@@ -1,0 +1,2953 @@
+<!-- Daily Wellness Tracking -->
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Daily Tracking | Executive Health</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .active-pill {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        body {
+            font-family: 'Manrope', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        .bento-wide {
+            grid-column: span 2;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-fixed-dim": "#a8cfbd",
+                      "surface-container": "#eeeeed",
+                      "surface-dim": "#dadad9",
+                      "on-secondary-fixed-variant": "#464744",
+                      "inverse-on-surface": "#f1f1f0",
+                      "tertiary-fixed": "#ffdbd0",
+                      "on-surface-variant": "#414844",
+                      "secondary-fixed": "#e3e3de",
+                      "on-error-container": "#93000a",
+                      "on-error": "#ffffff",
+                      "on-primary": "#ffffff",
+                      "secondary-fixed-dim": "#c7c7c2",
+                      "on-surface": "#1a1c1c",
+                      "secondary": "#5e5f5b",
+                      "tertiary": "#92462d",
+                      "error": "#ba1a1a",
+                      "outline-variant": "#c1c8c3",
+                      "surface-container-high": "#e8e8e8",
+                      "surface-container-highest": "#e2e2e2",
+                      "tertiary-fixed-dim": "#ffb59f",
+                      "on-primary-fixed": "#002116",
+                      "on-secondary-container": "#646561",
+                      "on-tertiary-fixed-variant": "#77311b",
+                      "on-tertiary": "#ffffff",
+                      "on-tertiary-fixed": "#3a0a00",
+                      "inverse-surface": "#2f3131",
+                      "surface-variant": "#e2e2e2",
+                      "inverse-primary": "#a8cfbd",
+                      "primary": "#3f6355",
+                      "surface-tint": "#426657",
+                      "on-tertiary-container": "#fffbff",
+                      "on-primary-fixed-variant": "#2a4d40",
+                      "surface-container-low": "#f4f3f3",
+                      "background": "#f9f9f9",
+                      "secondary-container": "#e3e3de",
+                      "primary-container": "#587c6d",
+                      "surface-container-lowest": "#ffffff",
+                      "on-secondary": "#ffffff",
+                      "on-secondary-fixed": "#1b1c19",
+                      "on-background": "#1a1c1c",
+                      "tertiary-container": "#b15d43",
+                      "primary-fixed": "#c4ebd9",
+                      "surface-bright": "#f9f9f9",
+                      "outline": "#717974",
+                      "surface": "#f9f9f9",
+                      "error-container": "#ffdad6",
+                      "on-primary-container": "#f5fff8"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "margin-mobile": "20px",
+                      "container-max": "1200px",
+                      "unit": "8px",
+                      "section-gap": "80px",
+                      "margin-desktop": "64px"
+              },
+              "fontSize": {
+                      "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "display": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "label-md": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                      "caption": ["12px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                      "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+      </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface min-h-screen pb-32">
+<!-- Top App Bar -->
+<header class="bg-surface sticky top-0 z-40 flex justify-between items-center w-full px-margin-mobile py-4 max-w-container-max mx-auto">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden bg-primary-fixed flex items-center justify-center">
+<img class="w-full h-full object-cover" data-alt="A professional close-up portrait of a mid-40s male executive with a kind smile, clean-shaven, wearing a light linen shirt. The lighting is soft and natural, suggesting an upscale clinic or resort environment. The background is slightly blurred with hints of sage green and soft ivory, maintaining a premium and calm healthcare aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAj1xxDpJNQ6jj8vIIlUrdyi-l0ZtM04CHzq-2SB0MZ_c2uTd7NUYJ4mEN9shxQZC_GQEL4a4y_YlcLoF_loly3xW_bHUZOs7z6OIqjbO0LyK9en1CTD9Fs7b7TyIrcWKdbyd9haoVF-SSQp9iCk7Za1SmgZMAg7E_gllDyyJEga2A4gJO2lH4VBifovi7B2IPbEytiGu-y8HZrW_xER6hftmnXDgVZ9fiRF4oWhjWYyIu1uEBZb_DfpqJFZOBm5Rz_QoWOU8zLTGY"/>
+</div>
+<div>
+<p class="font-label-md text-caption text-on-surface-variant">Thursday</p>
+<h1 class="font-headline-md text-headline-md-mobile text-on-surface">October 24, 2024</h1>
+</div>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:opacity-80 transition-opacity active:scale-95 duration-150 text-primary">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</header>
+<main class="px-margin-mobile mt-6">
+<!-- Weekly Trend Strip -->
+<section class="mb-8">
+<div class="flex items-center justify-between mb-4">
+<h2 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Weekly Activity</h2>
+<span class="font-label-md text-caption text-primary flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]" data-icon="auto_awesome">auto_awesome</span>
+                    Synced
+                </span>
+</div>
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-sm flex items-end justify-between h-24 gap-2">
+<!-- Simple Mini Chart Logic -->
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-primary-fixed rounded-t-full" style="height: 40%"></div>
+<span class="text-[10px] font-bold text-on-surface-variant">M</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-primary-fixed rounded-t-full" style="height: 65%"></div>
+<span class="text-[10px] font-bold text-on-surface-variant">T</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-primary-fixed rounded-t-full" style="height: 55%"></div>
+<span class="text-[10px] font-bold text-on-surface-variant">W</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-primary rounded-t-full" style="height: 85%"></div>
+<span class="text-[10px] font-bold text-primary font-bold">T</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-surface-container rounded-t-full" style="height: 20%"></div>
+<span class="text-[10px] font-bold text-on-surface-variant opacity-40">F</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-surface-container rounded-t-full" style="height: 20%"></div>
+<span class="text-[10px] font-bold text-on-surface-variant opacity-40">S</span>
+</div>
+<div class="flex-1 flex flex-col items-center gap-2">
+<div class="w-full bg-surface-container rounded-t-full" style="height: 20%"></div>
+<span class="text-[10px] font-bold text-on-surface-variant opacity-40">S</span>
+</div>
+</div>
+</section>
+<!-- Bento Grid Quick Log -->
+<div class="bento-grid">
+<!-- Sleep Card -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-outline-variant/30 flex flex-col justify-between hover:border-primary/30 transition-colors">
+<div class="flex items-start justify-between mb-2">
+<span class="material-symbols-outlined text-primary" data-icon="bedtime">bedtime</span>
+<span class="text-[10px] font-bold text-primary bg-primary-fixed px-2 py-0.5 rounded-full">+2%</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface-variant">Sleep</h3>
+<p class="font-headline-md text-headline-md text-on-surface">7.2<span class="text-body-md text-on-surface-variant ml-1 font-normal">hrs</span></p>
+</div>
+</div>
+<!-- Activity Card -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-outline-variant/30 flex flex-col justify-between hover:border-primary/30 transition-colors">
+<div class="flex items-start justify-between mb-2">
+<span class="material-symbols-outlined text-primary" data-icon="directions_run">directions_run</span>
+</div>
+<div>
+<h3 class="font-label-md text-label-md text-on-surface-variant">Activity</h3>
+<p class="font-headline-md text-headline-md text-on-surface">8,432<span class="text-body-md text-on-surface-variant ml-1 font-normal">steps</span></p>
+</div>
+</div>
+<!-- Mood Card (Wide) -->
+<div class="bento-wide bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-outline-variant/30">
+<h3 class="font-label-md text-label-md text-on-surface-variant mb-4">How is your mental clarity today?</h3>
+<div class="flex justify-between items-center px-2">
+<button class="w-12 h-12 flex items-center justify-center rounded-full bg-surface-container-low hover:bg-primary-fixed transition-colors active:scale-90">
+<span class="text-2xl">😔</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-full bg-surface-container-low hover:bg-primary-fixed transition-colors active:scale-90">
+<span class="text-2xl">😐</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-full bg-primary-fixed ring-2 ring-primary ring-offset-2 transition-all active:scale-90">
+<span class="text-2xl">😊</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-full bg-surface-container-low hover:bg-primary-fixed transition-colors active:scale-90">
+<span class="text-2xl">😌</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center rounded-full bg-surface-container-low hover:bg-primary-fixed transition-colors active:scale-90">
+<span class="text-2xl">🤩</span>
+</button>
+</div>
+</div>
+<!-- Food Add Meal -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-outline-variant/30 hover:border-primary/30 transition-colors group cursor-pointer">
+<div class="w-10 h-10 rounded-lg bg-secondary-container flex items-center justify-center mb-3 group-hover:bg-primary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined" data-icon="restaurant">restaurant</span>
+</div>
+<h3 class="font-label-md text-label-md text-on-surface-variant">Nutrition</h3>
+<p class="font-body-md text-body-md text-primary font-bold">Add Meal</p>
+</div>
+<!-- Weight -->
+<div class="bg-surface-container-lowest rounded-xl p-5 shadow-sm border border-outline-variant/30 hover:border-primary/30 transition-colors">
+<div class="flex items-start justify-between mb-3">
+<span class="material-symbols-outlined text-primary" data-icon="monitor_weight">monitor_weight</span>
+</div>
+<h3 class="font-label-md text-label-md text-on-surface-variant">Weight</h3>
+<div class="flex items-baseline gap-1">
+<p class="font-headline-md text-headline-md text-on-surface">184.5</p>
+<span class="text-caption text-on-surface-variant font-normal">lbs</span>
+</div>
+</div>
+<!-- Supplements Checklist (Wide) -->
+<div class="bento-wide bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/30">
+<div class="flex justify-between items-center mb-4">
+<h3 class="font-label-md text-label-md text-on-surface-variant">Protocol Supplements</h3>
+<span class="text-caption text-primary font-bold">2/4 Complete</span>
+</div>
+<div class="space-y-3">
+<div class="flex items-center gap-3 p-3 rounded-lg bg-surface-container-low border border-transparent hover:border-primary-fixed-dim transition-all cursor-pointer">
+<div class="w-6 h-6 rounded border-2 border-primary bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[18px]" data-icon="check">check</span>
+</div>
+<div class="flex-1">
+<p class="font-body-md text-body-md text-on-surface leading-tight">Omega-3 Forte</p>
+<p class="text-[10px] text-on-surface-variant uppercase">Morning • 2000mg</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-3 rounded-lg bg-surface-container-low border border-transparent hover:border-primary-fixed-dim transition-all cursor-pointer">
+<div class="w-6 h-6 rounded border-2 border-primary bg-primary flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[18px]" data-icon="check">check</span>
+</div>
+<div class="flex-1">
+<p class="font-body-md text-body-md text-on-surface leading-tight">Vitamin D3 + K2</p>
+<p class="text-[10px] text-on-surface-variant uppercase">Morning • 5000 IU</p>
+</div>
+</div>
+<div class="flex items-center gap-3 p-3 rounded-lg border border-outline-variant border-dashed hover:border-primary transition-all cursor-pointer">
+<div class="w-6 h-6 rounded border-2 border-outline"></div>
+<div class="flex-1">
+<p class="font-body-md text-body-md text-on-surface-variant leading-tight">Magnesium Glycinate</p>
+<p class="text-[10px] text-on-surface-variant opacity-60 uppercase">Evening • 400mg</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sync Note -->
+<div class="mt-8 flex items-center justify-center gap-2 py-4">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]" data-icon="sync">sync</span>
+<p class="font-body-md text-caption text-on-surface-variant italic">Wearable health data syncs automatically every 15 minutes.</p>
+</div>
+</main>
+<!-- Bottom Nav Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant dark:border-outline shadow-sm rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim bg-primary-fixed dark:bg-primary-container rounded-xl px-4 py-1 active:transform active:scale-95 transition-transform hover:bg-surface-container-high" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label-md text-label-md">Insights</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-surface-variant active:transform active:scale-95 transition-transform hover:bg-surface-container-high px-4 py-1" href="#">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+<span class="font-label-md text-label-md">Concierge</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-surface-variant active:transform active:scale-95 transition-transform hover:bg-surface-container-high px-4 py-1" href="#">
+<span class="material-symbols-outlined" data-icon="event_note">event_note</span>
+<span class="font-label-md text-label-md">Care Plan</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-surface-variant active:transform active:scale-95 transition-transform hover:bg-surface-container-high px-4 py-1" href="#">
+<span class="material-symbols-outlined" data-icon="tune">tune</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</nav>
+<!-- Micro-interaction Script -->
+<script>
+        document.querySelectorAll('.active\\:scale-90, .active\\:scale-95').forEach(button => {
+            button.addEventListener('touchstart', () => {
+                button.style.transform = 'scale(0.95)';
+            });
+            button.addEventListener('touchend', () => {
+                button.style.transform = 'scale(1)';
+            });
+        });
+
+        // Simple mock for "adding a meal" feedback
+        const mealCard = document.querySelector('div.group.cursor-pointer');
+        mealCard.addEventListener('click', () => {
+            const originalHtml = mealCard.innerHTML;
+            mealCard.innerHTML = `
+                <div class="flex items-center justify-center h-full w-full py-4">
+                    <span class="material-symbols-outlined animate-spin text-primary" data-icon="progress_activity">progress_activity</span>
+                </div>
+            `;
+            setTimeout(() => {
+                mealCard.innerHTML = originalHtml;
+            }, 1000);
+        });
+    </script>
+</body></html>
+
+<!-- Data Capture Channels -->
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Executive Health - Data Capture</title>
+<!-- Google Fonts: Manrope -->
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed-dim": "#a8cfbd",
+                    "surface-container": "#eeeeed",
+                    "surface-dim": "#dadad9",
+                    "on-secondary-fixed-variant": "#464744",
+                    "inverse-on-surface": "#f1f1f0",
+                    "tertiary-fixed": "#ffdbd0",
+                    "on-surface-variant": "#414844",
+                    "secondary-fixed": "#e3e3de",
+                    "on-error-container": "#93000a",
+                    "on-error": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "secondary-fixed-dim": "#c7c7c2",
+                    "on-surface": "#1a1c1c",
+                    "secondary": "#5e5f5b",
+                    "tertiary": "#92462d",
+                    "error": "#ba1a1a",
+                    "outline-variant": "#c1c8c3",
+                    "surface-container-high": "#e8e8e8",
+                    "surface-container-highest": "#e2e2e2",
+                    "tertiary-fixed-dim": "#ffb59f",
+                    "on-primary-fixed": "#002116",
+                    "on-secondary-container": "#646561",
+                    "on-tertiary-fixed-variant": "#77311b",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-fixed": "#3a0a00",
+                    "inverse-surface": "#2f3131",
+                    "surface-variant": "#e2e2e2",
+                    "inverse-primary": "#a8cfbd",
+                    "primary": "#3f6355",
+                    "surface-tint": "#426657",
+                    "on-tertiary-container": "#fffbff",
+                    "on-primary-fixed-variant": "#2a4d40",
+                    "surface-container-low": "#f4f3f3",
+                    "background": "#f9f9f9",
+                    "secondary-container": "#e3e3de",
+                    "primary-container": "#587c6d",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-fixed": "#1b1c19",
+                    "on-background": "#1a1c1c",
+                    "tertiary-container": "#b15d43",
+                    "primary-fixed": "#c4ebd9",
+                    "surface-bright": "#f9f9f9",
+                    "outline": "#717974",
+                    "surface": "#f9f9f9",
+                    "error-container": "#ffdad6",
+                    "on-primary-container": "#f5fff8"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "margin-mobile": "20px",
+                    "container-max": "1200px",
+                    "unit": "8px",
+                    "section-gap": "80px",
+                    "margin-desktop": "64px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Manrope"],
+                    "display": ["Manrope"],
+                    "body-lg": ["Manrope"],
+                    "body-md": ["Manrope"],
+                    "label-md": ["Manrope"],
+                    "headline-lg-mobile": ["Manrope"],
+                    "caption": ["Manrope"],
+                    "headline-md": ["Manrope"]
+            },
+            "fontSize": {
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "display": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                    "caption": ["12px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #f9f9f9; /* Bone white background */
+            color: #1a1c1c;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .soft-shadow {
+            box-shadow: 0 4px 20px rgba(26, 28, 28, 0.08);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .active-pill {
+            background-color: #3f6355; /* Sage */
+            color: #ffffff;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="font-body-md text-body-md min-h-screen pb-24">
+<!-- Top Navigation Anchor (Shell) -->
+<header class="bg-surface dark:bg-inverse-surface flex justify-between items-center w-full px-margin-mobile py-4 max-w-container-max mx-auto top-0 z-50">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A professional close-up portrait of a refined male executive in a minimalist clinical setting, soft natural lighting, high-key white background, serene atmosphere, quiet luxury healthcare aesthetic, sage green accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPPKERTsiJZ3kaVxtmZx69MGjexG2rU4EQaXzGd7dtPRrCBDNtFhhWUuRtlKRFVfuuELDkgY4xE9-agX3ihYl6BhqMlSk68M8WJHUKc7uNoVRa41f5fKN8i5hW0WGLLfwu1_DViOE9FKwIDUVEu3JjAosfIPaiL2f9SBtFXy0BhcpcmsRRFlrpFob1D8DtWAu1sF6D5i7cHPsZqUKH8CYAZXvY4YD78gUZN97hNWpCpfY8nxikr2pnJykjb4KL7yX9avnS3o4dWEA"/>
+</div>
+<h1 class="font-headline-md text-headline-md-mobile text-primary dark:text-primary-fixed-dim font-bold">Welcome, Alexander</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-primary">notifications</span>
+</button>
+</header>
+<main class="px-margin-mobile pt-4 max-w-md mx-auto">
+<!-- Progress Indicator -->
+<section class="mb-10">
+<div class="flex justify-between items-end mb-3">
+<span class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">Overall Progress</span>
+<span class="font-headline-md text-headline-md-mobile text-primary">Capture 60% complete</span>
+</div>
+<div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full transition-all duration-700 ease-out" style="width: 60%"></div>
+</div>
+</section>
+<!-- Segmented Control Pillars -->
+<nav class="flex p-1 bg-surface-container-low rounded-xl mb-8 gap-1">
+<button class="flex-1 py-2 text-center rounded-lg font-label-md text-label-md transition-all active-pill" onclick="selectPillar(this)">Vascular</button>
+<button class="flex-1 py-2 text-center rounded-lg font-label-md text-label-md transition-all text-on-surface-variant hover:bg-surface-variant/30" onclick="selectPillar(this)">Metabolic</button>
+<button class="flex-1 py-2 text-center rounded-lg font-label-md text-label-md transition-all text-on-surface-variant hover:bg-surface-variant/30" onclick="selectPillar(this)">Mental</button>
+</nav>
+<!-- Capture Channel Cards -->
+<div class="space-y-4">
+<!-- Card 1: Manual -->
+<div class="bg-surface-container-lowest p-6 rounded-xl soft-shadow border border-outline-variant/30 group active:scale-95 transition-transform duration-150">
+<div class="flex items-start justify-between">
+<div class="flex gap-4">
+<div class="w-12 h-12 bg-primary-fixed rounded-xl flex items-center justify-center text-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">description</span>
+</div>
+<div>
+<h3 class="font-headline-md text-[18px] leading-tight mb-1">Manual &amp; questionnaire</h3>
+<p class="font-caption text-caption text-on-surface-variant">Entered by: <span class="font-bold text-primary">Me</span></p>
+</div>
+</div>
+<div class="text-right">
+<span class="font-label-md text-label-md text-primary">3 of 6 done</span>
+</div>
+</div>
+</div>
+<!-- Card 2: Wearables -->
+<div class="bg-surface-container-lowest p-6 rounded-xl soft-shadow border border-outline-variant/30 group active:scale-95 transition-transform duration-150">
+<div class="flex items-start justify-between">
+<div class="flex gap-4">
+<div class="w-12 h-12 bg-surface-container-high rounded-xl flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">match_case</span>
+</div>
+<div>
+<h3 class="font-headline-md text-[18px] leading-tight mb-1">Wearables</h3>
+<p class="font-caption text-caption text-on-surface-variant">Entered by: <span class="font-bold">Me</span></p>
+</div>
+</div>
+<button class="px-5 py-2 bg-primary text-on-primary rounded-full font-label-md text-label-md hover:opacity-90 transition-opacity">Connect</button>
+</div>
+</div>
+<!-- Card 3: Body Comp -->
+<div class="bg-surface-container-lowest p-6 rounded-xl soft-shadow border border-outline-variant/30 group active:scale-95 transition-transform duration-150">
+<div class="flex items-start justify-between">
+<div class="flex gap-4">
+<div class="w-12 h-12 bg-surface-container-high rounded-xl flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">accessibility_new</span>
+</div>
+<div>
+<h3 class="font-headline-md text-[18px] leading-tight mb-1">Body composition scan</h3>
+<p class="font-caption text-caption text-on-surface-variant">Entered by: <span class="font-bold">Admin</span></p>
+</div>
+</div>
+</div>
+<div class="mt-4 flex gap-2">
+<button class="flex-1 py-3 border border-outline text-primary rounded-xl font-label-md text-label-md hover:bg-surface-container transition-colors">Upload</button>
+<button class="flex-1 py-3 border border-outline text-primary rounded-xl font-label-md text-label-md hover:bg-surface-container transition-colors">Enter Values</button>
+</div>
+</div>
+<!-- Card 4: Screening Labs -->
+<div class="bg-surface-container-lowest p-6 rounded-xl soft-shadow border border-outline-variant/30 group active:scale-95 transition-transform duration-150">
+<div class="flex items-start justify-between">
+<div class="flex gap-4">
+<div class="w-12 h-12 bg-surface-container-high rounded-xl flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined">clinical_notes</span>
+</div>
+<div>
+<h3 class="font-headline-md text-[18px] leading-tight mb-1">Screening / lab reports</h3>
+<p class="font-caption text-caption text-on-surface-variant">Entered by: <span class="font-bold">Admin</span></p>
+</div>
+</div>
+</div>
+<button class="mt-4 w-full py-3 border border-primary text-primary rounded-xl font-label-md text-label-md flex items-center justify-center gap-2 hover:bg-primary/5 transition-colors">
+<span class="material-symbols-outlined text-[20px]">upload_file</span>
+                    Upload PDF or photo
+                </button>
+</div>
+<!-- Card 5: ReCOGnAIze -->
+<div class="bg-primary-fixed p-6 rounded-xl border border-primary/10 group active:scale-95 transition-transform duration-150">
+<div class="flex items-start justify-between">
+<div class="flex gap-4">
+<div class="w-12 h-12 bg-primary rounded-xl flex items-center justify-center text-on-primary">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">psychology</span>
+</div>
+<div>
+<div class="flex items-center gap-1.5 mb-1">
+<h3 class="font-headline-md text-[18px] leading-tight">ReCOGnAIze</h3>
+<span class="px-2 py-0.5 bg-primary/10 text-[10px] font-bold uppercase tracking-widest text-primary rounded-full">AI Tech</span>
+</div>
+<p class="font-caption text-caption text-on-primary-fixed-variant">Cognitive assessment</p>
+</div>
+</div>
+</div>
+<button class="mt-4 w-full py-3 bg-primary text-on-primary rounded-xl font-label-md text-label-md flex items-center justify-center gap-2 shadow-sm">
+                    Start assessment
+                </button>
+</div>
+</div>
+<!-- Helper Text -->
+<div class="mt-8 flex items-center justify-center gap-2 text-on-surface-variant opacity-70">
+<span class="material-symbols-outlined text-[18px]">info</span>
+<p class="font-body-md text-label-md">Some items can be completed by your admin</p>
+</div>
+<!-- Primary Action -->
+<div class="mt-12 mb-8">
+<button class="w-full py-5 bg-primary text-on-primary rounded-2xl font-headline-md text-headline-md-mobile shadow-xl transform active:scale-95 transition-all">
+                Review my snapshot
+            </button>
+</div>
+</main>
+<!-- Bottom Navigation Shell (Anchor) -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 bg-surface-container-lowest dark:bg-inverse-surface border-t border-outline-variant shadow-sm rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-xl px-4 py-1" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-label-md text-label-md">Insights</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim bg-primary-fixed dark:bg-primary-container rounded-xl px-4 py-1" href="#">
+<span class="material-symbols-outlined" data-icon="chat_bubble">chat_bubble</span>
+<span class="font-label-md text-label-md">Concierge</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-xl px-4 py-1" href="#">
+<span class="material-symbols-outlined" data-icon="event_note">event_note</span>
+<span class="font-label-md text-label-md">Care Plan</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container dark:text-on-surface-variant hover:bg-surface-container-high transition-colors rounded-xl px-4 py-1" href="#">
+<span class="material-symbols-outlined" data-icon="tune">tune</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</nav>
+<script>
+        function selectPillar(btn) {
+            // Remove active classes from all buttons in the same parent
+            const buttons = btn.parentElement.querySelectorAll('button');
+            buttons.forEach(b => {
+                b.classList.remove('active-pill');
+                b.classList.add('text-on-surface-variant', 'hover:bg-surface-variant/30');
+            });
+            
+            // Add active class to clicked button
+            btn.classList.add('active-pill');
+            btn.classList.remove('text-on-surface-variant', 'hover:bg-surface-variant/30');
+            
+            // Haptic-like feedback
+            if (window.navigator && window.navigator.vibrate) {
+                window.navigator.vibrate(5);
+            }
+        }
+    </script>
+</body></html>
+
+<!-- Consent & Disclaimer -->
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Consent &amp; Wellness Disclaimer</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed-dim": "#a8cfbd",
+                    "surface-container": "#eeeeed",
+                    "surface-dim": "#dadad9",
+                    "on-secondary-fixed-variant": "#464744",
+                    "inverse-on-surface": "#f1f1f0",
+                    "tertiary-fixed": "#ffdbd0",
+                    "on-surface-variant": "#414844",
+                    "secondary-fixed": "#e3e3de",
+                    "on-error-container": "#93000a",
+                    "on-error": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "secondary-fixed-dim": "#c7c7c2",
+                    "on-surface": "#1a1c1c",
+                    "secondary": "#5e5f5b",
+                    "tertiary": "#92462d",
+                    "error": "#ba1a1a",
+                    "outline-variant": "#c1c8c3",
+                    "surface-container-high": "#e8e8e8",
+                    "surface-container-highest": "#e2e2e2",
+                    "tertiary-fixed-dim": "#ffb59f",
+                    "on-primary-fixed": "#002116",
+                    "on-secondary-container": "#646561",
+                    "on-tertiary-fixed-variant": "#77311b",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-fixed": "#3a0a00",
+                    "inverse-surface": "#2f3131",
+                    "surface-variant": "#e2e2e2",
+                    "inverse-primary": "#a8cfbd",
+                    "primary": "#3f6355",
+                    "surface-tint": "#426657",
+                    "on-tertiary-container": "#fffbff",
+                    "on-primary-fixed-variant": "#2a4d40",
+                    "surface-container-low": "#f4f3f3",
+                    "background": "#f9f9f9",
+                    "secondary-container": "#e3e3de",
+                    "primary-container": "#587c6d",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-fixed": "#1b1c19",
+                    "on-background": "#1a1c1c",
+                    "tertiary-container": "#b15d43",
+                    "primary-fixed": "#c4ebd9",
+                    "surface-bright": "#f9f9f9",
+                    "outline": "#717974",
+                    "surface": "#f9f9f9",
+                    "error-container": "#ffdad6",
+                    "on-primary-container": "#f5fff8"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "margin-mobile": "20px",
+                    "container-max": "1200px",
+                    "unit": "8px",
+                    "section-gap": "80px",
+                    "margin-desktop": "64px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Manrope"],
+                    "display": ["Manrope"],
+                    "body-lg": ["Manrope"],
+                    "body-md": ["Manrope"],
+                    "label-md": ["Manrope"],
+                    "headline-lg-mobile": ["Manrope"],
+                    "caption": ["Manrope"],
+                    "headline-md": ["Manrope"]
+            },
+            "fontSize": {
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "display": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                    "caption": ["12px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: #f9f9f9; /* Bone white background */
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .custom-checkbox:checked {
+            background-color: #3f6355;
+            border-color: #3f6355;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Ambient Glassmorphism for the card */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(235, 234, 228, 0.5);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="text-on-surface selection:bg-primary-fixed">
+<!-- Main Mobile Canvas -->
+<main class="min-h-screen max-w-[430px] mx-auto bg-surface flex flex-col relative overflow-hidden pb-12">
+<!-- Header Branding (Suppressed Nav, simple logo/back) -->
+<header class="flex justify-between items-center px-margin-mobile py-6 z-10">
+<button class="w-10 h-10 rounded-full flex items-center justify-center bg-surface-container-lowest shadow-sm hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined text-primary">arrow_back</span>
+</button>
+<div class="text-primary font-bold font-headline-md text-headline-md tracking-tight">Equilibrium</div>
+<div class="w-10"></div> <!-- Spacer -->
+</header>
+<!-- Aesthetic Background Elements -->
+<div class="absolute -top-24 -right-24 w-64 h-64 bg-primary-fixed/20 rounded-full blur-[100px]"></div>
+<div class="absolute top-1/2 -left-32 w-80 h-80 bg-primary-fixed-dim/10 rounded-full blur-[120px]"></div>
+<!-- Content Canvas -->
+<div class="flex-grow px-margin-mobile pt-4 flex flex-col fade-in">
+<!-- Hero Illustration / Iconography -->
+<div class="mb-8 flex justify-center">
+<div class="relative">
+<div class="w-20 h-20 bg-primary/5 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[40px]" style="font-variation-settings: 'wght' 300;">verified_user</span>
+</div>
+<!-- Decorative subtle orbit -->
+<div class="absolute inset-0 border border-primary/10 rounded-full scale-125 animate-[spin_10s_linear_infinite]"></div>
+</div>
+</div>
+<!-- Heading -->
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-4">Before we begin</h1>
+<!-- Body Text -->
+<div class="space-y-4 mb-10">
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                    Welcome to Equilibrium. This journey is designed as a <span class="text-primary font-semibold">wellness experience</span> to support your professional vitality and mental clarity.
+                </p>
+<div class="p-4 bg-surface-container-low rounded-xl border border-outline-variant/30">
+<p class="font-caption text-caption text-on-surface-variant uppercase tracking-wider mb-2 opacity-70">Important Notice</p>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                        Our AI-assisted insights are carefully reviewed by our care team. This platform provides holistic wellness support and is <span class="font-bold">not a medical diagnosis or a substitute for professional medical advice</span>.
+                    </p>
+</div>
+</div>
+<!-- Consent Checklist -->
+<form class="space-y-6" id="consentForm">
+<div class="space-y-4">
+<!-- Checkbox 1 -->
+<label class="flex items-start gap-4 p-4 rounded-xl transition-all cursor-pointer hover:bg-surface-container-low border border-transparent active:scale-[0.98]">
+<div class="relative flex items-center mt-1">
+<input class="peer appearance-none w-6 h-6 border-2 border-outline-variant rounded-md checked:bg-primary checked:border-primary transition-all duration-200" required="" type="checkbox"/>
+<span class="material-symbols-outlined absolute text-white text-lg left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" style="font-variation-settings: 'wght' 700;">check</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface leading-snug">
+                            I understand this is a wellness check, not a medical diagnosis
+                        </span>
+</label>
+<!-- Checkbox 2 -->
+<label class="flex items-start gap-4 p-4 rounded-xl transition-all cursor-pointer hover:bg-surface-container-low border border-transparent active:scale-[0.98]">
+<div class="relative flex items-center mt-1">
+<input class="peer appearance-none w-6 h-6 border-2 border-outline-variant rounded-md checked:bg-primary checked:border-primary transition-all duration-200" required="" type="checkbox"/>
+<span class="material-symbols-outlined absolute text-white text-lg left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" style="font-variation-settings: 'wght' 700;">check</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface leading-snug">
+                            I consent to my data being reviewed by the Equilibrium care team
+                        </span>
+</label>
+<!-- Checkbox 3 -->
+<label class="flex items-start gap-4 p-4 rounded-xl transition-all cursor-pointer hover:bg-surface-container-low border border-transparent active:scale-[0.98]">
+<div class="relative flex items-center mt-1">
+<input class="peer appearance-none w-6 h-6 border-2 border-outline-variant rounded-md checked:bg-primary checked:border-primary transition-all duration-200" required="" type="checkbox"/>
+<span class="material-symbols-outlined absolute text-white text-lg left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" style="font-variation-settings: 'wght' 700;">check</span>
+</div>
+<span class="font-body-md text-body-md text-on-surface leading-snug">
+                            I agree to the <span class="text-primary font-semibold underline decoration-primary/30 underline-offset-4">privacy terms</span> and data handling policy
+                        </span>
+</label>
+</div>
+<!-- Action Button Container -->
+<div class="mt-12 flex flex-col items-center gap-6">
+<button class="w-full bg-primary text-on-primary font-label-md text-label-md py-5 px-8 rounded-full shadow-lg shadow-primary/20 transition-all hover:opacity-90 active:scale-95 disabled:bg-outline-variant disabled:shadow-none disabled:cursor-not-allowed" id="submitBtn" type="button">
+                        Agree and continue
+                    </button>
+<a class="font-label-md text-label-md text-primary/70 hover:text-primary transition-colors border-b border-primary/20 pb-0.5" href="#">
+                        Read full privacy notice
+                    </a>
+</div>
+</form>
+</div>
+<!-- Progress Indicator (Minimal) -->
+<div class="mt-12 px-margin-mobile flex justify-center items-center gap-2 mb-4">
+<div class="w-8 h-1 rounded-full bg-primary"></div>
+<div class="w-2 h-1 rounded-full bg-outline-variant"></div>
+<div class="w-2 h-1 rounded-full bg-outline-variant"></div>
+</div>
+</main>
+<script>
+        // Simple Interaction Logic for the Consent Screen
+        const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+        const submitBtn = document.getElementById('submitBtn');
+
+        function checkFormValidity() {
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            if (allChecked) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50');
+            } else {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50');
+            }
+        }
+
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', checkFormValidity);
+        });
+
+        // Initialize state
+        checkFormValidity();
+
+        // Button click effect
+        submitBtn.addEventListener('click', function() {
+            if(!this.disabled) {
+                this.innerHTML = '<span class="flex items-center justify-center gap-2"><svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Initializing...</span>';
+                setTimeout(() => {
+                    alert('Consent received. Welcome Alexander.');
+                }, 1200);
+            }
+        });
+    </script>
+</body></html>
+
+<!-- Executive Health Card -->
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Executive Wellness Snapshot</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "primary-fixed-dim": "#a8cfbd",
+                "surface-container": "#eeeeed",
+                "surface-dim": "#dadad9",
+                "on-secondary-fixed-variant": "#464744",
+                "inverse-on-surface": "#f1f1f0",
+                "tertiary-fixed": "#ffdbd0",
+                "on-surface-variant": "#414844",
+                "secondary-fixed": "#e3e3de",
+                "on-error-container": "#93000a",
+                "on-error": "#ffffff",
+                "on-primary": "#ffffff",
+                "secondary-fixed-dim": "#c7c7c2",
+                "on-surface": "#1a1c1c",
+                "secondary": "#5e5f5b",
+                "tertiary": "#92462d",
+                "error": "#ba1a1a",
+                "outline-variant": "#c1c8c3",
+                "surface-container-high": "#e8e8e8",
+                "surface-container-highest": "#e2e2e2",
+                "tertiary-fixed-dim": "#ffb59f",
+                "on-primary-fixed": "#002116",
+                "on-secondary-container": "#646561",
+                "on-tertiary-fixed-variant": "#77311b",
+                "on-tertiary": "#ffffff",
+                "on-tertiary-fixed": "#3a0a00",
+                "inverse-surface": "#2f3131",
+                "surface-variant": "#e2e2e2",
+                "inverse-primary": "#a8cfbd",
+                "primary": "#3f6355", // Sage Green mapping
+                "surface-tint": "#426657",
+                "on-tertiary-container": "#fffbff",
+                "on-primary-fixed-variant": "#2a4d40",
+                "surface-container-low": "#f4f3f3",
+                "background": "#f9f9f9", // Bone White mapping
+                "secondary-container": "#e3e3de",
+                "primary-container": "#587c6d",
+                "surface-container-lowest": "#ffffff",
+                "on-secondary": "#ffffff",
+                "on-secondary-fixed": "#1b1c19",
+                "on-background": "#1a1c1c",
+                "tertiary-container": "#b15d43", // Terracotta mapping
+                "primary-fixed": "#c4ebd9",
+                "surface-bright": "#f9f9f9",
+                "outline": "#717974",
+                "surface": "#f9f9f9",
+                "error-container": "#ffdad6",
+                "on-primary-container": "#f5fff8"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "1rem", // 16px mapping
+                "full": "9999px"
+            },
+            "spacing": {
+                "gutter": "24px",
+                "margin-mobile": "20px",
+                "container-max": "1200px",
+                "unit": "8px",
+                "section-gap": "80px",
+                "margin-desktop": "64px"
+            },
+            "fontFamily": {
+                "headline-lg": ["Manrope"],
+                "display": ["Manrope"],
+                "body-lg": ["Manrope"],
+                "body-md": ["Manrope"],
+                "label-md": ["Manrope"],
+                "headline-lg-mobile": ["Manrope"],
+                "caption": ["Manrope"],
+                "headline-md": ["Manrope"]
+            },
+            "fontSize": {
+                "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                "display": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                "label-md": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                "caption": ["12px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+      body {
+        background-color: #FAF9F4; /* Strict bone-white mapping */
+        color: #1A1C1C;
+        font-family: 'Manrope', sans-serif;
+      }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+      }
+      .ring-chart {
+        transform: rotate(-90deg);
+      }
+      .shadow-soft {
+        box-shadow: 0 4px 20px rgba(26, 28, 28, 0.08);
+      }
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="min-h-screen overflow-x-hidden no-scrollbar">
+<!-- Top AppBar Integration -->
+<header class="bg-surface fixed top-0 w-full z-50 flex justify-between items-center px-margin-mobile py-4 max-w-container-max mx-auto">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional studio portrait of a senior executive man with a friendly, composed expression. He is wearing a minimalist, high-quality linen shirt in a neutral bone-white tone. The lighting is soft and natural, emphasizing a sense of calm authority and mental clarity. The background is a blurred, high-end wellness retreat setting with soft greenery and light wood textures." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBzoFgaUzV7H3QULFugqzGER4E2jQjCLrgJu3NORBDvTV2gspNX5EIwTvbiadxIgFZJZT46dDh0uH3w3MrL-XBUkJiVD82ce72JGr_wMGAdvuBGgramF6YxWbD1o4YcmaNZbCxkl1Qi6_H03j728e6dpU6f_psnzwpFPNhR4ZAF25P9-56rzae50yG0MiP910Dzbclyzl-C02segVFqZ6q84SIjrVdQtIP5rHC6ShG8TuCriOxsPo7HBntw3VGJNEsYB1MseevEiMA"/>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md-mobile text-on-surface">Welcome, James</h1>
+<p class="font-caption text-caption text-on-surface-variant">12 Oct 2024</p>
+</div>
+</div>
+<button class="text-primary hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</header>
+<main class="pt-24 pb-32 px-margin-mobile max-w-lg mx-auto space-y-8">
+<!-- Header Section -->
+<section class="space-y-1">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">James Chen</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Executive Wellness Snapshot</p>
+</section>
+<!-- Biological Age Hero Card -->
+<section class="bg-surface-container-lowest rounded-xl p-8 shadow-soft border border-outline-variant/30 flex items-center justify-between relative overflow-hidden">
+<div class="z-10">
+<div class="flex items-baseline gap-2">
+<span class="font-display text-display text-primary">54</span>
+<span class="font-label-md text-label-md text-on-surface-variant">YEARS</span>
+</div>
+<p class="font-label-md text-label-md uppercase tracking-wider text-on-surface-variant mb-4">Biological Age</p>
+<div class="flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary rounded-full w-fit">
+<span class="material-symbols-outlined text-[18px]">trending_down</span>
+<span class="font-label-md text-label-md">-4 Years difference</span>
+</div>
+</div>
+<div class="z-10 text-right">
+<div class="font-headline-md text-headline-md text-on-surface-variant/40 line-through">58</div>
+<p class="font-caption text-caption text-on-surface-variant">Chronological Age</p>
+</div>
+<!-- Abstract Background Graphic -->
+<div class="absolute -right-8 -top-8 w-40 h-40 bg-primary/5 rounded-full blur-3xl"></div>
+</section>
+<!-- Vital Score Rings -->
+<section class="grid grid-cols-3 gap-3">
+<!-- Vascular -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-soft flex flex-col items-center text-center">
+<div class="relative w-16 h-16 mb-3">
+<svg class="ring-chart w-full h-full" viewbox="0 0 36 36">
+<circle cx="18" cy="18" fill="none" r="16" stroke="#eeeeed" stroke-width="2.5"></circle>
+<circle cx="18" cy="18" fill="none" r="16" stroke="#3f6355" stroke-dasharray="74, 100" stroke-linecap="round" stroke-width="2.5"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center font-bold text-on-surface">74</div>
+</div>
+<p class="font-label-md text-label-md text-on-surface">Vascular</p>
+<span class="font-caption text-caption text-primary">Good</span>
+</div>
+<!-- Metabolic -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-soft flex flex-col items-center text-center">
+<div class="relative w-16 h-16 mb-3">
+<svg class="ring-chart w-full h-full" viewbox="0 0 36 36">
+<circle cx="18" cy="18" fill="none" r="16" stroke="#eeeeed" stroke-width="2.5"></circle>
+<circle cx="18" cy="18" fill="none" r="16" stroke="#b15d43" stroke-dasharray="68, 100" stroke-linecap="round" stroke-width="2.5"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center font-bold text-on-surface">68</div>
+</div>
+<p class="font-label-md text-label-md text-on-surface">Metabolic</p>
+<span class="font-caption text-caption text-tertiary">Monitor</span>
+</div>
+<!-- Mental -->
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-soft flex flex-col items-center text-center">
+<div class="relative w-16 h-16 mb-3">
+<svg class="ring-chart w-full h-full" viewbox="0 0 36 36">
+<circle cx="18" cy="18" fill="none" r="16" stroke="#eeeeed" stroke-width="2.5"></circle>
+<circle cx="18" cy="18" fill="none" r="16" stroke="#3f6355" stroke-dasharray="81, 100" stroke-linecap="round" stroke-width="2.5"></circle>
+</svg>
+<div class="absolute inset-0 flex items-center justify-center font-bold text-on-surface">81</div>
+</div>
+<p class="font-label-md text-label-md text-on-surface">Mental</p>
+<span class="font-caption text-caption text-primary">Strong</span>
+</div>
+</section>
+<!-- Key Contributors -->
+<section class="space-y-4">
+<h3 class="font-label-md text-label-md uppercase tracking-widest text-on-surface-variant">Key Contributors</h3>
+<div class="space-y-3">
+<div class="flex items-start gap-4 p-4 bg-surface-container-low rounded-xl">
+<span class="material-symbols-outlined text-primary mt-0.5">favorite</span>
+<div>
+<p class="font-body-md text-body-md text-on-surface">Resting heart rate in a healthy range</p>
+</div>
+</div>
+<div class="flex items-start gap-4 p-4 bg-tertiary-fixed/30 rounded-xl border border-tertiary/10">
+<span class="material-symbols-outlined text-tertiary mt-0.5">warning</span>
+<div>
+<p class="font-body-md text-body-md text-on-surface">Elevated LDL cholesterol — an area to monitor</p>
+</div>
+</div>
+<div class="flex items-start gap-4 p-4 bg-surface-container-low rounded-xl">
+<span class="material-symbols-outlined text-primary mt-0.5">bedtime</span>
+<div>
+<p class="font-body-md text-body-md text-on-surface">Strong sleep consistency</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Suggested Focus -->
+<section class="space-y-4">
+<h3 class="font-label-md text-label-md uppercase tracking-widest text-on-surface-variant">Suggested Focus</h3>
+<div class="grid grid-cols-2 gap-3">
+<div class="p-4 rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-primary/5 transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors mb-2">hotel</span>
+<p class="font-body-md text-body-md text-on-surface">Sleep optimization</p>
+</div>
+<div class="p-4 rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-primary/5 transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors mb-2">restaurant</span>
+<p class="font-body-md text-body-md text-on-surface">Nutrition adjustment</p>
+</div>
+<div class="p-4 rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-primary/5 transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors mb-2">directions_run</span>
+<p class="font-body-md text-body-md text-on-surface">Daily activity</p>
+</div>
+<div class="p-4 rounded-xl border border-outline-variant bg-surface-container-lowest hover:bg-primary/5 transition-colors cursor-pointer group">
+<span class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors mb-2">forum</span>
+<p class="font-body-md text-body-md text-on-surface">Follow-up discussion</p>
+</div>
+</div>
+</section>
+<!-- Certification Badge -->
+<div class="flex items-center justify-center gap-4 py-4 px-6 bg-surface-container-high/50 rounded-full w-fit mx-auto border border-outline-variant/30">
+<div class="flex -space-x-3">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center ring-2 ring-background text-[10px] font-bold text-on-primary-fixed">GP</div>
+<div class="w-8 h-8 rounded-full bg-secondary-fixed flex items-center justify-center ring-2 ring-background text-[10px] font-bold text-on-secondary-fixed">TCM</div>
+</div>
+<p class="font-caption text-caption text-on-surface-variant">Reviewed and signed off by your care team</p>
+</div>
+<!-- Action Button -->
+<button class="w-full py-5 px-8 bg-primary text-white rounded-full font-label-md text-label-md shadow-lg active:scale-[0.98] transition-transform flex items-center justify-center gap-2 group">
+            Ask about my results
+            <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+</button>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 bg-surface-container-lowest shadow-sm border-t border-outline-variant rounded-t-xl">
+<div class="flex flex-col items-center justify-center text-primary bg-primary-fixed rounded-xl px-4 py-1">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-md text-[10px]">Insights</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-secondary-container hover:bg-surface-container-high transition-colors px-4 py-1 rounded-xl">
+<span class="material-symbols-outlined">chat_bubble</span>
+<span class="font-label-md text-[10px]">Concierge</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-secondary-container hover:bg-surface-container-high transition-colors px-4 py-1 rounded-xl">
+<span class="material-symbols-outlined">event_note</span>
+<span class="font-label-md text-[10px]">Care Plan</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-secondary-container hover:bg-surface-container-high transition-colors px-4 py-1 rounded-xl">
+<span class="material-symbols-outlined">tune</span>
+<span class="font-label-md text-[10px]">Settings</span>
+</div>
+</nav>
+<script>
+        // Micro-interaction for score rings
+        document.addEventListener('DOMContentLoaded', () => {
+            const rings = document.querySelectorAll('.ring-chart circle[stroke-dasharray]');
+            rings.forEach(ring => {
+                const finalValue = ring.getAttribute('stroke-dasharray');
+                ring.style.strokeDasharray = "0, 100";
+                setTimeout(() => {
+                    ring.style.transition = "stroke-dasharray 1.5s cubic-bezier(0.4, 0, 0.2, 1)";
+                    ring.style.strokeDasharray = finalValue;
+                }, 300);
+            });
+        });
+    </script>
+</body></html>
+
+<!-- Ask AVA Assistant -->
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AVA Assistant - Executive Health Chat</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary-fixed-dim": "#a8cfbd",
+                      "surface-container": "#eeeeed",
+                      "surface-dim": "#dadad9",
+                      "on-secondary-fixed-variant": "#464744",
+                      "inverse-on-surface": "#f1f1f0",
+                      "tertiary-fixed": "#ffdbd0",
+                      "on-surface-variant": "#414844",
+                      "secondary-fixed": "#e3e3de",
+                      "on-error-container": "#93000a",
+                      "on-error": "#ffffff",
+                      "on-primary": "#ffffff",
+                      "secondary-fixed-dim": "#c7c7c2",
+                      "on-surface": "#1a1c1c",
+                      "secondary": "#5e5f5b",
+                      "tertiary": "#92462d",
+                      "error": "#ba1a1a",
+                      "outline-variant": "#c1c8c3",
+                      "surface-container-high": "#e8e8e8",
+                      "surface-container-highest": "#e2e2e2",
+                      "tertiary-fixed-dim": "#ffb59f",
+                      "on-primary-fixed": "#002116",
+                      "on-secondary-container": "#646561",
+                      "on-tertiary-fixed-variant": "#77311b",
+                      "on-tertiary": "#ffffff",
+                      "on-tertiary-fixed": "#3a0a00",
+                      "inverse-surface": "#2f3131",
+                      "surface-variant": "#e2e2e2",
+                      "inverse-primary": "#a8cfbd",
+                      "primary": "#3f6355",
+                      "surface-tint": "#426657",
+                      "on-tertiary-container": "#fffbff",
+                      "on-primary-fixed-variant": "#2a4d40",
+                      "surface-container-low": "#f4f3f3",
+                      "background": "#f9f9f9",
+                      "secondary-container": "#e3e3de",
+                      "primary-container": "#587c6d",
+                      "surface-container-lowest": "#ffffff",
+                      "on-secondary": "#ffffff",
+                      "on-secondary-fixed": "#1b1c19",
+                      "on-background": "#1a1c1c",
+                      "tertiary-container": "#b15d43",
+                      "primary-fixed": "#c4ebd9",
+                      "surface-bright": "#f9f9f9",
+                      "outline": "#717974",
+                      "surface": "#f9f9f9",
+                      "error-container": "#ffdad6",
+                      "on-primary-container": "#f5fff8"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "margin-mobile": "20px",
+                      "container-max": "1200px",
+                      "unit": "8px",
+                      "section-gap": "80px",
+                      "margin-desktop": "64px"
+              },
+              "fontFamily": {
+                      "headline-lg": ["Manrope"],
+                      "display": ["Manrope"],
+                      "body-lg": ["Manrope"],
+                      "body-md": ["Manrope"],
+                      "label-md": ["Manrope"],
+                      "headline-lg-mobile": ["Manrope"],
+                      "caption": ["Manrope"],
+                      "headline-md": ["Manrope"]
+              },
+              "fontSize": {
+                      "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                      "display": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                      "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                      "label-md": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                      "caption": ["12px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                      "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #e2e2e2; border-radius: 10px; }
+        .chat-bubble-in { border-bottom-left-radius: 4px; }
+        .chat-bubble-out { border-bottom-right-radius: 4px; }
+        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen flex flex-col items-center">
+<!-- Top Navigation Anchor (Suppressing BottomNav for sub-page focus) -->
+<header class="fixed top-0 left-0 w-full z-50 bg-surface/80 backdrop-blur-md">
+<div class="flex justify-between items-center w-full px-margin-mobile py-4 max-w-container-max mx-auto">
+<button class="text-on-surface hover:opacity-80 transition-opacity active:scale-95 duration-150">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="flex flex-col items-center">
+<h1 class="font-headline-md text-[18px] font-bold text-primary">Ask AVA about your results</h1>
+<p class="font-caption text-caption text-on-surface-variant">Read-only · based on your reviewed card</p>
+</div>
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="A professional studio portrait of a high-end healthcare concierge agent with a warm, empathetic expression. The background is a soft-focus, minimalist clinic with sage green and bone-white accents, conveying a sense of quiet luxury and medical professionalism. The lighting is diffused and flattering, highlighting the approachable and expert persona of the assistant." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_Do_9UKtQxnquSTL3cdvsptubZGT7xbMEdeXSozqJf8Rx6x-RFo4CAu0MJup7QnVPYPsCMsrHYQgKHW5_5kKqA4V6EVx1U0TLt-KfOs1Tob2pIMmcBHiR35_DjvGY3nvnHCtxby1zm4HKrNE_Qov_FdgZCDAHjS6V0qihgd4UNczvVr0IOFAiaHXM3xr2AMejvXu21tF7b4Dd2LuyGy-4xEkDq3MGc6uqiF7HR_Vmo7uLrUxTA7k1wkkipRy6kIPTkez_jhRWQzo"/>
+</div>
+</div>
+</header>
+<!-- Main Conversation Canvas -->
+<main class="flex-1 w-full max-w-[600px] px-margin-mobile pt-24 pb-40 space-y-6">
+<!-- User Message -->
+<div class="flex flex-col items-end fade-in" style="animation-delay: 0.1s;">
+<div class="chat-bubble-out bg-secondary-container text-on-surface px-5 py-4 rounded-2xl max-w-[85%] shadow-sm">
+<p class="font-body-md text-body-md">What does my metabolic score mean?</p>
+</div>
+<span class="font-caption text-caption text-on-surface-variant mt-1 mr-2">10:42 AM</span>
+</div>
+<!-- AVA Message -->
+<div class="flex flex-col items-start fade-in" style="animation-delay: 0.4s;">
+<div class="flex items-end gap-2 max-w-[90%]">
+<div class="w-8 h-8 rounded-full bg-primary flex-shrink-0 flex items-center justify-center text-on-primary text-[14px] font-bold">A</div>
+<div class="chat-bubble-in bg-surface-container-lowest border border-outline-variant text-on-surface px-5 py-4 rounded-2xl shadow-sm">
+<p class="font-body-md text-body-md">Your metabolic score of 84 reflects how efficiently your body processes energy. Based on your reviewed labs, your fasting glucose and insulin levels are in an optimal range, contributing to this high score. It indicates a strong baseline for metabolic flexibility.</p>
+<p class="font-body-md text-body-md mt-3 italic text-primary">Please discuss with your care team for deeper insights.</p>
+</div>
+</div>
+<span class="font-caption text-caption text-on-surface-variant mt-1 ml-10">10:43 AM</span>
+</div>
+<!-- User Message -->
+<div class="flex flex-col items-end fade-in" style="animation-delay: 0.8s;">
+<div class="chat-bubble-out bg-secondary-container text-on-surface px-5 py-4 rounded-2xl max-w-[85%] shadow-sm">
+<p class="font-body-md text-body-md">How can I improve my LDL?</p>
+</div>
+<span class="font-caption text-caption text-on-surface-variant mt-1 mr-2">10:45 AM</span>
+</div>
+<!-- AVA Message -->
+<div class="flex flex-col items-start fade-in" style="animation-delay: 1.2s;">
+<div class="flex items-end gap-2 max-w-[90%]">
+<div class="w-8 h-8 rounded-full bg-primary flex-shrink-0 flex items-center justify-center text-on-primary text-[14px] font-bold">A</div>
+<div class="chat-bubble-in bg-surface-container-lowest border border-outline-variant text-on-surface px-5 py-4 rounded-2xl shadow-sm">
+<p class="font-body-md text-body-md mb-2">To support cardiovascular optimization and your current LDL marker, consider:</p>
+<ul class="space-y-2 mb-4">
+<li class="flex items-start gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-primary mt-2"></span>
+<span class="font-body-md text-body-md text-on-surface-variant">Increasing soluble fiber intake (oats, legumes, and pectin-rich fruits).</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-primary mt-2"></span>
+<span class="font-body-md text-body-md text-on-surface-variant">Integrating 150 minutes of Zone 2 aerobic activity per week.</span>
+</li>
+<li class="flex items-start gap-2">
+<span class="w-1.5 h-1.5 rounded-full bg-primary mt-2"></span>
+<span class="font-body-md text-body-md text-on-surface-variant">Prioritizing healthy fats like avocado and extra-virgin olive oil over saturated fats.</span>
+</li>
+</ul>
+<div class="p-3 bg-surface-container rounded-lg">
+<p class="font-caption text-caption text-on-surface-variant text-center">This is general wellness information, not medical advice.</p>
+</div>
+</div>
+</div>
+<span class="font-caption text-caption text-on-surface-variant mt-1 ml-10">10:46 AM</span>
+</div>
+</main>
+<!-- Fixed Interaction Footer -->
+<div class="fixed bottom-0 left-0 w-full bg-surface/95 backdrop-blur-lg pt-4 pb-8 border-t border-outline-variant">
+<div class="max-w-[600px] mx-auto px-margin-mobile">
+<!-- Suggestion Chips -->
+<div class="flex overflow-x-auto gap-2 pb-4 no-scrollbar">
+<button class="flex-shrink-0 px-4 py-2 bg-surface-container-highest border border-outline-variant rounded-full text-primary font-label-md text-label-md hover:bg-primary-fixed transition-colors whitespace-nowrap active:scale-95 duration-150">
+                    Explain my biological age
+                </button>
+<button class="flex-shrink-0 px-4 py-2 bg-surface-container-highest border border-outline-variant rounded-full text-primary font-label-md text-label-md hover:bg-primary-fixed transition-colors whitespace-nowrap active:scale-95 duration-150">
+                    What's driving my vascular score?
+                </button>
+<button class="flex-shrink-0 px-4 py-2 bg-surface-container-highest border border-outline-variant rounded-full text-primary font-label-md text-label-md hover:bg-primary-fixed transition-colors whitespace-nowrap active:scale-95 duration-150">
+                    What should I focus on?
+                </button>
+</div>
+<!-- Input Bar -->
+<div class="flex items-center gap-3 bg-surface-container-lowest border border-outline-variant rounded-2xl p-2 pl-4 shadow-sm focus-within:border-primary transition-colors">
+<input class="flex-1 bg-transparent border-none focus:ring-0 font-body-md text-on-surface placeholder:text-on-surface-variant/50" placeholder="Ask follow-up..." type="text"/>
+<button class="w-10 h-10 bg-primary text-on-primary rounded-xl flex items-center justify-center hover:opacity-90 active:scale-90 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">send</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Decorative Subtle Shader for Calm Atmosphere -->
+
+<script>
+        // Micro-interaction for suggestion chips
+        const chips = document.querySelectorAll('button');
+        chips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                const text = chip.innerText.trim();
+                const input = document.querySelector('input');
+                input.value = text;
+                input.focus();
+            });
+        });
+
+        // Hide scrollbar but keep functionality
+        const style = document.createElement('style');
+        style.innerHTML = `
+            .no-scrollbar::-webkit-scrollbar { display: none; }
+            .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body></html>
+
+<!-- Design System -->
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AI Wellness | Welcome</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@100..900&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed-dim": "#a8cfbd",
+                    "surface-container": "#eeeeed",
+                    "surface-dim": "#dadad9",
+                    "on-secondary-fixed-variant": "#464744",
+                    "inverse-on-surface": "#f1f1f0",
+                    "tertiary-fixed": "#ffdbd0",
+                    "on-surface-variant": "#414844",
+                    "secondary-fixed": "#e3e3de",
+                    "on-error-container": "#93000a",
+                    "on-error": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "secondary-fixed-dim": "#c7c7c2",
+                    "on-surface": "#1a1c1c",
+                    "secondary": "#5e5f5b",
+                    "tertiary": "#92462d",
+                    "error": "#ba1a1a",
+                    "outline-variant": "#c1c8c3",
+                    "surface-container-high": "#e8e8e8",
+                    "surface-container-highest": "#e2e2e2",
+                    "tertiary-fixed-dim": "#ffb59f",
+                    "on-primary-fixed": "#002116",
+                    "on-secondary-container": "#646561",
+                    "on-tertiary-fixed-variant": "#77311b",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-fixed": "#3a0a00",
+                    "inverse-surface": "#2f3131",
+                    "surface-variant": "#e2e2e2",
+                    "inverse-primary": "#a8cfbd",
+                    "primary": "#3f6355",
+                    "surface-tint": "#426657",
+                    "on-tertiary-container": "#fffbff",
+                    "on-primary-fixed-variant": "#2a4d40",
+                    "surface-container-low": "#f4f3f3",
+                    "background": "#f9f9f9",
+                    "secondary-container": "#e3e3de",
+                    "primary-container": "#587c6d",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-fixed": "#1b1c19",
+                    "on-background": "#1a1c1c",
+                    "tertiary-container": "#b15d43",
+                    "primary-fixed": "#c4ebd9",
+                    "surface-bright": "#f9f9f9",
+                    "outline": "#717974",
+                    "surface": "#f9f9f9",
+                    "error-container": "#ffdad6",
+                    "on-primary-container": "#f5fff8"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "margin-mobile": "20px",
+                    "container-max": "1200px",
+                    "unit": "8px",
+                    "section-gap": "80px",
+                    "margin-desktop": "64px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Manrope"],
+                    "display": ["Manrope"],
+                    "body-lg": ["Manrope"],
+                    "body-md": ["Manrope"],
+                    "label-md": ["Manrope"],
+                    "headline-lg-mobile": ["Manrope"],
+                    "caption": ["Manrope"],
+                    "headline-md": ["Manrope"]
+            },
+            "fontSize": {
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "display": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "label-md": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                    "caption": ["12px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                    "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #FAF9F4; /* Brand specific bone-white */
+            color: #1A1C1C;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(235, 234, 228, 0.5);
+        }
+        .pulse-slow {
+            animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(1.05); }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="font-body-md text-on-surface">
+<!-- Main Viewport Wrapper -->
+<main class="min-h-screen flex flex-col items-center justify-between px-margin-mobile py-12 overflow-hidden relative">
+<!-- Background Atmospheric Element -->
+<div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 opacity-30 pointer-events-none">
+
+</div>
+<!-- Header / Wordmark -->
+<header class="w-full flex justify-center pt-4">
+<div class="flex items-center gap-2 group">
+<div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center transition-transform duration-500 group-hover:rotate-180">
+<span class="material-symbols-outlined text-white text-[18px]">spa</span>
+</div>
+<span class="font-headline-md text-headline-md tracking-tight text-primary">AI Wellness</span>
+</div>
+</header>
+<!-- Centered Illustration & Content -->
+<section class="flex-1 flex flex-col items-center justify-center w-full max-w-sm text-center">
+<!-- Abstract Graphic Placeholder -->
+<div class="relative mb-12 w-64 h-64 flex items-center justify-center">
+<div class="absolute inset-0 bg-primary/5 rounded-full pulse-slow"></div>
+<div class="absolute inset-4 bg-primary/10 rounded-full pulse-slow" style="animation-delay: 1s;"></div>
+<div class="z-10 w-full h-full flex items-center justify-center overflow-hidden rounded-full shadow-sm">
+<img class="w-full h-full object-cover" data-alt="A macro, minimalist photograph of a single green leaf with dew drops, softly lit by morning sunlight in a serene spa-like environment. The background is a clean, warm bone-white textured wall. The composition is elegant, professional, and emphasizes premium healthcare and longevity. The colors are dominated by soft sage green and neutral off-whites." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkfyE_L4KeCv5SG9doECHIJZ321TMdxG2ByMHN7pQXTNp6Wo4oSvM5vfZNxB6KfYQr_2-k5WhPJPpSfQ8H0PGeEIIluxfBccjmOzJGSG9OsPfUT1L2AZOzAe61lxD42p73Jnf8fWBCmdJTG4twfZWyE4ix4AK8BV6_dOa8QQAev77s0TeWf57o3dmiShDrQCqkLEoEDSMEW8oMeycGBMoGOZ-0aABz7_lMGHX7fvgzaZT47Sg-o8YY6vlMIKaPgkjPT9akCagF5zI"/>
+</div>
+</div>
+<!-- Typography Cluster -->
+<div class="space-y-4">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface px-4">
+                    Your personalised longevity snapshot
+                </h1>
+<p class="font-body-md text-body-md text-on-surface-variant px-6">
+                    A guided wellness check — about 30 minutes
+                </p>
+</div>
+</section>
+<!-- Interaction Area -->
+<footer class="w-full max-w-sm flex flex-col items-center gap-8 pb-4">
+<!-- Primary Action -->
+<button class="w-full bg-primary text-white py-5 rounded-full font-label-md text-label-md shadow-sm active:scale-[0.98] transition-all hover:bg-primary-container" onclick="window.location.reload()">
+                Begin
+            </button>
+<!-- Secondary QR Entry -->
+<div class="flex flex-col items-center gap-3 group cursor-pointer">
+<div class="flex items-center gap-2 text-on-surface-variant group-hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">qr_code_scanner</span>
+<span class="font-label-md text-label-md">Scan the retreat QR code to start</span>
+</div>
+<!-- Visual Indicator -->
+<div class="h-[2px] w-8 bg-outline-variant rounded-full group-hover:w-16 group-hover:bg-primary transition-all"></div>
+</div>
+</footer>
+<!-- Bottom Safe Area Padding -->
+<div class="h-4 w-full"></div>
+</main>
+<!-- Micro-interaction Script -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Subtle entrance animations
+            const elements = document.querySelectorAll('header, section, footer');
+            elements.forEach((el, index) => {
+                el.style.opacity = '0';
+                el.style.transform = 'translateY(10px)';
+                el.style.transition = 'all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                setTimeout(() => {
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                }, 200 * index);
+            });
+        });
+    </script>
+</body></html>
+
+<!-- Welcome & Onboarding -->
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Profile Setup | Executive Health</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "primary-fixed-dim": "#a8cfbd",
+                "surface-container": "#eeeeed",
+                "surface-dim": "#dadad9",
+                "on-secondary-fixed-variant": "#464744",
+                "inverse-on-surface": "#f1f1f0",
+                "tertiary-fixed": "#ffdbd0",
+                "on-surface-variant": "#414844",
+                "secondary-fixed": "#e3e3de",
+                "on-error-container": "#93000a",
+                "on-error": "#ffffff",
+                "on-primary": "#ffffff",
+                "secondary-fixed-dim": "#c7c7c2",
+                "on-surface": "#1a1c1c",
+                "secondary": "#5e5f5b",
+                "tertiary": "#92462d",
+                "error": "#ba1a1a",
+                "outline-variant": "#c1c8c3",
+                "surface-container-high": "#e8e8e8",
+                "surface-container-highest": "#e2e2e2",
+                "tertiary-fixed-dim": "#ffb59f",
+                "on-primary-fixed": "#002116",
+                "on-secondary-container": "#646561",
+                "on-tertiary-fixed-variant": "#77311b",
+                "on-tertiary": "#ffffff",
+                "on-tertiary-fixed": "#3a0a00",
+                "inverse-surface": "#2f3131",
+                "surface-variant": "#e2e2e2",
+                "inverse-primary": "#a8cfbd",
+                "primary": "#3f6355",
+                "surface-tint": "#426657",
+                "on-tertiary-container": "#fffbff",
+                "on-primary-fixed-variant": "#2a4d40",
+                "surface-container-low": "#f4f3f3",
+                "background": "#f9f9f9",
+                "secondary-container": "#e3e3de",
+                "primary-container": "#587c6d",
+                "surface-container-lowest": "#ffffff",
+                "on-secondary": "#ffffff",
+                "on-secondary-fixed": "#1b1c19",
+                "on-background": "#1a1c1c",
+                "tertiary-container": "#b15d43",
+                "primary-fixed": "#c4ebd9",
+                "surface-bright": "#f9f9f9",
+                "outline": "#717974",
+                "surface": "#f9f9f9",
+                "error-container": "#ffdad6",
+                "on-primary-container": "#f5fff8"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "0.5rem",
+                "xl": "0.75rem",
+                "full": "9999px"
+            },
+            "spacing": {
+                "gutter": "24px",
+                "margin-mobile": "20px",
+                "container-max": "1200px",
+                "unit": "8px",
+                "section-gap": "80px",
+                "margin-desktop": "64px"
+            },
+            "fontFamily": {
+                "headline-lg": ["Manrope"],
+                "display": ["Manrope"],
+                "body-lg": ["Manrope"],
+                "body-md": ["Manrope"],
+                "label-md": ["Manrope"],
+                "headline-lg-mobile": ["Manrope"],
+                "caption": ["Manrope"],
+                "headline-md": ["Manrope"]
+            },
+            "fontSize": {
+                "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                "display": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                "label-md": ["14px", {"lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                "caption": ["12px", {"lineHeight": "1.4", "fontWeight": "500"}],
+                "headline-md": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: #f9f9f9; /* Bone white */
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .custom-shadow {
+            box-shadow: 0 4px 20px rgba(26, 28, 28, 0.08);
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Subtle transition for interactive elements */
+        .interactive-element {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .active-tab {
+            background-color: #ffffff;
+            color: #3f6355;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="text-on-background min-h-screen">
+<!-- Top Navigation Header (Suppressed as per task context - but keeping a minimal back button for flow) -->
+<header class="flex justify-between items-center w-full px-margin-mobile py-6 max-w-container-max mx-auto bg-surface">
+<button class="interactive-element w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-low text-on-surface-variant hover:bg-surface-container-high active:scale-95">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<h1 class="font-headline-md text-headline-md-mobile text-on-surface font-bold">Profile Setup</h1>
+<div class="w-10"></div> <!-- Spacer -->
+</header>
+<main class="px-margin-mobile pb-32 max-w-md mx-auto">
+<!-- Segmented Control -->
+<section class="mt-4 mb-10">
+<div class="bg-surface-container-low p-1.5 rounded-full flex items-center w-full">
+<button class="active-tab interactive-element flex-1 py-3 text-center rounded-full font-label-md text-label-md" id="segment-me" onclick="toggleSegment('me')">
+                    Me
+                </button>
+<button class="interactive-element flex-1 py-3 text-center rounded-full font-label-md text-label-md text-on-surface-variant" id="segment-admin" onclick="toggleSegment('admin')">
+                    Admin
+                </button>
+</div>
+</section>
+<!-- Intro Text -->
+<section class="mb-10">
+<p class="font-body-md text-body-md text-on-surface-variant leading-relaxed">
+                Welcome to your bespoke health journey. Provide your baseline metrics to calibrate your care plan.
+            </p>
+</section>
+<!-- Grouped Identity Fields -->
+<section class="space-y-6 mb-12">
+<div class="space-y-2">
+<label class="block font-label-md text-label-md text-on-surface-variant ml-1">Full Name</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-4 text-body-md focus:ring-2 focus:ring-primary focus:border-transparent outline-none interactive-element" placeholder="e.g. Alexander Sterling" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-2">
+<label class="block font-label-md text-label-md text-on-surface-variant ml-1">Age</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-4 text-body-md focus:ring-2 focus:ring-primary focus:border-transparent outline-none interactive-element" placeholder="45" type="number"/>
+</div>
+<div class="space-y-2">
+<label class="block font-label-md text-label-md text-on-surface-variant ml-1">Sex</label>
+<select class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-4 text-body-md focus:ring-2 focus:ring-primary focus:border-transparent outline-none interactive-element appearance-none">
+<option>Male</option>
+<option>Female</option>
+<option>Other</option>
+</select>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-2">
+<label class="block font-label-md text-label-md text-on-surface-variant ml-1">Height (cm)</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-4 text-body-md focus:ring-2 focus:ring-primary focus:border-transparent outline-none interactive-element" placeholder="185" type="number"/>
+</div>
+<div class="space-y-2">
+<label class="block font-label-md text-label-md text-on-surface-variant ml-1">Weight (kg)</label>
+<input class="w-full bg-surface-container-lowest border border-outline-variant rounded-xl px-4 py-4 text-body-md focus:ring-2 focus:ring-primary focus:border-transparent outline-none interactive-element" placeholder="88" type="number"/>
+</div>
+</div>
+</section>
+<!-- Your Goals: Multi-select chips -->
+<section class="mb-12">
+<h2 class="font-headline-md text-headline-md-mobile text-on-surface mb-4">Your goals</h2>
+<div class="flex flex-wrap gap-3">
+<button class="interactive-element border border-outline-variant rounded-full px-5 py-2.5 font-label-md text-label-md text-on-surface-variant bg-surface-container-lowest active:scale-95" onclick="this.classList.toggle('bg-primary'); this.classList.toggle('text-white'); this.classList.toggle('border-primary');">More energy</button>
+<button class="interactive-element border border-outline-variant rounded-full px-5 py-2.5 font-label-md text-label-md text-on-surface-variant bg-surface-container-lowest active:scale-95" onclick="this.classList.toggle('bg-primary'); this.classList.toggle('text-white'); this.classList.toggle('border-primary');">Better sleep</button>
+<button class="interactive-element border border-outline-variant rounded-full px-5 py-2.5 font-label-md text-label-md text-on-surface-variant bg-surface-container-lowest active:scale-95" onclick="this.classList.toggle('bg-primary'); this.classList.toggle('text-white'); this.classList.toggle('border-primary');">Heart health</button>
+<button class="interactive-element border border-outline-variant rounded-full px-5 py-2.5 font-label-md text-label-md text-on-surface-variant bg-surface-container-lowest active:scale-95" onclick="this.classList.toggle('bg-primary'); this.classList.toggle('text-white'); this.classList.toggle('border-primary');">Manage weight</button>
+<button class="interactive-element border border-outline-variant rounded-full px-5 py-2.5 font-label-md text-label-md text-on-surface-variant bg-surface-container-lowest active:scale-95" onclick="this.classList.toggle('bg-primary'); this.classList.toggle('text-white'); this.classList.toggle('border-primary');">Sharper focus</button>
+</div>
+</section>
+<!-- Basic Health Questions: Toggles/Selects -->
+<section class="mb-16 space-y-8">
+<h2 class="font-headline-md text-headline-md-mobile text-on-surface mb-2">Basic health</h2>
+<!-- Exercise Row -->
+<div class="flex items-center justify-between py-2">
+<div>
+<p class="font-body-md text-body-md text-on-surface">Weekly exercise</p>
+<p class="font-caption text-caption text-on-surface-variant">Sessions per week</p>
+</div>
+<div class="flex items-center bg-surface-container-low rounded-lg p-1">
+<button class="w-10 h-10 flex items-center justify-center font-bold text-primary">-</button>
+<span class="w-8 text-center font-body-md">3</span>
+<button class="w-10 h-10 flex items-center justify-center font-bold text-primary">+</button>
+</div>
+</div>
+<!-- Smoking Row -->
+<div class="flex items-center justify-between py-2">
+<div>
+<p class="font-body-md text-body-md text-on-surface">Smoking status</p>
+<p class="font-caption text-caption text-on-surface-variant">Include nicotine alternatives</p>
+</div>
+<button class="w-14 h-8 bg-surface-container-high rounded-full relative p-1 transition-colors duration-300" id="switch-smoking" onclick="toggleSwitch('smoking')">
+<div class="w-6 h-6 bg-white rounded-full transition-transform duration-300" id="knob-smoking"></div>
+</button>
+</div>
+<!-- Alcohol Row -->
+<div class="flex items-center justify-between py-2">
+<div>
+<p class="font-body-md text-body-md text-on-surface">Alcohol consumption</p>
+<p class="font-caption text-caption text-on-surface-variant">Frequency of intake</p>
+</div>
+<select class="bg-transparent text-primary font-label-md border-none outline-none focus:ring-0">
+<option>Occasional</option>
+<option>Frequent</option>
+<option>None</option>
+</select>
+</div>
+</section>
+<!-- Primary Action Button -->
+<div class="fixed bottom-0 left-0 w-full p-6 bg-surface/80 backdrop-blur-md">
+<button class="w-full max-w-md mx-auto bg-primary text-white py-4 rounded-full font-label-md text-label-md uppercase tracking-widest custom-shadow interactive-element hover:opacity-90 active:scale-95 flex items-center justify-center gap-2">
+                Continue
+                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+</main>
+<!-- Visual Embellishment: Soft Ambient Shader Background (Fixed Positioning) -->
+<div class="fixed inset-0 -z-10 pointer-events-none opacity-30">
+
+</div>
+<script>
+        function toggleSegment(type) {
+            const meBtn = document.getElementById('segment-me');
+            const adminBtn = document.getElementById('segment-admin');
+            
+            if (type === 'me') {
+                meBtn.classList.add('active-tab');
+                meBtn.classList.remove('text-on-surface-variant');
+                adminBtn.classList.remove('active-tab');
+                adminBtn.classList.add('text-on-surface-variant');
+            } else {
+                adminBtn.classList.add('active-tab');
+                adminBtn.classList.remove('text-on-surface-variant');
+                meBtn.classList.remove('active-tab');
+                meBtn.classList.add('text-on-surface-variant');
+            }
+        }
+
+        function toggleSwitch(id) {
+            const switchEl = document.getElementById('switch-' + id);
+            const knobEl = document.getElementById('knob-' + id);
+            
+            if (switchEl.classList.contains('bg-primary')) {
+                switchEl.classList.remove('bg-primary');
+                switchEl.classList.add('bg-surface-container-high');
+                knobEl.style.transform = 'translateX(0)';
+            } else {
+                switchEl.classList.add('bg-primary');
+                switchEl.classList.remove('bg-surface-container-high');
+                knobEl.style.transform = 'translateX(24px)';
+            }
+        }
+
+        // Minimal micro-interaction for primary button
+        document.querySelector('button.bg-primary').addEventListener('click', function() {
+            this.innerHTML = `<span class="animate-spin material-symbols-outlined">progress_activity</span>`;
+            setTimeout(() => {
+                this.innerHTML = `Complete <span class="material-symbols-outlined text-sm">check</span>`;
+                this.classList.replace('bg-primary', 'bg-primary-container');
+            }, 1000);
+        });
+    </script>
+</body></html>
+
+<!-- Profile Setup -->
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Executive Admin Portal | Participant List</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: #f9f9f9; /* bone-white */
+            color: #1a1c1c;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #eeeeed;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c1c8c3;
+            border-radius: 10px;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+            border: 1px solid #EBEAE4;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#a8cfbd",
+                        "surface-container": "#eeeeed",
+                        "surface-dim": "#dadad9",
+                        "on-secondary-fixed-variant": "#464744",
+                        "inverse-on-surface": "#f1f1f0",
+                        "tertiary-fixed": "#ffdbd0",
+                        "on-surface-variant": "#414844",
+                        "secondary-fixed": "#e3e3de",
+                        "on-error-container": "#93000a",
+                        "on-error": "#ffffff",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed-dim": "#c7c7c2",
+                        "on-surface": "#1a1c1c",
+                        "secondary": "#5e5f5b",
+                        "tertiary": "#92462d",
+                        "error": "#ba1a1a",
+                        "outline-variant": "#c1c8c3",
+                        "surface-container-high": "#e8e8e8",
+                        "surface-container-highest": "#e2e2e2",
+                        "tertiary-fixed-dim": "#ffb59f",
+                        "on-primary-fixed": "#002116",
+                        "on-secondary-container": "#646561",
+                        "on-tertiary-fixed-variant": "#77311b",
+                        "on-tertiary": "#ffffff",
+                        "on-tertiary-fixed": "#3a0a00",
+                        "inverse-surface": "#2f3131",
+                        "surface-variant": "#e2e2e2",
+                        "inverse-primary": "#a8cfbd",
+                        "primary": "#3f6355",
+                        "surface-tint": "#426657",
+                        "on-tertiary-container": "#fffbff",
+                        "on-primary-fixed-variant": "#2a4d40",
+                        "surface-container-low": "#f4f3f3",
+                        "background": "#f9f9f9",
+                        "secondary-container": "#e3e3de",
+                        "primary-container": "#587c6d",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary": "#ffffff",
+                        "on-secondary-fixed": "#1b1c19",
+                        "on-background": "#1a1c1c",
+                        "tertiary-container": "#b15d43",
+                        "primary-fixed": "#c4ebd9",
+                        "surface-bright": "#f9f9f9",
+                        "outline": "#717974",
+                        "surface": "#f9f9f9",
+                        "error-container": "#ffdad6",
+                        "on-primary-container": "#f5fff8"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "margin-mobile": "20px",
+                        "container-max": "1200px",
+                        "unit": "8px",
+                        "section-gap": "80px",
+                        "margin-desktop": "64px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Manrope"],
+                        "display": ["Manrope"],
+                        "body-lg": ["Manrope"],
+                        "body-md": ["Manrope"],
+                        "label-md": ["Manrope"],
+                        "headline-md": ["Manrope"]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="flex min-h-screen">
+<!-- Left Navigation Drawer -->
+<aside class="w-80 h-screen sticky top-0 bg-surface-container border-r border-outline-variant flex flex-col py-gutter overflow-hidden">
+<div class="px-8 mb-12">
+<span class="font-headline-md text-headline-md font-bold text-primary tracking-tight">ELYSIA</span>
+<p class="text-on-surface-variant font-label-md text-xs mt-1 uppercase tracking-widest">Admin Portal</p>
+</div>
+<nav class="flex-grow space-y-2 px-2">
+<a class="flex items-center gap-4 bg-primary text-on-primary rounded-lg mx-2 my-1 px-4 py-3 font-body-md transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="diversity_1">diversity_1</span>
+<span>Participants</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant hover:bg-surface-variant mx-2 my-1 px-4 py-3 rounded-lg font-body-md transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="rate_review">rate_review</span>
+<span>Review queue</span>
+</a>
+<a class="flex items-center gap-4 text-on-surface-variant hover:bg-surface-variant mx-2 my-1 px-4 py-3 rounded-lg font-body-md transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="file_download">file_download</span>
+<span>Exports</span>
+</a>
+<div class="border-t border-outline-variant my-6 mx-6"></div>
+<a class="flex items-center gap-4 text-on-surface-variant hover:bg-surface-variant mx-2 my-1 px-4 py-3 rounded-lg font-body-md transition-all" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+<span>Global Settings</span>
+</a>
+</nav>
+<!-- Profile Section -->
+<div class="px-8 mt-auto flex items-center gap-4 border-t border-outline-variant pt-8">
+<div class="w-12 h-12 rounded-full overflow-hidden bg-primary-fixed flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="A professional headshot of a female lead clinician in her 40s with a warm but authoritative presence. She has dark hair tied back and is wearing a high-end, minimalist white linen medical coat. The background is a soft-focus, bright contemporary office space in sage and bone tones, reflecting a quiet luxury healthcare environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHTMb1dpSyr-gCZD6fNNdE6H8mJqmbGOlV76LYXJ-kV47qQ0OCTZ6avZ3-19f8Zhe35k_Q4WmMJBjcOGRfnZULpnw1UUWghyNra6gsfAUQiniitGEKyl4EWzHZnJOgNUWfQG6xcPjAVPJMuR7cyCs5_MPUuIUX-ABTC7kPbxow3TKmlHjQWtpdlfaNJ1IfRZpCOc7MiB-Tn_NeCi7G2zBLakOSnrNPZk-xMAcvpNwOuVpZbRVe7L5yo489iU_ligjL7HAHQVG2jT4"/>
+</div>
+<div class="overflow-hidden">
+<h4 class="font-body-md text-on-surface font-semibold truncate">Dr. Elena Rossi</h4>
+<p class="text-on-surface-variant text-sm font-label-md truncate">Lead Clinician</p>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex flex-col bg-surface overflow-y-auto custom-scrollbar">
+<!-- Top App Bar -->
+<header class="bg-surface sticky top-0 z-30 px-margin-desktop py-8">
+<div class="max-w-container-max mx-auto flex justify-between items-center">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Participant Management</h1>
+<p class="text-on-surface-variant font-body-md">Managing executive health flow and concierge oversight.</p>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline" data-icon="search">search</span>
+<input class="pl-12 pr-6 py-3 bg-surface-container-low border border-outline-variant rounded-full w-80 font-body-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all" placeholder="Search by name or ID..." type="text"/>
+</div>
+<button class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" data-icon="tune">tune</span>
+</button>
+<button class="w-12 h-12 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant hover:opacity-80 transition-opacity">
+<span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+</button>
+</div>
+</div>
+<!-- Summary Strip -->
+<div class="max-w-container-max mx-auto mt-10 grid grid-cols-4 gap-6">
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+</div>
+<div>
+<p class="text-on-surface-variant font-label-md text-xs uppercase tracking-wider">Total Participants</p>
+<p class="font-headline-md text-on-surface font-bold">20</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-tertiary-container/10 text-tertiary flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="clinical_notes">clinical_notes</span>
+</div>
+<div>
+<p class="text-on-surface-variant font-label-md text-xs uppercase tracking-wider">Awaiting GP/TCM</p>
+<p class="font-headline-md text-on-surface font-bold">9</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="verified_user">verified_user</span>
+</div>
+<div>
+<p class="text-on-surface-variant font-label-md text-xs uppercase tracking-wider">Delivered</p>
+<p class="font-headline-md text-on-surface font-bold">9</p>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-error-container/20 text-error flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="priority_high">priority_high</span>
+</div>
+<div>
+<p class="text-on-surface-variant font-label-md text-xs uppercase tracking-wider">Needs Attention</p>
+<p class="font-headline-md text-on-surface font-bold">3</p>
+</div>
+</div>
+</div>
+</header>
+<!-- Main Area: List Section -->
+<section class="px-margin-desktop pb-20 mt-4">
+<div class="max-w-container-max mx-auto">
+<div class="bg-white rounded-2xl border border-outline-variant shadow-sm overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant">
+<th class="px-8 py-5 font-label-md text-on-surface-variant uppercase text-xs tracking-widest">Name &amp; Identity</th>
+<th class="px-8 py-5 font-label-md text-on-surface-variant uppercase text-xs tracking-widest">Demographics</th>
+<th class="px-8 py-5 font-label-md text-on-surface-variant uppercase text-xs tracking-widest">Capture Completion</th>
+<th class="px-8 py-5 font-label-md text-on-surface-variant uppercase text-xs tracking-widest">Pipeline Status</th>
+<th class="px-8 py-5 font-label-md text-on-surface-variant uppercase text-xs tracking-widest text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30 font-body-md">
+<!-- Row 1: Delivered -->
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold">AJ</div>
+<div>
+<p class="font-semibold text-on-surface">Alexander Jameson</p>
+<p class="text-xs text-on-surface-variant">ID: EXE-90210</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6 text-on-surface">52 / Male</td>
+<td class="px-8 py-6">
+<div class="w-full bg-surface-container rounded-full h-2">
+<div class="bg-primary h-2 rounded-full" style="width: 100%"></div>
+</div>
+<p class="text-[10px] mt-1 text-primary font-bold uppercase tracking-tighter">Completed</p>
+</td>
+<td class="px-8 py-6">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold border border-primary/20">
+<span class="material-symbols-outlined text-[14px] mr-1" data-icon="check_circle">check_circle</span> Delivered
+                                    </span>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 2: Signed -->
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary font-bold">MC</div>
+<div>
+<p class="font-semibold text-on-surface">Morgan Chen</p>
+<p class="text-xs text-on-surface-variant">ID: EXE-88211</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6 text-on-surface">45 / Other</td>
+<td class="px-8 py-6">
+<div class="w-full bg-surface-container rounded-full h-2">
+<div class="bg-primary h-2 rounded-full" style="width: 100%"></div>
+</div>
+<p class="text-[10px] mt-1 text-primary font-bold uppercase tracking-tighter">Completed</p>
+</td>
+<td class="px-8 py-6">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold border border-primary/20">
+<span class="material-symbols-outlined text-[14px] mr-1" data-icon="edit_note">edit_note</span> Signed
+                                    </span>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 3: TCM Review (Needs Attention) -->
+<tr class="hover:bg-surface-container-lowest transition-colors bg-error-container/5">
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-tertiary-fixed flex items-center justify-center text-tertiary font-bold">BH</div>
+<div>
+<p class="font-semibold text-on-surface">Beatrice Holloway</p>
+<p class="text-xs text-on-surface-variant">ID: EXE-77610</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6 text-on-surface">61 / Female</td>
+<td class="px-8 py-6">
+<div class="w-full bg-surface-container rounded-full h-2">
+<div class="bg-tertiary-container h-2 rounded-full" style="width: 85%"></div>
+</div>
+<p class="text-[10px] mt-1 text-tertiary font-bold uppercase tracking-tighter">85% Capture</p>
+</td>
+<td class="px-8 py-6">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-tertiary/10 text-tertiary text-xs font-bold border border-tertiary/20">
+<span class="material-symbols-outlined text-[14px] mr-1" data-icon="clinical_notes">clinical_notes</span> TCM Review
+                                    </span>
+<span class="block text-[10px] text-error mt-1 font-semibold">Flag: Incomplete Labs</span>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="bg-primary text-on-primary px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity">Resolve</button>
+</td>
+</tr>
+<!-- Row 4: GP Review -->
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-bold">LW</div>
+<div>
+<p class="font-semibold text-on-surface">Lucas Wright</p>
+<p class="text-xs text-on-surface-variant">ID: EXE-10443</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6 text-on-surface">39 / Male</td>
+<td class="px-8 py-6">
+<div class="w-full bg-surface-container rounded-full h-2">
+<div class="bg-primary-container h-2 rounded-full" style="width: 92%"></div>
+</div>
+<p class="text-[10px] mt-1 text-on-surface-variant font-bold uppercase tracking-tighter">92% Capture</p>
+</td>
+<td class="px-8 py-6">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-xs font-bold border border-outline-variant">
+<span class="material-symbols-outlined text-[14px] mr-1" data-icon="stethoscope">stethoscope</span> GP Review
+                                    </span>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 5: AI Drafted -->
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-dim flex items-center justify-center text-on-surface font-bold">SK</div>
+<div>
+<p class="font-semibold text-on-surface">Sarah Kinsley</p>
+<p class="text-xs text-on-surface-variant">ID: EXE-22349</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6 text-on-surface">48 / Female</td>
+<td class="px-8 py-6">
+<div class="w-full bg-surface-container rounded-full h-2">
+<div class="bg-primary-container h-2 rounded-full" style="width: 70%"></div>
+</div>
+<p class="text-[10px] mt-1 text-on-surface-variant font-bold uppercase tracking-tighter">70% Capture</p>
+</td>
+<td class="px-8 py-6">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-surface-container-highest text-on-surface-variant text-xs font-bold border border-outline-variant">
+<span class="material-symbols-outlined text-[14px] mr-1" data-icon="auto_awesome">auto_awesome</span> AI Drafted
+                                    </span>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 6: Capturing -->
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-fixed-dim flex items-center justify-center text-primary font-bold">DS</div>
+<div>
+<p class="font-semibold text-on-surface">Daniel Stevens</p>
+<p class="text-xs text-on-surface-variant">ID: EXE-11902</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6 text-on-surface">55 / Male</td>
+<td class="px-8 py-6">
+<div class="w-full bg-surface-container rounded-full h-2">
+<div class="bg-primary-fixed-dim h-2 rounded-full" style="width: 30%"></div>
+</div>
+<p class="text-[10px] mt-1 text-on-surface-variant font-bold uppercase tracking-tighter">30% Capture</p>
+</td>
+<td class="px-8 py-6">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-surface-container text-on-surface-variant text-xs font-bold border border-outline-variant">
+<span class="material-symbols-outlined text-[14px] mr-1" data-icon="pending">pending</span> Capturing
+                                    </span>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 7: TCM Review -->
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-secondary-fixed flex items-center justify-center text-on-secondary-fixed font-bold">EM</div>
+<div>
+<p class="font-semibold text-on-surface">Elena Martinez</p>
+<p class="text-xs text-on-surface-variant">ID: EXE-66129</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6 text-on-surface">42 / Female</td>
+<td class="px-8 py-6">
+<div class="w-full bg-surface-container rounded-full h-2">
+<div class="bg-primary-container h-2 rounded-full" style="width: 95%"></div>
+</div>
+<p class="text-[10px] mt-1 text-on-surface-variant font-bold uppercase tracking-tighter">95% Capture</p>
+</td>
+<td class="px-8 py-6">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container text-xs font-bold border border-outline-variant">
+<span class="material-symbols-outlined text-[14px] mr-1" data-icon="clinical_notes">clinical_notes</span> TCM Review
+                                    </span>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Row 8: Signed -->
+<tr class="hover:bg-surface-container-lowest transition-colors">
+<td class="px-8 py-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-bold">RB</div>
+<div>
+<p class="font-semibold text-on-surface">Robert Blackwell</p>
+<p class="text-xs text-on-surface-variant">ID: EXE-55219</p>
+</div>
+</div>
+</td>
+<td class="px-8 py-6 text-on-surface">57 / Male</td>
+<td class="px-8 py-6">
+<div class="w-full bg-surface-container rounded-full h-2">
+<div class="bg-primary h-2 rounded-full" style="width: 100%"></div>
+</div>
+<p class="text-[10px] mt-1 text-primary font-bold uppercase tracking-tighter">Completed</p>
+</td>
+<td class="px-8 py-6">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold border border-primary/20">
+<span class="material-symbols-outlined text-[14px] mr-1" data-icon="edit_note">edit_note</span> Signed
+                                    </span>
+</td>
+<td class="px-8 py-6 text-right">
+<button class="text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- Pagination / Footer -->
+<div class="px-8 py-4 bg-surface-container-low border-t border-outline-variant flex justify-between items-center">
+<p class="text-on-surface-variant text-sm">Showing <span class="font-bold">8</span> of 20 participants</p>
+<div class="flex gap-2">
+<button class="px-4 py-2 rounded-lg border border-outline-variant bg-white text-on-surface-variant hover:bg-surface-container transition-all">Previous</button>
+<button class="px-4 py-2 rounded-lg border border-outline-variant bg-white text-on-surface-variant hover:bg-surface-container transition-all">Next</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Floating Quick Action (FAB Suppression Logic: Displayed for Main Lists) -->
+<button class="fixed bottom-10 right-10 w-16 h-16 rounded-full bg-primary text-on-primary shadow-lg hover:scale-105 active:scale-95 transition-all flex items-center justify-center">
+<span class="material-symbols-outlined" data-icon="add" style="font-variation-settings: 'FILL' 1;">add</span>
+</button>
+</main>
+<script>
+        // Simple micro-interaction for rows
+        document.querySelectorAll('tbody tr').forEach(row => {
+            row.addEventListener('mouseenter', () => {
+                row.style.transform = 'translateX(4px)';
+                row.style.transition = 'transform 0.2s ease-out';
+            });
+            row.addEventListener('mouseleave', () => {
+                row.style.transform = 'translateX(0)';
+            });
+        });
+    </script>
+</body></html>
+
+<!-- Admin: Participant List -->
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Participant Detail &amp; Sign-off | Alexander</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        body {
+            font-family: 'Manrope', sans-serif;
+            background-color: #f9f9f9; /* background from config */
+            color: #1a1c1c; /* on-background */
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(8px);
+        }
+        .transition-all-200 {
+            transition: all 0.2s ease-in-out;
+        }
+    </style>
+<!-- Tailwind Theme Config -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "primary-fixed-dim": "#a8cfbd",
+                    "surface-container": "#eeeeed",
+                    "surface-dim": "#dadad9",
+                    "on-secondary-fixed-variant": "#464744",
+                    "inverse-on-surface": "#f1f1f0",
+                    "tertiary-fixed": "#ffdbd0",
+                    "on-surface-variant": "#414844",
+                    "secondary-fixed": "#e3e3de",
+                    "on-error-container": "#93000a",
+                    "on-error": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "secondary-fixed-dim": "#c7c7c2",
+                    "on-surface": "#1a1c1c",
+                    "secondary": "#5e5f5b",
+                    "tertiary": "#92462d",
+                    "error": "#ba1a1a",
+                    "outline-variant": "#c1c8c3",
+                    "surface-container-high": "#e8e8e8",
+                    "surface-container-highest": "#e2e2e2",
+                    "tertiary-fixed-dim": "#ffb59f",
+                    "on-primary-fixed": "#002116",
+                    "on-secondary-container": "#646561",
+                    "on-tertiary-fixed-variant": "#77311b",
+                    "on-tertiary": "#ffffff",
+                    "on-tertiary-fixed": "#3a0a00",
+                    "inverse-surface": "#2f3131",
+                    "surface-variant": "#e2e2e2",
+                    "inverse-primary": "#a8cfbd",
+                    "primary": "#3f6355",
+                    "surface-tint": "#426657",
+                    "on-tertiary-container": "#fffbff",
+                    "on-primary-fixed-variant": "#2a4d40",
+                    "surface-container-low": "#f4f3f3",
+                    "background": "#f9f9f9",
+                    "secondary-container": "#e3e3de",
+                    "primary-container": "#587c6d",
+                    "surface-container-lowest": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-fixed": "#1b1c19",
+                    "on-background": "#1a1c1c",
+                    "tertiary-container": "#b15d43",
+                    "primary-fixed": "#c4ebd9",
+                    "surface-bright": "#f9f9f9",
+                    "outline": "#717974",
+                    "surface": "#f9f9f9",
+                    "error-container": "#ffdad6",
+                    "on-primary-container": "#f5fff8"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "margin-mobile": "20px",
+                    "container-max": "1200px",
+                    "unit": "8px",
+                    "section-gap": "80px",
+                    "margin-desktop": "64px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Manrope"],
+                    "display": ["Manrope"],
+                    "body-lg": ["Manrope"],
+                    "body-md": ["Manrope"],
+                    "label-md": ["Manrope"],
+                    "headline-lg-mobile": ["Manrope"],
+                    "caption": ["Manrope"],
+                    "headline-md": ["Manrope"]
+            },
+            "fontSize": {
+                    "headline-lg": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                    "display": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                    "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                    "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                    "label-md": ["14px", { "lineHeight": "1.4", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                    "headline-lg-mobile": ["24px", { "lineHeight": "1.2", "fontWeight": "600" }],
+                    "caption": ["12px", { "lineHeight": "1.4", "fontWeight": "500" }],
+                    "headline-md": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }]
+            }
+          },
+        },
+      }
+    </script>
+</head>
+<body class="bg-background min-h-screen flex flex-col md:flex-row">
+<!-- Navigation Drawer (Predicted Desktop) -->
+<nav class="hidden md:flex flex-col h-screen w-80 bg-surface-container border-r border-outline-variant sticky top-0 py-gutter shrink-0">
+<div class="px-6 mb-10">
+<h1 class="font-headline-md text-headline-md font-bold text-primary">Alexander</h1>
+<p class="font-label-md text-label-md text-on-surface-variant opacity-60">Admin Portal</p>
+</div>
+<div class="flex-1 space-y-1">
+<a class="flex items-center text-on-surface-variant hover:bg-surface-variant mx-2 my-1 rounded-lg px-4 py-3 transition-all" href="#">
+<span class="material-symbols-outlined mr-3">dashboard</span>
+<span class="font-body-md text-body-md">Executive Dashboard</span>
+</a>
+<a class="flex items-center bg-primary text-on-primary rounded-lg mx-2 my-1 px-4 py-3 shadow-md" href="#">
+<span class="material-symbols-outlined mr-3">diversity_1</span>
+<span class="font-body-md text-body-md">Care Team Portal</span>
+</a>
+<a class="flex items-center text-on-surface-variant hover:bg-surface-variant mx-2 my-1 rounded-lg px-4 py-3 transition-all" href="#">
+<span class="material-symbols-outlined mr-3">menu_book</span>
+<span class="font-body-md text-body-md">Resource Library</span>
+</a>
+<a class="flex items-center text-on-surface-variant hover:bg-surface-variant mx-2 my-1 rounded-lg px-4 py-3 transition-all" href="#">
+<span class="material-symbols-outlined mr-3">folder_shared</span>
+<span class="font-body-md text-body-md">Patient Records</span>
+</a>
+</div>
+<div class="mt-auto px-6 pt-6 border-t border-outline-variant">
+<div class="flex items-center">
+<div class="w-10 h-10 rounded-full bg-primary-fixed flex items-center justify-center text-primary font-bold overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="A professional medical profile portrait of a woman in her 40s with a kind, intelligent expression, wearing a minimalist modern clinical coat. The background is a soft-focus high-end medical clinic with warm wood accents and sage green plants. The lighting is bright, airy, and professional, reflecting a quiet luxury healthcare aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUBLeMWpDVTGafo_OrTg8ow-AW4X9RMGSO-47v1GZ-bg-k4vETNR87ik1PT434qT-bzF9UnrmHfbtjZxyx8dN9gRecigm2HgsY4Uew0S8CzurrFtMURZdTdXQc9gW6w6S5zlM7cu8gryXDEgEO48YQAk2zo2apAPxQVMab7dEoXBTCAo1zfZcVScV8vfQVEkYIpH6sbV_HMvWFqLEesRUl9iRzgJpxEcqKJHSthqqYfN2y04CAsUTkvo_q3eyqOHoDlnqMGXmK1Ic"/>
+</div>
+<div class="ml-3">
+<p class="font-body-md text-body-md font-bold">Dr. Elena Rossi</p>
+<p class="font-caption text-caption text-on-surface-variant">Lead Clinician</p>
+</div>
+</div>
+<a class="flex items-center mt-6 text-on-surface-variant hover:bg-surface-variant rounded-lg px-4 py-2 transition-all" href="#">
+<span class="material-symbols-outlined mr-3 text-sm">settings</span>
+<span class="font-label-md text-label-md">Global Settings</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="flex-1 p-margin-mobile md:p-margin-desktop overflow-y-auto">
+<!-- Header -->
+<header class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+<div>
+<nav class="flex items-center text-on-surface-variant font-label-md text-label-md mb-2">
+<a class="hover:text-primary" href="#">Care Team Portal</a>
+<span class="material-symbols-outlined mx-2 text-[16px]">chevron_right</span>
+<span class="text-primary font-bold">Participant Review</span>
+</nav>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Reviewing: Julian Thorne</h2>
+<p class="font-body-md text-body-md text-on-surface-variant">Member since Jan 2024 • Longevity Program v4.2</p>
+</div>
+<div class="flex items-center gap-4">
+<button class="px-6 py-2 rounded-full border border-outline text-primary font-label-md text-label-md hover:bg-surface-container transition-colors">
+                    Save Draft
+                </button>
+<button class="px-6 py-2 rounded-full bg-primary text-white font-label-md text-label-md hover:opacity-90 shadow-sm transition-opacity">
+                    Export PDF
+                </button>
+</div>
+</header>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-gutter items-start">
+<!-- Left Column: Data & Insights -->
+<div class="lg:col-span-8 space-y-gutter">
+<!-- Status Timeline -->
+<section class="bg-surface-container-lowest rounded-xl p-8 shadow-sm">
+<div class="flex items-center justify-between w-full max-w-2xl mx-auto">
+<div class="flex flex-col items-center gap-2 relative">
+<div class="w-8 h-8 rounded-full bg-primary-fixed flex items-center justify-center text-primary-container">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</div>
+<span class="font-label-md text-label-md text-primary font-bold">AI drafted</span>
+</div>
+<div class="h-[2px] flex-1 bg-primary-fixed mx-2"></div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-8 h-8 rounded-full border-2 border-primary-fixed-dim bg-white flex items-center justify-center text-primary-fixed-dim">
+<span class="material-symbols-outlined text-[18px]">edit</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant">GP signed</span>
+</div>
+<div class="h-[2px] flex-1 bg-surface-variant mx-2"></div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-8 h-8 rounded-full border-2 border-surface-variant bg-white flex items-center justify-center text-surface-variant">
+<span class="material-symbols-outlined text-[18px]">lock</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant opacity-40">TCM signed</span>
+</div>
+<div class="h-[2px] flex-1 bg-surface-variant mx-2"></div>
+<div class="flex flex-col items-center gap-2">
+<div class="w-8 h-8 rounded-full border-2 border-surface-variant bg-white flex items-center justify-center text-surface-variant">
+<span class="material-symbols-outlined text-[18px]">send</span>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant opacity-40">Released</span>
+</div>
+</div>
+</section>
+<!-- Pillars of Health -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm text-center">
+<div class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center mx-auto mb-4">
+<span class="material-symbols-outlined text-primary" data-weight="fill">favorite</span>
+</div>
+<h4 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-1">Vascular</h4>
+<p class="font-headline-md text-headline-md text-primary">Optimal</p>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm text-center">
+<div class="w-12 h-12 rounded-full bg-tertiary-fixed flex items-center justify-center mx-auto mb-4">
+<span class="material-symbols-outlined text-tertiary" data-weight="fill">bolt</span>
+</div>
+<h4 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-1">Metabolic</h4>
+<p class="font-headline-md text-headline-md text-tertiary">Monitor</p>
+</div>
+<div class="bg-surface-container-lowest p-6 rounded-xl border border-outline-variant shadow-sm text-center">
+<div class="w-12 h-12 rounded-full bg-primary-fixed flex items-center justify-center mx-auto mb-4">
+<span class="material-symbols-outlined text-primary" data-weight="fill">psychology</span>
+</div>
+<h4 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider mb-1">Mental</h4>
+<p class="font-headline-md text-headline-md text-primary">Resilient</p>
+</div>
+</div>
+<!-- Biomarker Table -->
+<section class="bg-white rounded-xl shadow-sm border border-outline-variant overflow-hidden">
+<div class="p-6 border-b border-outline-variant flex justify-between items-center">
+<h3 class="font-headline-md text-headline-md text-on-surface">Core Biomarkers</h3>
+<div class="flex gap-2">
+<span class="font-label-md text-label-md px-3 py-1 bg-surface-container rounded-full text-on-surface-variant">Wearable</span>
+<span class="font-label-md text-label-md px-3 py-1 bg-surface-container rounded-full text-on-surface-variant">Lab</span>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-background font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
+<th class="px-6 py-4 font-semibold">Metric</th>
+<th class="px-6 py-4 font-semibold">Current Value</th>
+<th class="px-6 py-4 font-semibold">Reference Range</th>
+<th class="px-6 py-4 font-semibold">Source</th>
+<th class="px-6 py-4 font-semibold">Trend</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md divide-y divide-outline-variant">
+<tr>
+<td class="px-6 py-5 font-semibold">HbA1c</td>
+<td class="px-6 py-5 text-tertiary">5.9%</td>
+<td class="px-6 py-5 text-on-surface-variant">4.0 - 5.6%</td>
+<td class="px-6 py-5">
+<span class="px-2 py-1 bg-surface-container-high rounded text-sm">Lab</span>
+</td>
+<td class="px-6 py-5">
+<span class="material-symbols-outlined text-tertiary">trending_up</span>
+</td>
+</tr>
+<tr>
+<td class="px-6 py-5 font-semibold">VO2 Max</td>
+<td class="px-6 py-5 text-primary">48.2</td>
+<td class="px-6 py-5 text-on-surface-variant">&gt; 42.0</td>
+<td class="px-6 py-5">
+<span class="px-2 py-1 bg-surface-container-high rounded text-sm">Wearable</span>
+</td>
+<td class="px-6 py-5">
+<span class="material-symbols-outlined text-primary">trending_flat</span>
+</td>
+</tr>
+<tr>
+<td class="px-6 py-5 font-semibold">ApoB</td>
+<td class="px-6 py-5 text-on-surface font-medium">82 mg/dL</td>
+<td class="px-6 py-5 text-on-surface-variant">&lt; 90 mg/dL</td>
+<td class="px-6 py-5">
+<span class="px-2 py-1 bg-surface-container-high rounded text-sm">Lab</span>
+</td>
+<td class="px-6 py-5">
+<span class="material-symbols-outlined text-primary">trending_down</span>
+</td>
+</tr>
+<tr>
+<td class="px-6 py-5 font-semibold">HRV (Avg)</td>
+<td class="px-6 py-5 text-tertiary">42 ms</td>
+<td class="px-6 py-5 text-on-surface-variant">55 - 80 ms</td>
+<td class="px-6 py-5">
+<span class="px-2 py-1 bg-surface-container-high rounded text-sm">Wearable</span>
+</td>
+<td class="px-6 py-5">
+<span class="material-symbols-outlined text-tertiary">trending_down</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<!-- AI Drafted Wellness Summary -->
+<section class="bg-surface-container-low rounded-xl p-8 border border-primary/10 relative overflow-hidden">
+<!-- Subtle pattern background -->
+<div class="absolute top-0 right-0 p-6 opacity-10 pointer-events-none">
+<span class="material-symbols-outlined text-[120px]">auto_awesome</span>
+</div>
+<div class="flex items-center gap-3 mb-6">
+<span class="material-symbols-outlined text-primary">auto_awesome</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">AI-Drafted Wellness Summary</h3>
+<span class="ml-auto font-label-md text-label-md text-primary bg-primary-fixed px-3 py-1 rounded-full">Editable</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div>
+<h4 class="font-label-md text-label-md text-primary uppercase tracking-widest mb-3">Strengths</h4>
+<ul class="space-y-3">
+<li class="flex items-start gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-primary mt-2"></div>
+<p class="font-body-md text-body-md text-on-surface">Cardiovascular endurance remains in the top 5th percentile for age group.</p>
+</li>
+<li class="flex items-start gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-primary mt-2"></div>
+<p class="font-body-md text-body-md text-on-surface">Lipid profile showing consistent improvement over the last 3 quarters.</p>
+</li>
+</ul>
+</div>
+<div>
+<h4 class="font-label-md text-label-md text-tertiary uppercase tracking-widest mb-3">Areas to Monitor</h4>
+<ul class="space-y-3">
+<li class="flex items-start gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-tertiary mt-2"></div>
+<p class="font-body-md text-body-md text-on-surface">Slight elevation in fasting glucose levels warrants metabolic adjustment.</p>
+</li>
+<li class="flex items-start gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-tertiary mt-2"></div>
+<p class="font-body-md text-body-md text-on-surface">Declining sleep quality scores correlated with high evening work hours.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="mt-8 pt-6 border-t border-outline-variant">
+<h4 class="font-label-md text-label-md text-on-surface-variant uppercase tracking-widest mb-3">Suggested Focus</h4>
+<div class="p-4 bg-white rounded-lg border border-outline-variant italic text-on-surface-variant font-body-md">
+                            "Prioritize glycemic control through resistance training and low-GI nutritional pivots. Introduce a 20-minute digital sunset to recover autonomic nervous system balance (HRV)."
+                        </div>
+</div>
+</section>
+</div>
+<!-- Right Column: Sign-off Workflow -->
+<div class="lg:col-span-4 space-y-gutter">
+<div class="sticky top-gutter">
+<div class="bg-white rounded-xl shadow-lg border border-outline-variant overflow-hidden">
+<div class="p-6 bg-surface-container border-b border-outline-variant">
+<h3 class="font-headline-md text-headline-md text-on-surface">Verification Hub</h3>
+</div>
+<div class="p-6 space-y-8">
+<!-- Stage 1: GP Review -->
+<div class="space-y-4">
+<div class="flex items-center gap-3">
+<span class="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center font-bold text-sm">1</span>
+<h4 class="font-label-md text-label-md text-on-surface-variant font-bold uppercase">GP Review</h4>
+<span class="ml-auto material-symbols-outlined text-primary" data-weight="fill">check_circle</span>
+</div>
+<div class="space-y-2">
+<label class="font-label-md text-label-md text-on-surface-variant block">Reviewer</label>
+<div class="p-3 bg-surface-container-low rounded-lg font-body-md text-on-surface">Dr. James Aris</div>
+</div>
+<div class="space-y-2">
+<label class="font-label-md text-label-md text-on-surface-variant block">Clinical Notes</label>
+<textarea class="w-full rounded-lg border-outline-variant bg-white text-body-md p-3 focus:ring-primary focus:border-primary" placeholder="Add clinical context..." rows="3">Biomarkers confirmed. Patient is showing good adherence but needs monitoring on glucose.</textarea>
+</div>
+<button class="w-full py-3 bg-primary text-white rounded-lg font-label-md text-label-md hover:opacity-90 shadow-sm transition-all transform active:scale-[0.98]">
+                                    Sign off (GP)
+                                </button>
+</div>
+<hr class="border-outline-variant"/>
+<!-- Stage 2: TCM Review -->
+<div class="space-y-4 opacity-50 cursor-not-allowed">
+<div class="flex items-center gap-3">
+<span class="w-8 h-8 rounded-full border-2 border-outline-variant text-on-surface-variant flex items-center justify-center font-bold text-sm">2</span>
+<h4 class="font-label-md text-label-md text-on-surface-variant font-bold uppercase">TCM Review</h4>
+<span class="ml-auto material-symbols-outlined text-outline-variant">lock</span>
+</div>
+<div class="space-y-2">
+<label class="font-label-md text-label-md text-on-surface-variant block">Reviewer</label>
+<div class="p-3 bg-surface-container-low rounded-lg font-body-md text-on-surface">Master Lin Wei</div>
+</div>
+<div class="space-y-2">
+<label class="font-label-md text-label-md text-on-surface-variant block">Constitutional Notes</label>
+<textarea class="w-full rounded-lg border-outline-variant bg-surface-container text-body-md p-3 italic" disabled="" rows="3">Locked until GP validation...</textarea>
+</div>
+<button class="w-full py-3 bg-surface-variant text-on-surface-variant rounded-lg font-label-md text-label-md cursor-not-allowed" disabled="">
+                                    Sign off (TCM)
+                                </button>
+</div>
+<hr class="border-outline-variant"/>
+<!-- Release Action -->
+<div class="pt-2">
+<button class="w-full py-4 bg-surface-variant text-on-surface-variant/40 rounded-xl font-headline-md text-headline-md-mobile cursor-not-allowed transition-all duration-300" disabled="" id="release-btn">
+                                    Release Health Card
+                                </button>
+<p class="text-center font-caption text-caption text-on-surface-variant mt-4 px-4 leading-relaxed">
+                                    The Health Card will be pushed to the participant's app once both medical signatures are verified.
+                                </p>
+</div>
+</div>
+</div>
+<!-- Discussion Points Card -->
+<div class="mt-gutter p-6 bg-surface-container-lowest rounded-xl border border-outline-variant shadow-sm">
+<h4 class="font-label-md text-label-md text-primary font-bold uppercase mb-4">Suggested Discussion Points</h4>
+<ul class="space-y-4">
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-[20px]">chat_bubble_outline</span>
+<p class="font-body-md text-body-md text-on-surface-variant">Review the impact of evening cortisol on morning glucose spikes.</p>
+</li>
+<li class="flex items-start gap-3">
+<span class="material-symbols-outlined text-primary text-[20px]">chat_bubble_outline</span>
+<p class="font-body-md text-body-md text-on-surface-variant">Propose a transition to Zone 2 cardio for metabolic flexibility.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<!-- Section Gap for Breathing Room -->
+<div class="h-section-gap"></div>
+</main>
+<!-- Bottom Nav (Mobile Only) -->
+<nav class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center bg-surface-container-lowest border-t border-outline-variant px-4 pb-6 pt-2 shadow-sm rounded-t-xl">
+<a class="flex flex-col items-center justify-center text-on-secondary-container" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-md text-label-md">Insights</span>
+</a>
+<a class="flex flex-col items-center justify-center text-primary bg-primary-fixed rounded-xl px-4 py-1" href="#">
+<span class="material-symbols-outlined">diversity_1</span>
+<span class="font-label-md text-label-md">Portal</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container" href="#">
+<span class="material-symbols-outlined">event_note</span>
+<span class="font-label-md text-label-md">Plan</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-secondary-container" href="#">
+<span class="material-symbols-outlined">tune</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</nav>
+<script>
+        // Micro-interaction: Mimicking the two-stage sign off flow for demo
+        document.addEventListener('DOMContentLoaded', () => {
+            const gpBtn = document.querySelector('button:contains("Sign off (GP)")') || document.querySelectorAll('button')[2];
+            const tcmSection = document.querySelectorAll('.space-y-4')[2];
+            const releaseBtn = document.getElementById('release-btn');
+            
+            // Note: In a real app this would be state-driven.
+            // Using a simple click simulation for UI fidelity.
+            gpBtn.addEventListener('click', () => {
+                gpBtn.classList.remove('bg-primary');
+                gpBtn.classList.add('bg-primary-container', 'text-on-primary-container');
+                gpBtn.innerHTML = '<span class="material-symbols-outlined text-sm mr-2">check</span>Signed';
+                
+                tcmSection.classList.remove('opacity-50', 'cursor-not-allowed');
+                const tcmArea = tcmSection.querySelector('textarea');
+                tcmArea.removeAttribute('disabled');
+                tcmArea.classList.remove('bg-surface-container');
+                tcmArea.classList.add('bg-white');
+                tcmArea.placeholder = "Enter TCM insights...";
+                tcmArea.value = "";
+                
+                const tcmBtn = tcmSection.querySelector('button');
+                tcmBtn.removeAttribute('disabled');
+                tcmBtn.classList.remove('bg-surface-variant', 'cursor-not-allowed');
+                tcmBtn.classList.add('bg-primary', 'text-white', 'hover:opacity-90');
+                
+                tcmBtn.addEventListener('click', () => {
+                    tcmBtn.classList.remove('bg-primary');
+                    tcmBtn.classList.add('bg-primary-container', 'text-on-primary-container');
+                    tcmBtn.innerHTML = '<span class="material-symbols-outlined text-sm mr-2">check</span>Signed';
+                    
+                    releaseBtn.removeAttribute('disabled');
+                    releaseBtn.classList.remove('bg-surface-variant', 'text-on-surface-variant/40', 'cursor-not-allowed');
+                    releaseBtn.classList.add('bg-primary', 'text-white', 'hover:bg-primary/90', 'shadow-lg', 'scale-105');
+                });
+            });
+        });
+    </script>
+</body></html>
