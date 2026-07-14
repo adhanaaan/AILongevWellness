@@ -1,0 +1,41 @@
+/* AI Wellness — globals.
+   Load Manrope via next/font in layout.tsx (preferred) OR the import below.
+   CSS variables mirror tailwind.config.js for any non-Tailwind usage (SVG rings, etc.). */
+
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bone: #FAF9F4;
+  --surface: #FFFFFF;
+  --surface-muted: #F3F1EA;
+  --charcoal: #1A1C1C;
+  --ink-muted: #5F625C;
+
+  --sage: #6B9080;
+  --sage-dark: #557567;
+  --sage-tint: #E8F0EB;
+
+  --terracotta: #E98A6D;
+  --terracotta-ink: #B8542F;
+  --terracotta-tint: #FBE9E1;
+
+  --border: #DCD9CF;
+  --border-strong: #C9C5B8;
+
+  --danger: #BA1A1A;
+  --danger-tint: #FBE4E2;
+}
+
+html, body {
+  background: var(--bone);
+  color: var(--charcoal);
+  font-family: "Manrope", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Score ring helper (used by ScoreRing component) */
+.ring-chart { transform: rotate(-90deg); }
