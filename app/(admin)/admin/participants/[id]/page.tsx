@@ -46,9 +46,9 @@ export default async function ParticipantDetailPage({ params }: { params: { id: 
 
   return (
     <AdminShell title={participant.name}>
-      <div className="grid grid-cols-3 gap-6">
-        <div className="col-span-2 space-y-6">
-          <Card className="flex items-center justify-between">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <Card className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-headline-md text-charcoal">{participant.name}</p>
               <p className="text-caption text-ink-muted">
@@ -85,23 +85,25 @@ export default async function ParticipantDetailPage({ params }: { params: { id: 
                 <div className="border-b border-border px-5 py-4">
                   <h3 className="text-headline-md text-charcoal">Biomarkers</h3>
                 </div>
-                <table className="w-full text-left">
-                  <thead className="bg-surface-muted text-caption text-ink-muted">
-                    <tr>
-                      <th className="px-4 py-2 font-semibold">Metric</th>
-                      <th className="px-4 py-2 font-semibold">Value</th>
-                      <th className="px-4 py-2 font-semibold">Reference range</th>
-                      <th className="px-4 py-2 font-semibold">Source</th>
-                      <th className="px-4 py-2 font-semibold">Trend</th>
-                      <th className="px-4 py-2" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {biomarkers.map((b) => (
-                      <BiomarkerRow key={b.id} biomarker={b} participantId={participant.id} />
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[640px] text-left">
+                    <thead className="bg-surface-muted text-caption text-ink-muted">
+                      <tr>
+                        <th className="px-4 py-2 font-semibold">Metric</th>
+                        <th className="px-4 py-2 font-semibold">Value</th>
+                        <th className="px-4 py-2 font-semibold">Reference range</th>
+                        <th className="px-4 py-2 font-semibold">Source</th>
+                        <th className="px-4 py-2 font-semibold">Trend</th>
+                        <th className="px-4 py-2" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {biomarkers.map((b) => (
+                        <BiomarkerRow key={b.id} biomarker={b} participantId={participant.id} />
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </Card>
 
               <AIDraftSummaryCard aiDraft={aiDraft} participantId={participant.id} />
