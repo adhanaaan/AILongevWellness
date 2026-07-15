@@ -14,17 +14,11 @@ const PILLARS: { value: Pillar; label: string }[] = [
 ];
 
 export function PillarTabs({ active, onChange }: PillarTabsProps) {
-  const selectedIndex = PILLARS.findIndex((p) => p.value === active);
-
-  const handleChange = (index: number) => {
-    onChange(PILLARS[index].value);
-  };
-
   return (
     <SegmentedControl
-      segments={PILLARS.map((p) => p.label)}
-      selectedIndex={selectedIndex}
-      onChange={handleChange}
+      options={PILLARS}
+      value={active}
+      onChange={(v) => onChange(v as Pillar)}
     />
   );
 }
