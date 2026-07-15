@@ -1,8 +1,6 @@
 /* AI Wellness — globals.
-   Load Manrope via next/font in layout.tsx (preferred) OR the import below.
+   Manrope is loaded via next/font in app/layout.tsx.
    CSS variables mirror tailwind.config.js for any non-Tailwind usage (SVG rings, etc.). */
-
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
 
 @tailwind base;
 @tailwind components;
