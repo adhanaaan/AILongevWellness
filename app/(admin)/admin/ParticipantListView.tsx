@@ -39,15 +39,15 @@ export function ParticipantListView({ summaries }: { summaries: ParticipantSumma
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <SummaryStatCard icon={<Users size={20} />} label="Total" value={total} tone="neutral" />
         <SummaryStatCard icon={<ClipboardCheck size={20} />} label="Awaiting GP/TCM" value={awaiting} tone="sage" />
         <SummaryStatCard icon={<CheckCircle2 size={20} />} label="Delivered" value={delivered} tone="sage" />
         <SummaryStatCard icon={<AlertTriangle size={20} />} label="Needs attention" value={needsAttention} tone="danger" />
       </div>
 
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1 sm:max-w-sm">
           <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-muted" />
           <input
             value={query}
@@ -56,7 +56,7 @@ export function ParticipantListView({ summaries }: { summaries: ParticipantSumma
             className="w-full rounded-md border border-border-strong bg-surface py-2.5 pl-9 pr-3 text-body-md focus:outline-none focus:ring-2 focus:ring-sage"
           />
         </div>
-        <Select value={filter} onChange={(e) => setFilter(e.target.value)} className="max-w-xs">
+        <Select value={filter} onChange={(e) => setFilter(e.target.value)} className="sm:max-w-xs">
           {FILTERS.map((f) => (
             <option key={f.value} value={f.value}>
               {f.label}
@@ -66,21 +66,23 @@ export function ParticipantListView({ summaries }: { summaries: ParticipantSumma
       </div>
 
       <div className="overflow-hidden rounded-lg border border-border bg-surface">
-        <table className="w-full text-left">
-          <thead className="bg-surface-muted text-caption text-ink-muted">
-            <tr>
-              <th className="px-4 py-3 font-semibold">Participant</th>
-              <th className="px-4 py-3 font-semibold">Capture</th>
-              <th className="px-4 py-3 font-semibold">Pipeline status</th>
-              <th className="px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((summary) => (
-              <ParticipantTableRow key={summary.participant.id} summary={summary} />
-            ))}
-          </tbody>
-        </table>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px] text-left">
+            <thead className="bg-surface-muted text-caption text-ink-muted">
+              <tr>
+                <th className="px-4 py-3 font-semibold">Participant</th>
+                <th className="px-4 py-3 font-semibold">Capture</th>
+                <th className="px-4 py-3 font-semibold">Pipeline status</th>
+                <th className="px-4 py-3" />
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((summary) => (
+                <ParticipantTableRow key={summary.participant.id} summary={summary} />
+              ))}
+            </tbody>
+          </table>
+        </div>
         {filtered.length === 0 && <p className="p-6 text-center text-body-md text-ink-muted">No participants match your search.</p>}
       </div>
     </div>

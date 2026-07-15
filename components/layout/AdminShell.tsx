@@ -1,9 +1,9 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Users, ClipboardCheck, Download, Settings as SettingsIcon } from "lucide-react";
+import { Users, ClipboardCheck, Download, Settings as SettingsIcon, Menu, X } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { cn } from "@/lib/utils/cn";
 
@@ -24,13 +24,37 @@ export function AdminShell({
   headerActions?: ReactNode;
 }) {
   const pathname = usePathname();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen bg-bone">
-      <aside className="flex w-64 shrink-0 flex-col border-r border-border bg-surface">
-        <div className="px-5 py-6">
-          <p className="text-label-md font-semibold text-sage-dark">AI Wellness</p>
-          <p className="text-caption text-ink-muted">Admin Portal</p>
+      {menuOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-charcoal/40 md:hidden"
+          onClick={() => setMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-40 flex w-64 shrink-0 flex-col border-r border-border bg-surface transition-transform duration-200 md:static md:translate-x-0",
+          menuOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        <div className="flex items-center justify-between px-5 py-6">
+          <div>
+            <p className="text-label-md font-semibold text-sage-dark">AI Wellness</p>
+            <p className="text-caption text-ink-muted">Admin Portal</p>
+          </div>
+          <button
+            type="button"
+            className="text-ink-muted md:hidden"
+            onClick={() => setMenuOpen(false)}
+            aria-label="Close menu"
+          >
+            <X size={20} />
+          </button>
         </div>
         <nav className="flex-1 space-y-1 px-3">
           {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
@@ -39,6 +63,7 @@ export function AdminShell({
               <Link
                 key={href}
                 href={href}
+                onClick={() => setMenuOpen(false)}
                 className={cn(
                   "flex items-center gap-3 rounded-md px-3 py-2.5 text-label-md transition-colors",
                   active ? "bg-sage-tint text-sage-dark" : "text-ink-muted hover:bg-surface-muted"
@@ -59,12 +84,22 @@ export function AdminShell({
         </div>
       </aside>
 
-      <div className="flex-1">
-        <header className="flex items-center justify-between border-b border-border bg-surface px-8 py-5">
-          <h1 className="text-headline-lg text-charcoal">{title}</h1>
+      <div className="min-w-0 flex-1">
+        <header className="flex items-center justify-between gap-3 border-b border-border bg-surface px-4 py-4 md:px-8 md:py-5">
+          <div className="flex min-w-0 items-center gap-3">
+            <button
+              type="button"
+              className="shrink-0 text-charcoal md:hidden"
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu size={22} />
+            </button>
+            <h1 className="truncate text-headline-md text-charcoal md:text-headline-lg">{title}</h1>
+          </div>
           {headerActions}
         </header>
-        <main className="px-8 py-6">{children}</main>
+        <main className="px-4 py-5 md:px-8 md:py-6">{children}</main>
       </div>
     </div>
   );
