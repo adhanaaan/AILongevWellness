@@ -1,30 +1,20 @@
-"use client";
-
-import type { ReactNode } from "react";
-import { CheckCircle2 } from "lucide-react";
+import React from "react";
+import { View, Text, StyleSheet, type ViewStyle } from "react-native";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { cn } from "@/lib/utils/cn";
-import type { CaptureChannelStatus, EnteredBy } from "@/lib/types/db";
+import { colors, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
 
 export interface CaptureChannelCardProps {
-  icon: ReactNode;
+  icon: React.ReactNode;
   title: string;
-  description?: string;
+  description: string;
   sourceTag: string;
-  enteredBy: EnteredBy | null;
-  status: CaptureChannelStatus;
+  enteredBy: string;
+  status: "empty" | "partial" | "complete";
   actionLabel: string;
   onAction: () => void;
-  /** ReCOGnAIze gets the sage-tint "AI Tech" treatment per COMPONENTS.md. */
   highlight?: boolean;
 }
-
-const STATUS_LABEL: Record<CaptureChannelStatus, string> = {
-  empty: "Not started",
-  partial: "In progress",
-  complete: "Complete",
-};
 
 export function CaptureChannelCard({
   icon,
@@ -35,39 +25,110 @@ export function CaptureChannelCard({
   status,
   actionLabel,
   onAction,
-  highlight,
+  highlight = false,
 }: CaptureChannelCardProps) {
+  const statusColors: Record<string, ViewStyle> = {
+    empty: { backgroundColor: colors.surfaceMuted },
+    partial: { backgroundColor: colors.terracottaTint },
+    complete: { backgroundColor: colors.sageTint },
+  };
+
+  const statusLabels: Record<string, string> = {
+    empty: "Not started",
+    partial: "Partial",
+    complete: "Complete",
+  };
+
+  const statusTextColors: Record<string, string> = {
+    empty: colors.inkMuted,
+    partial: colors.terracottaInk,
+    complete: colors.sageDark,
+  };
+
   return (
-    <Card tinted={highlight} className="flex items-start gap-4">
-      <div
-        className={cn(
-          "flex h-11 w-11 shrink-0 items-center justify-center rounded-full",
-          highlight ? "bg-sage text-white" : "bg-sage-tint text-sage-dark"
-        )}
-      >
-        {icon}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="text-label-md text-charcoal">{title}</h3>
-          {status === "complete" && <CheckCircle2 size={18} className="text-sage shrink-0" />}
-        </div>
-        {description && <p className="mt-0.5 text-caption text-ink-muted">{description}</p>}
-        <div className="mt-2 flex flex-wrap items-center gap-2 text-caption text-ink-muted">
-          <span className="rounded-full bg-surface-muted px-2.5 py-0.5 font-semibold">{sourceTag}</span>
-          {enteredBy && <span>Entered by {enteredBy === "participant" ? "you" : "care team"}</span>}
-          <span>· {STATUS_LABEL[status]}</span>
-        </div>
-        <Button
-          variant={status === "complete" ? "secondary" : "primary"}
-          size="sm"
-          shape="md"
-          className="mt-3"
-          onClick={onAction}
-        >
-          {actionLabel}
-        </Button>
-      </div>
+    <Card style={highlight ? styles.highlighted : undefined}>
+      <View style={styles.topRow}>
+        <View style={styles.iconCircle}>{icon}</View>
+        <View style={styles.info}>
+          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.description}>{description}</Text>
+        </View>
+      </View>
+
+      <View style={styles.metaRow}>
+        <View style={[styles.statusBadge, statusColors[status]]}>
+          <Text style={[styles.statusText, { color: statusTextColors[status] }]}>
+            {statusLabels[status]}
+          </Text>
+        </View>
+        <Text style={styles.metaText}>{sourceTag}</Text>
+        <Text style={styles.metaDivider}>{"·"}</Text>
+        <Text style={styles.metaText}>{enteredBy}</Text>
+      </View>
+
+      <Button variant="secondary" size="sm" onPress={onAction}>
+        {actionLabel}
+      </Button>
     </Card>
   );
 }
+
+const styles = StyleSheet.create({
+  highlighted: {
+    borderColor: colors.sage,
+    borderWidth: 2,
+  },
+  topRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: spacing.md,
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: spacing.md,
+  },
+  info: {
+    flex: 1,
+  },
+  title: {
+    fontSize: fontSizes.bodyMd,
+    fontWeight: fontWeights.semibold,
+    color: colors.charcoal,
+    marginBottom: spacing.xs,
+  },
+  description: {
+    fontSize: fontSizes.labelMd,
+    fontWeight: fontWeights.regular,
+    color: colors.inkMuted,
+  },
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: spacing.lg,
+  },
+  statusBadge: {
+    borderRadius: radii.sm,
+    paddingVertical: 2,
+    paddingHorizontal: spacing.sm,
+    marginRight: spacing.sm,
+  },
+  statusText: {
+    fontSize: fontSizes.caption,
+    fontWeight: fontWeights.medium,
+  },
+  metaText: {
+    fontSize: fontSizes.caption,
+    fontWeight: fontWeights.regular,
+    color: colors.inkMuted,
+  },
+  metaDivider: {
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    marginHorizontal: spacing.xs,
+  },
+});

@@ -1,21 +1,61 @@
-import { MessageCircle } from "lucide-react";
-import { Card } from "@/components/ui/Card";
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { MessageCircle } from "lucide-react-native";
+import { Card } from "@/components/ui";
+import { colors, fontSizes, fontWeights, spacing } from "@/lib/theme/tokens";
 
-export function DiscussionPointsCard({ points }: { points: string[] }) {
-  if (points.length === 0) return null;
+interface DiscussionPointsCardProps {
+  points: string[];
+}
+
+export function DiscussionPointsCard({ points }: DiscussionPointsCardProps) {
   return (
     <Card>
-      <h3 className="flex items-center gap-2 text-label-md text-charcoal">
-        <MessageCircle size={16} className="text-sage-dark" />
-        Suggested discussion points
-      </h3>
-      <ul className="mt-3 space-y-2">
-        {points.map((point) => (
-          <li key={point} className="text-body-md text-charcoal">
-            • {point}
-          </li>
+      <View style={styles.header}>
+        <MessageCircle size={20} color={colors.sage} />
+        <Text style={styles.heading}>Discussion Points</Text>
+      </View>
+
+      <View style={styles.list}>
+        {points.map((point, index) => (
+          <View key={index} style={styles.bulletRow}>
+            <Text style={styles.bullet}>{"•"}</Text>
+            <Text style={styles.bulletText}>{point}</Text>
+          </View>
         ))}
-      </ul>
+      </View>
     </Card>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.lg,
+  },
+  heading: {
+    fontSize: fontSizes.headlineMd,
+    fontWeight: fontWeights.bold,
+    color: colors.charcoal,
+  },
+  list: {
+    gap: spacing.sm,
+  },
+  bulletRow: {
+    flexDirection: "row",
+  },
+  bullet: {
+    fontSize: fontSizes.bodyMd,
+    color: colors.sage,
+    marginRight: spacing.sm,
+    lineHeight: 22,
+  },
+  bulletText: {
+    fontSize: fontSizes.bodyMd,
+    color: colors.charcoal,
+    flex: 1,
+    lineHeight: 22,
+  },
+});

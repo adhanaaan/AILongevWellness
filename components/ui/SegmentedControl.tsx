@@ -1,40 +1,70 @@
-"use client";
+import React from "react";
+import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
+import { colors, fontSizes, fontWeights, radii, shadows, spacing } from "@/lib/theme/tokens";
 
-import { cn } from "@/lib/utils/cn";
-
-export interface SegmentedControlOption {
+export interface SegmentOption {
   value: string;
   label: string;
 }
 
 export interface SegmentedControlProps {
-  options: SegmentedControlOption[];
+  options: SegmentOption[];
   value: string;
   onChange: (value: string) => void;
-  className?: string;
 }
 
-export function SegmentedControl({ options, value, onChange, className }: SegmentedControlProps) {
+export function SegmentedControl({
+  options,
+  value,
+  onChange,
+}: SegmentedControlProps) {
   return (
-    <div className={cn("inline-flex rounded-full bg-surface-muted p-1", className)} role="tablist">
+    <View style={styles.container}>
       {options.map((option) => {
-        const active = option.value === value;
+        const isActive = option.value === value;
         return (
-          <button
+          <TouchableOpacity
             key={option.value}
-            type="button"
-            role="tab"
-            aria-selected={active}
-            onClick={() => onChange(option.value)}
-            className={cn(
-              "rounded-full px-4 py-1.5 text-label-md transition-colors",
-              active ? "bg-surface text-sage shadow-card" : "text-ink-muted"
-            )}
+            style={[styles.segment, isActive && styles.segmentActive]}
+            onPress={() => onChange(option.value)}
+            activeOpacity={0.7}
           >
-            {option.label}
-          </button>
+            <Text style={[styles.label, isActive && styles.labelActive]}>
+              {option.label}
+            </Text>
+          </TouchableOpacity>
         );
       })}
-    </div>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radii.md,
+    padding: spacing.xs,
+  },
+  segment: {
+    flex: 1,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.sm,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  segmentActive: {
+    backgroundColor: colors.surface,
+    ...shadows.card,
+  },
+  label: {
+    fontSize: fontSizes.labelMd,
+    fontWeight: fontWeights.medium,
+    color: colors.inkMuted,
+  },
+  labelActive: {
+    color: colors.sageDark,
+    fontWeight: fontWeights.semibold,
+  },
+});

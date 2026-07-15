@@ -1,30 +1,50 @@
-"use client";
-
-import type { ReactNode } from "react";
-import { cn } from "@/lib/utils/cn";
+import React from "react";
+import { TouchableOpacity, Text, StyleSheet } from "react-native";
+import { colors, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
 
 export interface ChipProps {
   selected?: boolean;
   onToggle?: () => void;
-  children: ReactNode;
-  className?: string;
+  children: string;
 }
 
-export function Chip({ selected, onToggle, children, className }: ChipProps) {
+export function Chip({ selected = false, onToggle, children }: ChipProps) {
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-pressed={selected}
-      className={cn(
-        "rounded-full border px-4 py-2 text-label-md transition-colors",
-        selected
-          ? "bg-sage text-white border-sage"
-          : "bg-surface text-charcoal border-border-strong hover:bg-sage-tint",
-        className
-      )}
+    <TouchableOpacity
+      style={[styles.container, selected ? styles.selected : styles.unselected]}
+      onPress={onToggle}
+      activeOpacity={0.7}
     >
-      {children}
-    </button>
+      <Text style={[styles.text, selected ? styles.selectedText : styles.unselectedText]}>
+        {children}
+      </Text>
+    </TouchableOpacity>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radii.full,
+    alignSelf: "flex-start",
+  },
+  selected: {
+    backgroundColor: colors.sage,
+  },
+  unselected: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+  },
+  text: {
+    fontSize: fontSizes.labelMd,
+    fontWeight: fontWeights.medium,
+  },
+  selectedText: {
+    color: colors.white,
+  },
+  unselectedText: {
+    color: colors.charcoal,
+  },
+});

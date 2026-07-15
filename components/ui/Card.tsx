@@ -1,30 +1,52 @@
-import type { HTMLAttributes } from "react";
-import { cn } from "@/lib/utils/cn";
+import React from "react";
+import { View, StyleSheet, type ViewStyle } from "react-native";
+import { colors, radii, shadows, spacing } from "@/lib/theme/tokens";
 
-export interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  padding?: "none" | "sm" | "md" | "lg";
+export type CardPadding = "none" | "sm" | "md" | "lg";
+
+export interface CardProps {
+  padding?: CardPadding;
   tinted?: boolean;
+  style?: ViewStyle;
+  children: React.ReactNode;
 }
 
-const PADDING_CLASSES = {
-  none: "",
-  sm: "p-3",
-  md: "p-5",
-  lg: "p-6",
+const paddingMap: Record<CardPadding, number> = {
+  none: 0,
+  sm: spacing.sm,
+  md: spacing.lg,
+  lg: spacing["2xl"],
 };
 
-export function Card({ padding = "md", tinted, className, children, ...props }: CardProps) {
+export function Card({
+  padding = "md",
+  tinted = false,
+  style,
+  children,
+}: CardProps) {
   return (
-    <div
-      className={cn(
-        "rounded-lg border border-border shadow-soft",
-        tinted ? "bg-sage-tint" : "bg-surface",
-        PADDING_CLASSES[padding],
-        className
-      )}
-      {...props}
+    <View
+      style={[
+        styles.container,
+        { padding: paddingMap[padding] },
+        tinted && styles.tinted,
+        style,
+      ]}
     >
       {children}
-    </div>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadows.soft,
+  },
+  tinted: {
+    backgroundColor: colors.sageTint,
+  },
+});

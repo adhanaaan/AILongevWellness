@@ -1,103 +1,209 @@
-"use client";
-
-import { useState, useTransition } from "react";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Textarea } from "@/components/ui/Field";
+import React, { useState } from "react";
+import { View, Text, TextInput, StyleSheet } from "react-native";
+import { Card, Button, StatusBadge } from "@/components/ui";
+import { colors, fontSizes, fontWeights, spacing, radii } from "@/lib/theme/tokens";
 import { updateAiDraftAction } from "@/lib/data/actions";
 import type { AiDraft } from "@/lib/types/db";
 
-function toLines(items: string[]) {
-  return items.join("\n");
-}
-function fromLines(text: string) {
-  return text
-    .split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean);
+interface AIDraftSummaryCardProps {
+  aiDraft: AiDraft;
+  participantId: string;
+  editable: boolean;
 }
 
 export function AIDraftSummaryCard({
   aiDraft,
   participantId,
-  editable = true,
-}: {
-  aiDraft: AiDraft;
-  participantId: string;
-  editable?: boolean;
-}) {
-  const [editing, setEditing] = useState(false);
-  const [strengths, setStrengths] = useState(toLines(aiDraft.strengths));
-  const [areas, setAreas] = useState(toLines(aiDraft.areas_to_monitor));
-  const [focus, setFocus] = useState(toLines(aiDraft.suggested_focus));
-  const [isPending, startTransition] = useTransition();
+  editable,
+}: AIDraftSummaryCardProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [strengths, setStrengths] = useState(aiDraft.strengths.join("\n"));
+  const [areasToMonitor, setAreasToMonitor] = useState(
+    aiDraft.areas_to_monitor.join("\n")
+  );
+  const [suggestedFocus, setSuggestedFocus] = useState(
+    aiDraft.suggested_focus.join("\n")
+  );
 
-  function save() {
-    startTransition(async () => {
-      await updateAiDraftAction(participantId, {
-        strengths: fromLines(strengths),
-        areas_to_monitor: fromLines(areas),
-        suggested_focus: fromLines(focus),
-      });
-      setEditing(false);
+  const handleSave = async () => {
+    await updateAiDraftAction(participantId, {
+      strengths: strengths.split("\n").filter((s) => s.trim()),
+      areas_to_monitor: areasToMonitor.split("\n").filter((s) => s.trim()),
+      suggested_focus: suggestedFocus.split("\n").filter((s) => s.trim()),
+      edited_by_admin: true,
     });
-  }
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setStrengths(aiDraft.strengths.join("\n"));
+    setAreasToMonitor(aiDraft.areas_to_monitor.join("\n"));
+    setSuggestedFocus(aiDraft.suggested_focus.join("\n"));
+    setIsEditing(false);
+  };
 
   return (
     <Card>
-      <div className="flex items-center justify-between">
-        <h3 className="text-headline-md text-charcoal">AI-drafted summary</h3>
-        <div className="flex items-center gap-2">
+      <View style={styles.header}>
+        <Text style={styles.heading}>AI Draft Summary</Text>
+        <View style={styles.headerRight}>
           {aiDraft.edited_by_admin && (
-            <span className="rounded-full bg-surface-muted px-2.5 py-0.5 text-caption font-semibold text-ink-muted">
-              Edited
-            </span>
+            <StatusBadge status="monitor" label="Edited" />
           )}
-          {editable && !editing && (
-            <Button size="sm" shape="md" variant="secondary" onClick={() => setEditing(true)}>
+          {editable && !isEditing && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onPress={() => setIsEditing(true)}
+            >
               Edit
             </Button>
           )}
-        </div>
-      </div>
+        </View>
+      </View>
 
-      {editing ? (
-        <div className="mt-4 space-y-4">
-          <Textarea label="Strengths (one per line)" rows={3} value={strengths} onChange={(e) => setStrengths(e.target.value)} />
-          <Textarea label="Areas to monitor (one per line)" rows={3} value={areas} onChange={(e) => setAreas(e.target.value)} />
-          <Textarea label="Suggested focus (one per line)" rows={3} value={focus} onChange={(e) => setFocus(e.target.value)} />
-          <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setEditing(false)}>
-              Cancel
-            </Button>
-            <Button disabled={isPending} onClick={save}>
-              Save
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <div className="mt-4 space-y-4">
-          <Section title="Strengths" items={aiDraft.strengths} />
-          <Section title="Areas to monitor" items={aiDraft.areas_to_monitor} tone="monitor" />
-          <Section title="Suggested focus" items={aiDraft.suggested_focus} />
-        </div>
+      <Section title="Strengths">
+        {isEditing ? (
+          <TextInput
+            style={styles.textArea}
+            value={strengths}
+            onChangeText={setStrengths}
+            multiline
+            textAlignVertical="top"
+          />
+        ) : (
+          <BulletList items={aiDraft.strengths} />
+        )}
+      </Section>
+
+      <Section title="Areas to Monitor">
+        {isEditing ? (
+          <TextInput
+            style={styles.textArea}
+            value={areasToMonitor}
+            onChangeText={setAreasToMonitor}
+            multiline
+            textAlignVertical="top"
+          />
+        ) : (
+          <BulletList items={aiDraft.areas_to_monitor} />
+        )}
+      </Section>
+
+      <Section title="Suggested Focus">
+        {isEditing ? (
+          <TextInput
+            style={styles.textArea}
+            value={suggestedFocus}
+            onChangeText={setSuggestedFocus}
+            multiline
+            textAlignVertical="top"
+          />
+        ) : (
+          <BulletList items={aiDraft.suggested_focus} />
+        )}
+      </Section>
+
+      {isEditing && (
+        <View style={styles.editActions}>
+          <Button variant="primary" size="sm" onPress={handleSave}>
+            Save
+          </Button>
+          <Button variant="ghost" size="sm" onPress={handleCancel}>
+            Cancel
+          </Button>
+        </View>
       )}
     </Card>
   );
 }
 
-function Section({ title, items, tone }: { title: string; items: string[]; tone?: "monitor" }) {
-  if (items.length === 0) return null;
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div>
-      <p className="text-label-md text-ink-muted">{title}</p>
-      <ul className="mt-1.5 space-y-1">
-        {items.map((item) => (
-          <li key={item} className={tone === "monitor" ? "text-terracotta-ink" : "text-charcoal"}>
-            • {item}
-          </li>
-        ))}
-      </ul>
-    </div>
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      {children}
+    </View>
   );
 }
+
+function BulletList({ items }: { items: string[] }) {
+  return (
+    <View>
+      {items.map((item, index) => (
+        <View key={index} style={styles.bulletRow}>
+          <Text style={styles.bullet}>{"•"}</Text>
+          <Text style={styles.bulletText}>{item}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing.lg,
+  },
+  heading: {
+    fontSize: fontSizes.headlineMd,
+    fontWeight: fontWeights.bold,
+    color: colors.charcoal,
+  },
+  headerRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  section: {
+    marginBottom: spacing.lg,
+  },
+  sectionTitle: {
+    fontSize: fontSizes.labelMd,
+    fontWeight: fontWeights.semibold,
+    color: colors.inkMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginBottom: spacing.sm,
+  },
+  bulletRow: {
+    flexDirection: "row",
+    marginBottom: spacing.xs,
+  },
+  bullet: {
+    fontSize: fontSizes.bodyMd,
+    color: colors.sage,
+    marginRight: spacing.sm,
+    lineHeight: 22,
+  },
+  bulletText: {
+    fontSize: fontSizes.bodyMd,
+    color: colors.charcoal,
+    flex: 1,
+    lineHeight: 22,
+  },
+  textArea: {
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    borderRadius: radii.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    fontSize: fontSizes.bodyMd,
+    color: colors.charcoal,
+    backgroundColor: colors.surface,
+    minHeight: 80,
+  },
+  editActions: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    justifyContent: "flex-end",
+  },
+});

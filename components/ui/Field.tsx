@@ -1,80 +1,135 @@
-"use client";
+import React from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  type TextInputProps,
+  type ViewStyle,
+} from "react-native";
+import { colors, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
 
-import { forwardRef, type InputHTMLAttributes, type SelectHTMLAttributes, type TextareaHTMLAttributes } from "react";
-import { cn } from "@/lib/utils/cn";
+/* ---------- shared label / error wrapper ---------- */
 
-function fieldClasses(error?: boolean) {
-  return cn(
-    "w-full rounded-md border bg-surface px-3.5 py-2.5 text-body-md text-charcoal placeholder:text-ink-muted",
-    "focus:outline-none focus:ring-2 focus:ring-sage focus:border-sage",
-    error ? "border-danger" : "border-border-strong"
+interface FieldWrapperProps {
+  label?: string;
+  error?: string;
+  style?: ViewStyle;
+  children: React.ReactNode;
+}
+
+function FieldWrapper({ label, error, style, children }: FieldWrapperProps) {
+  return (
+    <View style={[styles.wrapper, style]}>
+      {label ? <Text style={styles.label}>{label}</Text> : null}
+      {children}
+      {error ? <Text style={styles.error}>{error}</Text> : null}
+    </View>
   );
 }
 
-function Wrapper({
+/* ---------- Input ---------- */
+
+export interface InputProps extends Omit<TextInputProps, "style"> {
+  label?: string;
+  error?: string;
+  containerStyle?: ViewStyle;
+}
+
+export function Input({ label, error, containerStyle, ...rest }: InputProps) {
+  return (
+    <FieldWrapper label={label} error={error} style={containerStyle}>
+      <TextInput
+        style={[styles.input, error ? styles.inputError : undefined]}
+        placeholderTextColor={colors.inkMuted}
+        {...rest}
+      />
+    </FieldWrapper>
+  );
+}
+
+/* ---------- Textarea ---------- */
+
+export interface TextareaProps extends Omit<TextInputProps, "style"> {
+  label?: string;
+  error?: string;
+  containerStyle?: ViewStyle;
+}
+
+export function Textarea({
   label,
   error,
-  children,
-}: {
-  label?: string;
-  error?: string;
-  children: React.ReactNode;
-}) {
+  containerStyle,
+  ...rest
+}: TextareaProps) {
   return (
-    <label className="block">
-      {label && <span className="mb-1.5 block text-label-md text-charcoal">{label}</span>}
-      {children}
-      {error && <span className="mt-1 block text-caption text-danger">{error}</span>}
-    </label>
+    <FieldWrapper label={label} error={error} style={containerStyle}>
+      <TextInput
+        style={[styles.input, styles.textarea, error ? styles.inputError : undefined]}
+        placeholderTextColor={colors.inkMuted}
+        multiline
+        textAlignVertical="top"
+        {...rest}
+      />
+    </FieldWrapper>
   );
 }
 
-export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+/* ---------- Select (TextInput-based placeholder) ---------- */
+
+export interface SelectProps extends Omit<TextInputProps, "style"> {
   label?: string;
   error?: string;
+  containerStyle?: ViewStyle;
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { label, error, className, ...props },
-  ref
-) {
+export function Select({
+  label,
+  error,
+  containerStyle,
+  ...rest
+}: SelectProps) {
   return (
-    <Wrapper label={label} error={error}>
-      <input ref={ref} className={cn(fieldClasses(Boolean(error)), className)} {...props} />
-    </Wrapper>
+    <FieldWrapper label={label} error={error} style={containerStyle}>
+      <TextInput
+        style={[styles.input, error ? styles.inputError : undefined]}
+        placeholderTextColor={colors.inkMuted}
+        {...rest}
+      />
+    </FieldWrapper>
   );
-});
-
-export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
-  label?: string;
-  error?: string;
 }
 
-export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
-  { label, error, className, children, ...props },
-  ref
-) {
-  return (
-    <Wrapper label={label} error={error}>
-      <select ref={ref} className={cn(fieldClasses(Boolean(error)), className)} {...props}>
-        {children}
-      </select>
-    </Wrapper>
-  );
-});
+/* ---------- styles ---------- */
 
-export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
-  label?: string;
-  error?: string;
-}
-
-export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea(
-  { label, error, className, ...props },
-  ref
-) {
-  return (
-    <Wrapper label={label} error={error}>
-      <textarea ref={ref} className={cn(fieldClasses(Boolean(error)), className)} {...props} />
-    </Wrapper>
-  );
+const styles = StyleSheet.create({
+  wrapper: {
+    gap: spacing.xs,
+  },
+  label: {
+    fontSize: fontSizes.labelMd,
+    fontWeight: fontWeights.medium,
+    color: colors.charcoal,
+    marginBottom: spacing.xs,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    fontSize: fontSizes.bodyMd,
+    color: colors.charcoal,
+    backgroundColor: colors.surface,
+  },
+  inputError: {
+    borderColor: colors.danger,
+  },
+  textarea: {
+    minHeight: 100,
+  },
+  error: {
+    fontSize: fontSizes.caption,
+    color: colors.danger,
+  },
 });

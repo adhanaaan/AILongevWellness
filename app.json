@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "AI Wellness",
+    "slug": "ai-wellness",
+    "version": "0.2.0",
+    "orientation": "portrait",
+    "scheme": "ai-wellness",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#FAF9F4"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.aiwellness.app"
+    },
+    "android": {
+      "package": "com.aiwellness.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#FAF9F4"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": ["expo-router", "expo-font"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

@@ -1,5 +1,14 @@
-import { Sparkles } from "lucide-react";
-import { Card } from "@/components/ui/Card";
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { Sparkles } from "lucide-react-native";
+import {
+  colors,
+  fontSizes,
+  fontWeights,
+  radii,
+  shadows,
+  spacing,
+} from "@/lib/theme/tokens";
 
 export interface SuggestedFocusGridProps {
   items: string[];
@@ -7,15 +16,47 @@ export interface SuggestedFocusGridProps {
 
 export function SuggestedFocusGrid({ items }: SuggestedFocusGridProps) {
   return (
-    <div className="grid grid-cols-2 gap-3">
-      {items.map((item) => (
-        <Card key={item} padding="sm" className="flex flex-col items-start gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-sage-tint text-sage-dark">
-            <Sparkles size={16} />
-          </span>
-          <span className="text-label-md text-charcoal">{item}</span>
-        </Card>
+    <View style={styles.grid}>
+      {items.map((item, index) => (
+        <View key={index} style={styles.card}>
+          <View style={styles.iconCircle}>
+            <Sparkles size={18} color={colors.sage} />
+          </View>
+          <Text style={styles.label}>{item}</Text>
+        </View>
       ))}
-    </div>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginHorizontal: -(spacing.sm / 2),
+  },
+  card: {
+    width: "48%",
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    margin: "1%",
+    ...shadows.card,
+  },
+  iconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.sageTint,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.sm,
+  },
+  label: {
+    fontSize: fontSizes.labelMd,
+    fontWeight: fontWeights.medium,
+    color: colors.charcoal,
+  },
+});

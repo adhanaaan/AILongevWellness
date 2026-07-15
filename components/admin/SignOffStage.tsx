@@ -1,17 +1,21 @@
-"use client";
-
-import { useState, useTransition } from "react";
-import { Lock, CheckCircle2 } from "lucide-react";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Input, Textarea } from "@/components/ui/Field";
+import React, { useState } from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { Lock, CheckCircle2 } from "lucide-react-native";
+import { Card, Button, Input, Textarea } from "@/components/ui";
+import { colors, fontSizes, fontWeights, spacing, radii } from "@/lib/theme/tokens";
 import { signOffAction } from "@/lib/data/actions";
-import type { Review, ReviewStage } from "@/lib/types/db";
+import type { ReviewStage, Review } from "@/lib/types/db";
 
-const STAGE_LABEL: Record<ReviewStage, string> = { gp: "GP", tcm: "TCM" };
-const DEFAULT_CREDENTIAL: Record<ReviewStage, string> = {
-  gp: "MBBS, General Practice",
-  tcm: "TCM Practitioner, Licensed",
+interface SignOffStageProps {
+  stage: ReviewStage;
+  participantId: string;
+  review: Review | undefined;
+  locked: boolean;
+}
+
+const stageLabels: Record<ReviewStage, string> = {
+  gp: "GP Review",
+  tcm: "TCM Review",
 };
 
 export function SignOffStage({
@@ -19,83 +23,157 @@ export function SignOffStage({
   participantId,
   review,
   locked,
-}: {
-  stage: ReviewStage;
-  participantId: string;
-  review?: Review;
-  locked: boolean;
-}) {
-  const [reviewerName, setReviewerName] = useState(review?.reviewer_name ?? "");
-  const [credential, setCredential] = useState(review?.reviewer_credential ?? DEFAULT_CREDENTIAL[stage]);
-  const [notes, setNotes] = useState(review?.notes ?? "");
-  const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+}: SignOffStageProps) {
+  const [name, setName] = useState("");
+  const [credential, setCredential] = useState("");
+  const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const signed = Boolean(review?.signed_at);
+  const isSigned = review?.signed_at !== null && review?.signed_at !== undefined;
 
-  if (locked) {
-    return (
-      <Card className="flex items-center gap-3 opacity-60">
-        <Lock size={18} className="text-ink-muted" />
-        <div>
-          <p className="text-label-md text-charcoal">Stage {stage === "gp" ? 1 : 2}: {STAGE_LABEL[stage]} review</p>
-          <p className="text-caption text-ink-muted">
-            {stage === "tcm" ? "Locked until GP sign-off is complete." : "Locked."}
-          </p>
-        </div>
-      </Card>
-    );
-  }
-
-  if (signed && review) {
-    return (
-      <Card className="flex items-start gap-3 bg-sage-tint">
-        <CheckCircle2 size={20} className="text-sage-dark shrink-0 mt-0.5" />
-        <div>
-          <p className="text-label-md text-sage-dark">
-            Stage {stage === "gp" ? 1 : 2}: {STAGE_LABEL[stage]} signed
-          </p>
-          <p className="mt-1 text-body-md text-charcoal">
-            {review.reviewer_name} · {review.reviewer_credential}
-          </p>
-          {review.notes && <p className="mt-1 text-caption text-ink-muted">&ldquo;{review.notes}&rdquo;</p>}
-          <p className="mt-1 text-caption text-ink-muted">
-            Signed {review.signed_at ? new Date(review.signed_at).toLocaleString() : ""}
-          </p>
-        </div>
-      </Card>
-    );
-  }
-
-  function submit() {
-    if (!reviewerName.trim() || !credential.trim()) {
-      setError("Reviewer name and credential are required.");
-      return;
-    }
-    setError(null);
-    startTransition(async () => {
+  const handleSignOff = async () => {
+    if (!name.trim() || !credential.trim()) return;
+    setSubmitting(true);
+    try {
       await signOffAction(participantId, stage, {
-        reviewer_name: reviewerName.trim(),
+        reviewer_name: name.trim(),
         reviewer_credential: credential.trim(),
         notes: notes.trim(),
       });
-    });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (locked) {
+    return (
+      <Card>
+        <View style={styles.lockedContainer}>
+          <Lock size={20} color={colors.inkMuted} />
+          <View style={styles.lockedTextContainer}>
+            <Text style={styles.stageTitle}>{stageLabels[stage]}</Text>
+            <Text style={styles.lockedMessage}>
+              Complete the previous stage to unlock.
+            </Text>
+          </View>
+        </View>
+      </Card>
+    );
+  }
+
+  if (isSigned && review) {
+    return (
+      <Card>
+        <View style={styles.signedContainer}>
+          <CheckCircle2 size={20} color={colors.sageDark} />
+          <View style={styles.signedContent}>
+            <Text style={styles.stageTitle}>{stageLabels[stage]}</Text>
+            <Text style={styles.reviewerName}>{review.reviewer_name}</Text>
+            <Text style={styles.reviewerCredential}>
+              {review.reviewer_credential}
+            </Text>
+            {review.notes ? (
+              <Text style={styles.notes}>{review.notes}</Text>
+            ) : null}
+            <Text style={styles.signedAt}>
+              Signed{" "}
+              {new Date(review.signed_at!).toLocaleDateString(undefined, {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })}
+            </Text>
+          </View>
+        </View>
+      </Card>
+    );
   }
 
   return (
     <Card>
-      <p className="text-label-md text-charcoal">
-        Stage {stage === "gp" ? 1 : 2}: {STAGE_LABEL[stage]} review
-      </p>
-      <div className="mt-3 space-y-3">
-        <Input label="Reviewer name" value={reviewerName} onChange={(e) => setReviewerName(e.target.value)} placeholder="Dr. Jane Doe" />
-        <Input label="Credential" value={credential} onChange={(e) => setCredential(e.target.value)} />
-        <Textarea label="Notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Review notes (optional)" />
-        {error && <p className="text-caption text-danger">{error}</p>}
-        <Button className="w-full" disabled={isPending} onClick={submit}>
-          Sign off ({STAGE_LABEL[stage]})
+      <Text style={styles.stageTitle}>{stageLabels[stage]}</Text>
+      <View style={styles.form}>
+        <Input
+          label="Reviewer Name"
+          value={name}
+          onChangeText={setName}
+          placeholder="Dr. Jane Smith"
+        />
+        <Input
+          label="Credential"
+          value={credential}
+          onChangeText={setCredential}
+          placeholder="MBBS, FRACP"
+        />
+        <Textarea
+          label="Notes (optional)"
+          value={notes}
+          onChangeText={setNotes}
+          placeholder="Any review notes..."
+          multiline
+        />
+        <Button
+          variant="primary"
+          onPress={handleSignOff}
+          disabled={!name.trim() || !credential.trim() || submitting}
+        >
+          {submitting ? "Signing..." : "Sign Off"}
         </Button>
-      </div>
+      </View>
     </Card>
   );
 }
+
+const styles = StyleSheet.create({
+  lockedContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+  },
+  lockedTextContainer: {
+    flex: 1,
+  },
+  lockedMessage: {
+    fontSize: fontSizes.bodyMd,
+    color: colors.inkMuted,
+    marginTop: spacing.xs,
+  },
+  signedContainer: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.md,
+  },
+  signedContent: {
+    flex: 1,
+  },
+  stageTitle: {
+    fontSize: fontSizes.bodyMd,
+    fontWeight: fontWeights.semibold,
+    color: colors.charcoal,
+    marginBottom: spacing.sm,
+  },
+  reviewerName: {
+    fontSize: fontSizes.bodyMd,
+    fontWeight: fontWeights.medium,
+    color: colors.charcoal,
+  },
+  reviewerCredential: {
+    fontSize: fontSizes.labelMd,
+    color: colors.inkMuted,
+    marginTop: 2,
+  },
+  notes: {
+    fontSize: fontSizes.bodyMd,
+    color: colors.charcoal,
+    marginTop: spacing.sm,
+    fontStyle: "italic",
+  },
+  signedAt: {
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    marginTop: spacing.sm,
+  },
+  form: {
+    gap: spacing.lg,
+  },
+});

@@ -1,44 +1,82 @@
-import { cn } from "@/lib/utils/cn";
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import Svg, { Circle } from "react-native-svg";
+import { colors, fontSizes, fontWeights, spacing } from "@/lib/theme/tokens";
 
 export interface ScoreRingProps {
-  value: number; // 0-100
+  value: number;
   label: string;
   status: "good" | "monitor";
   size?: number;
 }
 
-export function ScoreRing({ value, label, status, size = 88 }: ScoreRingProps) {
-  const stroke = 8;
-  const radius = (size - stroke) / 2;
+export function ScoreRing({
+  value,
+  label,
+  status,
+  size = 88,
+}: ScoreRingProps) {
+  const strokeWidth = 6;
+  const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const offset = circumference * (1 - value / 100);
-  const color = status === "good" ? "#6B9080" : "#E98A6D";
+  const clamped = Math.max(0, Math.min(100, value));
+  const strokeDashoffset = circumference * (1 - clamped / 100);
+  const progressColor = status === "good" ? colors.sage : colors.terracotta;
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="relative" style={{ width: size, height: size }}>
-        <svg width={size} height={size} className="ring-chart">
-          <circle cx={size / 2} cy={size / 2} r={radius} stroke="#F3F1EA" strokeWidth={stroke} fill="none" />
-          <circle
+    <View style={styles.container}>
+      <View style={{ width: size, height: size }}>
+        <Svg width={size} height={size}>
+          <Circle
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke={color}
-            strokeWidth={stroke}
-            strokeLinecap="round"
+            stroke={colors.surfaceMuted}
+            strokeWidth={strokeWidth}
             fill="none"
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            style={{ transition: "stroke-dashoffset 0.6s ease" }}
           />
-        </svg>
-        <div className="absolute inset-0 flex items-center justify-center text-headline-md text-charcoal">
-          {value}
-        </div>
-      </div>
-      <span className={cn("text-label-md", status === "good" ? "text-sage-dark" : "text-terracotta-ink")}>
-        {label}
-      </span>
-    </div>
+          <Circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke={progressColor}
+            strokeWidth={strokeWidth}
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={`${circumference}`}
+            strokeDashoffset={strokeDashoffset}
+            rotation={-90}
+            origin={`${size / 2}, ${size / 2}`}
+          />
+        </Svg>
+        <View style={[styles.valueContainer, { width: size, height: size }]}>
+          <Text style={[styles.value, { color: progressColor }]}>{clamped}</Text>
+        </View>
+      </View>
+      <Text style={styles.label}>{label}</Text>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    alignItems: "center",
+  },
+  valueContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  value: {
+    fontSize: fontSizes.headlineMd,
+    fontWeight: fontWeights.bold,
+  },
+  label: {
+    fontSize: fontSizes.caption,
+    fontWeight: fontWeights.medium,
+    color: colors.inkMuted,
+    marginTop: spacing.sm,
+  },
+});

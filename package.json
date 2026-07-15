@@ -1,31 +1,44 @@
 {
   "name": "ai-wellness",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
+  "main": "expo-router/entry",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "lint": "eslint . --ext .ts,.tsx",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "next": "14.2.35",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "lucide-react": "^0.400.0",
-    "clsx": "^2.1.1"
+    "expo": "~52.0.0",
+    "expo-router": "~4.0.0",
+    "expo-linking": "~7.0.0",
+    "expo-constants": "~17.0.0",
+    "expo-status-bar": "~2.0.0",
+    "expo-font": "~13.0.0",
+    "expo-splash-screen": "~0.29.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-native": "0.76.7",
+    "react-native-web": "~0.19.13",
+    "react-native-safe-area-context": "~4.14.0",
+    "react-native-screens": "~4.4.0",
+    "react-native-svg": "~15.8.0",
+    "react-native-reanimated": "~3.16.0",
+    "react-native-gesture-handler": "~2.20.0",
+    "@react-navigation/native": "^7.0.0",
+    "@react-navigation/bottom-tabs": "^7.0.0",
+    "@react-navigation/drawer": "^7.0.0",
+    "@expo/vector-icons": "^14.0.0",
+    "lucide-react-native": "^0.400.0",
+    "@expo-google-fonts/manrope": "^0.2.3"
   },
   "devDependencies": {
-    "typescript": "^5.5.4",
-    "@types/node": "^20.14.10",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "tailwindcss": "^3.4.6",
-    "postcss": "^8.5.10",
-    "autoprefixer": "^10.4.19",
-    "@tailwindcss/forms": "^0.5.7"
-  },
-  "overrides": {
-    "postcss": "^8.5.10"
+    "@babel/core": "^7.24.0",
+    "@types/react": "~18.3.3",
+    "@types/react-native": "^0.73.0",
+    "typescript": "~5.5.4"
   }
 }
