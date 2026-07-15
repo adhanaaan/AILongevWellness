@@ -1,19 +1,46 @@
-import { cn } from "@/lib/utils/cn";
+import React from "react";
+import { View, StyleSheet } from "react-native";
+import { colors, radii } from "@/lib/theme/tokens";
+
+export type ProgressBarTone = "sage" | "terracotta";
 
 export interface ProgressBarProps {
   value: number; // 0-100
-  className?: string;
-  tone?: "sage" | "terracotta";
+  tone?: ProgressBarTone;
 }
 
-export function ProgressBar({ value, className, tone = "sage" }: ProgressBarProps) {
-  const clamped = Math.min(100, Math.max(0, value));
+const toneColors: Record<ProgressBarTone, string> = {
+  sage: colors.sage,
+  terracotta: colors.terracotta,
+};
+
+export function ProgressBar({ value, tone = "sage" }: ProgressBarProps) {
+  const clamped = Math.max(0, Math.min(100, value));
+
   return (
-    <div className={cn("h-2 w-full overflow-hidden rounded-full bg-surface-muted", className)}>
-      <div
-        className={cn("h-full rounded-full transition-all", tone === "sage" ? "bg-sage" : "bg-terracotta")}
-        style={{ width: `${clamped}%` }}
+    <View style={styles.track}>
+      <View
+        style={[
+          styles.fill,
+          {
+            width: `${clamped}%`,
+            backgroundColor: toneColors[tone],
+          },
+        ]}
       />
-    </div>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  track: {
+    height: 8,
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radii.full,
+    overflow: "hidden",
+  },
+  fill: {
+    height: "100%",
+    borderRadius: radii.full,
+  },
+});

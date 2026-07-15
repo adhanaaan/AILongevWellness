@@ -1,4 +1,4 @@
-import type { SignedCard } from "@/lib/data/repository";
+import type { SignedCard } from "../data/repository";
 
 const DISCLAIMER = "This is general wellness information, not medical advice.";
 const DEFER = "That's a good question for your care team.";
@@ -11,11 +11,6 @@ function pillarLine(card: SignedCard, pillar: "vascular" | "metabolic" | "mental
   return `Your ${pillar} score on your reviewed card is ${score}, which is ${status}.`;
 }
 
-/**
- * Canned, rule-based responder — AVA's context is strictly the participant's own
- * delivered ai_draft + biomarkers (passed in as `card`). It never invents a number
- * that isn't on the card, and it never proposes new protocols/dosages/durations.
- */
 export function respondAsAva(message: string, card: SignedCard): string {
   const text = message.toLowerCase();
 

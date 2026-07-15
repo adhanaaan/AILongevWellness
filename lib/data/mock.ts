@@ -16,17 +16,15 @@ import type {
   Review,
   ReviewStage,
   Sex,
-} from "@/lib/types/db";
-import type { Repository, SignedCard } from "@/lib/data/repository";
+} from "../types/db";
+import type { Repository, SignedCard } from "./repository";
 
-/** The single demo participant driven end-to-end on the participant side. */
 export const DEMO_PARTICIPANT_ID = "james-chen";
 
 function nowIso(): string {
   return new Date().toISOString();
 }
 
-// Deterministic PRNG so the seeded demo roster is stable across dev-server restarts.
 function mulberry32(seed: number) {
   return function () {
     seed |= 0;
@@ -85,15 +83,10 @@ const BIOMARKER_TEMPLATES: Record<Pillar, BiomarkerTemplate[]> = {
   ],
 };
 
-function scoreToStatus(score: number): "good" | "monitor" {
-  return score >= 70 ? "good" : "monitor";
-}
-
 function genBiomarkersForScore(participantId: string, pillar: Pillar, score: number, seed: number): Biomarker[] {
   const templates = BIOMARKER_TEMPLATES[pillar];
   return templates.map((t, i) => {
     const r = mulberry32(seed + i * 17)();
-    // Map score (0-100, higher = healthier) onto a value within/near the reference band.
     const span = t.ref_high - t.ref_low;
     const center = t.lowerIsBetter ? t.ref_low + span * (1 - score / 100) : t.ref_low + span * (score / 100);
     const jitter = (r - 0.5) * span * 0.3;
@@ -113,13 +106,13 @@ function genBiomarkersForScore(participantId: string, pillar: Pillar, score: num
       status: t.source === "lab_extract" ? "extracted" : t.source === "wearable" ? "imported" : "entered",
       flagged,
       updated_at: nowIso(),
-    };
+    } as Biomarker;
   });
 }
 
 function genAiDraftForScores(
   participantId: string,
-  name: string,
+  _name: string,
   scores: PillarScores,
   bioAgeOffset: number,
   chronologicalAge: number
@@ -182,8 +175,6 @@ const OTHER_NAMES: Array<{ name: string; age: number; sex: Sex }> = [
   { name: "Charlotte Meyer", age: 53, sex: "female" },
 ];
 
-// 19 other seeded participants + James Chen = 20 total.
-// Distribution: 9 delivered, 4 gp_review, 4 tcm_review, 1 ai_drafted, 1 capturing (+ James in gp_review = 5 gp_review/9 awaiting).
 const OTHER_STATES: PipelineState[] = [
   ...Array(9).fill("delivered"),
   ...Array(4).fill("gp_review"),
@@ -192,26 +183,37 @@ const OTHER_STATES: PipelineState[] = [
   "capturing",
 ];
 
-const ATTENTION_INDEXES = new Set([2, 7, 13]); // 3 rows flagged needs_attention, spread across states
+const ATTENTION_INDEXES = new Set([2, 7, 13]);
 
 const GOALS_POOL = ["Longevity", "Energy & focus", "Weight management", "Stress resilience", "Sleep quality", "Cardiovascular fitness"];
 
 class MockRepository implements Repository {
   private participants = new Map<string, Participant>();
-  private captureChannels = new Map<string, CaptureChannel>(); // key: `${participantId}:${channel}`
-  private biomarkers = new Map<string, Biomarker>(); // key: biomarker id
-  private aiDrafts = new Map<string, AiDraft>(); // key: participantId
-  private pendingAiDrafts = new Map<string, AiDraft>(); // draft generated on submitCapture, keyed by participantId
-  private reviews = new Map<string, Review[]>(); // key: participantId
-  private pipelines = new Map<string, Pipeline>(); // key: participantId
-  private files = new Map<string, FileRecord[]>(); // key: participantId
+  private captureChannels = new Map<string, CaptureChannel>();
+  private biomarkers = new Map<string, Biomarker>();
+  private aiDrafts = new Map<string, AiDraft>();
+  private pendingAiDrafts = new Map<string, AiDraft>();
+  private reviews = new Map<string, Review[]>();
+  private pipelines = new Map<string, Pipeline>();
+  private files = new Map<string, FileRecord[]>();
+  private listeners: Array<() => void> = [];
 
   constructor() {
     this.seed();
   }
 
+  subscribe(listener: () => void): () => void {
+    this.listeners.push(listener);
+    return () => {
+      this.listeners = this.listeners.filter((l) => l !== listener);
+    };
+  }
+
+  private notify() {
+    this.listeners.forEach((l) => l());
+  }
+
   private seed() {
-    // --- James Chen: the canonical, fully-interactive demo participant ---
     const james: Participant = {
       id: DEMO_PARTICIPANT_ID,
       name: "James Chen",
@@ -234,8 +236,6 @@ class MockRepository implements Repository {
     this.reviews.set(james.id, []);
     this.files.set(james.id, []);
 
-    // Three channels already captured at the retreat kickoff, two still open —
-    // gives the capture screen something real to complete during the demo.
     const jamesChannelSeed: Array<[CaptureChannelName, CaptureChannelStatus, EnteredBy | null]> = [
       ["manual", "complete", "participant"],
       ["wearables", "complete", "participant"],
@@ -254,7 +254,6 @@ class MockRepository implements Repository {
       });
     }
 
-    // Hand-authored biomarkers so every number lines up with the spec's locked scores.
     const jamesBiomarkers: Biomarker[] = [
       { id: "bm-james-chen-systolic_bp", participant_id: james.id, pillar: "vascular", key: "systolic_bp", label: "Systolic blood pressure", value: 118, unit: "mmHg", ref_low: 90, ref_high: 120, source: "wearable", status: "imported", flagged: false, updated_at: nowIso() },
       { id: "bm-james-chen-resting_hr", participant_id: james.id, pillar: "vascular", key: "resting_hr", label: "Resting heart rate", value: 58, unit: "bpm", ref_low: 50, ref_high: 80, source: "wearable", status: "imported", flagged: false, updated_at: nowIso() },
@@ -268,7 +267,6 @@ class MockRepository implements Repository {
     ];
     for (const bm of jamesBiomarkers) this.biomarkers.set(bm.id, bm);
 
-    // The draft AVA/the health card will use once capture is submitted — locked to the spec's numbers.
     this.pendingAiDrafts.set(james.id, {
       id: "draft-james-chen",
       participant_id: james.id,
@@ -299,7 +297,6 @@ class MockRepository implements Repository {
       edited_by_admin: false,
     });
 
-    // --- 19 other demo participants for the admin list ---
     OTHER_NAMES.forEach((person, idx) => {
       const id = slugify(person.name);
       const participant: Participant = {
@@ -391,7 +388,6 @@ class MockRepository implements Repository {
         CHANNELS.length;
       summaries.push({ participant, pipeline, captureCompletionPct: Math.round(completion * 100) });
     }
-    // James Chen first, then alphabetical — keeps the canonical demo participant easy to find.
     summaries.sort((a, b) => {
       if (a.participant.id === DEMO_PARTICIPANT_ID) return -1;
       if (b.participant.id === DEMO_PARTICIPANT_ID) return 1;
@@ -409,6 +405,7 @@ class MockRepository implements Repository {
     if (!existing) throw new Error(`Unknown participant ${id}`);
     const updated: Participant = { ...existing, ...patch };
     this.participants.set(id, updated);
+    this.notify();
     return updated;
   }
 
@@ -428,6 +425,7 @@ class MockRepository implements Repository {
     if (!existing) throw new Error(`Unknown capture channel ${channel} for ${participantId}`);
     const updated: CaptureChannel = { ...existing, ...patch, updated_at: nowIso() };
     this.captureChannels.set(key, updated);
+    this.notify();
     return updated;
   }
 
@@ -446,9 +444,9 @@ class MockRepository implements Repository {
       this.aiDrafts.set(participantId, { ...draft, generated_at: nowIso() });
       this.pendingAiDrafts.delete(participantId);
     }
-    // capturing -> ai_drafted -> gp_review: auto-enters the GP queue per spec §6 guard table.
     const updated: Pipeline = { ...pipeline, state: "gp_review" };
     this.pipelines.set(participantId, updated);
+    this.notify();
     return updated;
   }
 
@@ -463,6 +461,7 @@ class MockRepository implements Repository {
     if (!existing) throw new Error(`Unknown biomarker ${id}`);
     const updated: Biomarker = { ...existing, ...patch, updated_at: nowIso() };
     this.biomarkers.set(id, updated);
+    this.notify();
     return updated;
   }
 
@@ -475,6 +474,7 @@ class MockRepository implements Repository {
     if (!existing) throw new Error(`No AI draft exists yet for ${participantId}`);
     const updated: AiDraft = { ...existing, ...patch, edited_by_admin: true };
     this.aiDrafts.set(participantId, updated);
+    this.notify();
     return updated;
   }
 
@@ -511,6 +511,7 @@ class MockRepository implements Repository {
 
     const nextState: PipelineState = stage === "gp" ? "tcm_review" : "signed";
     this.pipelines.set(participantId, { ...pipeline, state: nextState });
+    this.notify();
 
     return review;
   }
@@ -527,6 +528,7 @@ class MockRepository implements Repository {
     }
     const updated: Pipeline = { ...pipeline, state: "delivered", delivered_at: nowIso() };
     this.pipelines.set(participantId, updated);
+    this.notify();
     return updated;
   }
 
@@ -535,6 +537,7 @@ class MockRepository implements Repository {
     if (!pipeline) throw new Error(`Unknown participant ${participantId}`);
     const updated: Pipeline = { ...pipeline, needs_attention: false, attention_reason: null };
     this.pipelines.set(participantId, updated);
+    this.notify();
     return updated;
   }
 
@@ -557,13 +560,13 @@ class MockRepository implements Repository {
   }
 }
 
-// Pinned to globalThis (not just a module-level const): Next.js dev can re-evaluate
-// this module's graph independently per route entry, which would otherwise reseed
-// a fresh store on every navigation and silently drop mutations. Same idiom as the
-// standard "globalThis.prisma" singleton guard for Next.js dev/HMR.
-// A future SupabaseRepository implements the same `Repository` interface — call
-// sites never need to change.
-const globalForRepository = globalThis as unknown as { __aiWellnessRepository?: Repository };
+let _repository: MockRepository | null = null;
 
-export const repository: Repository =
-  globalForRepository.__aiWellnessRepository ?? (globalForRepository.__aiWellnessRepository = new MockRepository());
+export function getRepository(): MockRepository {
+  if (!_repository) {
+    _repository = new MockRepository();
+  }
+  return _repository;
+}
+
+export const repository = getRepository();

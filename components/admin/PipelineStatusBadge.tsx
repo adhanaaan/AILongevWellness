@@ -1,25 +1,49 @@
-import { StatusBadge, type Status } from "@/components/ui/StatusBadge";
+import React from "react";
+import { View, StyleSheet } from "react-native";
+import { StatusBadge } from "@/components/ui";
+import type { Status } from "@/components/ui";
 import type { PipelineState } from "@/lib/types/db";
+import { spacing } from "@/lib/theme/tokens";
 
-export interface PipelineStatusBadgeProps {
+interface PipelineStatusBadgeProps {
   state: PipelineState;
-  needsAttention?: boolean;
+  needsAttention: boolean;
 }
 
-const STATE_TO_STATUS: Record<PipelineState, Status> = {
-  capturing: "capturing",
-  ai_drafted: "ai_drafted",
-  gp_review: "gp_review",
-  tcm_review: "tcm_review",
+const stateToStatus: Record<PipelineState, Status> = {
+  capturing: "processing",
+  ai_drafted: "draft",
+  gp_review: "pending",
+  tcm_review: "pending",
   signed: "signed",
   delivered: "delivered",
 };
 
+const stateToLabel: Record<PipelineState, string> = {
+  capturing: "Capturing",
+  ai_drafted: "AI Drafted",
+  gp_review: "GP Review",
+  tcm_review: "TCM Review",
+  signed: "Signed",
+  delivered: "Delivered",
+};
+
 export function PipelineStatusBadge({ state, needsAttention }: PipelineStatusBadgeProps) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <StatusBadge status={STATE_TO_STATUS[state]} />
-      {needsAttention && <StatusBadge status="needs-attention" />}
-    </div>
+    <View style={styles.row}>
+      <StatusBadge status={stateToStatus[state]} label={stateToLabel[state]} />
+      {needsAttention && (
+        <StatusBadge status="needs-attention" label="Needs Attention" />
+      )}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    flexWrap: "wrap",
+  },
+});

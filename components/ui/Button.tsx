@@ -1,58 +1,124 @@
-"use client";
-
-import type { ButtonHTMLAttributes, ReactNode } from "react";
-import { cn } from "@/lib/utils/cn";
+import React from "react";
+import {
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  type ViewStyle,
+  type TextStyle,
+  View,
+} from "react-native";
+import { colors, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost";
 export type ButtonSize = "sm" | "md" | "lg";
+export type ButtonShape = "full" | "md";
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps {
   variant?: ButtonVariant;
   size?: ButtonSize;
-  iconRight?: ReactNode;
-  iconLeft?: ReactNode;
-  /** Admin surfaces use a tighter, squared-off radius per COMPONENTS.md. */
-  shape?: "full" | "md";
+  shape?: ButtonShape;
+  iconLeft?: React.ReactNode;
+  iconRight?: React.ReactNode;
+  disabled?: boolean;
+  onPress?: () => void;
+  children: string;
 }
 
-const SIZE_CLASSES: Record<ButtonSize, string> = {
-  sm: "text-caption px-3 py-1.5 gap-1.5",
-  md: "text-label-md px-5 py-2.5 gap-2",
-  lg: "text-label-md px-6 py-3.5 gap-2",
+const sizeStyles: Record<ButtonSize, { container: ViewStyle; text: TextStyle }> = {
+  sm: {
+    container: { paddingVertical: spacing.sm, paddingHorizontal: spacing.lg },
+    text: { fontSize: fontSizes.labelMd },
+  },
+  md: {
+    container: { paddingVertical: spacing.md, paddingHorizontal: spacing.xl },
+    text: { fontSize: fontSizes.bodyMd },
+  },
+  lg: {
+    container: { paddingVertical: spacing.lg, paddingHorizontal: spacing["2xl"] },
+    text: { fontSize: fontSizes.bodyLg },
+  },
 };
 
 export function Button({
   variant = "primary",
   size = "md",
-  shape = "full",
-  iconRight,
+  shape = "md",
   iconLeft,
-  disabled,
-  className,
+  iconRight,
+  disabled = false,
+  onPress,
   children,
-  ...props
 }: ButtonProps) {
+  const borderRadius = shape === "full" ? radii.full : radii.md;
+
+  const containerStyle: ViewStyle[] = [
+    styles.base,
+    sizeStyles[size].container,
+    { borderRadius },
+    variant === "primary" && styles.primaryContainer,
+    variant === "secondary" && styles.secondaryContainer,
+    variant === "ghost" && styles.ghostContainer,
+    disabled && styles.disabled,
+  ].filter(Boolean) as ViewStyle[];
+
+  const textStyle: TextStyle[] = [
+    styles.baseText,
+    sizeStyles[size].text,
+    variant === "primary" && styles.primaryText,
+    variant === "secondary" && styles.secondaryText,
+    variant === "ghost" && styles.ghostText,
+  ].filter(Boolean) as TextStyle[];
+
   return (
-    <button
+    <TouchableOpacity
+      style={containerStyle}
+      onPress={onPress}
       disabled={disabled}
-      className={cn(
-        "inline-flex items-center justify-center font-semibold transition-colors",
-        shape === "full" ? "rounded-full" : "rounded-md",
-        SIZE_CLASSES[size],
-        disabled
-          ? "bg-surface-muted text-ink-muted cursor-not-allowed shadow-none"
-          : variant === "primary"
-          ? "bg-sage text-white shadow-soft hover:bg-sage-dark"
-          : variant === "secondary"
-          ? "border border-border-strong text-sage bg-surface hover:bg-sage-tint"
-          : "text-sage hover:bg-sage-tint",
-        className
-      )}
-      {...props}
+      activeOpacity={0.7}
     >
-      {iconLeft}
-      {children}
-      {iconRight}
-    </button>
+      {iconLeft && <View style={styles.iconLeft}>{iconLeft}</View>}
+      <Text style={textStyle}>{children}</Text>
+      {iconRight && <View style={styles.iconRight}>{iconRight}</View>}
+    </TouchableOpacity>
   );
 }
+
+const styles = StyleSheet.create({
+  base: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  primaryContainer: {
+    backgroundColor: colors.sage,
+  },
+  secondaryContainer: {
+    backgroundColor: colors.transparent,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  ghostContainer: {
+    backgroundColor: colors.transparent,
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+  baseText: {
+    fontWeight: fontWeights.semibold,
+  },
+  primaryText: {
+    color: colors.white,
+  },
+  secondaryText: {
+    color: colors.sage,
+  },
+  ghostText: {
+    color: colors.sage,
+  },
+  iconLeft: {
+    marginRight: spacing.sm,
+  },
+  iconRight: {
+    marginLeft: spacing.sm,
+  },
+});

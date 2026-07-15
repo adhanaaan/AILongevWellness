@@ -1,4 +1,6 @@
-"use client";
+import React from "react";
+import { ScrollView, TouchableOpacity, Text, StyleSheet } from "react-native";
+import { colors, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
 
 export interface SuggestionChipsProps {
   items: string[];
@@ -7,17 +9,41 @@ export interface SuggestionChipsProps {
 
 export function SuggestionChips({ items, onPick }: SuggestionChipsProps) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1">
-      {items.map((item) => (
-        <button
-          key={item}
-          type="button"
-          onClick={() => onPick(item)}
-          className="shrink-0 rounded-full border border-border-strong bg-surface px-4 py-2 text-label-md text-sage-dark hover:bg-sage-tint"
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.scrollContent}
+    >
+      {items.map((item, index) => (
+        <TouchableOpacity
+          key={index}
+          style={styles.chip}
+          onPress={() => onPick(item)}
+          activeOpacity={0.7}
         >
-          {item}
-        </button>
+          <Text style={styles.chipText}>{item}</Text>
+        </TouchableOpacity>
       ))}
-    </div>
+    </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    paddingHorizontal: spacing.lg,
+    gap: spacing.sm,
+  },
+  chip: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.full,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+  },
+  chipText: {
+    fontSize: fontSizes.labelMd,
+    fontWeight: fontWeights.medium,
+    color: colors.sage,
+  },
+});

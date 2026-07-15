@@ -1,4 +1,6 @@
-import { cn } from "@/lib/utils/cn";
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { colors, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
 
 export type Status =
   | "good"
@@ -7,55 +9,57 @@ export type Status =
   | "delivered"
   | "monitor"
   | "needs-attention"
-  | "capturing"
-  | "ai_drafted"
-  | "gp_review"
-  | "tcm_review"
-  | "neutral";
+  | "pending"
+  | "processing"
+  | "queued"
+  | "draft";
 
-const LABELS: Record<Status, string> = {
-  good: "Good",
-  strong: "Strong",
-  signed: "Signed",
-  delivered: "Delivered",
-  monitor: "Monitor",
-  "needs-attention": "Needs attention",
-  capturing: "Capturing",
-  ai_drafted: "AI drafted",
-  gp_review: "GP review",
-  tcm_review: "TCM review",
-  neutral: "In progress",
+interface StatusColors {
+  bg: string;
+  text: string;
+}
+
+const statusColorMap: Record<Status, StatusColors> = {
+  good: { bg: colors.sageTint, text: colors.sageDark },
+  strong: { bg: colors.sageTint, text: colors.sageDark },
+  signed: { bg: colors.sageTint, text: colors.sageDark },
+  delivered: { bg: colors.sageTint, text: colors.sageDark },
+  monitor: { bg: colors.terracottaTint, text: colors.terracottaInk },
+  "needs-attention": { bg: colors.dangerTint, text: colors.danger },
+  pending: { bg: colors.surfaceMuted, text: colors.inkMuted },
+  processing: { bg: colors.surfaceMuted, text: colors.inkMuted },
+  queued: { bg: colors.surfaceMuted, text: colors.inkMuted },
+  draft: { bg: colors.surfaceMuted, text: colors.inkMuted },
 };
-
-const SAGE: Status[] = ["good", "strong", "signed", "delivered"];
-const NEUTRAL: Status[] = ["capturing", "ai_drafted", "gp_review", "tcm_review", "neutral"];
 
 export interface StatusBadgeProps {
   status: Status;
   label?: string;
-  className?: string;
 }
 
-export function StatusBadge({ status, label, className }: StatusBadgeProps) {
-  const tone = SAGE.includes(status)
-    ? "bg-sage-tint text-sage-dark"
-    : status === "monitor"
-    ? "bg-terracotta-tint text-terracotta-ink"
-    : status === "needs-attention"
-    ? "bg-danger-tint text-danger"
-    : NEUTRAL.includes(status)
-    ? "bg-surface-muted text-ink-muted"
-    : "bg-surface-muted text-ink-muted";
+export function StatusBadge({ status, label }: StatusBadgeProps) {
+  const colorScheme = statusColorMap[status];
+  const displayLabel = label ?? status.replace("-", " ");
 
   return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full px-3 py-1 text-caption font-semibold whitespace-nowrap",
-        tone,
-        className
-      )}
-    >
-      {label ?? LABELS[status]}
-    </span>
+    <View style={[styles.container, { backgroundColor: colorScheme.bg }]}>
+      <Text style={[styles.text, { color: colorScheme.text }]}>
+        {displayLabel}
+      </Text>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.full,
+    alignSelf: "flex-start",
+  },
+  text: {
+    fontSize: fontSizes.caption,
+    fontWeight: fontWeights.semibold,
+    textTransform: "capitalize",
+  },
+});

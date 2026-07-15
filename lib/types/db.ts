@@ -1,9 +1,3 @@
-/**
- * Typed models mirroring the Supabase tables in AI_Wellness_BUILD_SPEC.md §5.
- * Table names and field names match the spec exactly so the mock repository
- * and the eventual Supabase repository can share these types unchanged.
- */
-
 export type Sex = "male" | "female" | "other";
 
 export interface Participant {
@@ -129,7 +123,6 @@ export interface FileRecord {
   extracted: boolean;
 }
 
-/** Convenience shape for list views that join participant + pipeline + capture completion. */
 export interface ParticipantSummary {
   participant: Participant;
   pipeline: Pipeline;

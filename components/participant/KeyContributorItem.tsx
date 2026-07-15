@@ -1,25 +1,43 @@
-import type { ReactNode } from "react";
-import { CheckCircle2, AlertTriangle } from "lucide-react";
-import { cn } from "@/lib/utils/cn";
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { CheckCircle2, AlertTriangle } from "lucide-react-native";
+import { colors, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
 
 export interface KeyContributorItemProps {
-  icon?: ReactNode;
   text: string;
   tone: "good" | "monitor";
 }
 
-export function KeyContributorItem({ icon, text, tone }: KeyContributorItemProps) {
+export function KeyContributorItem({ text, tone }: KeyContributorItemProps) {
+  const isGood = tone === "good";
+  const bgColor = isGood ? colors.sageTint : colors.terracottaTint;
+  const iconColor = isGood ? colors.sage : colors.terracotta;
+  const Icon = isGood ? CheckCircle2 : AlertTriangle;
+
   return (
-    <div
-      className={cn(
-        "flex items-start gap-3 rounded-lg p-3",
-        tone === "monitor" ? "bg-terracotta-tint" : "bg-sage-tint"
-      )}
-    >
-      <span className={tone === "monitor" ? "text-terracotta-ink" : "text-sage-dark"}>
-        {icon ?? (tone === "monitor" ? <AlertTriangle size={20} /> : <CheckCircle2 size={20} />)}
-      </span>
-      <p className={cn("text-body-md", tone === "monitor" ? "text-terracotta-ink" : "text-charcoal")}>{text}</p>
-    </div>
+    <View style={[styles.row, { backgroundColor: bgColor }]}>
+      <Icon size={18} color={iconColor} style={styles.icon} />
+      <Text style={styles.text}>{text}</Text>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: radii.sm,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+  },
+  icon: {
+    marginRight: spacing.sm,
+  },
+  text: {
+    flex: 1,
+    fontSize: fontSizes.bodyMd,
+    fontWeight: fontWeights.regular,
+    color: colors.charcoal,
+  },
+});

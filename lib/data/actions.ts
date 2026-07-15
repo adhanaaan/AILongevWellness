@@ -1,7 +1,4 @@
-"use server";
-
-import { revalidatePath } from "next/cache";
-import { repository, DEMO_PARTICIPANT_ID } from "@/lib/data/mock";
+import { repository, DEMO_PARTICIPANT_ID } from "./mock";
 import type {
   AiDraft,
   Biomarker,
@@ -10,22 +7,12 @@ import type {
   EnteredBy,
   Participant,
   ReviewStage,
-} from "@/lib/types/db";
+} from "../types/db";
 
-function revalidateParticipantSurfaces(participantId: string) {
-  revalidatePath("/");
-  revalidatePath("/capture");
-  revalidatePath("/card");
-  revalidatePath("/ava");
-  revalidatePath("/settings");
-  revalidatePath("/admin");
-  revalidatePath(`/admin/participants/${participantId}`);
-}
+export { DEMO_PARTICIPANT_ID };
 
 export async function updateParticipantAction(id: string, patch: Partial<Participant>) {
-  const result = await repository.updateParticipant(id, patch);
-  revalidateParticipantSurfaces(id);
-  return result;
+  return repository.updateParticipant(id, patch);
 }
 
 export async function updateCaptureChannelAction(
@@ -33,15 +20,11 @@ export async function updateCaptureChannelAction(
   channel: CaptureChannelName,
   patch: { status?: CaptureChannelStatus; entered_by?: EnteredBy }
 ) {
-  const result = await repository.updateCaptureChannel(participantId, channel, patch);
-  revalidateParticipantSurfaces(participantId);
-  return result;
+  return repository.updateCaptureChannel(participantId, channel, patch);
 }
 
 export async function submitCaptureAction(participantId: string = DEMO_PARTICIPANT_ID) {
-  const result = await repository.submitCapture(participantId);
-  revalidateParticipantSurfaces(participantId);
-  return result;
+  return repository.submitCapture(participantId);
 }
 
 export async function updateBiomarkerAction(
@@ -49,15 +32,11 @@ export async function updateBiomarkerAction(
   id: string,
   patch: Partial<Biomarker>
 ) {
-  const result = await repository.updateBiomarker(id, patch);
-  revalidateParticipantSurfaces(participantId);
-  return result;
+  return repository.updateBiomarker(id, patch);
 }
 
 export async function updateAiDraftAction(participantId: string, patch: Partial<AiDraft>) {
-  const result = await repository.updateAiDraft(participantId, patch);
-  revalidateParticipantSurfaces(participantId);
-  return result;
+  return repository.updateAiDraft(participantId, patch);
 }
 
 export async function signOffAction(
@@ -65,19 +44,13 @@ export async function signOffAction(
   stage: ReviewStage,
   data: { reviewer_name: string; reviewer_credential: string; notes: string }
 ) {
-  const result = await repository.signOff(participantId, stage, data);
-  revalidateParticipantSurfaces(participantId);
-  return result;
+  return repository.signOff(participantId, stage, data);
 }
 
 export async function releaseCardAction(participantId: string) {
-  const result = await repository.releaseCard(participantId);
-  revalidateParticipantSurfaces(participantId);
-  return result;
+  return repository.releaseCard(participantId);
 }
 
 export async function resolveAttentionAction(participantId: string) {
-  const result = await repository.resolveAttention(participantId);
-  revalidateParticipantSurfaces(participantId);
-  return result;
+  return repository.resolveAttention(participantId);
 }

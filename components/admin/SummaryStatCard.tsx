@@ -1,31 +1,61 @@
-import type { ReactNode } from "react";
-import { Card } from "@/components/ui/Card";
-import { cn } from "@/lib/utils/cn";
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { Card } from "@/components/ui";
+import { colors, fontSizes, fontWeights, spacing, radii } from "@/lib/theme/tokens";
 
-export interface SummaryStatCardProps {
-  icon: ReactNode;
+type Tone = "sage" | "terracotta" | "danger" | "neutral";
+
+interface SummaryStatCardProps {
+  icon: React.ReactNode;
   label: string;
   value: number | string;
-  tone?: "sage" | "terracotta" | "danger" | "neutral";
+  tone: Tone;
 }
 
-const TONE_CLASSES: Record<NonNullable<SummaryStatCardProps["tone"]>, string> = {
-  sage: "bg-sage-tint text-sage-dark",
-  terracotta: "bg-terracotta-tint text-terracotta-ink",
-  danger: "bg-danger-tint text-danger",
-  neutral: "bg-surface-muted text-ink-muted",
+const toneColors: Record<Tone, { bg: string; fg: string }> = {
+  sage: { bg: colors.sageTint, fg: colors.sageDark },
+  terracotta: { bg: colors.terracottaTint, fg: colors.terracottaInk },
+  danger: { bg: colors.dangerTint, fg: colors.danger },
+  neutral: { bg: colors.surfaceMuted, fg: colors.inkMuted },
 };
 
-export function SummaryStatCard({ icon, label, value, tone = "neutral" }: SummaryStatCardProps) {
+export function SummaryStatCard({ icon, label, value, tone }: SummaryStatCardProps) {
+  const scheme = toneColors[tone];
+
   return (
-    <Card className="flex items-center gap-4">
-      <span className={cn("flex h-11 w-11 items-center justify-center rounded-full", TONE_CLASSES[tone])}>
-        {icon}
-      </span>
-      <div>
-        <p className="text-headline-md text-charcoal">{value}</p>
-        <p className="text-caption text-ink-muted">{label}</p>
-      </div>
+    <Card>
+      <View style={styles.content}>
+        <View style={[styles.iconCircle, { backgroundColor: scheme.bg }]}>
+          {icon}
+        </View>
+        <Text style={styles.value}>{value}</Text>
+        <Text style={styles.label}>{label}</Text>
+      </View>
     </Card>
   );
 }
+
+const styles = StyleSheet.create({
+  content: {
+    alignItems: "center",
+  },
+  iconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: radii.full,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.md,
+  },
+  value: {
+    fontSize: fontSizes.headlineLg,
+    fontWeight: fontWeights.bold,
+    color: colors.charcoal,
+    marginBottom: spacing.xs,
+  },
+  label: {
+    fontSize: fontSizes.labelMd,
+    fontWeight: fontWeights.medium,
+    color: colors.inkMuted,
+  },
+});

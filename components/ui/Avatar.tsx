@@ -1,32 +1,74 @@
-import { cn } from "@/lib/utils/cn";
+import React from "react";
+import { View, Text, Image, StyleSheet } from "react-native";
+import { colors, fontSizes, fontWeights } from "@/lib/theme/tokens";
+
+export type AvatarSize = "sm" | "md" | "lg";
 
 export interface AvatarProps {
   src?: string;
   initials: string;
-  size?: "sm" | "md" | "lg";
-  className?: string;
+  size?: AvatarSize;
 }
 
-const SIZE_CLASSES = {
-  sm: "h-8 w-8 text-caption",
-  md: "h-10 w-10 text-label-md",
-  lg: "h-14 w-14 text-headline-md",
+const sizeMap: Record<AvatarSize, number> = {
+  sm: 32,
+  md: 40,
+  lg: 56,
 };
 
-export function Avatar({ src, initials, size = "md", className }: AvatarProps) {
-  if (src) {
-    // eslint-disable-next-line @next/next/no-img-element
-    return <img src={src} alt={initials} className={cn("rounded-full object-cover", SIZE_CLASSES[size], className)} />;
-  }
+const fontSizeMap: Record<AvatarSize, number> = {
+  sm: fontSizes.caption,
+  md: fontSizes.labelMd,
+  lg: fontSizes.bodyLg,
+};
+
+export function Avatar({ src, initials, size = "md" }: AvatarProps) {
+  const dimension = sizeMap[size];
+
   return (
-    <div
-      className={cn(
-        "flex items-center justify-center rounded-full bg-sage-tint font-semibold text-sage-dark",
-        SIZE_CLASSES[size],
-        className
-      )}
+    <View
+      style={[
+        styles.container,
+        {
+          width: dimension,
+          height: dimension,
+          borderRadius: dimension / 2,
+        },
+      ]}
     >
-      {initials}
-    </div>
+      {src ? (
+        <Image
+          source={{ uri: src }}
+          style={[
+            styles.image,
+            {
+              width: dimension,
+              height: dimension,
+              borderRadius: dimension / 2,
+            },
+          ]}
+        />
+      ) : (
+        <Text style={[styles.initials, { fontSize: fontSizeMap[size] }]}>
+          {initials}
+        </Text>
+      )}
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: colors.sageTint,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  image: {
+    resizeMode: "cover",
+  },
+  initials: {
+    color: colors.sageDark,
+    fontWeight: fontWeights.semibold,
+  },
+});
