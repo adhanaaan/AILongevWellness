@@ -9,12 +9,16 @@ import type { ParticipantSummary } from "@/lib/types/db";
 import { colors, fontSizes, spacing, radii } from "@/lib/theme/tokens";
 import { useRouter } from "expo-router";
 
-const SEGMENTS = ["All Reviews", "GP Review", "TCM Review"];
+const SEGMENTS = [
+  { value: "all", label: "All Reviews" },
+  { value: "gp_review", label: "GP Review" },
+  { value: "tcm_review", label: "TCM Review" },
+];
 
 export default function ReviewQueuePage() {
   const router = useRouter();
   const [summaries, setSummaries] = useState<ParticipantSummary[]>([]);
-  const [segment, setSegment] = useState(0);
+  const [segment, setSegment] = useState("all");
 
   useEffect(() => {
     repository.listParticipants().then(setSummaries);
@@ -28,8 +32,8 @@ export default function ReviewQueuePage() {
       (s) =>
         s.pipeline.state === "gp_review" || s.pipeline.state === "tcm_review"
     );
-    if (segment === 1) return reviewable.filter((s) => s.pipeline.state === "gp_review");
-    if (segment === 2) return reviewable.filter((s) => s.pipeline.state === "tcm_review");
+    if (segment === "gp_review") return reviewable.filter((s) => s.pipeline.state === "gp_review");
+    if (segment === "tcm_review") return reviewable.filter((s) => s.pipeline.state === "tcm_review");
     return reviewable;
   }, [summaries, segment]);
 
@@ -45,8 +49,8 @@ export default function ReviewQueuePage() {
 
       <View style={styles.segmentRow}>
         <SegmentedControl
-          segments={SEGMENTS}
-          selectedIndex={segment}
+          options={SEGMENTS}
+          value={segment}
           onChange={setSegment}
         />
       </View>
