@@ -1,6 +1,6 @@
 import React from "react";
 import { View, TouchableOpacity, Text, StyleSheet } from "react-native";
-import { colors, fontSizes, fontWeights, radii, shadows, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, radii, shadows, spacing } from "@/lib/theme/tokens";
 
 export interface SegmentOption {
   value: string;
@@ -59,12 +59,12 @@ const styles = StyleSheet.create({
     ...shadows.card,
   },
   label: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.labelMd,
-    fontWeight: fontWeights.medium,
     color: colors.inkMuted,
   },
   labelActive: {
-    color: colors.sageDark,
-    fontWeight: fontWeights.semibold,
+    fontFamily: fontFamilies.bodySemiBold,
+    color: colors.tealDark,
   },
 });

@@ -1,16 +1,16 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Input, Select } from "@/components/ui/Field";
+import { User } from "lucide-react-native";
+import { OnboardingStepper } from "@/components/layout/OnboardingStepper";
+import { Input } from "@/components/ui/Field";
 import { Chip } from "@/components/ui/Chip";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Toggle } from "@/components/ui/Toggle";
 import { Button } from "@/components/ui/Button";
 import { updateParticipantAction } from "@/lib/data/actions";
 import { DEMO_PARTICIPANT_ID } from "@/lib/data/mock";
-import { repository } from "@/lib/data/mock";
-import { colors, fontSizes, radii } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 
 const GOAL_OPTIONS = [
   "Longevity",
@@ -21,15 +21,61 @@ const GOAL_OPTIONS = [
   "Cardiovascular fitness",
 ];
 
+const SEX_OPTIONS = ["Male", "Female", "Other"];
+const EXERCISE_OPTIONS = ["Rarely", "Sometimes", "Regularly"];
+const ALCOHOL_OPTIONS = ["Never", "Occasionally", "Regularly"];
+
+function SectionHeader({ title }: { title: string }) {
+  return (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      <View style={styles.sectionLine} />
+    </View>
+  );
+}
+
+function OptionSelector({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: string[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <View style={styles.optionGroup}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <View style={styles.optionRow}>
+        {options.map((opt) => {
+          const isSelected = value.toLowerCase() === opt.toLowerCase();
+          return (
+            <TouchableOpacity
+              key={opt}
+              style={[styles.optionChip, isSelected && styles.optionChipSelected]}
+              onPress={() => onChange(opt.toLowerCase())}
+              activeOpacity={0.7}
+            >
+              <Text
+                style={[
+                  styles.optionChipText,
+                  isSelected && styles.optionChipTextSelected,
+                ]}
+              >
+                {opt}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </View>
+  );
+}
+
 export default function ProfilePage() {
   const router = useRouter();
-  const participant = React.useMemo(
-    () => {
-      const p = repository.getParticipant(DEMO_PARTICIPANT_ID);
-      return p;
-    },
-    []
-  );
 
   const [enteredBy, setEnteredBy] = useState("me");
   const [name, setName] = useState("James Chen");
@@ -37,7 +83,11 @@ export default function ProfilePage() {
   const [sex, setSex] = useState("male");
   const [height, setHeight] = useState("178");
   const [weight, setWeight] = useState("82");
-  const [goals, setGoals] = useState<string[]>(["Longevity", "Energy & focus", "Cardiovascular fitness"]);
+  const [goals, setGoals] = useState<string[]>([
+    "Longevity",
+    "Energy & focus",
+    "Cardiovascular fitness",
+  ]);
   const [exercise, setExercise] = useState("regularly");
   const [smoking, setSmoking] = useState(false);
   const [alcohol, setAlcohol] = useState("occasionally");
@@ -67,14 +117,18 @@ export default function ProfilePage() {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <OnboardingStepper>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
+        <View style={styles.headerIcon}>
+          <User size={24} color={colors.teal} />
+        </View>
+
         <View style={styles.headerRow}>
-          <Text style={styles.title}>Your profile</Text>
+          <Text style={styles.title}>Your Profile</Text>
           <SegmentedControl
             options={[
               { value: "me", label: "Me" },
@@ -86,9 +140,11 @@ export default function ProfilePage() {
         </View>
         <Text style={styles.subtitle}>
           {enteredBy === "me"
-            ? "Fill this in yourself."
+            ? "Tell us about yourself to personalise your wellness assessment."
             : "A care team member is entering this on your behalf."}
         </Text>
+
+        <SectionHeader title="Personal Information" />
 
         <View style={styles.form}>
           <Input label="Full name" value={name} onChangeText={setName} />
@@ -102,11 +158,11 @@ export default function ProfilePage() {
               />
             </View>
             <View style={styles.halfField}>
-              <Input
+              <OptionSelector
                 label="Sex"
+                options={SEX_OPTIONS}
                 value={sex}
-                onChangeText={setSex}
-                placeholder="male / female / other"
+                onChange={setSex}
               />
             </View>
           </View>
@@ -128,41 +184,41 @@ export default function ProfilePage() {
               />
             </View>
           </View>
+        </View>
 
-          <View>
-            <Text style={styles.fieldLabel}>Goals</Text>
-            <View style={styles.chips}>
-              {GOAL_OPTIONS.map((goal) => (
-                <Chip
-                  key={goal}
-                  selected={goals.includes(goal)}
-                  onToggle={() => toggleGoal(goal)}
-                >
-                  {goal}
-                </Chip>
-              ))}
-            </View>
-          </View>
+        <SectionHeader title="Wellness Goals" />
 
-          <View style={styles.healthBox}>
-            <Text style={styles.fieldLabel}>Basic health</Text>
-            <Input
-              label="Exercise frequency"
-              value={exercise}
-              onChangeText={setExercise}
-              placeholder="rarely / sometimes / regularly"
-            />
-            <View style={styles.toggleRow}>
-              <Text style={styles.toggleLabel}>Smoking</Text>
-              <Toggle checked={smoking} onChange={setSmoking} label="Smoking" />
-            </View>
-            <Input
-              label="Alcohol"
-              value={alcohol}
-              onChangeText={setAlcohol}
-              placeholder="never / occasionally / regularly"
-            />
+        <View style={styles.chips}>
+          {GOAL_OPTIONS.map((goal) => (
+            <Chip
+              key={goal}
+              selected={goals.includes(goal)}
+              onToggle={() => toggleGoal(goal)}
+            >
+              {goal}
+            </Chip>
+          ))}
+        </View>
+
+        <SectionHeader title="Lifestyle" />
+
+        <View style={styles.lifestyleSection}>
+          <OptionSelector
+            label="Exercise frequency"
+            options={EXERCISE_OPTIONS}
+            value={exercise}
+            onChange={setExercise}
+          />
+          <View style={styles.toggleRow}>
+            <Text style={styles.toggleLabel}>Smoking</Text>
+            <Toggle checked={smoking} onChange={setSmoking} label="" />
           </View>
+          <OptionSelector
+            label="Alcohol consumption"
+            options={ALCOHOL_OPTIONS}
+            value={alcohol}
+            onChange={setAlcohol}
+          />
         </View>
       </ScrollView>
 
@@ -171,23 +227,25 @@ export default function ProfilePage() {
           Continue to capture
         </Button>
       </View>
-    </SafeAreaView>
+    </OnboardingStepper>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.bone,
-    maxWidth: 448,
-    alignSelf: "center",
-    width: "100%",
-  },
   scroll: { flex: 1 },
   scrollContent: {
-    paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 16,
+    paddingHorizontal: spacing["2xl"],
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.lg,
+  },
+  headerIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: colors.tealTint,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.lg,
   },
   headerRow: {
     flexDirection: "row",
@@ -195,56 +253,106 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   title: {
-    fontSize: fontSizes.headlineLg,
-    fontWeight: "600",
-    color: colors.charcoal,
+    fontFamily: fontFamilies.displayBold,
+    fontSize: fontSizes.headlineMd,
+    color: colors.ink,
+    letterSpacing: -0.3,
   },
   subtitle: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.inkMuted,
-    marginTop: 8,
+    marginTop: spacing.sm,
+    lineHeight: 24,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    marginTop: spacing["2xl"],
+    marginBottom: spacing.lg,
+  },
+  sectionTitle: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+  sectionLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
   },
   form: {
-    marginTop: 24,
-    gap: 16,
+    gap: spacing.lg,
   },
   row: {
     flexDirection: "row",
-    gap: 12,
+    gap: spacing.md,
   },
   halfField: {
     flex: 1,
   },
   fieldLabel: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.labelMd,
-    fontWeight: "600",
-    color: colors.charcoal,
-    marginBottom: 8,
+    color: colors.ink,
+    marginBottom: spacing.sm,
   },
   chips: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 8,
+    gap: spacing.sm,
   },
-  healthBox: {
+  lifestyleSection: {
+    gap: spacing.lg,
+  },
+  optionGroup: {},
+  optionRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+  },
+  optionChip: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    alignItems: "center",
+    borderRadius: radii.sm,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: 16,
-    gap: 12,
+  },
+  optionChipSelected: {
+    backgroundColor: colors.tealTint,
+    borderColor: colors.teal,
+  },
+  optionChipText: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.labelMd,
+    color: colors.inkMuted,
+  },
+  optionChipTextSelected: {
+    fontFamily: fontFamilies.bodySemiBold,
+    color: colors.tealDark,
   },
   toggleRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    backgroundColor: colors.surface,
+    borderRadius: radii.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
   toggleLabel: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.bodyMd,
-    color: colors.charcoal,
+    color: colors.ink,
   },
   footer: {
-    paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingHorizontal: spacing["2xl"],
+    paddingVertical: spacing.lg,
   },
 });
