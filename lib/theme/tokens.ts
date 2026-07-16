@@ -106,10 +106,10 @@ export const colors = {
 // ─── Typography ───
 
 export const fontFamilies = {
-  display: "Lora_400Regular",
-  displayMedium: "Lora_500Medium",
-  displaySemiBold: "Lora_600SemiBold",
-  displayBold: "Lora_700Bold",
+  display: "Manrope_600SemiBold",
+  displayMedium: "Manrope_600SemiBold",
+  displaySemiBold: "Manrope_700Bold",
+  displayBold: "Manrope_800ExtraBold",
   body: "PlusJakartaSans_400Regular",
   bodyMedium: "PlusJakartaSans_500Medium",
   bodySemiBold: "PlusJakartaSans_600SemiBold",
