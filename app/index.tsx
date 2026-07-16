@@ -1,10 +1,10 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { ScanLine } from "lucide-react-native";
+import { Activity } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
-import { colors, fontSizes } from "@/lib/theme/tokens";
+import { colors, fontSizes, fontWeights, spacing } from "@/lib/theme/tokens";
 
 export default function WelcomePage() {
   const router = useRouter();
@@ -12,27 +12,31 @@ export default function WelcomePage() {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
-        <Text style={styles.brand}>AI WELLNESS</Text>
-        <Text style={styles.title}>Your personalised longevity snapshot</Text>
-        <Text style={styles.subtitle}>
-          A guided wellness check — about 30 minutes.
-        </Text>
+        <View style={styles.hero}>
+          <View style={styles.iconCircle}>
+            <Activity size={28} color={colors.teal} />
+          </View>
+          <Text style={styles.brand}>EXECUTIVE HEALTH</Text>
+          <Text style={styles.title}>
+            Your Executive{"\n"}Health Intelligence
+          </Text>
+          <Text style={styles.subtitle}>
+            A comprehensive wellness assessment powered by AI — personalised
+            insights in about 30 minutes.
+          </Text>
+        </View>
 
         <View style={styles.actions}>
           <Button
             size="lg"
             onPress={() => router.push("/onboarding/consent")}
           >
-            Begin
+            Begin Assessment
           </Button>
-          <Button
-            size="lg"
-            variant="secondary"
-            iconLeft={<ScanLine size={18} color={colors.sage} />}
-            onPress={() => router.push("/onboarding/consent")}
-          >
-            Scan the retreat QR code to start
-          </Button>
+          <Text style={styles.hint}>
+            Your data is encrypted and handled in accordance with our privacy
+            policy.
+          </Text>
         </View>
       </View>
     </SafeAreaView>
@@ -42,39 +46,61 @@ export default function WelcomePage() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: colors.bone,
+    backgroundColor: colors.navy,
   },
   container: {
     flex: 1,
+    justifyContent: "space-between",
+    paddingHorizontal: spacing["3xl"],
+    paddingTop: spacing["6xl"],
+    paddingBottom: spacing["4xl"],
+  },
+  hero: {
+    alignItems: "center",
+    marginTop: spacing["6xl"],
+  },
+  iconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "rgba(42, 175, 170, 0.12)",
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal: 24,
+    marginBottom: spacing["3xl"],
   },
   brand: {
-    fontSize: fontSizes.labelMd,
-    fontWeight: "600",
-    letterSpacing: 2,
-    color: colors.sageDark,
+    fontSize: fontSizes.overline,
+    fontWeight: fontWeights.semibold,
+    letterSpacing: 3,
+    color: colors.teal,
+    marginBottom: spacing.lg,
   },
   title: {
     fontSize: fontSizes.headlineLg,
-    fontWeight: "600",
-    color: colors.charcoal,
+    fontWeight: fontWeights.bold,
+    color: colors.inkOnDark,
     textAlign: "center",
-    marginTop: 16,
-    letterSpacing: -0.3,
+    lineHeight: 40,
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: fontSizes.bodyMd,
-    color: colors.inkMuted,
+    color: colors.inkOnDarkMuted,
     textAlign: "center",
-    marginTop: 12,
-    maxWidth: 280,
+    marginTop: spacing.lg,
+    lineHeight: 24,
+    maxWidth: 300,
   },
   actions: {
     width: "100%",
-    maxWidth: 320,
-    marginTop: 40,
-    gap: 12,
+    gap: spacing.lg,
+    alignItems: "center",
+  },
+  hint: {
+    fontSize: fontSizes.caption,
+    color: colors.inkOnDarkMuted,
+    textAlign: "center",
+    maxWidth: 260,
+    lineHeight: 18,
   },
 });

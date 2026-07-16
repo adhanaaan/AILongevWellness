@@ -2,7 +2,7 @@ import React from "react";
 import { View, StyleSheet } from "react-native";
 import { colors, radii } from "@/lib/theme/tokens";
 
-export type ProgressBarTone = "sage" | "terracotta";
+export type ProgressBarTone = "teal" | "warning" | "sage" | "terracotta";
 
 export interface ProgressBarProps {
   value: number; // 0-100
@@ -10,11 +10,13 @@ export interface ProgressBarProps {
 }
 
 const toneColors: Record<ProgressBarTone, string> = {
-  sage: colors.sage,
-  terracotta: colors.terracotta,
+  teal: colors.teal,
+  warning: colors.warning,
+  sage: colors.teal,
+  terracotta: colors.warning,
 };
 
-export function ProgressBar({ value, tone = "sage" }: ProgressBarProps) {
+export function ProgressBar({ value, tone = "teal" }: ProgressBarProps) {
   const clamped = Math.max(0, Math.min(100, value));
 
   return (

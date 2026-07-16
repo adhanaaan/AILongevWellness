@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: fontSizes.labelMd,
     fontWeight: fontWeights.medium,
-    color: colors.charcoal,
+    color: colors.ink,
     marginBottom: spacing.xs,
   },
   input: {
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     fontSize: fontSizes.bodyMd,
-    color: colors.charcoal,
+    color: colors.ink,
     backgroundColor: colors.surface,
   },
   inputError: {

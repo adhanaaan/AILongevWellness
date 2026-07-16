@@ -1,8 +1,9 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { usePathname } from "expo-router";
-import { colors } from "@/lib/theme/tokens";
+import { useRouter, usePathname } from "expo-router";
+import { ChevronLeft } from "lucide-react-native";
+import { colors, fontSizes, fontWeights, spacing } from "@/lib/theme/tokens";
 
 const STEPS = [
   { href: "/", label: "Welcome" },
@@ -17,24 +18,42 @@ interface OnboardingStepperProps {
 
 export function OnboardingStepper({ children }: OnboardingStepperProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const activeIndex = Math.max(
     0,
     STEPS.findIndex((s) => s.href === pathname)
   );
 
+  const canGoBack = activeIndex > 0;
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
-      <View style={styles.dots}>
+      <View style={styles.header}>
+        {canGoBack ? (
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+            activeOpacity={0.7}
+          >
+            <ChevronLeft size={20} color={colors.ink} />
+            <Text style={styles.backLabel}>Back</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.backPlaceholder} />
+        )}
+        <Text style={styles.stepLabel}>
+          Step {activeIndex + 1} of {STEPS.length}
+        </Text>
+      </View>
+      <View style={styles.progressTrack}>
         {STEPS.map((step, i) => (
           <View
             key={step.href}
             style={[
-              styles.dot,
-              i === activeIndex
-                ? styles.dotActive
-                : i < activeIndex
-                ? styles.dotDone
-                : styles.dotFuture,
+              styles.progressSegment,
+              i <= activeIndex
+                ? styles.segmentActive
+                : styles.segmentInactive,
             ]}
           />
         ))}
@@ -47,38 +66,55 @@ export function OnboardingStepper({ children }: OnboardingStepperProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bone,
+    backgroundColor: colors.cloud,
     maxWidth: 448,
     alignSelf: "center",
     width: "100%",
   },
-  dots: {
+  header: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingHorizontal: 20,
-    paddingTop: 24,
+    justifyContent: "space-between",
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.sm,
   },
-  dot: {
-    height: 6,
-    borderRadius: 3,
+  backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
   },
-  dotActive: {
-    width: 32,
-    backgroundColor: colors.sage,
+  backLabel: {
+    fontSize: fontSizes.labelMd,
+    fontWeight: fontWeights.medium,
+    color: colors.ink,
   },
-  dotDone: {
-    width: 16,
-    backgroundColor: colors.sageDark,
+  backPlaceholder: {
+    width: 60,
   },
-  dotFuture: {
-    width: 16,
-    backgroundColor: colors.surfaceMuted,
+  stepLabel: {
+    fontSize: fontSizes.caption,
+    fontWeight: fontWeights.medium,
+    color: colors.inkMuted,
+  },
+  progressTrack: {
+    flexDirection: "row",
+    gap: spacing.xs,
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.lg,
+  },
+  progressSegment: {
+    flex: 1,
+    height: 3,
+    borderRadius: 2,
+  },
+  segmentActive: {
+    backgroundColor: colors.teal,
+  },
+  segmentInactive: {
+    backgroundColor: colors.border,
   },
   content: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingVertical: 32,
   },
 });

@@ -59,7 +59,7 @@ export function Avatar({ src, initials, size = "md" }: AvatarProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.sageTint,
+    backgroundColor: colors.tealTint,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
   },
   initials: {
-    color: colors.sageDark,
+    color: colors.tealDark,
     fontWeight: fontWeights.semibold,
   },
 });

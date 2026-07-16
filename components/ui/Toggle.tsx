@@ -38,7 +38,7 @@ export function Toggle({ checked, onChange, label }: ToggleProps) {
 
   const trackBg = animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [colors.surfaceMuted, colors.sage],
+    outputRange: [colors.surfaceMuted, colors.teal],
   });
 
   return (
@@ -84,6 +84,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: fontSizes.bodyMd,
     fontWeight: fontWeights.medium,
-    color: colors.charcoal,
+    color: colors.ink,
   },
 });

@@ -29,8 +29,8 @@ export function CaptureChannelCard({
 }: CaptureChannelCardProps) {
   const statusColors: Record<string, ViewStyle> = {
     empty: { backgroundColor: colors.surfaceMuted },
-    partial: { backgroundColor: colors.terracottaTint },
-    complete: { backgroundColor: colors.sageTint },
+    partial: { backgroundColor: colors.warningTint },
+    complete: { backgroundColor: colors.tealTint },
   };
 
   const statusLabels: Record<string, string> = {
@@ -41,8 +41,8 @@ export function CaptureChannelCard({
 
   const statusTextColors: Record<string, string> = {
     empty: colors.inkMuted,
-    partial: colors.terracottaInk,
-    complete: colors.sageDark,
+    partial: colors.metabolicDark,
+    complete: colors.tealDark,
   };
 
   return (
@@ -75,7 +75,7 @@ export function CaptureChannelCard({
 
 const styles = StyleSheet.create({
   highlighted: {
-    borderColor: colors.sage,
+    borderColor: colors.teal,
     borderWidth: 2,
   },
   topRow: {
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: fontSizes.bodyMd,
     fontWeight: fontWeights.semibold,
-    color: colors.charcoal,
+    color: colors.ink,
     marginBottom: spacing.xs,
   },
   description: {

@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   selected: {
-    backgroundColor: colors.sage,
+    backgroundColor: colors.teal,
   },
   unselected: {
     backgroundColor: colors.surface,
@@ -45,6 +45,6 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   unselectedText: {
-    color: colors.charcoal,
+    color: colors.ink,
   },
 });

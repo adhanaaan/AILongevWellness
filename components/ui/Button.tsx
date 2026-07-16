@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   primaryContainer: {
-    backgroundColor: colors.sage,
+    backgroundColor: colors.teal,
   },
   secondaryContainer: {
     backgroundColor: colors.transparent,
@@ -110,10 +110,10 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   secondaryText: {
-    color: colors.sage,
+    color: colors.teal,
   },
   ghostText: {
-    color: colors.sage,
+    color: colors.teal,
   },
   iconLeft: {
     marginRight: spacing.sm,

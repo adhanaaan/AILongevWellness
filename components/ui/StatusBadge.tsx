@@ -20,11 +20,11 @@ interface StatusColors {
 }
 
 const statusColorMap: Record<Status, StatusColors> = {
-  good: { bg: colors.sageTint, text: colors.sageDark },
-  strong: { bg: colors.sageTint, text: colors.sageDark },
-  signed: { bg: colors.sageTint, text: colors.sageDark },
-  delivered: { bg: colors.sageTint, text: colors.sageDark },
-  monitor: { bg: colors.terracottaTint, text: colors.terracottaInk },
+  good: { bg: colors.tealTint, text: colors.tealDark },
+  strong: { bg: colors.tealTint, text: colors.tealDark },
+  signed: { bg: colors.tealTint, text: colors.tealDark },
+  delivered: { bg: colors.tealTint, text: colors.tealDark },
+  monitor: { bg: colors.warningTint, text: colors.metabolicDark },
   "needs-attention": { bg: colors.dangerTint, text: colors.danger },
   pending: { bg: colors.surfaceMuted, text: colors.inkMuted },
   processing: { bg: colors.surfaceMuted, text: colors.inkMuted },

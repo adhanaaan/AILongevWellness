@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
     color: colors.inkMuted,
   },
   labelActive: {
-    color: colors.sageDark,
+    color: colors.tealDark,
     fontWeight: fontWeights.semibold,
   },
 });
