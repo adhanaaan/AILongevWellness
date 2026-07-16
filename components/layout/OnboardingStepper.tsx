@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, usePathname } from "expo-router";
 import { ChevronLeft } from "lucide-react-native";
+import { GradientOrb } from "@/components/ui/GradientOrb";
 import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 
 const STEPS = [
@@ -28,6 +29,8 @@ export function OnboardingStepper({ children }: OnboardingStepperProps) {
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
+      <GradientOrb tone="teal" size={280} style={styles.orbTopLeft} />
+      <GradientOrb tone="amber" size={260} style={styles.orbBottomRight} />
       <View style={styles.header}>
         {canGoBack ? (
           <TouchableOpacity
@@ -70,6 +73,17 @@ const styles = StyleSheet.create({
     maxWidth: 448,
     alignSelf: "center",
     width: "100%",
+    overflow: "hidden",
+  },
+  orbTopLeft: {
+    top: -80,
+    left: -100,
+    opacity: 0.5,
+  },
+  orbBottomRight: {
+    bottom: -60,
+    right: -100,
+    opacity: 0.4,
   },
   header: {
     flexDirection: "row",
