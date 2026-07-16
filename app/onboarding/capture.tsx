@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { FileEdit, Watch, PersonStanding, FileText, Brain } from "lucide-react-native";
+import { OnboardingStepper } from "@/components/layout/OnboardingStepper";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Button } from "@/components/ui/Button";
 import { CaptureChannelCard } from "@/components/participant/CaptureChannelCard";
@@ -13,7 +13,7 @@ import {
 } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import type { CaptureChannel, CaptureChannelName } from "@/lib/types/db";
-import { colors, fontSizes } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 
 const CHANNEL_META: Record<
   CaptureChannelName,
@@ -124,28 +124,31 @@ export default function CapturePage() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <OnboardingStepper>
         <View style={styles.center}>
           <Text style={styles.loadingText}>Loading...</Text>
         </View>
-      </SafeAreaView>
+      </OnboardingStepper>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <OnboardingStepper>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
       >
-        <Text style={styles.title}>Data capture</Text>
+        <Text style={styles.title}>Data Capture</Text>
         <Text style={styles.subtitle}>
-          Complete each channel to build your snapshot.
+          Complete each channel to build your wellness snapshot.
         </Text>
 
         <View style={styles.progressSection}>
+          <View style={styles.progressHeader}>
+            <Text style={styles.progressLabel}>Progress</Text>
+            <Text style={styles.progressPct}>{pct}%</Text>
+          </View>
           <ProgressBar value={pct} />
-          <Text style={styles.progressLabel}>{pct}% complete</Text>
         </View>
 
         <View style={styles.cards}>
@@ -158,7 +161,7 @@ export default function CapturePage() {
                 icon={
                   <IconComp
                     size={20}
-                    color={meta.highlight ? colors.white : colors.sageDark}
+                    color={meta.highlight ? colors.white : colors.tealDark}
                   />
                 }
                 title={meta.title}
@@ -187,9 +190,7 @@ export default function CapturePage() {
       </ScrollView>
 
       <View style={styles.footer}>
-        {submitError && (
-          <Text style={styles.error}>{submitError}</Text>
-        )}
+        {submitError && <Text style={styles.error}>{submitError}</Text>}
         <Button
           size="lg"
           disabled={!allComplete || submitting}
@@ -198,48 +199,65 @@ export default function CapturePage() {
           Review my snapshot
         </Button>
       </View>
-    </SafeAreaView>
+    </OnboardingStepper>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: colors.bone,
-    maxWidth: 448,
-    alignSelf: "center",
-    width: "100%",
-  },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  loadingText: { fontSize: fontSizes.bodyMd, color: colors.inkMuted },
+  loadingText: { fontFamily: fontFamilies.body, fontSize: fontSizes.bodyMd, color: colors.inkMuted },
   scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: 24, paddingTop: 32, paddingBottom: 16 },
+  scrollContent: {
+    paddingHorizontal: spacing["2xl"],
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.lg,
+  },
   title: {
-    fontSize: fontSizes.headlineLg,
-    fontWeight: "600",
-    color: colors.charcoal,
+    fontFamily: fontFamilies.displayBold,
+    fontSize: fontSizes.headlineMd,
+    color: colors.ink,
+    letterSpacing: -0.3,
   },
   subtitle: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.inkMuted,
-    marginTop: 4,
+    marginTop: spacing.sm,
+    lineHeight: 24,
   },
-  progressSection: { marginTop: 16 },
+  progressSection: {
+    marginTop: spacing.xl,
+    marginBottom: spacing.sm,
+  },
+  progressHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing.sm,
+  },
   progressLabel: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
-    marginTop: 4,
   },
-  cards: { marginTop: 20, gap: 12 },
+  progressPct: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.caption,
+    color: colors.teal,
+  },
+  cards: { marginTop: spacing.lg, gap: spacing.md },
   hint: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
-    marginTop: 16,
+    marginTop: spacing.lg,
+    lineHeight: 18,
   },
-  footer: { paddingHorizontal: 24, paddingVertical: 16 },
+  footer: { paddingHorizontal: spacing["2xl"], paddingVertical: spacing.lg },
   error: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.danger,
-    marginBottom: 8,
+    marginBottom: spacing.sm,
   },
 });
