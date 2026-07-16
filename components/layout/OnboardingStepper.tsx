@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, usePathname } from "expo-router";
 import { ChevronLeft } from "lucide-react-native";
-import { colors, fontSizes, fontWeights, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 
 const STEPS = [
   { href: "/", label: "Welcome" },
@@ -85,16 +85,16 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   backLabel: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.labelMd,
-    fontWeight: fontWeights.medium,
     color: colors.ink,
   },
   backPlaceholder: {
     width: 60,
   },
   stepLabel: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.caption,
-    fontWeight: fontWeights.medium,
     color: colors.inkMuted,
   },
   progressTrack: {

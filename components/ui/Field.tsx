@@ -7,7 +7,7 @@ import {
   type TextInputProps,
   type ViewStyle,
 } from "react-native";
-import { colors, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 
 /* ---------- shared label / error wrapper ---------- */
 
@@ -107,12 +107,13 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   label: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.labelMd,
-    fontWeight: fontWeights.medium,
     color: colors.ink,
     marginBottom: spacing.xs,
   },
   input: {
+    fontFamily: fontFamilies.body,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radii.md,
@@ -129,6 +130,7 @@ const styles = StyleSheet.create({
     minHeight: 100,
   },
   error: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.danger,
   },

@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, type ViewStyle } from "react-native";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { colors, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 
 export interface CaptureChannelCardProps {
   icon: React.ReactNode;
@@ -96,14 +96,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.bodyMd,
-    fontWeight: fontWeights.semibold,
     color: colors.ink,
     marginBottom: spacing.xs,
   },
   description: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.labelMd,
-    fontWeight: fontWeights.regular,
     color: colors.inkMuted,
   },
   metaRow: {
@@ -118,12 +118,12 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   statusText: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.caption,
-    fontWeight: fontWeights.medium,
   },
   metaText: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
-    fontWeight: fontWeights.regular,
     color: colors.inkMuted,
   },
   metaDivider: {

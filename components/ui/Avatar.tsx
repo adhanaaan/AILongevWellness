@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, Image, StyleSheet } from "react-native";
-import { colors, fontSizes, fontWeights } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes } from "@/lib/theme/tokens";
 
 export type AvatarSize = "sm" | "md" | "lg";
 
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
   },
   initials: {
+    fontFamily: fontFamilies.bodySemiBold,
     color: colors.tealDark,
-    fontWeight: fontWeights.semibold,
   },
 });

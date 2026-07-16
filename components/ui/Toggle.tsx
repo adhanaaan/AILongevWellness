@@ -6,7 +6,7 @@ import {
   Animated,
   StyleSheet,
 } from "react-native";
-import { colors, fontSizes, fontWeights, radii, shadows, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, radii, shadows, spacing } from "@/lib/theme/tokens";
 
 export interface ToggleProps {
   checked: boolean;
@@ -82,8 +82,8 @@ const styles = StyleSheet.create({
     ...shadows.card,
   },
   label: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.bodyMd,
-    fontWeight: fontWeights.medium,
     color: colors.ink,
   },
 });

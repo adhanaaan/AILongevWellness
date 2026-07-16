@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { colors, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 
 export type Status =
   | "good"
@@ -58,8 +58,8 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   text: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.caption,
-    fontWeight: fontWeights.semibold,
     textTransform: "capitalize",
   },
 });

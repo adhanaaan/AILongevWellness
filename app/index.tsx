@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { Activity } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
-import { colors, fontSizes, fontWeights, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, fontWeights, spacing } from "@/lib/theme/tokens";
 
 export default function WelcomePage() {
   const router = useRouter();
@@ -69,21 +69,22 @@ const styles = StyleSheet.create({
     marginBottom: spacing["3xl"],
   },
   brand: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.overline,
-    fontWeight: fontWeights.semibold,
     letterSpacing: 3,
     color: colors.teal,
     marginBottom: spacing.lg,
   },
   title: {
+    fontFamily: fontFamilies.displayBold,
     fontSize: fontSizes.headlineLg,
-    fontWeight: fontWeights.bold,
     color: colors.inkOnDark,
     textAlign: "center",
     lineHeight: 40,
     letterSpacing: -0.5,
   },
   subtitle: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.inkOnDarkMuted,
     textAlign: "center",
@@ -97,6 +98,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   hint: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.inkOnDarkMuted,
     textAlign: "center",

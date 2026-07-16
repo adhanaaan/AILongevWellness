@@ -13,7 +13,7 @@ import {
 } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import type { CaptureChannel, CaptureChannelName } from "@/lib/types/db";
-import { colors, fontSizes, fontWeights, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 
 const CHANNEL_META: Record<
   CaptureChannelName,
@@ -205,7 +205,7 @@ export default function CapturePage() {
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  loadingText: { fontSize: fontSizes.bodyMd, color: colors.inkMuted },
+  loadingText: { fontFamily: fontFamilies.body, fontSize: fontSizes.bodyMd, color: colors.inkMuted },
   scroll: { flex: 1 },
   scrollContent: {
     paddingHorizontal: spacing["2xl"],
@@ -213,12 +213,13 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.lg,
   },
   title: {
+    fontFamily: fontFamilies.displayBold,
     fontSize: fontSizes.headlineMd,
-    fontWeight: fontWeights.bold,
     color: colors.ink,
     letterSpacing: -0.3,
   },
   subtitle: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.inkMuted,
     marginTop: spacing.sm,
@@ -235,17 +236,18 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   progressLabel: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.caption,
-    fontWeight: fontWeights.medium,
     color: colors.inkMuted,
   },
   progressPct: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.caption,
-    fontWeight: fontWeights.semibold,
     color: colors.teal,
   },
   cards: { marginTop: spacing.lg, gap: spacing.md },
   hint: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
     marginTop: spacing.lg,
@@ -253,6 +255,7 @@ const styles = StyleSheet.create({
   },
   footer: { paddingHorizontal: spacing["2xl"], paddingVertical: spacing.lg },
   error: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.danger,
     marginBottom: spacing.sm,

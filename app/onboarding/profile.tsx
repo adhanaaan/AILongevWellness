@@ -10,7 +10,7 @@ import { Toggle } from "@/components/ui/Toggle";
 import { Button } from "@/components/ui/Button";
 import { updateParticipantAction } from "@/lib/data/actions";
 import { DEMO_PARTICIPANT_ID } from "@/lib/data/mock";
-import { colors, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 
 const GOAL_OPTIONS = [
   "Longevity",
@@ -253,12 +253,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   title: {
+    fontFamily: fontFamilies.displayBold,
     fontSize: fontSizes.headlineMd,
-    fontWeight: fontWeights.bold,
     color: colors.ink,
     letterSpacing: -0.3,
   },
   subtitle: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.inkMuted,
     marginTop: spacing.sm,
@@ -272,8 +273,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   sectionTitle: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.caption,
-    fontWeight: fontWeights.semibold,
     color: colors.inkMuted,
     letterSpacing: 0.5,
     textTransform: "uppercase",
@@ -294,8 +295,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   fieldLabel: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.labelMd,
-    fontWeight: fontWeights.medium,
     color: colors.ink,
     marginBottom: spacing.sm,
   },
@@ -326,13 +327,13 @@ const styles = StyleSheet.create({
     borderColor: colors.teal,
   },
   optionChipText: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.labelMd,
-    fontWeight: fontWeights.medium,
     color: colors.inkMuted,
   },
   optionChipTextSelected: {
+    fontFamily: fontFamilies.bodySemiBold,
     color: colors.tealDark,
-    fontWeight: fontWeights.semibold,
   },
   toggleRow: {
     flexDirection: "row",
@@ -346,8 +347,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   toggleLabel: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.bodyMd,
-    fontWeight: fontWeights.medium,
     color: colors.ink,
   },
   footer: {

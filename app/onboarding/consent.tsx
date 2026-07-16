@@ -2,10 +2,9 @@ import React, { useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { Check, ShieldCheck } from "lucide-react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { OnboardingStepper } from "@/components/layout/OnboardingStepper";
 import { Button } from "@/components/ui/Button";
-import { colors, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 
 const ITEMS = [
   {
@@ -112,12 +111,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   title: {
+    fontFamily: fontFamilies.displayBold,
     fontSize: fontSizes.headlineMd,
-    fontWeight: fontWeights.bold,
     color: colors.ink,
     letterSpacing: -0.3,
   },
   subtitle: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.inkMuted,
     marginTop: spacing.sm,
@@ -159,12 +159,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   itemTitle: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.bodyMd,
-    fontWeight: fontWeights.semibold,
     color: colors.ink,
     marginBottom: spacing.xs,
   },
   itemDescription: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.labelMd,
     color: colors.inkMuted,
     lineHeight: 20,
