@@ -6,6 +6,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { GradientOrb } from "@/components/ui/GradientOrb";
+import { VideoHero } from "@/components/ui/VideoHero";
+import { HERO_VIDEO_SOURCE } from "@/lib/config/media";
 import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 
 const TRUST_ITEMS = [
@@ -14,66 +16,86 @@ const TRUST_ITEMS = [
   { icon: UserCheck, label: "Care team reviewed" },
 ];
 
+function AmbientFallback() {
+  return (
+    <>
+      <GradientOrb tone="teal" size={420} style={styles.fallbackOrbTop} />
+      <GradientOrb tone="amber" size={360} style={styles.fallbackOrbBottom} />
+    </>
+  );
+}
+
 export default function WelcomePage() {
   const router = useRouter();
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.container}>
-        <View style={styles.hero}>
-          <View style={styles.iconWrap}>
-            <GradientOrb tone="teal" size={200} />
-            <GlassCard tint="dark" padding="none" radius="full" style={styles.iconCircle}>
-              <Activity size={28} color={colors.teal} />
-            </GlassCard>
-          </View>
-          <Text style={styles.brand}>EXECUTIVE HEALTH</Text>
-          <Text style={styles.title}>
-            Your Executive{"\n"}Health Intelligence
-          </Text>
-          <Text style={styles.subtitle}>
-            A comprehensive wellness assessment powered by AI — personalised
-            insights in about 30 minutes.
-          </Text>
-
-          <View style={styles.trustRow}>
-            {TRUST_ITEMS.map(({ icon: Icon, label }) => (
-              <GlassCard
-                key={label}
-                tint="dark"
-                padding="sm"
-                radius="full"
-                style={styles.trustChip}
-              >
-                <Icon size={13} color={colors.teal} />
-                <Text style={styles.trustLabel}>{label}</Text>
+    <VideoHero source={HERO_VIDEO_SOURCE} fallback={<AmbientFallback />}>
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.container}>
+          <View style={styles.hero}>
+            <View style={styles.iconWrap}>
+              <GradientOrb tone="teal" size={200} />
+              <GlassCard tint="dark" padding="none" radius="full" style={styles.iconCircle}>
+                <Activity size={28} color={colors.teal} />
               </GlassCard>
-            ))}
+            </View>
+            <Text style={styles.brand}>EXECUTIVE HEALTH</Text>
+            <Text style={styles.title}>
+              Your Executive{"\n"}Health Intelligence
+            </Text>
+            <Text style={styles.subtitle}>
+              A comprehensive wellness assessment powered by AI — personalised
+              insights in about 30 minutes.
+            </Text>
+
+            <View style={styles.trustRow}>
+              {TRUST_ITEMS.map(({ icon: Icon, label }) => (
+                <GlassCard
+                  key={label}
+                  tint="dark"
+                  padding="sm"
+                  radius="full"
+                  style={styles.trustChip}
+                >
+                  <Icon size={13} color={colors.teal} />
+                  <Text style={styles.trustLabel}>{label}</Text>
+                </GlassCard>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.actions}>
+            <Button
+              size="lg"
+              shape="full"
+              onPress={() => router.push("/onboarding/consent")}
+            >
+              Begin Assessment
+            </Button>
+            <Text style={styles.hint}>
+              Your data is encrypted and handled in accordance with our privacy
+              policy.
+            </Text>
           </View>
         </View>
-
-        <View style={styles.actions}>
-          <Button
-            size="lg"
-            shape="full"
-            onPress={() => router.push("/onboarding/consent")}
-          >
-            Begin Assessment
-          </Button>
-          <Text style={styles.hint}>
-            Your data is encrypted and handled in accordance with our privacy
-            policy.
-          </Text>
-        </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </VideoHero>
   );
 }
 
 const styles = StyleSheet.create({
+  fallbackOrbTop: {
+    top: -100,
+    left: "50%",
+    marginLeft: -210,
+  },
+  fallbackOrbBottom: {
+    bottom: -80,
+    left: "50%",
+    marginLeft: -180,
+  },
   safe: {
     flex: 1,
-    backgroundColor: colors.navy,
   },
   container: {
     flex: 1,
