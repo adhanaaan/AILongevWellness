@@ -49,7 +49,7 @@ export function Button({
   onPress,
   children,
 }: ButtonProps) {
-  const borderRadius = shape === "full" ? radii.full : radii.md;
+  const borderRadius = shape === "full" ? radii.full : radii.lg;
 
   const containerStyle: ViewStyle[] = [
     styles.base,

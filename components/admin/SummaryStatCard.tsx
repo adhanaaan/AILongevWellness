@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Card } from "@/components/ui";
-import { colors, fontSizes, fontWeights, spacing, radii } from "@/lib/theme/tokens";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { colors, fontFamilies, fontSizes, spacing, radii } from "@/lib/theme/tokens";
 
 type Tone = "sage" | "terracotta" | "danger" | "neutral";
 
@@ -13,8 +13,8 @@ interface SummaryStatCardProps {
 }
 
 const toneColors: Record<Tone, { bg: string; fg: string }> = {
-  sage: { bg: colors.sageTint, fg: colors.sageDark },
-  terracotta: { bg: colors.terracottaTint, fg: colors.terracottaInk },
+  sage: { bg: colors.tealTint, fg: colors.tealDark },
+  terracotta: { bg: colors.warningTint, fg: colors.metabolicDark },
   danger: { bg: colors.dangerTint, fg: colors.danger },
   neutral: { bg: colors.surfaceMuted, fg: colors.inkMuted },
 };
@@ -23,7 +23,7 @@ export function SummaryStatCard({ icon, label, value, tone }: SummaryStatCardPro
   const scheme = toneColors[tone];
 
   return (
-    <Card>
+    <GlassCard tint="light" radius="2xl">
       <View style={styles.content}>
         <View style={[styles.iconCircle, { backgroundColor: scheme.bg }]}>
           {icon}
@@ -31,7 +31,7 @@ export function SummaryStatCard({ icon, label, value, tone }: SummaryStatCardPro
         <Text style={styles.value}>{value}</Text>
         <Text style={styles.label}>{label}</Text>
       </View>
-    </Card>
+    </GlassCard>
   );
 }
 
@@ -48,14 +48,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   value: {
+    fontFamily: fontFamilies.displayBold,
     fontSize: fontSizes.headlineLg,
-    fontWeight: fontWeights.bold,
-    color: colors.charcoal,
+    color: colors.ink,
     marginBottom: spacing.xs,
   },
   label: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.labelMd,
-    fontWeight: fontWeights.medium,
     color: colors.inkMuted,
   },
 });

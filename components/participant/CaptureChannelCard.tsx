@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, type ViewStyle } from "react-native";
-import { Card } from "@/components/ui/Card";
+import { GlassCard } from "@/components/ui/GlassCard";
 import { Button } from "@/components/ui/Button";
 import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 
@@ -46,9 +46,17 @@ export function CaptureChannelCard({
   };
 
   return (
-    <Card style={highlight ? styles.highlighted : undefined}>
+    <GlassCard
+      tint="light"
+      padding="md"
+      radius="2xl"
+      tintColor={highlight ? "rgba(212,168,83,0.16)" : undefined}
+      tintBorderColor={highlight ? colors.amber : undefined}
+    >
       <View style={styles.topRow}>
-        <View style={styles.iconCircle}>{icon}</View>
+        <View style={[styles.iconCircle, highlight && styles.iconCircleHighlight]}>
+          {icon}
+        </View>
         <View style={styles.info}>
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.description}>{description}</Text>
@@ -69,15 +77,11 @@ export function CaptureChannelCard({
       <Button variant="secondary" size="sm" onPress={onAction}>
         {actionLabel}
       </Button>
-    </Card>
+    </GlassCard>
   );
 }
 
 const styles = StyleSheet.create({
-  highlighted: {
-    borderColor: colors.teal,
-    borderWidth: 2,
-  },
   topRow: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -87,10 +91,13 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.surfaceMuted,
+    backgroundColor: colors.tealTint,
     alignItems: "center",
     justifyContent: "center",
     marginRight: spacing.md,
+  },
+  iconCircleHighlight: {
+    backgroundColor: colors.amber,
   },
   info: {
     flex: 1,
@@ -112,13 +119,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   statusBadge: {
-    borderRadius: radii.sm,
-    paddingVertical: 2,
-    paddingHorizontal: spacing.sm,
+    borderRadius: radii.full,
+    paddingVertical: 3,
+    paddingHorizontal: spacing.md,
     marginRight: spacing.sm,
   },
   statusText: {
-    fontFamily: fontFamilies.bodyMedium,
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.caption,
   },
   metaText: {

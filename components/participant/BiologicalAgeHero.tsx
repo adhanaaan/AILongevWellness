@@ -1,11 +1,12 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { GradientOrb } from "@/components/ui/GradientOrb";
 import {
   colors,
+  fontFamilies,
   fontSizes,
-  fontWeights,
   radii,
-  shadows,
   spacing,
 } from "@/lib/theme/tokens";
 
@@ -14,59 +15,103 @@ export interface BiologicalAgeHeroProps {
   chronoAge: number;
 }
 
-export function BiologicalAgeHero({ bioAge, chronoAge }: BiologicalAgeHeroProps) {
-  const delta = chronoAge - bioAge;
-  const deltaLabel = delta >= 0 ? `−${delta} years` : `+${Math.abs(delta)} years`;
+const RULER_MIN = 20;
+const RULER_MAX = 90;
+const RULER_TICKS = 28;
+
+function TickRuler({ value }: { value: number }) {
+  const markerIndex = Math.round(
+    ((value - RULER_MIN) / (RULER_MAX - RULER_MIN)) * (RULER_TICKS - 1)
+  );
 
   return (
-    <View style={styles.card}>
-      <Text style={styles.label}>Your biological age</Text>
+    <View style={styles.ruler}>
+      {Array.from({ length: RULER_TICKS }).map((_, i) => (
+        <View
+          key={i}
+          style={[
+            styles.tick,
+            i === markerIndex ? styles.tickActive : styles.tickInactive,
+          ]}
+        />
+      ))}
+    </View>
+  );
+}
+
+export function BiologicalAgeHero({ bioAge, chronoAge }: BiologicalAgeHeroProps) {
+  const delta = chronoAge - bioAge;
+  const deltaLabel =
+    delta > 0
+      ? `${delta} years younger`
+      : delta < 0
+        ? `${Math.abs(delta)} years older`
+        : "On pace with age";
+
+  return (
+    <GlassCard tint="dark" radius="3xl" padding="lg" style={styles.card}>
+      <GradientOrb tone="amber" size={220} style={styles.orb} />
+      <Text style={styles.label}>Biological age</Text>
       <Text style={styles.bioAge}>{bioAge}</Text>
-      <Text style={styles.chronoAge}>{chronoAge}</Text>
       <View style={styles.pill}>
         <Text style={styles.pillText}>{deltaLabel}</Text>
       </View>
-    </View>
+      <TickRuler value={bioAge} />
+    </GlassCard>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.sageTint,
-    borderRadius: radii.lg,
-    padding: spacing["2xl"],
     alignItems: "center",
-    ...shadows.card,
+    overflow: "hidden",
+  },
+  orb: {
+    top: -20,
+    left: "50%",
+    marginLeft: -110,
   },
   label: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.labelMd,
-    fontWeight: fontWeights.medium,
-    color: colors.inkMuted,
+    color: colors.inkOnDarkMuted,
     marginBottom: spacing.sm,
   },
   bioAge: {
+    fontFamily: fontFamilies.displayBold,
     fontSize: fontSizes.display,
-    fontWeight: fontWeights.extrabold,
-    color: colors.charcoal,
-    lineHeight: fontSizes.display * 1.1,
-  },
-  chronoAge: {
-    fontSize: fontSizes.bodyMd,
-    fontWeight: fontWeights.regular,
-    color: colors.inkMuted,
-    textDecorationLine: "line-through",
-    marginTop: spacing.xs,
-    marginBottom: spacing.md,
+    color: colors.inkOnDark,
+    lineHeight: fontSizes.display * 1.05,
   },
   pill: {
-    backgroundColor: colors.sage,
+    marginTop: spacing.md,
+    marginBottom: spacing.xl,
+    backgroundColor: colors.amber,
     borderRadius: radii.full,
     paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
+    paddingHorizontal: spacing.lg,
   },
   pillText: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.labelMd,
-    fontWeight: fontWeights.semibold,
-    color: colors.white,
+    color: colors.navy,
+  },
+  ruler: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 4,
+    width: "100%",
+  },
+  tick: {
+    flex: 1,
+    borderRadius: 1,
+  },
+  tickInactive: {
+    height: 10,
+    backgroundColor: "rgba(255,255,255,0.25)",
+  },
+  tickActive: {
+    height: 20,
+    backgroundColor: colors.amber,
   },
 });

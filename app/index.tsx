@@ -1,52 +1,101 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { Activity } from "lucide-react-native";
+import { Activity, Clock, Sparkles, UserCheck } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
-import { colors, fontFamilies, fontSizes, fontWeights, spacing } from "@/lib/theme/tokens";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { GradientOrb } from "@/components/ui/GradientOrb";
+import { VideoHero } from "@/components/ui/VideoHero";
+import { HERO_VIDEO_SOURCE } from "@/lib/config/media";
+import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
+
+const TRUST_ITEMS = [
+  { icon: Clock, label: "~30 minutes" },
+  { icon: Sparkles, label: "AI-personalised" },
+  { icon: UserCheck, label: "Care team reviewed" },
+];
+
+function AmbientFallback() {
+  return (
+    <>
+      <GradientOrb tone="teal" size={420} style={styles.fallbackOrbTop} />
+      <GradientOrb tone="amber" size={360} style={styles.fallbackOrbBottom} />
+    </>
+  );
+}
 
 export default function WelcomePage() {
   const router = useRouter();
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.container}>
-        <View style={styles.hero}>
-          <View style={styles.iconCircle}>
-            <Activity size={28} color={colors.teal} />
-          </View>
-          <Text style={styles.brand}>EXECUTIVE HEALTH</Text>
-          <Text style={styles.title}>
-            Your Executive{"\n"}Health Intelligence
-          </Text>
-          <Text style={styles.subtitle}>
-            A comprehensive wellness assessment powered by AI — personalised
-            insights in about 30 minutes.
-          </Text>
-        </View>
+    <VideoHero source={HERO_VIDEO_SOURCE} fallback={<AmbientFallback />}>
+      <SafeAreaView style={styles.safe}>
+        <View style={styles.container}>
+          <View style={styles.hero}>
+            <View style={styles.iconWrap}>
+              <GradientOrb tone="teal" size={200} />
+              <GlassCard tint="dark" padding="none" radius="full" style={styles.iconCircle}>
+                <Activity size={28} color={colors.teal} />
+              </GlassCard>
+            </View>
+            <Text style={styles.brand}>EXECUTIVE HEALTH</Text>
+            <Text style={styles.title}>
+              Your Executive{"\n"}Health Intelligence
+            </Text>
+            <Text style={styles.subtitle}>
+              A comprehensive wellness assessment powered by AI — personalised
+              insights in about 30 minutes.
+            </Text>
 
-        <View style={styles.actions}>
-          <Button
-            size="lg"
-            onPress={() => router.push("/onboarding/consent")}
-          >
-            Begin Assessment
-          </Button>
-          <Text style={styles.hint}>
-            Your data is encrypted and handled in accordance with our privacy
-            policy.
-          </Text>
+            <View style={styles.trustRow}>
+              {TRUST_ITEMS.map(({ icon: Icon, label }) => (
+                <GlassCard
+                  key={label}
+                  tint="dark"
+                  padding="sm"
+                  radius="full"
+                  style={styles.trustChip}
+                >
+                  <Icon size={13} color={colors.teal} />
+                  <Text style={styles.trustLabel}>{label}</Text>
+                </GlassCard>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.actions}>
+            <Button
+              size="lg"
+              shape="full"
+              onPress={() => router.push("/onboarding/consent")}
+            >
+              Begin Assessment
+            </Button>
+            <Text style={styles.hint}>
+              Your data is encrypted and handled in accordance with our privacy
+              policy.
+            </Text>
+          </View>
         </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </VideoHero>
   );
 }
 
 const styles = StyleSheet.create({
+  fallbackOrbTop: {
+    top: -100,
+    left: "50%",
+    marginLeft: -210,
+  },
+  fallbackOrbBottom: {
+    bottom: -80,
+    left: "50%",
+    marginLeft: -180,
+  },
   safe: {
     flex: 1,
-    backgroundColor: colors.navy,
   },
   container: {
     flex: 1,
@@ -59,14 +108,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: spacing["6xl"],
   },
-  iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: "rgba(42, 175, 170, 0.12)",
+  iconWrap: {
+    width: 200,
+    height: 200,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing["3xl"],
+  },
+  iconCircle: {
+    width: 64,
+    height: 64,
+    alignItems: "center",
+    justifyContent: "center",
   },
   brand: {
     fontFamily: fontFamilies.bodySemiBold,
@@ -91,6 +144,24 @@ const styles = StyleSheet.create({
     marginTop: spacing.lg,
     lineHeight: 24,
     maxWidth: 300,
+  },
+  trustRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: spacing.sm,
+    marginTop: spacing["2xl"],
+  },
+  trustChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    paddingHorizontal: spacing.lg,
+  },
+  trustLabel: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.caption,
+    color: colors.inkOnDark,
   },
   actions: {
     width: "100%",

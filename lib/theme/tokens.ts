@@ -92,6 +92,12 @@ export const colors = {
   white: "#FFFFFF",
   transparent: "transparent",
 
+  // Glass surfaces (used with BlurView)
+  glassLight: "rgba(255,255,255,0.55)",
+  glassLightBorder: "rgba(255,255,255,0.7)",
+  glassDark: "rgba(255,255,255,0.06)",
+  glassDarkBorder: "rgba(255,255,255,0.14)",
+
   // ─── Legacy aliases (keeps non-onboarding screens compiling) ───
   bone: "#F4F6F8",
   sage: teal[500],
@@ -106,10 +112,10 @@ export const colors = {
 // ─── Typography ───
 
 export const fontFamilies = {
-  display: "Lora_400Regular",
-  displayMedium: "Lora_500Medium",
-  displaySemiBold: "Lora_600SemiBold",
-  displayBold: "Lora_700Bold",
+  display: "Manrope_600SemiBold",
+  displayMedium: "Manrope_600SemiBold",
+  displaySemiBold: "Manrope_700Bold",
+  displayBold: "Manrope_800ExtraBold",
   body: "PlusJakartaSans_400Regular",
   bodyMedium: "PlusJakartaSans_500Medium",
   bodySemiBold: "PlusJakartaSans_600SemiBold",
@@ -169,7 +175,17 @@ export const radii = {
   md: 12,
   lg: 16,
   xl: 20,
+  "2xl": 28,
+  "3xl": 36,
   full: 9999,
+} as const;
+
+// ─── Gradient orbs (soft radial glow accents) ───
+
+export const gradientOrbs = {
+  teal: ["rgba(42,175,170,0.5)", "rgba(42,175,170,0)"] as [string, string],
+  amber: ["rgba(212,168,83,0.5)", "rgba(212,168,83,0)"] as [string, string],
+  navy: ["rgba(19,32,56,0.6)", "rgba(19,32,56,0)"] as [string, string],
 } as const;
 
 // ─── Shadows ───
