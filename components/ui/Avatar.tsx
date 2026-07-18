@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, Image, StyleSheet } from "react-native";
-import { colors, fontSizes, fontWeights } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes } from "@/lib/theme/tokens";
 
 export type AvatarSize = "sm" | "md" | "lg";
 
@@ -59,7 +59,7 @@ export function Avatar({ src, initials, size = "md" }: AvatarProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.sageTint,
+    backgroundColor: colors.tealTint,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
   },
   initials: {
-    color: colors.sageDark,
-    fontWeight: fontWeights.semibold,
+    fontFamily: fontFamilies.bodySemiBold,
+    color: colors.tealDark,
   },
 });
