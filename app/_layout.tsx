@@ -5,11 +5,10 @@ import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 import { useFonts } from "expo-font";
 import {
-  Lora_400Regular,
-  Lora_500Medium,
-  Lora_600SemiBold,
-  Lora_700Bold,
-} from "@expo-google-fonts/lora";
+  Manrope_600SemiBold,
+  Manrope_700Bold,
+  Manrope_800ExtraBold,
+} from "@expo-google-fonts/manrope";
 import {
   PlusJakartaSans_400Regular,
   PlusJakartaSans_500Medium,
@@ -23,10 +22,9 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
-    Lora_400Regular,
-    Lora_500Medium,
-    Lora_600SemiBold,
-    Lora_700Bold,
+    Manrope_600SemiBold,
+    Manrope_700Bold,
+    Manrope_800ExtraBold,
     PlusJakartaSans_400Regular,
     PlusJakartaSans_500Medium,
     PlusJakartaSans_600SemiBold,
