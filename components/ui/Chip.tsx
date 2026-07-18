@@ -1,6 +1,6 @@
 import React from "react";
 import { TouchableOpacity, Text, StyleSheet } from "react-native";
-import { colors, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 
 export interface ChipProps {
   selected?: boolean;
@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   selected: {
-    backgroundColor: colors.sage,
+    backgroundColor: colors.teal,
   },
   unselected: {
     backgroundColor: colors.surface,
@@ -38,13 +38,13 @@ const styles = StyleSheet.create({
     borderColor: colors.borderStrong,
   },
   text: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.labelMd,
-    fontWeight: fontWeights.medium,
   },
   selectedText: {
     color: colors.white,
   },
   unselectedText: {
-    color: colors.charcoal,
+    color: colors.ink,
   },
 });

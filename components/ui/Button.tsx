@@ -7,7 +7,7 @@ import {
   type TextStyle,
   View,
 } from "react-native";
-import { colors, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 
 export type ButtonVariant = "primary" | "secondary" | "ghost";
 export type ButtonSize = "sm" | "md" | "lg";
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   primaryContainer: {
-    backgroundColor: colors.sage,
+    backgroundColor: colors.teal,
   },
   secondaryContainer: {
     backgroundColor: colors.transparent,
@@ -104,16 +104,16 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   baseText: {
-    fontWeight: fontWeights.semibold,
+    fontFamily: fontFamilies.bodySemiBold,
   },
   primaryText: {
     color: colors.white,
   },
   secondaryText: {
-    color: colors.sage,
+    color: colors.teal,
   },
   ghostText: {
-    color: colors.sage,
+    color: colors.teal,
   },
   iconLeft: {
     marginRight: spacing.sm,

@@ -47,6 +47,6 @@ const styles = StyleSheet.create({
     ...shadows.soft,
   },
   tinted: {
-    backgroundColor: colors.sageTint,
+    backgroundColor: colors.tealTint,
   },
 });
