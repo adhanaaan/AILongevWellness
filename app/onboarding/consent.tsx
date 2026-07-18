@@ -4,7 +4,8 @@ import { useRouter } from "expo-router";
 import { Check, ShieldCheck } from "lucide-react-native";
 import { OnboardingStepper } from "@/components/layout/OnboardingStepper";
 import { Button } from "@/components/ui/Button";
-import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
+import { GlassCard } from "@/components/ui/GlassCard";
+import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 
 const ITEMS = [
   {
@@ -38,9 +39,14 @@ export default function ConsentPage() {
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
       >
-        <View style={styles.headerIcon}>
+        <GlassCard
+          tint="light"
+          padding="none"
+          radius="full"
+          style={styles.headerIcon}
+        >
           <ShieldCheck size={24} color={colors.teal} />
-        </View>
+        </GlassCard>
         <Text style={styles.title}>Consent & Disclaimer</Text>
         <Text style={styles.subtitle}>
           Before we begin, please review and confirm each item below.
@@ -52,27 +58,38 @@ export default function ConsentPage() {
             return (
               <TouchableOpacity
                 key={item.key}
-                style={[styles.item, isChecked && styles.itemChecked]}
                 onPress={() =>
                   setChecked((prev) => ({
                     ...prev,
                     [item.key]: !prev[item.key],
                   }))
                 }
-                activeOpacity={0.7}
+                activeOpacity={0.8}
               >
-                <View
-                  style={[
-                    styles.checkbox,
-                    isChecked && styles.checkboxChecked,
-                  ]}
+                <GlassCard
+                  tint="light"
+                  padding="md"
+                  radius="2xl"
+                  tintColor={isChecked ? "rgba(42,175,170,0.16)" : undefined}
+                  tintBorderColor={isChecked ? colors.teal : undefined}
                 >
-                  {isChecked && <Check size={14} color={colors.white} />}
-                </View>
-                <View style={styles.itemContent}>
-                  <Text style={styles.itemTitle}>{item.title}</Text>
-                  <Text style={styles.itemDescription}>{item.description}</Text>
-                </View>
+                  <View style={styles.itemRow}>
+                    <View
+                      style={[
+                        styles.checkbox,
+                        isChecked && styles.checkboxChecked,
+                      ]}
+                    >
+                      {isChecked && <Check size={14} color={colors.white} />}
+                    </View>
+                    <View style={styles.itemContent}>
+                      <Text style={styles.itemTitle}>{item.title}</Text>
+                      <Text style={styles.itemDescription}>
+                        {item.description}
+                      </Text>
+                    </View>
+                  </View>
+                </GlassCard>
               </TouchableOpacity>
             );
           })}
@@ -104,8 +121,6 @@ const styles = StyleSheet.create({
   headerIcon: {
     width: 48,
     height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.tealTint,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing.lg,
@@ -127,19 +142,10 @@ const styles = StyleSheet.create({
     marginTop: spacing["2xl"],
     gap: spacing.md,
   },
-  item: {
+  itemRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    borderRadius: radii.lg,
-    padding: spacing.lg,
-  },
-  itemChecked: {
-    borderColor: colors.teal,
-    backgroundColor: colors.tealTint,
   },
   checkbox: {
     width: 22,

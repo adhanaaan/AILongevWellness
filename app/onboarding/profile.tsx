@@ -8,6 +8,7 @@ import { Chip } from "@/components/ui/Chip";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { Toggle } from "@/components/ui/Toggle";
 import { Button } from "@/components/ui/Button";
+import { GlassCard } from "@/components/ui/GlassCard";
 import { updateParticipantAction } from "@/lib/data/actions";
 import { DEMO_PARTICIPANT_ID } from "@/lib/data/mock";
 import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
@@ -123,9 +124,9 @@ export default function ProfilePage() {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.headerIcon}>
+        <GlassCard tint="light" padding="none" radius="full" style={styles.headerIcon}>
           <User size={24} color={colors.teal} />
-        </View>
+        </GlassCard>
 
         <View style={styles.headerRow}>
           <Text style={styles.title}>Your Profile</Text>
@@ -241,8 +242,6 @@ const styles = StyleSheet.create({
   headerIcon: {
     width: 48,
     height: 48,
-    borderRadius: 24,
-    backgroundColor: colors.tealTint,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing.lg,

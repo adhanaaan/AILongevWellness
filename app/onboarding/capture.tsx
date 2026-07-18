@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { FileEdit, Watch, PersonStanding, FileText, Brain } from "lucide-react-native";
+import { FileEdit, Watch, PersonStanding, FileText, Brain, ClipboardList } from "lucide-react-native";
 import { OnboardingStepper } from "@/components/layout/OnboardingStepper";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Button } from "@/components/ui/Button";
+import { GlassCard } from "@/components/ui/GlassCard";
 import { CaptureChannelCard } from "@/components/participant/CaptureChannelCard";
 import {
   updateCaptureChannelAction,
@@ -138,6 +139,9 @@ export default function CapturePage() {
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
       >
+        <GlassCard tint="light" padding="none" radius="full" style={styles.headerIcon}>
+          <ClipboardList size={24} color={colors.teal} />
+        </GlassCard>
         <Text style={styles.title}>Data Capture</Text>
         <Text style={styles.subtitle}>
           Complete each channel to build your wellness snapshot.
@@ -211,6 +215,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing["2xl"],
     paddingTop: spacing.lg,
     paddingBottom: spacing.lg,
+  },
+  headerIcon: {
+    width: 48,
+    height: 48,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: spacing.lg,
   },
   title: {
     fontFamily: fontFamilies.displayBold,
