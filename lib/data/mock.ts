@@ -7,6 +7,7 @@ import type {
   CaptureChannelStatus,
   EnteredBy,
   FileRecord,
+  OutOfRangeBiomarker,
   Participant,
   ParticipantSummary,
   Pillar,
@@ -110,12 +111,23 @@ function genBiomarkersForScore(participantId: string, pillar: Pillar, score: num
   });
 }
 
+function computeOutOfRange(biomarkers: Biomarker[]): OutOfRangeBiomarker[] {
+  return biomarkers
+    .filter((b) => b.flagged && b.value !== null && b.ref_high !== null)
+    .map((b) => ({ key: b.key, value: b.value as number, ref_high: b.ref_high as number }));
+}
+
+function computeMissingBiomarkers(biomarkers: Biomarker[]): string[] {
+  return biomarkers.filter((b) => b.value === null).map((b) => b.key);
+}
+
 function genAiDraftForScores(
   participantId: string,
   _name: string,
   scores: PillarScores,
   bioAgeOffset: number,
-  chronologicalAge: number
+  chronologicalAge: number,
+  biomarkers: Biomarker[]
 ): AiDraft {
   const entries = Object.entries(scores) as [Pillar, number][];
   const weakest = entries.slice().sort((a, b) => a[1] - b[1])[0];
@@ -150,6 +162,8 @@ function genAiDraftForScores(
     ],
     generated_at: nowIso(),
     edited_by_admin: false,
+    missing_biomarkers: computeMissingBiomarkers(biomarkers),
+    out_of_range: computeOutOfRange(biomarkers),
   };
 }
 
@@ -295,6 +309,8 @@ class MockRepository implements Repository {
       ],
       generated_at: nowIso(),
       edited_by_admin: false,
+      missing_biomarkers: computeMissingBiomarkers(jamesBiomarkers),
+      out_of_range: computeOutOfRange(jamesBiomarkers),
     });
 
     OTHER_NAMES.forEach((person, idx) => {
@@ -333,15 +349,17 @@ class MockRepository implements Repository {
         mental: 55 + Math.floor(mulberry32(idx * 29 + 9)() * 40),
       };
 
+      const participantBiomarkers: Biomarker[] = [];
       for (const pillar of PILLARS) {
         for (const bm of genBiomarkersForScore(id, pillar, scores[pillar], idx * 31 + PILLARS.indexOf(pillar))) {
           this.biomarkers.set(bm.id, bm);
+          participantBiomarkers.push(bm);
         }
       }
 
       if (pastAiDraft) {
         const bioAgeOffset = Math.floor(mulberry32(idx * 37 + 10)() * 8) - 2;
-        this.aiDrafts.set(id, genAiDraftForScores(id, person.name, scores, bioAgeOffset, person.age));
+        this.aiDrafts.set(id, genAiDraftForScores(id, person.name, scores, bioAgeOffset, person.age, participantBiomarkers));
       }
 
       const needsAttention = ATTENTION_INDEXES.has(idx);

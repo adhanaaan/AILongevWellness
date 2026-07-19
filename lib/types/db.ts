@@ -1,3 +1,6 @@
+// CHANGE LOG (newest first)
+// - 2026-07-19 Person 3: Added missing_biomarkers/out_of_range to AiDraft (mock.ts populates them).
+
 export type Sex = "male" | "female" | "other";
 
 export interface Participant {
@@ -70,6 +73,12 @@ export interface KeyContributor {
   tone: "good" | "monitor";
 }
 
+export interface OutOfRangeBiomarker {
+  key: string;
+  value: number;
+  ref_high: number;
+}
+
 export interface AiDraft {
   id: string;
   participant_id: string;
@@ -83,6 +92,10 @@ export interface AiDraft {
   discussion_points: string[];
   generated_at: string;
   edited_by_admin: boolean;
+  /** Biomarker keys with no value captured at generation time. */
+  missing_biomarkers?: string[];
+  /** Biomarkers whose value fell outside its reference range at generation time. */
+  out_of_range?: OutOfRangeBiomarker[];
 }
 
 export type ReviewStage = "gp" | "tcm";
