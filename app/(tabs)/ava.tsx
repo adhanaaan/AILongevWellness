@@ -24,10 +24,10 @@ interface Message {
 }
 
 const SUGGESTIONS = [
-  "What does my metabolic score mean?",
-  "Why is my biological age lower?",
-  "What should I focus on?",
-  "Can you give me a diagnosis?",
+  "What does my vascular score mean?",
+  "Tell me about my biological age",
+  "What are my focus areas?",
+  "Who reviewed my card?",
 ];
 
 export default function AvaPage() {
