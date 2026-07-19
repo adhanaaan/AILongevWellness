@@ -171,7 +171,13 @@ export default function CapturePage() {
                 title={meta.title}
                 description={meta.description}
                 sourceTag={meta.sourceTag}
-                enteredBy={c.entered_by}
+                enteredBy={
+                  c.entered_by === "participant"
+                    ? "You"
+                    : c.entered_by === "admin"
+                    ? "Care team"
+                    : "Not yet entered"
+                }
                 status={c.status}
                 actionLabel={
                   c.status === "complete"

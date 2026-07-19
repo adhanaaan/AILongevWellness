@@ -115,7 +115,7 @@ export default function ParticipantDetailPage() {
               {participant.weight_kg}kg
             </Text>
           </View>
-          <PipelineStatusBadge state={pipeline.state} />
+          <PipelineStatusBadge state={pipeline.state} needsAttention={pipeline.needs_attention} />
         </View>
 
         {pipeline.needs_attention && (
