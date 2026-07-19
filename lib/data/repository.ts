@@ -4,6 +4,7 @@ import type {
   CaptureChannel,
   CaptureChannelName,
   CaptureChannelStatus,
+  DailyLog,
   EnteredBy,
   FileRecord,
   Participant,
@@ -53,4 +54,11 @@ export interface Repository {
   getSignedCard(participantId: string): Promise<SignedCard | null>;
 
   listFiles(participantId: string): Promise<FileRecord[]>;
+
+  listDailyLogs(participantId: string): Promise<DailyLog[]>;
+  upsertDailyLog(
+    participantId: string,
+    logDate: string,
+    patch: Partial<Omit<DailyLog, "id" | "participant_id" | "log_date">>
+  ): Promise<DailyLog>;
 }

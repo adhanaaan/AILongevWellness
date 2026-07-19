@@ -4,6 +4,7 @@ import type {
   Biomarker,
   CaptureChannelName,
   CaptureChannelStatus,
+  DailyLog,
   EnteredBy,
   Participant,
   ReviewStage,
@@ -53,4 +54,16 @@ export async function releaseCardAction(participantId: string) {
 
 export async function resolveAttentionAction(participantId: string) {
   return repository.resolveAttention(participantId);
+}
+
+export async function listDailyLogsAction(participantId: string = DEMO_PARTICIPANT_ID) {
+  return repository.listDailyLogs(participantId);
+}
+
+export async function upsertDailyLogAction(
+  logDate: string,
+  patch: Partial<Omit<DailyLog, "id" | "participant_id" | "log_date">>,
+  participantId: string = DEMO_PARTICIPANT_ID
+) {
+  return repository.upsertDailyLog(participantId, logDate, patch);
 }

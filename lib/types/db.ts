@@ -1,3 +1,6 @@
+// CHANGE LOG (newest first)
+// - 2026-07-19 Person 2: Added DailyLog type + expanded biomarker coverage (mock.ts).
+
 export type Sex = "male" | "female" | "other";
 
 export interface Participant {
@@ -127,4 +130,36 @@ export interface ParticipantSummary {
   participant: Participant;
   pipeline: Pipeline;
   captureCompletionPct: number;
+}
+
+export interface DailyLogSleep {
+  hours: number;
+  quality: number; // 0-100
+}
+
+export interface DailyLogActivity {
+  type: string;
+  duration_minutes: number;
+}
+
+export interface DailyLogMood {
+  score: number; // 1-10
+}
+
+export interface DailyLogFood {
+  meals: number;
+  notes?: string;
+}
+
+export interface DailyLog {
+  id: string;
+  participant_id: string;
+  log_date: string; // YYYY-MM-DD
+  sleep: DailyLogSleep | null;
+  food: DailyLogFood | null;
+  mood: DailyLogMood | null;
+  activity: DailyLogActivity | null;
+  weight_kg: number | null;
+  supplements: string[];
+  notes: string | null;
 }
