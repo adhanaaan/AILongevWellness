@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { User } from "lucide-react-native";
@@ -10,6 +10,7 @@ import { Toggle } from "@/components/ui/Toggle";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { updateParticipantAction } from "@/lib/data/actions";
+import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 
@@ -79,21 +80,37 @@ export default function ProfilePage() {
   const router = useRouter();
   const { participantId } = useAuth();
 
+  const [loading, setLoading] = useState(true);
   const [enteredBy, setEnteredBy] = useState("me");
-  const [name, setName] = useState("James Chen");
-  const [age, setAge] = useState("58");
+  const [name, setName] = useState("");
+  const [age, setAge] = useState("");
   const [sex, setSex] = useState("male");
-  const [height, setHeight] = useState("178");
-  const [weight, setWeight] = useState("82");
-  const [goals, setGoals] = useState<string[]>([
-    "Longevity",
-    "Energy & focus",
-    "Cardiovascular fitness",
-  ]);
+  const [height, setHeight] = useState("");
+  const [weight, setWeight] = useState("");
+  const [goals, setGoals] = useState<string[]>([]);
   const [exercise, setExercise] = useState("regularly");
   const [smoking, setSmoking] = useState(false);
   const [alcohol, setAlcohol] = useState("occasionally");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!participantId) return;
+    repository.getParticipant(participantId).then((p) => {
+      if (p) {
+        // "New participant" is the server-side default for a brand-new sign-up
+        // (no metadata was ever passed) — treat it as "nothing entered yet"
+        // rather than showing that placeholder text as if it were their name.
+        const isUnfilled = p.name === "New participant";
+        setName(isUnfilled ? "" : p.name);
+        setAge(isUnfilled ? "" : String(p.age));
+        setSex(p.sex);
+        setHeight(isUnfilled ? "" : String(p.height_cm));
+        setWeight(isUnfilled ? "" : String(p.weight_kg));
+        setGoals(p.goals ?? []);
+      }
+      setLoading(false);
+    });
+  }, [participantId]);
 
   function toggleGoal(goal: string) {
     setGoals((prev) =>
@@ -117,6 +134,16 @@ export default function ProfilePage() {
     } finally {
       setSaving(false);
     }
+  }
+
+  if (loading) {
+    return (
+      <OnboardingStepper>
+        <View style={styles.center}>
+          <Text style={styles.subtitle}>Loading…</Text>
+        </View>
+      </OnboardingStepper>
+    );
   }
 
   return (
@@ -236,6 +263,7 @@ export default function ProfilePage() {
 
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
+  center: { flex: 1, alignItems: "center", justifyContent: "center" },
   scrollContent: {
     paddingHorizontal: spacing["2xl"],
     paddingTop: spacing.lg,
