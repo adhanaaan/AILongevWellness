@@ -13,6 +13,9 @@ import { PipelineStatusBadge } from "@/components/admin/PipelineStatusBadge";
 import { Button, Card } from "@/components/ui";
 import { repository } from "@/lib/data/mock";
 import { resolveAttentionAction } from "@/lib/data/actions";
+import { useAuth } from "@/lib/auth/AuthProvider";
+import { isSupabaseConfigured } from "@/lib/config/env";
+import { generateDraft } from "@/lib/ai/client";
 import type {
   Participant,
   Pipeline,
@@ -47,12 +50,15 @@ const PILLAR_ORDER: Pillar[] = ["vascular", "metabolic", "mental"];
 export default function ParticipantDetailPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { session } = useAuth();
 
   const [participant, setParticipant] = useState<Participant | null>(null);
   const [pipeline, setPipeline] = useState<Pipeline | null>(null);
   const [biomarkers, setBiomarkers] = useState<Biomarker[]>([]);
   const [aiDraft, setAiDraft] = useState<AiDraft | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState<string | null>(null);
 
   const loadData = async () => {
     if (!id) return;
@@ -77,6 +83,20 @@ export default function ParticipantDetailPage() {
 
   const gpReview = reviews.find((r) => r.stage === "gp");
   const tcmReview = reviews.find((r) => r.stage === "tcm");
+
+  async function onGenerateDraft() {
+    if (!id || !session?.access_token) return;
+    setGenerateError(null);
+    setGenerating(true);
+    try {
+      await generateDraft(session.access_token, id);
+      await loadData();
+    } catch (e) {
+      setGenerateError(e instanceof Error ? e.message : "Draft generation failed.");
+    } finally {
+      setGenerating(false);
+    }
+  }
 
   const biomarkersByPillar = useMemo(() => {
     const grouped: Record<string, Biomarker[]> = {};
@@ -162,6 +182,22 @@ export default function ParticipantDetailPage() {
               </View>
             )}
           </>
+        )}
+
+        {!aiDraft && pipeline.state === "ai_drafted" && isSupabaseConfigured && (
+          <View style={styles.section}>
+            <Card>
+              <Text style={styles.sectionTitle}>AI draft not generated yet</Text>
+              <Text style={styles.meta}>
+                Capture is complete, but the draft health card hasn't been generated —
+                this usually happens automatically right after submission. Retry it below.
+              </Text>
+              {generateError && <Text style={styles.attentionReason}>{generateError}</Text>}
+              <Button size="sm" disabled={generating} onPress={onGenerateDraft}>
+                {generating ? "Generating…" : "Generate AI draft"}
+              </Button>
+            </Card>
+          </View>
         )}
 
         <View style={styles.section}>

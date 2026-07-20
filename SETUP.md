@@ -38,6 +38,20 @@ off gives a frictionless sign-up → profile → capture flow. The app already
 handles either setting (it shows a "check your email" screen if confirmation
 is required) — this step is a UX recommendation, not a hard requirement.
 
+**If you already hit "confirm email" going to a broken/localhost link**: fresh
+Supabase projects default their **Site URL** to `http://localhost:3000`, so a
+confirmation link clicked from anywhere else lands nowhere. Either turn off
+Confirm Email as above (simplest — makes this a non-issue), or fix it properly
+at Dashboard → **Authentication** → **URL Configuration**:
+- **Site URL** → your deployed URL (production domain, or the PR preview URL
+  you're testing on)
+- **Redirect URLs** → add that same URL (wildcards work, e.g.
+  `https://*.vercel.app/**`, useful since every PR/branch gets its own preview
+  URL)
+
+Any account stuck mid-confirmation from before this fix: Dashboard →
+**Authentication** → **Users** → delete that row and sign up again.
+
 ## 4. Collect your keys
 
 Dashboard → **Project Settings** → **API**:

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { Activity, Clock, Sparkles, UserCheck } from "lucide-react-native";
@@ -8,6 +8,9 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { GradientOrb } from "@/components/ui/GradientOrb";
 import { VideoHero } from "@/components/ui/VideoHero";
 import { HERO_VIDEO_SOURCE } from "@/lib/config/media";
+import { useAuth } from "@/lib/auth/AuthProvider";
+import { isSupabaseConfigured } from "@/lib/config/env";
+import { repository } from "@/lib/data/mock";
 import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 
 const TRUST_ITEMS = [
@@ -27,6 +30,33 @@ function AmbientFallback() {
 
 export default function WelcomePage() {
   const router = useRouter();
+  const { participantId } = useAuth();
+
+  // Lands here whenever a signed-in participant hits the root — most notably
+  // right after clicking an email confirmation link, which otherwise would
+  // leave them stranded on the marketing screen instead of continuing where
+  // they left off (profile, capture, or their card).
+  useEffect(() => {
+    if (!isSupabaseConfigured || !participantId) return;
+    let cancelled = false;
+    (async () => {
+      const [participant, pipeline] = await Promise.all([
+        repository.getParticipant(participantId),
+        repository.getPipeline(participantId),
+      ]);
+      if (cancelled || !participant || !pipeline) return;
+      if (participant.name === "New participant") {
+        router.replace("/onboarding/profile");
+      } else if (pipeline.state === "capturing") {
+        router.replace("/onboarding/capture");
+      } else {
+        router.replace("/(tabs)/card");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [participantId, router]);
 
   return (
     <VideoHero source={HERO_VIDEO_SOURCE} fallback={<AmbientFallback />}>

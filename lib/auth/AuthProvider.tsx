@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { Platform } from "react-native";
 import type { Session } from "@supabase/supabase-js";
 import { getSupabaseClient } from "@/lib/data/supabase";
 import { isSupabaseConfigured } from "@/lib/config/env";
@@ -89,6 +90,13 @@ function RealAuthProvider({ children }: { children: React.ReactNode }) {
     [client]
   );
 
+  // Points the confirmation-email link back at whichever origin the user actually
+  // signed up from (prod, or a Vercel preview URL) instead of depending solely on
+  // the single static "Site URL" configured in the Supabase dashboard — that
+  // still has to be added to the dashboard's Redirect URLs allow-list, but at
+  // least it won't silently fall back to a mismatched default.
+  const emailRedirectTo = Platform.OS === "web" && typeof window !== "undefined" ? window.location.origin : undefined;
+
   // Bootstrapping (participants row, pipeline, capture_channels, user_roles) happens
   // in the on_auth_user_created trigger (supabase/migrations/0001_init.sql) — the
   // client only needs to pass the role + profile as signup metadata.
@@ -97,12 +105,12 @@ function RealAuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await client.auth.signUp({
         email,
         password,
-        options: { data: { role: "participant" } },
+        options: { data: { role: "participant" }, emailRedirectTo },
       });
       if (error) throw new Error(error.message);
       return Boolean(data.session);
     },
-    [client]
+    [client, emailRedirectTo]
   );
 
   const signUpCareTeam = useCallback(
@@ -110,12 +118,12 @@ function RealAuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await client.auth.signUp({
         email,
         password,
-        options: { data: { role: "care_team" } },
+        options: { data: { role: "care_team" }, emailRedirectTo },
       });
       if (error) throw new Error(error.message);
       return Boolean(data.session);
     },
-    [client]
+    [client, emailRedirectTo]
   );
 
   const signOut = useCallback(async () => {

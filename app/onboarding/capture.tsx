@@ -16,7 +16,7 @@ import {
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
-import { extractLabReport } from "@/lib/ai/client";
+import { extractLabReport, generateDraft } from "@/lib/ai/client";
 import type { CaptureChannel, CaptureChannelName, FileKind } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 
@@ -169,6 +169,14 @@ export default function CapturePage() {
     setSubmitting(true);
     try {
       await submitCaptureAction(participantId);
+      // Turns the just-submitted capture into an actual draft health card (scores,
+      // bio age, narrative) — the participant won't see it until care team signs
+      // off and releases it, so this doesn't need to block navigation.
+      if (isSupabaseConfigured && session?.access_token) {
+        generateDraft(session.access_token, participantId).catch(() => {
+          // Care team can retry generation manually from the admin review queue.
+        });
+      }
       router.replace("/(tabs)/card");
     } catch (e) {
       setSubmitError(

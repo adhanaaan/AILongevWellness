@@ -30,3 +30,7 @@ export function extractLabReport(
 ): Promise<{ extracted: string[] }> {
   return postJson("/api/extract-lab", token, { participantId, fileId });
 }
+
+export function generateDraft(token: string, participantId: string): Promise<{ draft: unknown }> {
+  return postJson("/api/generate-draft", token, { participantId });
+}
