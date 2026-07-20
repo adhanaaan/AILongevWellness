@@ -20,9 +20,9 @@ import { colors, fontSizes, radii } from "@/lib/theme/tokens";
 import {
   listDailyLogsAction,
   upsertDailyLogAction,
-  DEMO_PARTICIPANT_ID,
 } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import type { DailyLog } from "@/lib/types/db";
 
 const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
@@ -72,27 +72,31 @@ function dayLabel(dateStr: string): string {
 }
 
 export default function TrackingPage() {
+  const { participantId } = useAuth();
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadLogs = useCallback(() => {
-    listDailyLogsAction(DEMO_PARTICIPANT_ID).then((l) => {
+    if (!participantId) return;
+    listDailyLogsAction(participantId).then((l) => {
       setLogs(l);
       setLoading(false);
     });
-  }, []);
+  }, [participantId]);
 
   useEffect(() => {
+    if (!participantId) return;
     loadLogs();
     return repository.subscribe(loadLogs);
-  }, [loadLogs]);
+  }, [participantId, loadLogs]);
 
   const today = todayIso();
   const todayLog = logs.find((l) => l.log_date === today);
   const last7 = logs.slice(-7);
 
   async function patchToday(patch: Partial<Omit<DailyLog, "id" | "participant_id" | "log_date">>) {
-    const updated = await upsertDailyLogAction(today, patch);
+    if (!participantId) return;
+    const updated = await upsertDailyLogAction(today, patch, participantId);
     setLogs((prev) => {
       const idx = prev.findIndex((l) => l.log_date === today);
       if (idx === -1) return [...prev, updated];

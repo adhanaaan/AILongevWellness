@@ -142,10 +142,13 @@ lib/
 - [x] Admin participant list + search + stat cards
 - [x] Admin participant detail with biomarkers + sign-off + release
 - [x] Admin review queue
-- [ ] Supabase wiring (auth, tables, storage, RLS)
-- [ ] Lab report extraction (OpenAI)
-- [ ] AVA grounding against real signed card data
-- [ ] Daily log persistence
+- [x] Supabase wiring (auth, tables, storage, RLS) — see `SETUP.md` for self-serve setup
+- [x] Real accounts: participant + care team sign-up/sign-in, session, route guards
+- [x] File upload to Supabase Storage (lab report + body comp capture channels)
+- [x] Lab report extraction (Claude vision, `/api/extract-lab.ts`, writes `needs_review` biomarkers)
+- [x] AVA grounding against real signed card data (Claude, `/api/ava.ts`, mock rule-based engine stays as the no-Supabase-configured fallback)
+- [x] Daily log persistence
 - [ ] Wearable aggregator connect
-- [ ] Consent tracking (consent_given, consented_at fields)
-- [ ] File upload to Supabase Storage
+- [ ] Consent tracking (consent_given, consented_at fields) — consent screen doesn't yet persist to a row
+- [ ] Body composition scan value extraction (currently uploads the file only, no parsing)
+- [ ] Manual questionnaire + ReCOGnAIze channels are still tap-to-complete placeholders

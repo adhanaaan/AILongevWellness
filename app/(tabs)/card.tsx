@@ -9,7 +9,8 @@ import { KeyContributorItem } from "@/components/participant/KeyContributorItem"
 import { SuggestedFocusGrid } from "@/components/participant/SuggestedFocusGrid";
 import { CareTeamBadge } from "@/components/participant/CareTeamBadge";
 import { Button } from "@/components/ui/Button";
-import { repository, DEMO_PARTICIPANT_ID } from "@/lib/data/mock";
+import { repository } from "@/lib/data/mock";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import type { SignedCard } from "@/lib/data/repository";
 import { colors, fontSizes } from "@/lib/theme/tokens";
 
@@ -23,14 +24,16 @@ function initialsOf(name: string) {
 
 export default function CardPage() {
   const router = useRouter();
+  const { participantId } = useAuth();
   const [card, setCard] = useState<SignedCard | null | undefined>(undefined);
 
   useEffect(() => {
-    repository.getSignedCard(DEMO_PARTICIPANT_ID).then(setCard);
+    if (!participantId) return;
+    repository.getSignedCard(participantId).then(setCard);
     return repository.subscribe(() => {
-      repository.getSignedCard(DEMO_PARTICIPANT_ID).then(setCard);
+      repository.getSignedCard(participantId).then(setCard);
     });
-  }, []);
+  }, [participantId]);
 
   if (card === undefined) return null;
 

@@ -7,6 +7,7 @@ import type {
   CaptureChannelStatus,
   DailyLog,
   EnteredBy,
+  FileKind,
   FileRecord,
   OutOfRangeBiomarker,
   Participant,
@@ -20,6 +21,7 @@ import type {
   Sex,
 } from "../types/db";
 import type { Repository, SignedCard } from "./repository";
+import { createSupabaseRepository } from "./supabase";
 
 export const DEMO_PARTICIPANT_ID = "james-chen";
 
@@ -637,6 +639,24 @@ class MockRepository implements Repository {
     return this.files.get(participantId) ?? [];
   }
 
+  async uploadFile(
+    participantId: string,
+    kind: FileKind,
+    file: { filename: string }
+  ): Promise<FileRecord> {
+    const existing = this.files.get(participantId) ?? [];
+    const record: FileRecord = {
+      id: `file-${participantId}-${existing.length}`,
+      participant_id: participantId,
+      kind,
+      storage_path: `mock://${participantId}/${file.filename}`,
+      extracted: false,
+    };
+    this.files.set(participantId, [...existing, record]);
+    this.notify();
+    return record;
+  }
+
   async listDailyLogs(participantId: string): Promise<DailyLog[]> {
     return Array.from(this.dailyLogs.values())
       .filter((l) => l.participant_id === participantId)
@@ -669,13 +689,18 @@ class MockRepository implements Repository {
   }
 }
 
-let _repository: MockRepository | null = null;
+let _repository: Repository | null = null;
 
-export function getRepository(): MockRepository {
+/**
+ * Real Supabase backend when EXPO_PUBLIC_SUPABASE_URL/ANON_KEY are set (see
+ * .env.example); otherwise the in-memory mock, so local dev and demo/preview
+ * deploys keep working with zero setup.
+ */
+export function getRepository(): Repository {
   if (!_repository) {
-    _repository = new MockRepository();
+    _repository = createSupabaseRepository() ?? new MockRepository();
   }
   return _repository;
 }
 
-export const repository = getRepository();
+export const repository: Repository = getRepository();

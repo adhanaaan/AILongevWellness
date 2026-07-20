@@ -6,6 +6,7 @@ import type {
   CaptureChannelStatus,
   DailyLog,
   EnteredBy,
+  FileKind,
   FileRecord,
   Participant,
   ParticipantSummary,
@@ -13,6 +14,12 @@ import type {
   Review,
   ReviewStage,
 } from "../types/db";
+
+export interface UploadableFile {
+  blob: Blob;
+  filename: string;
+  contentType?: string;
+}
 
 export interface SignedCard {
   participant: Participant;
@@ -22,6 +29,9 @@ export interface SignedCard {
 }
 
 export interface Repository {
+  /** Registers a listener called on any data change; returns an unsubscribe function. */
+  subscribe(listener: () => void): () => void;
+
   listParticipants(): Promise<ParticipantSummary[]>;
   getParticipant(id: string): Promise<Participant | null>;
   updateParticipant(id: string, patch: Partial<Participant>): Promise<Participant>;
@@ -54,6 +64,11 @@ export interface Repository {
   getSignedCard(participantId: string): Promise<SignedCard | null>;
 
   listFiles(participantId: string): Promise<FileRecord[]>;
+  uploadFile(
+    participantId: string,
+    kind: FileKind,
+    file: UploadableFile
+  ): Promise<FileRecord>;
 
   listDailyLogs(participantId: string): Promise<DailyLog[]>;
   upsertDailyLog(

@@ -1,4 +1,5 @@
 import { repository, DEMO_PARTICIPANT_ID } from "./mock";
+import type { UploadableFile } from "./repository";
 import type {
   AiDraft,
   Biomarker,
@@ -6,6 +7,7 @@ import type {
   CaptureChannelStatus,
   DailyLog,
   EnteredBy,
+  FileKind,
   Participant,
   ReviewStage,
 } from "../types/db";
@@ -66,4 +68,12 @@ export async function upsertDailyLogAction(
   participantId: string = DEMO_PARTICIPANT_ID
 ) {
   return repository.upsertDailyLog(participantId, logDate, patch);
+}
+
+export async function uploadFileAction(
+  participantId: string,
+  kind: FileKind,
+  file: UploadableFile
+) {
+  return repository.uploadFile(participantId, kind, file);
 }
