@@ -100,7 +100,7 @@ export default function ConsentPage() {
         <Button
           size="lg"
           disabled={!allChecked}
-          onPress={() => router.push("/onboarding/profile")}
+          onPress={() => router.push("/onboarding/auth")}
         >
           Agree and continue
         </Button>

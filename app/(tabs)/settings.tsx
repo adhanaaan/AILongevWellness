@@ -1,19 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
-import { User, ShieldCheck, FileText } from "lucide-react-native";
+import { User, ShieldCheck, FileText, LogOut } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
-import { repository, DEMO_PARTICIPANT_ID } from "@/lib/data/mock";
+import { Button } from "@/components/ui/Button";
+import { repository } from "@/lib/data/mock";
+import { useAuth } from "@/lib/auth/AuthProvider";
+import { isSupabaseConfigured } from "@/lib/config/env";
 import type { Participant } from "@/lib/types/db";
 import { colors, fontSizes } from "@/lib/theme/tokens";
 
 export default function SettingsPage() {
+  const { participantId, signOut } = useAuth();
   const [participant, setParticipant] = useState<Participant | null>(null);
 
   useEffect(() => {
-    repository.getParticipant(DEMO_PARTICIPANT_ID).then(setParticipant);
-  }, []);
+    if (!participantId) return;
+    repository.getParticipant(participantId).then(setParticipant);
+  }, [participantId]);
 
   if (!participant) return null;
 
@@ -65,6 +70,12 @@ export default function SettingsPage() {
             </Text>
           </View>
         </Card>
+
+        {isSupabaseConfigured && (
+          <Button variant="secondary" iconLeft={<LogOut size={16} color={colors.sageDark} />} onPress={signOut}>
+            Sign out
+          </Button>
+        )}
       </ScrollView>
     </MobileShell>
   );

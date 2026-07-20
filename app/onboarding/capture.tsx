@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { View, Text, ScrollView, StyleSheet, Platform } from "react-native";
 import { useRouter } from "expo-router";
+import * as DocumentPicker from "expo-document-picker";
 import { FileEdit, Watch, PersonStanding, FileText, Brain, ClipboardList } from "lucide-react-native";
 import { OnboardingStepper } from "@/components/layout/OnboardingStepper";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -10,11 +11,19 @@ import { CaptureChannelCard } from "@/components/participant/CaptureChannelCard"
 import {
   updateCaptureChannelAction,
   submitCaptureAction,
-  DEMO_PARTICIPANT_ID,
+  uploadFileAction,
 } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
-import type { CaptureChannel, CaptureChannelName } from "@/lib/types/db";
+import { useAuth } from "@/lib/auth/AuthProvider";
+import { isSupabaseConfigured } from "@/lib/config/env";
+import { extractLabReport } from "@/lib/ai/client";
+import type { CaptureChannel, CaptureChannelName, FileKind } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
+
+const FILE_KIND_BY_CHANNEL: Partial<Record<CaptureChannelName, FileKind>> = {
+  lab_report: "lab_report",
+  body_composition: "body_comp",
+};
 
 const CHANNEL_META: Record<
   CaptureChannelName,
@@ -73,17 +82,21 @@ const CHANNEL_META: Record<
 
 export default function CapturePage() {
   const router = useRouter();
+  const { participantId, session } = useAuth();
   const [channels, setChannels] = useState<CaptureChannel[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [uploadingChannel, setUploadingChannel] = useState<CaptureChannelName | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   useEffect(() => {
-    repository.getCaptureChannels(DEMO_PARTICIPANT_ID).then((c) => {
+    if (!participantId) return;
+    repository.getCaptureChannels(participantId).then((c) => {
       setChannels(c);
       setLoading(false);
     });
-  }, []);
+  }, [participantId]);
 
   const completion =
     channels.length > 0
@@ -98,8 +111,9 @@ export default function CapturePage() {
   const pct = Math.round(completion * 100);
 
   async function completeChannel(channel: CaptureChannelName) {
+    if (!participantId) return;
     const updated = await updateCaptureChannelAction(
-      DEMO_PARTICIPANT_ID,
+      participantId,
       channel,
       { status: "complete", entered_by: "participant" }
     );
@@ -108,11 +122,53 @@ export default function CapturePage() {
     );
   }
 
+  async function uploadForChannel(channel: CaptureChannelName) {
+    if (!participantId) return;
+    const kind = FILE_KIND_BY_CHANNEL[channel];
+    if (!kind || !isSupabaseConfigured) {
+      completeChannel(channel);
+      return;
+    }
+
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ["application/pdf", "image/*"],
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled) return;
+    const asset = result.assets[0];
+
+    setUploadError(null);
+    setUploadingChannel(channel);
+    try {
+      const response = await fetch(asset.uri);
+      const blob = await response.blob();
+      const fileRecord = await uploadFileAction(participantId, kind, {
+        blob,
+        filename: asset.name,
+        contentType: asset.mimeType ?? (Platform.OS === "web" ? blob.type : undefined),
+      });
+      await completeChannel(channel);
+      // Lab reports get AI-extracted biomarkers in the background — the care team
+      // reviews them (status: needs_review) before they ever reach the participant.
+      if (kind === "lab_report" && session?.access_token) {
+        extractLabReport(session.access_token, participantId, fileRecord.id).catch(() => {
+          // Extraction failure isn't fatal to capture — the care team can still enter
+          // values manually during review, so we don't block or alarm the participant.
+        });
+      }
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : "Upload failed. Please try again.");
+    } finally {
+      setUploadingChannel(null);
+    }
+  }
+
   async function submit() {
+    if (!participantId) return;
     setSubmitError(null);
     setSubmitting(true);
     try {
-      await submitCaptureAction(DEMO_PARTICIPANT_ID);
+      await submitCaptureAction(participantId);
       router.replace("/(tabs)/card");
     } catch (e) {
       setSubmitError(
@@ -180,18 +236,24 @@ export default function CapturePage() {
                 }
                 status={c.status}
                 actionLabel={
-                  c.status === "complete"
+                  uploadingChannel === c.channel
+                    ? "Uploading…"
+                    : c.status === "complete"
                     ? meta.completeLabel
                     : meta.incompleteLabel
                 }
                 onAction={() => {
-                  if (c.status !== "complete") completeChannel(c.channel);
+                  if (c.status !== "complete" && uploadingChannel === null) {
+                    uploadForChannel(c.channel);
+                  }
                 }}
                 highlight={meta.highlight}
               />
             );
           })}
         </View>
+
+        {uploadError && <Text style={styles.error}>{uploadError}</Text>}
 
         <Text style={styles.hint}>
           Wearable data syncs automatically once connected — no need to re-enter

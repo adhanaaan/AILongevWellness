@@ -17,6 +17,7 @@ import {
   PlusJakartaSans_800ExtraBold,
 } from "@expo-google-fonts/plus-jakarta-sans";
 import { colors } from "@/lib/theme/tokens";
+import { AuthProvider } from "@/lib/auth/AuthProvider";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -45,17 +46,19 @@ export default function RootLayout() {
   return (
     <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
       <StatusBar style="dark" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.cloud },
-        }}
-      >
-        <Stack.Screen name="index" />
-        <Stack.Screen name="onboarding" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="admin" />
-      </Stack>
+      <AuthProvider>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.cloud },
+          }}
+        >
+          <Stack.Screen name="index" />
+          <Stack.Screen name="onboarding" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="admin" />
+        </Stack>
+      </AuthProvider>
     </View>
   );
 }

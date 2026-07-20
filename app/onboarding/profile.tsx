@@ -10,7 +10,7 @@ import { Toggle } from "@/components/ui/Toggle";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { updateParticipantAction } from "@/lib/data/actions";
-import { DEMO_PARTICIPANT_ID } from "@/lib/data/mock";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 
 const GOAL_OPTIONS = [
@@ -77,6 +77,7 @@ function OptionSelector({
 
 export default function ProfilePage() {
   const router = useRouter();
+  const { participantId } = useAuth();
 
   const [enteredBy, setEnteredBy] = useState("me");
   const [name, setName] = useState("James Chen");
@@ -101,9 +102,10 @@ export default function ProfilePage() {
   }
 
   async function onContinue() {
+    if (!participantId) return;
     setSaving(true);
     try {
-      await updateParticipantAction(DEMO_PARTICIPANT_ID, {
+      await updateParticipantAction(participantId, {
         name,
         age: Number(age),
         sex: sex as any,

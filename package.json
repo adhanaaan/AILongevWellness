@@ -12,17 +12,23 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.60.0",
+    "@opentelemetry/api": "^1.9.0",
     "@expo-google-fonts/manrope": "^0.2.3",
     "@expo-google-fonts/plus-jakarta-sans": "^0.4.2",
     "@expo/vector-icons": "^14.0.0",
+    "@react-native-async-storage/async-storage": "1.23.1",
     "@react-navigation/bottom-tabs": "^7.0.0",
     "@react-navigation/drawer": "^7.0.0",
     "@react-navigation/native": "^7.0.0",
+    "@supabase/supabase-js": "^2.45.4",
     "expo": "~52.0.0",
     "expo-asset": "~11.0.0",
     "expo-blur": "~14.0.1",
     "expo-constants": "~17.0.0",
+    "expo-document-picker": "~13.0.1",
     "expo-font": "~13.0.4",
+    "expo-image-picker": "~16.0.3",
     "expo-linking": "~7.0.0",
     "expo-router": "~4.0.0",
     "expo-splash-screen": "~0.29.0",
@@ -43,6 +49,7 @@
     "@babel/core": "^7.24.0",
     "@types/react": "~18.3.3",
     "@types/react-native": "^0.73.0",
+    "@vercel/node": "^3.2.24",
     "typescript": "~5.5.4"
   }
 }

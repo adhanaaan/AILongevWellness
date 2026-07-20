@@ -10,6 +10,7 @@ export default function OnboardingLayout() {
       }}
     >
       <Stack.Screen name="consent" />
+      <Stack.Screen name="auth" />
       <Stack.Screen name="profile" />
       <Stack.Screen name="capture" />
     </Stack>

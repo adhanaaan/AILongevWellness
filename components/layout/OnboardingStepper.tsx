@@ -9,6 +9,7 @@ import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 const STEPS = [
   { href: "/", label: "Welcome" },
   { href: "/onboarding/consent", label: "Consent" },
+  { href: "/onboarding/auth", label: "Account" },
   { href: "/onboarding/profile", label: "Profile" },
   { href: "/onboarding/capture", label: "Capture" },
 ];

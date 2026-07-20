@@ -14,7 +14,10 @@ import { MobileShell } from "@/components/layout/MobileShell";
 import { ChatBubble } from "@/components/participant/ChatBubble";
 import { SuggestionChips } from "@/components/participant/SuggestionChips";
 import { respondAsAva } from "@/lib/ava/respond";
-import { repository, DEMO_PARTICIPANT_ID } from "@/lib/data/mock";
+import { repository } from "@/lib/data/mock";
+import { useAuth } from "@/lib/auth/AuthProvider";
+import { isSupabaseConfigured } from "@/lib/config/env";
+import { askAva } from "@/lib/ai/client";
 import type { SignedCard } from "@/lib/data/repository";
 import { colors, fontSizes, radii } from "@/lib/theme/tokens";
 
@@ -31,14 +34,16 @@ const SUGGESTIONS = [
 ];
 
 export default function AvaPage() {
+  const { participantId } = useAuth();
   const [card, setCard] = useState<SignedCard | null | undefined>(undefined);
 
   useEffect(() => {
-    repository.getSignedCard(DEMO_PARTICIPANT_ID).then(setCard);
+    if (!participantId) return;
+    repository.getSignedCard(participantId).then(setCard);
     return repository.subscribe(() => {
-      repository.getSignedCard(DEMO_PARTICIPANT_ID).then(setCard);
+      repository.getSignedCard(participantId).then(setCard);
     });
-  }, []);
+  }, [participantId]);
 
   if (card === undefined) return null;
 
@@ -63,6 +68,7 @@ export default function AvaPage() {
 }
 
 function AvaChatContent({ card }: { card: SignedCard }) {
+  const { session, participantId } = useAuth();
   const scrollRef = useRef<ScrollView>(null);
   const [messages, setMessages] = useState<Message[]>(() => [
     { role: "user", text: "What does my metabolic score mean?" },
@@ -72,17 +78,35 @@ function AvaChatContent({ card }: { card: SignedCard }) {
     },
   ]);
   const [input, setInput] = useState("");
+  const [sending, setSending] = useState(false);
 
-  function send(text: string) {
+  async function send(text: string) {
     const trimmed = text.trim();
-    if (!trimmed) return;
-    const reply = respondAsAva(trimmed, card);
-    setMessages((prev) => [
-      ...prev,
-      { role: "user", text: trimmed },
-      { role: "ava", text: reply },
-    ]);
+    if (!trimmed || sending) return;
+    const history = messages;
+    setMessages((prev) => [...prev, { role: "user", text: trimmed }]);
     setInput("");
+    setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+
+    if (isSupabaseConfigured && session?.access_token && participantId) {
+      setSending(true);
+      try {
+        const { reply } = await askAva(session.access_token, participantId, trimmed, history);
+        setMessages((prev) => [...prev, { role: "ava", text: reply }]);
+      } catch (e) {
+        setMessages((prev) => [
+          ...prev,
+          { role: "ava", text: "AVA is unavailable right now — please try again shortly." },
+        ]);
+      } finally {
+        setSending(false);
+        setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
+      }
+      return;
+    }
+
+    const reply = respondAsAva(trimmed, card);
+    setMessages((prev) => [...prev, { role: "ava", text: reply }]);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
   }
 
