@@ -134,6 +134,9 @@ function Section({
 }
 
 function BulletList({ items }: { items: string[] }) {
+  if (items.length === 0) {
+    return <Text style={styles.emptyText}>Not enough captured data yet.</Text>;
+  }
   return (
     <View>
       {items.map((item, index) => (
@@ -189,6 +192,11 @@ const styles = StyleSheet.create({
     color: colors.charcoal,
     flex: 1,
     lineHeight: 22,
+  },
+  emptyText: {
+    fontSize: fontSizes.bodyMd,
+    color: colors.inkMuted,
+    fontStyle: "italic",
   },
   textArea: {
     borderWidth: 1,
