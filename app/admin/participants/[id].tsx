@@ -202,28 +202,37 @@ export default function ParticipantDetailPage() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Biomarkers</Text>
-          {PILLAR_ORDER.map((pillar) => {
-            const items = biomarkersByPillar[pillar] ?? [];
-            if (items.length === 0) return null;
-            return (
-              <View key={pillar} style={styles.pillarGroup}>
-                <Text style={styles.pillarLabel}>
-                  {pillar.charAt(0).toUpperCase() + pillar.slice(1)}
-                </Text>
-                <Card style={styles.biomarkerCard}>
-                  {items.map((bm) => (
-                    <BiomarkerRow
-                      key={bm.id}
-                      biomarker={bm}
-                      participantId={id!}
-                      trend="flat"
-                      editable={isEditable}
-                    />
-                  ))}
-                </Card>
-              </View>
-            );
-          })}
+          {biomarkers.length === 0 ? (
+            <Card>
+              <Text style={styles.meta}>
+                No biomarkers captured yet — none of this participant's capture channels
+                have produced real values (e.g. no lab report uploaded).
+              </Text>
+            </Card>
+          ) : (
+            PILLAR_ORDER.map((pillar) => {
+              const items = biomarkersByPillar[pillar] ?? [];
+              if (items.length === 0) return null;
+              return (
+                <View key={pillar} style={styles.pillarGroup}>
+                  <Text style={styles.pillarLabel}>
+                    {pillar.charAt(0).toUpperCase() + pillar.slice(1)}
+                  </Text>
+                  <Card style={styles.biomarkerCard}>
+                    {items.map((bm) => (
+                      <BiomarkerRow
+                        key={bm.id}
+                        biomarker={bm}
+                        participantId={id!}
+                        trend="flat"
+                        editable={isEditable}
+                      />
+                    ))}
+                  </Card>
+                </View>
+              );
+            })
+          )}
         </View>
 
         {pipeline.state !== "capturing" && pipeline.state !== "ai_drafted" && (

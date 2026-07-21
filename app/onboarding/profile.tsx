@@ -118,16 +118,28 @@ export default function ProfilePage() {
     );
   }
 
+  const ageNum = Number(age);
+  const heightNum = Number(height);
+  const weightNum = Number(weight);
+  const isValid =
+    name.trim().length > 0 &&
+    Number.isFinite(ageNum) &&
+    ageNum > 0 &&
+    Number.isFinite(heightNum) &&
+    heightNum > 0 &&
+    Number.isFinite(weightNum) &&
+    weightNum > 0;
+
   async function onContinue() {
-    if (!participantId) return;
+    if (!participantId || !isValid) return;
     setSaving(true);
     try {
       await updateParticipantAction(participantId, {
-        name,
-        age: Number(age),
+        name: name.trim(),
+        age: ageNum,
         sex: sex as any,
-        height_cm: Number(height),
-        weight_kg: Number(weight),
+        height_cm: heightNum,
+        weight_kg: weightNum,
         goals,
       });
       router.push("/onboarding/capture");
@@ -253,7 +265,7 @@ export default function ProfilePage() {
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button size="lg" disabled={saving} onPress={onContinue}>
+        <Button size="lg" disabled={saving || !isValid} onPress={onContinue}>
           Continue to capture
         </Button>
       </View>
