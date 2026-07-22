@@ -34,3 +34,11 @@ export function extractLabReport(
 export function generateDraft(token: string, participantId: string): Promise<{ draft: unknown }> {
   return postJson("/api/generate-draft", token, { participantId });
 }
+
+export function extractWearableExport(
+  token: string,
+  participantId: string,
+  fileId: string
+): Promise<{ extracted: string[] }> {
+  return postJson("/api/extract-wearables", token, { participantId, fileId });
+}
