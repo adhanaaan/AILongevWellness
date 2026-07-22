@@ -16,13 +16,14 @@ import {
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
-import { extractLabReport, generateDraft } from "@/lib/ai/client";
+import { extractLabReport, extractWearableExport, generateDraft } from "@/lib/ai/client";
 import type { CaptureChannel, CaptureChannelName, FileKind } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 
 const FILE_KIND_BY_CHANNEL: Partial<Record<CaptureChannelName, FileKind>> = {
   lab_report: "lab_report",
   body_composition: "body_comp",
+  wearables: "apple_health_export",
 };
 
 const CHANNEL_META: Record<
@@ -47,11 +48,12 @@ const CHANNEL_META: Record<
   },
   wearables: {
     title: "Wearables",
-    description: "Connect your device for heart rate, sleep and activity.",
+    description:
+      "Upload your Apple Health export — we'll extract your heart rate, sleep, and activity data.",
     sourceTag: "Wearable",
     IconComponent: Watch,
-    completeLabel: "Manage connection",
-    incompleteLabel: "Connect",
+    completeLabel: "View data",
+    incompleteLabel: "Upload Apple Health export",
   },
   body_composition: {
     title: "Body composition scan",
@@ -131,7 +133,10 @@ export default function CapturePage() {
     }
 
     const result = await DocumentPicker.getDocumentAsync({
-      type: ["application/pdf", "image/*"],
+      type:
+        kind === "apple_health_export"
+          ? ["application/zip", "application/x-zip-compressed"]
+          : ["application/pdf", "image/*"],
       copyToCacheDirectory: true,
     });
     if (result.canceled) return;
@@ -148,13 +153,13 @@ export default function CapturePage() {
         contentType: asset.mimeType ?? (Platform.OS === "web" ? blob.type : undefined),
       });
       await completeChannel(channel);
-      // Lab reports get AI-extracted biomarkers in the background — the care team
-      // reviews them (status: needs_review) before they ever reach the participant.
+      // Lab reports and Apple Health exports both get extracted in the background —
+      // extraction failure isn't fatal to capture, so we don't block or alarm the
+      // participant if it fails; the care team can retry from the admin screen.
       if (kind === "lab_report" && session?.access_token) {
-        extractLabReport(session.access_token, participantId, fileRecord.id).catch(() => {
-          // Extraction failure isn't fatal to capture — the care team can still enter
-          // values manually during review, so we don't block or alarm the participant.
-        });
+        extractLabReport(session.access_token, participantId, fileRecord.id).catch(() => {});
+      } else if (kind === "apple_health_export" && session?.access_token) {
+        extractWearableExport(session.access_token, participantId, fileRecord.id).catch(() => {});
       }
     } catch (e) {
       setUploadError(e instanceof Error ? e.message : "Upload failed. Please try again.");
@@ -264,8 +269,8 @@ export default function CapturePage() {
         {uploadError && <Text style={styles.error}>{uploadError}</Text>}
 
         <Text style={styles.hint}>
-          Wearable data syncs automatically once connected — no need to re-enter
-          it here.
+          To export your Apple Health data: open the Health app on your phone,
+          tap your profile icon, then "Export All Health Data".
         </Text>
       </ScrollView>
 

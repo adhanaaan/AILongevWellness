@@ -206,7 +206,7 @@ export default function ParticipantDetailPage() {
             <Card>
               <Text style={styles.meta}>
                 No biomarkers captured yet — none of this participant's capture channels
-                have produced real values (e.g. no lab report uploaded).
+                have produced real values (e.g. no lab report or Apple Health export uploaded).
               </Text>
             </Card>
           ) : (
