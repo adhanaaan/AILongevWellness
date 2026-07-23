@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
+import * as Linking from "expo-linking";
 import { ArrowLeft, AlertTriangle } from "lucide-react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AdminShell } from "@/components/layout/AdminShell";
@@ -12,7 +13,7 @@ import { DiscussionPointsCard } from "@/components/admin/DiscussionPointsCard";
 import { PipelineStatusBadge } from "@/components/admin/PipelineStatusBadge";
 import { Button, Card } from "@/components/ui";
 import { repository } from "@/lib/data/mock";
-import { resolveAttentionAction } from "@/lib/data/actions";
+import { resolveAttentionAction, getFileUrlAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { generateDraft, extractLabReport, extractWearableExport } from "@/lib/ai/client";
@@ -101,6 +102,11 @@ export default function ParticipantDetailPage() {
     } finally {
       setExtractingFileId(null);
     }
+  }
+
+  async function onViewFile(file: FileRecord) {
+    const url = await getFileUrlAction(file.id);
+    if (url) Linking.openURL(url);
   }
 
   useEffect(() => {
@@ -272,6 +278,11 @@ export default function ParticipantDetailPage() {
                         </Text>
                         {!!error && <Text style={styles.attentionReason}>{error}</Text>}
                       </View>
+                      {isSupabaseConfigured && (
+                        <Button variant="ghost" size="sm" onPress={() => onViewFile(file)}>
+                          View file
+                        </Button>
+                      )}
                       {canExtract && isSupabaseConfigured && (
                         <Button
                           variant="secondary"

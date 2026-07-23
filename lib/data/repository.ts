@@ -69,6 +69,8 @@ export interface Repository {
     kind: FileKind,
     file: UploadableFile
   ): Promise<FileRecord>;
+  /** A short-lived signed URL to view/download the raw uploaded file. Null if unavailable (e.g. mock mode has no real file storage). */
+  getFileUrl(fileId: string): Promise<string | null>;
 
   listDailyLogs(participantId: string): Promise<DailyLog[]>;
   upsertDailyLog(
