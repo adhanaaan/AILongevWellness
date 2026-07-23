@@ -129,6 +129,10 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
     backgroundColor: colors.cloud,
+    maxWidth: 448,
+    alignSelf: "center",
+    width: "100%",
+    overflow: "hidden",
   },
   heroWrap: {
     width: "100%",
