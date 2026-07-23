@@ -47,16 +47,8 @@ export default function WelcomePage() {
   }, [participantId, router]);
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
-      <View style={styles.logoRow}>
-        <Image
-          source={require("@/assets/images/aiw-logo.png")}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-      </View>
-
-      <View style={[styles.heroWrap, { height: windowHeight * 0.42 }]}>
+    <SafeAreaView style={styles.safe} edges={["bottom"]}>
+      <View style={[styles.heroWrap, { height: windowHeight * 0.5 }]}>
         <Image
           source={require("@/assets/images/splash-hero.jpg")}
           style={styles.heroImage}
@@ -65,14 +57,21 @@ export default function WelcomePage() {
         <GradientOverlay stops={HERO_FADE_STOPS} />
       </View>
 
+      <View style={styles.logoRow}>
+        <Image
+          source={require("@/assets/images/aiw-logo.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      </View>
+
       <View style={styles.container}>
         <View style={styles.textBlock}>
           <Text style={styles.title}>
             Your Executive Health Intelligence
           </Text>
           <Text style={styles.subtitle}>
-            A comprehensive wellness assessment powered by AI — personalised
-            insights in about 30 minutes.
+            Get personalised insights under 30 minutes.
           </Text>
         </View>
 
@@ -95,15 +94,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.cloud,
   },
-  logoRow: {
-    alignItems: "center",
-    paddingTop: spacing.md,
-    paddingBottom: spacing.sm,
-  },
-  logo: {
-    width: 132,
-    height: 74,
-  },
   heroWrap: {
     width: "100%",
   },
@@ -111,11 +101,19 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
   },
+  logoRow: {
+    alignItems: "center",
+    marginTop: -40,
+  },
+  logo: {
+    width: 200,
+    height: 112,
+  },
   container: {
     flex: 1,
     justifyContent: "space-between",
     paddingHorizontal: spacing["2xl"],
-    paddingTop: spacing.lg,
+    paddingTop: spacing.md,
     paddingBottom: spacing.lg,
   },
   textBlock: {
@@ -125,7 +123,6 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.displayBold,
     fontSize: fontSizes.headlineLg,
     color: colors.ink,
-    textAlign: "center",
     lineHeight: 38,
     letterSpacing: -0.5,
   },
@@ -133,7 +130,6 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.inkMuted,
-    textAlign: "center",
     marginTop: spacing.md,
     lineHeight: 24,
   },
