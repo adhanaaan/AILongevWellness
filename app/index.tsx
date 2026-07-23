@@ -93,7 +93,7 @@ export default function WelcomePage() {
       <View style={styles.container}>
         <View style={styles.textBlock}>
           <Text style={styles.title}>
-            Your Executive Health Intelligence
+            Your Executive{"\n"}Health Intelligence
           </Text>
           <Text style={styles.subtitle}>
             Get personalised insights under 30 minutes.
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
     width: "100%",
     gap: spacing.md,
     alignItems: "center",
-    marginTop: spacing["3xl"],
+    marginTop: spacing["6xl"],
   },
   hint: {
     fontFamily: fontFamilies.body,
