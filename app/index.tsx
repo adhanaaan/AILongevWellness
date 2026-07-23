@@ -97,7 +97,6 @@ export default function WelcomePage() {
           <View style={styles.actions}>
             <Button
               size="lg"
-              shape="full"
               onPress={() => router.push("/onboarding/consent")}
             >
               Begin Assessment

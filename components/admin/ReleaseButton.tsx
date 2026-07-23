@@ -27,7 +27,6 @@ export function ReleaseButton({ participantId, enabled }: ReleaseButtonProps) {
       <Button
         variant="primary"
         size="lg"
-        shape="full"
         iconLeft={<Send size={18} color={colors.white} />}
         disabled={!enabled || releasing}
         onPress={handleRelease}
