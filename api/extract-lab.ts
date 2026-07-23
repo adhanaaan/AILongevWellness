@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
 import { LAB_CATALOG_BY_KEY } from "../lib/ai/labCatalog";
 import { BUCKET_BY_KIND } from "../lib/data/storageBuckets";
+import { convertToTargetUnit } from "../lib/ai/unitConversion";
 
 // This is a Vercel serverless function (not an Expo Router API route) — see
 // vercel.json's rewrite, which excludes /api/* from the SPA catch-all so
@@ -15,19 +16,43 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!;
 
 const EXTRACTION_PROMPT = `You are extracting standard blood panel results from a lab report image or PDF.
 
-Only report values for these exact keys, using the exact target unit shown (convert if the
-document uses a different but equivalent unit, e.g. cholesterol mg/dL -> mmol/L is value / 38.67,
-glucose mmol/L -> mg/dL is value * 18.02):
+Only report values for these exact keys (common aliases a real report might use are listed
+in parentheses — match on meaning, not exact wording):
 
-- total_cholesterol (mmol/L)
-- ldl_c (mmol/L)
-- hdl_c (mmol/L)
-- hscrp (mg/L) — also written "hs-CRP" or "high sensitivity CRP"
-- fasting_glucose (mg/dL)
-- hba1c (%)
-- vitamin_d (nmol/L) — also written "25-OH vitamin D" or "vitamin D, 25-hydroxy"
+Vascular:
+- total_cholesterol (Total Cholesterol, Cholesterol)
+- ldl_c (LDL, LDL-C, LDL Cholesterol)
+- hdl_c (HDL, HDL-C, HDL Cholesterol)
+- triglycerides (Triglycerides, TG)
+- hscrp (hs-CRP, high sensitivity CRP, CRP)
+- homocysteine (Homocysteine, Hcy)
+- lpa (Lipoprotein(a), Lp(a))
 
-Skip any key not present in the document. Call report_lab_values with what you found.`;
+Metabolic:
+- fasting_glucose (Fasting Glucose, Glucose, FBG, FPG)
+- hba1c (HbA1c, Glycated Haemoglobin, A1C)
+- fasting_insulin (Fasting Insulin, Insulin)
+- vitamin_d (Vitamin D, 25-OH Vitamin D, Vitamin D 25-Hydroxy)
+- vitamin_b12 (Vitamin B12, B12)
+- ferritin (Ferritin)
+- uric_acid (Uric Acid, Urate)
+- alt (ALT, SGPT, Alanine Aminotransferase)
+- ast (AST, SGOT, Aspartate Aminotransferase)
+- creatinine (Creatinine)
+- egfr (eGFR, Estimated GFR, GFR)
+- tsh (TSH, Thyroid Stimulating Hormone)
+
+Rules:
+- Report the value and unit EXACTLY as printed on the document (e.g. if it prints
+  "Cholesterol, Total 5.8 mmol/L" report value 5.8, unit "mmol/L"; if it prints
+  "Creatinine 88 umol/L" report value 88, unit "umol/L"). Do NOT convert units yourself —
+  unit conversion is handled afterward in code from whatever unit you report.
+- Skip any key not present in the document. Do not guess or estimate a value.
+- Do NOT report tumor markers (e.g. AFP, CEA, CA19-9, CA15.3, PSA), cancer screening
+  results, or infectious disease serology (e.g. Hepatitis, EBV) even if present in the
+  document — this platform is wellness-only, not diagnostic.
+
+Call report_lab_values with what you found.`;
 
 // Forcing a tool call instead of asking Claude to free-write a JSON string: the
 // API validates/constrains the output to this schema server-side, so there's no
@@ -46,8 +71,9 @@ const EXTRACTION_TOOL: Anthropic.Tool = {
           properties: {
             key: { type: "string" },
             value: { type: "number" },
+            unit: { type: "string", description: "The unit exactly as printed on the document, e.g. 'mg/dL'." },
           },
-          required: ["key", "value"],
+          required: ["key", "value", "unit"],
         },
       },
     },
@@ -128,7 +154,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 
-  let parsed: { results: Array<{ key: string; value: number }> };
+  let parsed: { results: Array<{ key: string; value: number; unit: string }> };
   try {
     const content =
       mediaType === "application/pdf"
@@ -164,18 +190,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     .filter((r) => LAB_CATALOG_BY_KEY[r.key] && typeof r.value === "number")
     .map((r) => {
       const entry = LAB_CATALOG_BY_KEY[r.key];
+      const value = convertToTargetUnit(entry.key, r.value, r.unit ?? entry.unit, entry.unit);
       return {
         participant_id: participantId,
         pillar: entry.pillar,
         key: entry.key,
         label: entry.label,
-        value: r.value,
+        value,
         unit: entry.unit,
         ref_low: entry.ref_low,
         ref_high: entry.ref_high,
         source: "lab_extract",
         status: "needs_review",
-        flagged: r.value < entry.ref_low || r.value > entry.ref_high,
+        flagged: value < entry.ref_low || value > entry.ref_high,
         updated_at: new Date().toISOString(),
       };
     });
