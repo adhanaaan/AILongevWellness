@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Mail } from "lucide-react-native";
 import { OnboardingStepper } from "@/components/layout/OnboardingStepper";
 import { Input } from "@/components/ui/Field";
@@ -12,7 +12,10 @@ import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 export default function ParticipantAuthPage() {
   const router = useRouter();
   const { signIn, signUpParticipant } = useAuth();
-  const [mode, setMode] = useState<"signup" | "signin">("signup");
+  const { mode: initialMode } = useLocalSearchParams<{ mode?: string }>();
+  const [mode, setMode] = useState<"signup" | "signin">(
+    initialMode === "signin" ? "signin" : "signup"
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);

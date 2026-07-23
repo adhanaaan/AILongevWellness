@@ -17,6 +17,7 @@ export interface ButtonProps {
   variant?: ButtonVariant;
   size?: ButtonSize;
   shape?: ButtonShape;
+  style?: ViewStyle;
   iconLeft?: React.ReactNode;
   iconRight?: React.ReactNode;
   disabled?: boolean;
@@ -43,6 +44,7 @@ export function Button({
   variant = "primary",
   size = "md",
   shape = "md",
+  style,
   iconLeft,
   iconRight,
   disabled = false,
@@ -59,6 +61,7 @@ export function Button({
     variant === "secondary" && styles.secondaryContainer,
     variant === "ghost" && styles.ghostContainer,
     disabled && styles.disabled,
+    style,
   ].filter(Boolean) as ViewStyle[];
 
   const textStyle: TextStyle[] = [
