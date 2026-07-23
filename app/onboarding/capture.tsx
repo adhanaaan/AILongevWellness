@@ -67,7 +67,7 @@ const CHANNEL_META: Record<
   },
   lab_report: {
     title: "Screening / lab reports",
-    description: "Upload a PDF or photo — we'll extract the values for you.",
+    description: "Upload a lab report, screening PDF, or CGM (continuous glucose monitor) summary report — we'll extract the values for you.",
     sourceTag: "Lab",
     IconComponent: FileText,
     completeLabel: "View report",

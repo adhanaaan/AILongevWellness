@@ -37,6 +37,16 @@ export const LAB_CATALOG: LabCatalogEntry[] = [
   { key: "creatinine", label: "Creatinine", pillar: "metabolic", unit: "µmol/L", ref_low: 60, ref_high: 110 },
   { key: "egfr", label: "eGFR (kidney function)", pillar: "metabolic", unit: "mL/min/1.73m²", ref_low: 90, ref_high: 200 },
   { key: "tsh", label: "TSH (thyroid)", pillar: "metabolic", unit: "mIU/L", ref_low: 0.4, ref_high: 4.0 },
+
+  // CGM (continuous glucose monitor) summary stats — a different document shape
+  // (e.g. a Buzud/Freestyle/Dexcom export) but same upload path and pillar as
+  // the rest of the metabolic panel, so it lives in the same catalog.
+  { key: "cgm_avg_glucose", label: "Average glucose (CGM)", pillar: "metabolic", unit: "mg/dL", ref_low: 70, ref_high: 140 },
+  { key: "cgm_gmi", label: "Glucose Management Indicator", pillar: "metabolic", unit: "%", ref_low: 4.0, ref_high: 7.0 },
+  { key: "cgm_variability", label: "Glucose variability (%CV)", pillar: "metabolic", unit: "%", ref_low: 0, ref_high: 36 },
+  { key: "cgm_time_in_range", label: "Time in range (CGM)", pillar: "metabolic", unit: "%", ref_low: 70, ref_high: 100 },
+  { key: "cgm_time_above_range", label: "Time above range (CGM)", pillar: "metabolic", unit: "%", ref_low: 0, ref_high: 25 },
+  { key: "cgm_time_below_range", label: "Time below range (CGM)", pillar: "metabolic", unit: "%", ref_low: 0, ref_high: 4 },
 ];
 
 export const LAB_CATALOG_BY_KEY: Record<string, LabCatalogEntry> = Object.fromEntries(

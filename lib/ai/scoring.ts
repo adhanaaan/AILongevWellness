@@ -11,6 +11,7 @@ export const BIOMARKER_KEYS_BY_PILLAR: Record<Pillar, string[]> = {
   metabolic: [
     "fasting_glucose", "hba1c", "fasting_insulin", "waist_hip_ratio", "bmi", "body_fat_pct", "visceral_fat",
     "vitamin_d", "vitamin_b12", "ferritin", "uric_acid", "alt", "ast", "creatinine", "egfr", "tsh",
+    "cgm_avg_glucose", "cgm_gmi", "cgm_variability", "cgm_time_in_range", "cgm_time_above_range", "cgm_time_below_range",
   ],
   mental: ["reaction_time", "cog_composite", "sleep_quality", "sleep_hours", "stress_index", "stress_level", "exercise_freq"],
 };

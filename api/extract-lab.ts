@@ -14,7 +14,10 @@ const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!;
 
-const EXTRACTION_PROMPT = `You are extracting standard blood panel results from a lab report image or PDF.
+const EXTRACTION_PROMPT = `You are extracting results from a health report image or PDF. This may be
+either (a) a standard blood panel from a lab, or (b) a continuous glucose monitor
+(CGM) summary report (e.g. Freestyle Libre, Dexcom, Buzud) — identify which one you're
+looking at and extract only the keys that apply.
 
 Only report values for these exact keys (common aliases a real report might use are listed
 in parentheses — match on meaning, not exact wording):
@@ -28,7 +31,7 @@ Vascular:
 - homocysteine (Homocysteine, Hcy)
 - lpa (Lipoprotein(a), Lp(a))
 
-Metabolic:
+Metabolic (standard blood panel):
 - fasting_glucose (Fasting Glucose, Glucose, FBG, FPG)
 - hba1c (HbA1c, Glycated Haemoglobin, A1C)
 - fasting_insulin (Fasting Insulin, Insulin)
@@ -42,11 +45,22 @@ Metabolic:
 - egfr (eGFR, Estimated GFR, GFR)
 - tsh (TSH, Thyroid Stimulating Hormone)
 
+Metabolic (CGM summary report only — these come from the report's summary/overview page,
+never from reading values off a chart):
+- cgm_avg_glucose (Average Glucose, Mean Glucose)
+- cgm_gmi (Glucose Management Indicator, GMI, Estimated A1C)
+- cgm_variability (Glucose Variability, %CV, Coefficient of Variation)
+- cgm_time_in_range (Time in Range, TIR, % in target range)
+- cgm_time_above_range (Time Above Range, TAR, % above target range — sum "high" + "very high" if split)
+- cgm_time_below_range (Time Below Range, TBR, % below target range — sum "low" + "very low" if split)
+
 Rules:
 - Report the value and unit EXACTLY as printed on the document (e.g. if it prints
   "Cholesterol, Total 5.8 mmol/L" report value 5.8, unit "mmol/L"; if it prints
   "Creatinine 88 umol/L" report value 88, unit "umol/L"). Do NOT convert units yourself —
   unit conversion is handled afterward in code from whatever unit you report.
+- For CGM reports, only extract the named summary statistics — never estimate a value by
+  reading position off a glucose trend chart or graph.
 - Skip any key not present in the document. Do not guess or estimate a value.
 - Do NOT report tumor markers (e.g. AFP, CEA, CA19-9, CA15.3, PSA), cancer screening
   results, or infectious disease serology (e.g. Hepatitis, EBV) even if present in the
