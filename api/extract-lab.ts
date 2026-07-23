@@ -3,8 +3,6 @@ import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
 import { LAB_CATALOG_BY_KEY } from "../lib/ai/labCatalog";
 import { BUCKET_BY_KIND } from "../lib/data/storageBuckets";
-import { parseJsonResponse } from "../lib/ai/parseJson";
-import { extractText } from "../lib/ai/extractText";
 
 // This is a Vercel serverless function (not an Expo Router API route) — see
 // vercel.json's rewrite, which excludes /api/* from the SPA catch-all so
@@ -29,9 +27,33 @@ glucose mmol/L -> mg/dL is value * 18.02):
 - hba1c (%)
 - vitamin_d (nmol/L) — also written "25-OH vitamin D" or "vitamin D, 25-hydroxy"
 
-Skip any key not present in the document. Reply with ONLY a JSON object, no prose, no markdown
-fences, in exactly this shape:
-{"results": [{"key": "total_cholesterol", "value": 4.9}, ...]}`;
+Skip any key not present in the document. Call report_lab_values with what you found.`;
+
+// Forcing a tool call instead of asking Claude to free-write a JSON string: the
+// API validates/constrains the output to this schema server-side, so there's no
+// JSON.parse involved and no way for a stray quote or markdown fence in the
+// model's output to break parsing.
+const EXTRACTION_TOOL: Anthropic.Tool = {
+  name: "report_lab_values",
+  description: "Report the lab values found in the document.",
+  input_schema: {
+    type: "object",
+    properties: {
+      results: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            key: { type: "string" },
+            value: { type: "number" },
+          },
+          required: ["key", "value"],
+        },
+      },
+    },
+    required: ["results"],
+  },
+};
 
 // Trusts the file extension first — we control storage_path ourselves at upload
 // time, so it's a more reliable signal than whatever content-type Supabase
@@ -106,7 +128,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 
-  let raw: string;
+  let parsed: { results: Array<{ key: string; value: number }> };
   try {
     const content =
       mediaType === "application/pdf"
@@ -116,6 +138,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const message = await anthropic.messages.create({
       model: "claude-sonnet-5",
       max_tokens: 1024,
+      tools: [EXTRACTION_TOOL],
+      tool_choice: { type: "tool", name: "report_lab_values" },
       messages: [
         {
           role: "user",
@@ -123,20 +147,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         },
       ],
     });
-    raw = extractText(message.content);
+    const toolUse = message.content.find(
+      (block): block is Anthropic.ToolUseBlock => block.type === "tool_use"
+    );
+    if (!toolUse) {
+      res.status(502).json({ error: "AI did not call the expected tool" });
+      return;
+    }
+    parsed = toolUse.input as typeof parsed;
   } catch (e) {
     res.status(502).json({ error: e instanceof Error ? e.message : "AI extraction failed" });
-    return;
-  }
-
-  let parsed: { results: Array<{ key: string; value: number }> };
-  try {
-    parsed = parseJsonResponse(raw);
-  } catch {
-    // Surface what Claude actually said instead of a generic message — otherwise
-    // this failure mode is undiagnosable from the outside.
-    const preview = raw.trim().slice(0, 500) || "(empty response)";
-    res.status(502).json({ error: `AI did not return valid JSON. Raw response: ${preview}` });
     return;
   }
 
