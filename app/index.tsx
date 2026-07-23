@@ -103,6 +103,7 @@ export default function WelcomePage() {
         <View style={styles.actions}>
           <Button
             size="lg"
+            style={styles.loginButton}
             onPress={() => router.push({ pathname: "/onboarding/auth", params: { mode: "signin" } })}
           >
             Login
@@ -175,6 +176,9 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     alignItems: "center",
     marginTop: spacing["6xl"],
+  },
+  loginButton: {
+    width: "100%",
   },
   signUpButton: {
     paddingVertical: spacing.xs,
