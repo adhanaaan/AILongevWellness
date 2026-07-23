@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
+import { extractText } from "../lib/ai/extractText";
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
@@ -93,8 +94,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       system: systemPrompt(card),
       messages: [...priorMessages, { role: "user", content: message }],
     });
-    const block = response.content[0];
-    const reply = block.type === "text" ? block.text : DISCLAIMER;
+    const reply = extractText(response.content) || DISCLAIMER;
     res.status(200).json({ reply });
   } catch (e) {
     res.status(502).json({ error: e instanceof Error ? e.message : "AVA is unavailable right now" });

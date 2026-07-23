@@ -8,6 +8,7 @@ import {
   computePillarScores,
 } from "../lib/ai/scoring";
 import { parseJsonResponse } from "../lib/ai/parseJson";
+import { extractText } from "../lib/ai/extractText";
 import type { Biomarker, KeyContributor } from "../lib/types/db";
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
@@ -136,8 +137,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         },
       ],
     });
-    const block = message.content[0];
-    narrative = parseJsonResponse(block.type === "text" ? block.text : "{}");
+    narrative = parseJsonResponse(extractText(message.content) || "{}");
   } catch (e) {
     res.status(502).json({ error: e instanceof Error ? e.message : "AI draft generation failed" });
     return;
