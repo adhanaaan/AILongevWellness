@@ -7,6 +7,7 @@ import {
   computeOutOfRange,
   computePillarScores,
 } from "../lib/ai/scoring";
+import { parseJsonResponse } from "../lib/ai/parseJson";
 import type { Biomarker, KeyContributor } from "../lib/types/db";
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
@@ -136,7 +137,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ],
     });
     const block = message.content[0];
-    narrative = JSON.parse(block.type === "text" ? block.text : "{}");
+    narrative = parseJsonResponse(block.type === "text" ? block.text : "{}");
   } catch (e) {
     res.status(502).json({ error: e instanceof Error ? e.message : "AI draft generation failed" });
     return;
