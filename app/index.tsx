@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Image, StyleSheet, useWindowDimensions, type LayoutChangeEvent } from "react-native";
+import { View, Text, Image, TouchableOpacity, StyleSheet, useWindowDimensions, type LayoutChangeEvent } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
@@ -96,14 +96,24 @@ export default function WelcomePage() {
             Your Executive{"\n"}Health Intelligence
           </Text>
           <Text style={styles.subtitle}>
-            Get personalised insights under 30 minutes.
+            All your health data, in one place.
           </Text>
         </View>
 
         <View style={styles.actions}>
-          <Button size="lg" onPress={() => router.push("/onboarding/consent")}>
-            Begin Assessment
+          <Button
+            size="lg"
+            onPress={() => router.push({ pathname: "/onboarding/auth", params: { mode: "signin" } })}
+          >
+            Login
           </Button>
+          <TouchableOpacity
+            onPress={() => router.push("/onboarding/consent")}
+            activeOpacity={0.7}
+            style={styles.signUpButton}
+          >
+            <Text style={styles.signUpText}>Sign up</Text>
+          </TouchableOpacity>
           <Text style={styles.hint}>
             Your data is encrypted and handled in accordance with our privacy
             policy.
@@ -162,9 +172,17 @@ const styles = StyleSheet.create({
   },
   actions: {
     width: "100%",
-    gap: spacing.md,
+    gap: spacing.lg,
     alignItems: "center",
     marginTop: spacing["6xl"],
+  },
+  signUpButton: {
+    paddingVertical: spacing.xs,
+  },
+  signUpText: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.bodyLg,
+    color: colors.ink,
   },
   hint: {
     fontFamily: fontFamilies.body,
