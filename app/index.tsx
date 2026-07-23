@@ -148,9 +148,9 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: fontFamilies.displayBold,
-    fontSize: fontSizes.headlineLg,
+    fontSize: 38,
     color: colors.ink,
-    lineHeight: 38,
+    lineHeight: 44,
     letterSpacing: -0.5,
   },
   subtitle: {
