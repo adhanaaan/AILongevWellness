@@ -1,36 +1,38 @@
-import React, { useEffect } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, Image, TouchableOpacity, StyleSheet, useWindowDimensions, type LayoutChangeEvent } from "react-native";
 import { useRouter } from "expo-router";
-import { Activity, Clock, Sparkles, UserCheck } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { GradientOrb } from "@/components/ui/GradientOrb";
-import { VideoHero } from "@/components/ui/VideoHero";
-import { HERO_VIDEO_SOURCE } from "@/lib/config/media";
+import { GradientOverlay } from "@/components/ui/GradientOverlay";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { repository } from "@/lib/data/mock";
-import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, lineHeights, spacing } from "@/lib/theme/tokens";
 
-const TRUST_ITEMS = [
-  { icon: Clock, label: "~30 minutes" },
-  { icon: Sparkles, label: "AI-personalised" },
-  { icon: UserCheck, label: "Care team reviewed" },
+const HERO_FADE_STOPS = [
+  { offset: "0", color: "rgba(250,250,250,0)" },
+  { offset: "0.55", color: "rgba(250,250,250,0)" },
+  { offset: "1", color: colors.cloud },
 ];
 
-function AmbientFallback() {
-  return (
-    <>
-      <GradientOrb tone="teal" size={420} style={styles.fallbackOrbTop} />
-      <GradientOrb tone="amber" size={360} style={styles.fallbackOrbBottom} />
-    </>
-  );
-}
+// Native aspect ratio of assets/images/splash-hero.jpg (1000x1675). The image
+// is rendered at full (uncropped) height for this ratio and shifted up so the
+// crop window starts just above her hairline (~11.6% down the source photo)
+// rather than resizeMode="cover"'s default center-crop, which cut off her
+// face. react-native-web doesn't honor the `aspectRatio` style on Image, so
+// width/height are computed explicitly from a measured layout width instead.
+const HERO_IMAGE_ASPECT_RATIO = 1000 / 1675;
+const HERO_TOP_CROP_FRACTION = 195 / 1675;
 
 export default function WelcomePage() {
   const router = useRouter();
   const { participantId } = useAuth();
+  const { height: windowHeight } = useWindowDimensions();
+  const [heroWidth, setHeroWidth] = useState(0);
+
+  function onHeroLayout(e: LayoutChangeEvent) {
+    setHeroWidth(e.nativeEvent.layout.width);
+  }
 
   // Lands here whenever a signed-in participant hits the root — most notably
   // right after clicking an email confirmation link, which otherwise would
@@ -59,150 +61,139 @@ export default function WelcomePage() {
   }, [participantId, router]);
 
   return (
-    <VideoHero source={HERO_VIDEO_SOURCE} fallback={<AmbientFallback />}>
-      <SafeAreaView style={styles.safe}>
-        <View style={styles.container}>
-          <View style={styles.hero}>
-            <View style={styles.iconWrap}>
-              <GradientOrb tone="teal" size={200} />
-              <GlassCard tint="dark" padding="none" radius="full" style={styles.iconCircle}>
-                <Activity size={28} color={colors.teal} />
-              </GlassCard>
-            </View>
-            <Text style={styles.brand}>EXECUTIVE HEALTH</Text>
-            <Text style={styles.title}>
-              Your Executive{"\n"}Health Intelligence
-            </Text>
-            <Text style={styles.subtitle}>
-              A comprehensive wellness assessment powered by AI — personalised
-              insights in about 30 minutes.
-            </Text>
+    <SafeAreaView style={styles.safe} edges={["bottom"]}>
+      <View
+        style={[styles.heroWrap, { height: windowHeight * 0.5 }]}
+        onLayout={onHeroLayout}
+      >
+        {heroWidth > 0 && (
+          <Image
+            source={require("@/assets/images/splash-hero.jpg")}
+            style={[
+              styles.heroImage,
+              {
+                width: heroWidth,
+                height: heroWidth / HERO_IMAGE_ASPECT_RATIO,
+                top: -(heroWidth / HERO_IMAGE_ASPECT_RATIO) * HERO_TOP_CROP_FRACTION,
+              },
+            ]}
+          />
+        )}
+        <GradientOverlay stops={HERO_FADE_STOPS} />
+      </View>
 
-            <View style={styles.trustRow}>
-              {TRUST_ITEMS.map(({ icon: Icon, label }) => (
-                <GlassCard
-                  key={label}
-                  tint="dark"
-                  padding="sm"
-                  radius="full"
-                  style={styles.trustChip}
-                >
-                  <Icon size={13} color={colors.teal} />
-                  <Text style={styles.trustLabel}>{label}</Text>
-                </GlassCard>
-              ))}
-            </View>
-          </View>
+      <View style={styles.logoRow}>
+        <Image
+          source={require("@/assets/images/aiw-logo.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      </View>
 
-          <View style={styles.actions}>
-            <Button
-              size="lg"
-              onPress={() => router.push("/onboarding/consent")}
-            >
-              Begin Assessment
-            </Button>
-            <Text style={styles.hint}>
-              Your data is encrypted and handled in accordance with our privacy
-              policy.
-            </Text>
-          </View>
+      <View style={styles.container}>
+        <View style={styles.textBlock}>
+          <Text style={styles.title}>
+            Your Executive{"\n"}Health Intelligence
+          </Text>
+          <Text style={styles.subtitle}>
+            All your health data, in one place.
+          </Text>
         </View>
-      </SafeAreaView>
-    </VideoHero>
+
+        <View style={styles.actions}>
+          <Button
+            size="lg"
+            style={styles.loginButton}
+            onPress={() => router.push({ pathname: "/onboarding/auth", params: { mode: "signin" } })}
+          >
+            Login
+          </Button>
+          <TouchableOpacity
+            onPress={() => router.push("/onboarding/consent")}
+            activeOpacity={0.7}
+            style={styles.signUpButton}
+          >
+            <Text style={styles.signUpText}>Sign up</Text>
+          </TouchableOpacity>
+          <Text style={styles.hint}>
+            Your data is encrypted and handled in accordance with our privacy
+            policy.
+          </Text>
+        </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  fallbackOrbTop: {
-    top: -100,
-    left: "50%",
-    marginLeft: -210,
-  },
-  fallbackOrbBottom: {
-    bottom: -80,
-    left: "50%",
-    marginLeft: -180,
-  },
   safe: {
     flex: 1,
+    backgroundColor: colors.cloud,
+  },
+  heroWrap: {
+    width: "100%",
+    overflow: "hidden",
+  },
+  heroImage: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+  },
+  logoRow: {
+    alignItems: "center",
+    marginTop: -40,
+  },
+  logo: {
+    width: 200,
+    height: 112,
   },
   container: {
     flex: 1,
-    justifyContent: "space-between",
-    paddingHorizontal: spacing["3xl"],
-    paddingTop: spacing["6xl"],
-    paddingBottom: spacing["4xl"],
+    paddingHorizontal: spacing["2xl"],
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
   },
-  hero: {
-    alignItems: "center",
-    marginTop: spacing["6xl"],
-  },
-  iconWrap: {
-    width: 200,
-    height: 200,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: spacing["3xl"],
-  },
-  iconCircle: {
-    width: 64,
-    height: 64,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  brand: {
-    fontFamily: fontFamilies.bodySemiBold,
-    fontSize: fontSizes.overline,
-    letterSpacing: 3,
-    color: colors.teal,
-    marginBottom: spacing.lg,
+  textBlock: {
+    marginTop: spacing.sm,
   },
   title: {
     fontFamily: fontFamilies.displayBold,
-    fontSize: fontSizes.headlineLg,
-    color: colors.inkOnDark,
-    textAlign: "center",
-    lineHeight: 40,
+    fontSize: 38,
+    color: colors.ink,
+    lineHeight: 44,
     letterSpacing: -0.5,
   },
   subtitle: {
     fontFamily: fontFamilies.body,
-    fontSize: fontSizes.bodyMd,
-    color: colors.inkOnDarkMuted,
-    textAlign: "center",
-    marginTop: spacing.lg,
-    lineHeight: 24,
-    maxWidth: 300,
-  },
-  trustRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    gap: spacing.sm,
-    marginTop: spacing["2xl"],
-  },
-  trustChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs,
-    paddingHorizontal: spacing.lg,
-  },
-  trustLabel: {
-    fontFamily: fontFamilies.bodyMedium,
-    fontSize: fontSizes.caption,
-    color: colors.inkOnDark,
+    fontSize: fontSizes.headlineSm,
+    color: colors.inkMuted,
+    marginTop: spacing.md,
+    lineHeight: lineHeights.headlineSm,
   },
   actions: {
     width: "100%",
     gap: spacing.lg,
     alignItems: "center",
+    marginTop: spacing["6xl"],
+  },
+  loginButton: {
+    width: "100%",
+  },
+  signUpButton: {
+    paddingVertical: spacing.xs,
+  },
+  signUpText: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.bodyLg,
+    color: colors.ink,
   },
   hint: {
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
-    color: colors.inkOnDarkMuted,
+    color: colors.inkMuted,
     textAlign: "center",
-    maxWidth: 260,
+    maxWidth: 300,
     lineHeight: 18,
   },
 });
