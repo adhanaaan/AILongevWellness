@@ -7,7 +7,7 @@ import { GradientOverlay } from "@/components/ui/GradientOverlay";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { repository } from "@/lib/data/mock";
-import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, lineHeights, spacing } from "@/lib/theme/tokens";
 
 const HERO_FADE_STOPS = [
   { offset: "0", color: "rgba(250,250,250,0)" },
@@ -166,10 +166,10 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontFamily: fontFamilies.body,
-    fontSize: fontSizes.bodyMd,
+    fontSize: fontSizes.headlineSm,
     color: colors.inkMuted,
     marginTop: spacing.md,
-    lineHeight: 24,
+    lineHeight: lineHeights.headlineSm,
   },
   actions: {
     width: "100%",
