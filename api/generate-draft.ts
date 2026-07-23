@@ -69,7 +69,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(403).json({ error: "Not authorized for this participant" });
     return;
   }
-  if (pipeline.state !== "ai_drafted") {
+  // Allowed any time before sign-off starts producing a permanent record — this
+  // also covers regenerating a draft that was created too early (e.g. before a
+  // slow biomarker extraction had finished writing its rows).
+  const REGENERATABLE_STATES = ["ai_drafted", "gp_review", "tcm_review"];
+  if (!REGENERATABLE_STATES.includes(pipeline.state)) {
     res.status(409).json({ error: `Cannot generate a draft while pipeline is in state "${pipeline.state}"` });
     return;
   }
