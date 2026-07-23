@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
 import { LAB_CATALOG_BY_KEY } from "../lib/ai/labCatalog";
 import { BUCKET_BY_KIND } from "../lib/data/storageBuckets";
+import { parseJsonResponse } from "../lib/ai/parseJson";
 
 // This is a Vercel serverless function (not an Expo Router API route) — see
 // vercel.json's rewrite, which excludes /api/* from the SPA catch-all so
@@ -130,9 +131,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   let parsed: { results: Array<{ key: string; value: number }> };
   try {
-    parsed = JSON.parse(raw);
-  } catch {
-    res.status(502).json({ error: "AI did not return valid JSON" });
+    parsed = parseJsonResponse(raw);
+  } catch (e) {
+    res.status(502).json({ error: e instanceof Error ? e.message : "AI did not return valid JSON" });
     return;
   }
 
