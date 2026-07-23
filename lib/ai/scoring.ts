@@ -4,8 +4,15 @@ import type { Biomarker, OutOfRangeBiomarker, Pillar, PillarScores } from "../ty
 // used to report which ones are still missing for a participant, regardless
 // of which capture channel would eventually supply them.
 export const BIOMARKER_KEYS_BY_PILLAR: Record<Pillar, string[]> = {
-  vascular: ["systolic_bp", "diastolic_bp", "resting_hr", "hrv", "total_cholesterol", "ldl_c", "hdl_c", "hscrp"],
-  metabolic: ["fasting_glucose", "hba1c", "waist_hip_ratio", "bmi", "body_fat_pct", "visceral_fat", "vitamin_d"],
+  vascular: [
+    "systolic_bp", "diastolic_bp", "resting_hr", "hrv",
+    "total_cholesterol", "ldl_c", "hdl_c", "triglycerides", "hscrp", "homocysteine", "lpa",
+  ],
+  metabolic: [
+    "fasting_glucose", "hba1c", "fasting_insulin", "waist_hip_ratio", "bmi", "body_fat_pct", "visceral_fat",
+    "vitamin_d", "vitamin_b12", "ferritin", "uric_acid", "alt", "ast", "creatinine", "egfr", "tsh",
+    "cgm_avg_glucose", "cgm_gmi", "cgm_variability", "cgm_time_in_range", "cgm_time_above_range", "cgm_time_below_range",
+  ],
   mental: ["reaction_time", "cog_composite", "sleep_quality", "sleep_hours", "stress_index", "stress_level", "exercise_freq"],
 };
 
