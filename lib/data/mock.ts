@@ -657,6 +657,11 @@ class MockRepository implements Repository {
     return record;
   }
 
+  async getFileUrl(_fileId: string): Promise<string | null> {
+    // Mock mode never stores real file bytes anywhere, so there's nothing to view.
+    return null;
+  }
+
   async listDailyLogs(participantId: string): Promise<DailyLog[]> {
     return Array.from(this.dailyLogs.values())
       .filter((l) => l.participant_id === participantId)

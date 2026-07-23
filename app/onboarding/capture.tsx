@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { View, Text, ScrollView, StyleSheet, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import * as DocumentPicker from "expo-document-picker";
+import * as Linking from "expo-linking";
 import { FileEdit, Watch, PersonStanding, FileText, Brain, ClipboardList } from "lucide-react-native";
 import { OnboardingStepper } from "@/components/layout/OnboardingStepper";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -12,12 +13,13 @@ import {
   updateCaptureChannelAction,
   submitCaptureAction,
   uploadFileAction,
+  getFileUrlAction,
 } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { extractLabReport, extractWearableExport, generateDraft } from "@/lib/ai/client";
-import type { CaptureChannel, CaptureChannelName, FileKind } from "@/lib/types/db";
+import type { CaptureChannel, CaptureChannelName, FileKind, FileRecord } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 
 const FILE_KIND_BY_CHANNEL: Partial<Record<CaptureChannelName, FileKind>> = {
@@ -91,6 +93,7 @@ export default function CapturePage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [uploadingChannel, setUploadingChannel] = useState<CaptureChannelName | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [files, setFiles] = useState<FileRecord[]>([]);
   // Extraction (lab/wearable) runs in the background so it doesn't block the
   // upload UI — but submit() needs to wait for it before generating the AI
   // draft, or the draft gets generated from zero biomarkers if the participant
@@ -99,11 +102,24 @@ export default function CapturePage() {
 
   useEffect(() => {
     if (!participantId) return;
-    repository.getCaptureChannels(participantId).then((c) => {
+    Promise.all([
+      repository.getCaptureChannels(participantId),
+      repository.listFiles(participantId),
+    ]).then(([c, f]) => {
       setChannels(c);
+      setFiles(f);
       setLoading(false);
     });
   }, [participantId]);
+
+  async function viewFileForChannel(channel: CaptureChannelName) {
+    const kind = FILE_KIND_BY_CHANNEL[channel];
+    if (!kind) return;
+    const match = files.filter((f) => f.kind === kind).slice(-1)[0];
+    if (!match) return;
+    const url = await getFileUrlAction(match.id);
+    if (url) Linking.openURL(url);
+  }
 
   const completion =
     channels.length > 0
@@ -157,6 +173,7 @@ export default function CapturePage() {
         filename: asset.name,
         contentType: asset.mimeType ?? (Platform.OS === "web" ? blob.type : undefined),
       });
+      setFiles((prev) => [...prev, fileRecord]);
       await completeChannel(channel);
       // Lab reports and Apple Health exports both get extracted in the background —
       // extraction failure isn't fatal to capture, so we don't block or alarm the
@@ -242,6 +259,8 @@ export default function CapturePage() {
           {channels.map((c) => {
             const meta = CHANNEL_META[c.channel];
             const IconComp = meta.IconComponent;
+            const channelKind = FILE_KIND_BY_CHANNEL[c.channel];
+            const hasFile = channelKind && files.some((f) => f.kind === channelKind);
             return (
               <CaptureChannelCard
                 key={c.channel}
@@ -275,6 +294,8 @@ export default function CapturePage() {
                   }
                 }}
                 highlight={meta.highlight}
+                secondaryActionLabel={hasFile ? "View uploaded file" : undefined}
+                onSecondaryAction={hasFile ? () => viewFileForChannel(c.channel) : undefined}
               />
             );
           })}

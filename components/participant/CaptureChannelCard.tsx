@@ -14,6 +14,8 @@ export interface CaptureChannelCardProps {
   actionLabel: string;
   onAction: () => void;
   highlight?: boolean;
+  secondaryActionLabel?: string;
+  onSecondaryAction?: () => void;
 }
 
 export function CaptureChannelCard({
@@ -26,6 +28,8 @@ export function CaptureChannelCard({
   actionLabel,
   onAction,
   highlight = false,
+  secondaryActionLabel,
+  onSecondaryAction,
 }: CaptureChannelCardProps) {
   const statusColors: Record<string, ViewStyle> = {
     empty: { backgroundColor: colors.surfaceMuted },
@@ -74,9 +78,16 @@ export function CaptureChannelCard({
         <Text style={styles.metaText}>{enteredBy}</Text>
       </View>
 
-      <Button variant="secondary" size="sm" onPress={onAction}>
-        {actionLabel}
-      </Button>
+      <View style={styles.actionRow}>
+        <Button variant="secondary" size="sm" onPress={onAction}>
+          {actionLabel}
+        </Button>
+        {secondaryActionLabel && onSecondaryAction && (
+          <Button variant="ghost" size="sm" onPress={onSecondaryAction}>
+            {secondaryActionLabel}
+          </Button>
+        )}
+      </View>
     </GlassCard>
   );
 }
@@ -137,5 +148,10 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
     marginHorizontal: spacing.xs,
+  },
+  actionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
   },
 });

@@ -257,6 +257,20 @@ export class SupabaseRepository implements Repository {
     return must(data, error, "file");
   }
 
+  async getFileUrl(fileId: string): Promise<string | null> {
+    const { data: fileRow, error: fileErr } = await this.client
+      .from("files")
+      .select("*")
+      .eq("id", fileId)
+      .maybeSingle();
+    if (fileErr || !fileRow) return null;
+
+    const bucket = BUCKET_BY_KIND[fileRow.kind as FileKind];
+    const { data, error } = await this.client.storage.from(bucket).createSignedUrl(fileRow.storage_path, 600);
+    if (error || !data) return null;
+    return data.signedUrl;
+  }
+
   async listDailyLogs(participantId: string): Promise<DailyLog[]> {
     const { data, error } = await this.client
       .from("daily_logs")
