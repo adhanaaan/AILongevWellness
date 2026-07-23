@@ -7,8 +7,6 @@ import {
   computeOutOfRange,
   computePillarScores,
 } from "../lib/ai/scoring";
-import { parseJsonResponse } from "../lib/ai/parseJson";
-import { extractText } from "../lib/ai/extractText";
 import type { Biomarker, KeyContributor } from "../lib/types/db";
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
@@ -24,17 +22,40 @@ Use this language:
 - "areas to monitor", never "risk factors"
 - "suggested discussion points", never "treatment plan"
 - Never mention medications, dosages, or specific conditions/diseases.
+- Do not use double quotes for emphasis inside any text field — write around it instead.
 
-Reply with ONLY a JSON object, no prose, no markdown fences, in exactly this shape:
-{
-  "key_contributors": [{"text": "...", "tone": "good"}, {"text": "...", "tone": "monitor"}],
-  "strengths": ["...", "..."],
-  "areas_to_monitor": ["...", "..."],
-  "suggested_focus": ["...", "..."],
-  "discussion_points": ["...", "..."]
-}
-3-5 key_contributors, 2-4 items in each other list. Ground every sentence in the data given —
-never invent a value that isn't there.`;
+Call write_narrative with 3-5 key_contributors, 2-4 items in each other list. Ground every
+sentence in the data given — never invent a value that isn't there.`;
+
+// Forcing a tool call instead of asking Claude to free-write a JSON string: the
+// API validates/constrains the output to this schema server-side, so there's no
+// JSON.parse involved and no way for a stray quote or markdown fence in the
+// model's output to break parsing — a whole class of bugs this hit repeatedly.
+const NARRATIVE_TOOL: Anthropic.Tool = {
+  name: "write_narrative",
+  description: "Write the narrative sections of the wellness card.",
+  input_schema: {
+    type: "object",
+    properties: {
+      key_contributors: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            text: { type: "string" },
+            tone: { type: "string", enum: ["good", "monitor"] },
+          },
+          required: ["text", "tone"],
+        },
+      },
+      strengths: { type: "array", items: { type: "string" } },
+      areas_to_monitor: { type: "array", items: { type: "string" } },
+      suggested_focus: { type: "array", items: { type: "string" } },
+      discussion_points: { type: "array", items: { type: "string" } },
+    },
+    required: ["key_contributors", "strengths", "areas_to_monitor", "suggested_focus", "discussion_points"],
+  },
+};
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
@@ -103,12 +124,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 
-  let rawText: string;
+  let narrative: {
+    key_contributors: KeyContributor[];
+    strengths: string[];
+    areas_to_monitor: string[];
+    suggested_focus: string[];
+    discussion_points: string[];
+  };
   try {
     const message = await anthropic.messages.create({
       model: "claude-sonnet-5",
       max_tokens: 800,
       system: NARRATIVE_PROMPT,
+      tools: [NARRATIVE_TOOL],
+      tool_choice: { type: "tool", name: "write_narrative" },
       messages: [
         {
           role: "user",
@@ -131,26 +160,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         },
       ],
     });
-    rawText = extractText(message.content);
+    const toolUse = message.content.find(
+      (block): block is Anthropic.ToolUseBlock => block.type === "tool_use"
+    );
+    if (!toolUse) {
+      res.status(502).json({ error: "AI did not call the expected tool" });
+      return;
+    }
+    narrative = toolUse.input as typeof narrative;
   } catch (e) {
     res.status(502).json({ error: e instanceof Error ? e.message : "AI draft generation failed" });
-    return;
-  }
-
-  let narrative: {
-    key_contributors: KeyContributor[];
-    strengths: string[];
-    areas_to_monitor: string[];
-    suggested_focus: string[];
-    discussion_points: string[];
-  };
-  try {
-    narrative = parseJsonResponse(rawText || "{}");
-  } catch {
-    // Surface what Claude actually said instead of a generic message — otherwise
-    // this failure mode is undiagnosable from the outside.
-    const preview = rawText.trim().slice(0, 500) || "(empty response)";
-    res.status(502).json({ error: `AI did not return valid JSON. Raw response: ${preview}` });
     return;
   }
 
