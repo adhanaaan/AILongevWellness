@@ -103,13 +103,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 
-  let narrative: {
-    key_contributors: KeyContributor[];
-    strengths: string[];
-    areas_to_monitor: string[];
-    suggested_focus: string[];
-    discussion_points: string[];
-  };
+  let rawText: string;
   try {
     const message = await anthropic.messages.create({
       model: "claude-sonnet-5",
@@ -137,9 +131,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         },
       ],
     });
-    narrative = parseJsonResponse(extractText(message.content) || "{}");
+    rawText = extractText(message.content);
   } catch (e) {
     res.status(502).json({ error: e instanceof Error ? e.message : "AI draft generation failed" });
+    return;
+  }
+
+  let narrative: {
+    key_contributors: KeyContributor[];
+    strengths: string[];
+    areas_to_monitor: string[];
+    suggested_focus: string[];
+    discussion_points: string[];
+  };
+  try {
+    narrative = parseJsonResponse(rawText || "{}");
+  } catch {
+    // Surface what Claude actually said instead of a generic message — otherwise
+    // this failure mode is undiagnosable from the outside.
+    const preview = rawText.trim().slice(0, 500) || "(empty response)";
+    res.status(502).json({ error: `AI did not return valid JSON. Raw response: ${preview}` });
     return;
   }
 
