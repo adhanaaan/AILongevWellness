@@ -4,6 +4,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { LAB_CATALOG_BY_KEY } from "../lib/ai/labCatalog";
 import { BUCKET_BY_KIND } from "../lib/data/storageBuckets";
 import { parseJsonResponse } from "../lib/ai/parseJson";
+import { extractText } from "../lib/ai/extractText";
 
 // This is a Vercel serverless function (not an Expo Router API route) — see
 // vercel.json's rewrite, which excludes /api/* from the SPA catch-all so
@@ -122,8 +123,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         },
       ],
     });
-    const block = message.content[0];
-    raw = block.type === "text" ? block.text : "";
+    raw = extractText(message.content);
   } catch (e) {
     res.status(502).json({ error: e instanceof Error ? e.message : "AI extraction failed" });
     return;
