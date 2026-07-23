@@ -132,8 +132,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   let parsed: { results: Array<{ key: string; value: number }> };
   try {
     parsed = parseJsonResponse(raw);
-  } catch (e) {
-    res.status(502).json({ error: e instanceof Error ? e.message : "AI did not return valid JSON" });
+  } catch {
+    // Surface what Claude actually said instead of a generic message — otherwise
+    // this failure mode is undiagnosable from the outside.
+    const preview = raw.trim().slice(0, 500) || "(empty response)";
+    res.status(502).json({ error: `AI did not return valid JSON. Raw response: ${preview}` });
     return;
   }
 
