@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { View, Text, Image, StyleSheet, useWindowDimensions } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, Image, StyleSheet, useWindowDimensions, type LayoutChangeEvent } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
@@ -15,10 +15,24 @@ const HERO_FADE_STOPS = [
   { offset: "1", color: colors.cloud },
 ];
 
+// Native aspect ratio of assets/images/splash-hero.jpg (1000x1675). The image
+// is rendered at full (uncropped) height for this ratio and shifted up so the
+// crop window starts just above her hairline (~11.6% down the source photo)
+// rather than resizeMode="cover"'s default center-crop, which cut off her
+// face. react-native-web doesn't honor the `aspectRatio` style on Image, so
+// width/height are computed explicitly from a measured layout width instead.
+const HERO_IMAGE_ASPECT_RATIO = 1000 / 1675;
+const HERO_TOP_CROP_FRACTION = 195 / 1675;
+
 export default function WelcomePage() {
   const router = useRouter();
   const { participantId } = useAuth();
   const { height: windowHeight } = useWindowDimensions();
+  const [heroWidth, setHeroWidth] = useState(0);
+
+  function onHeroLayout(e: LayoutChangeEvent) {
+    setHeroWidth(e.nativeEvent.layout.width);
+  }
 
   // Lands here whenever a signed-in participant hits the root — most notably
   // right after clicking an email confirmation link, which otherwise would
@@ -48,12 +62,23 @@ export default function WelcomePage() {
 
   return (
     <SafeAreaView style={styles.safe} edges={["bottom"]}>
-      <View style={[styles.heroWrap, { height: windowHeight * 0.5 }]}>
-        <Image
-          source={require("@/assets/images/splash-hero.jpg")}
-          style={styles.heroImage}
-          resizeMode="cover"
-        />
+      <View
+        style={[styles.heroWrap, { height: windowHeight * 0.5 }]}
+        onLayout={onHeroLayout}
+      >
+        {heroWidth > 0 && (
+          <Image
+            source={require("@/assets/images/splash-hero.jpg")}
+            style={[
+              styles.heroImage,
+              {
+                width: heroWidth,
+                height: heroWidth / HERO_IMAGE_ASPECT_RATIO,
+                top: -(heroWidth / HERO_IMAGE_ASPECT_RATIO) * HERO_TOP_CROP_FRACTION,
+              },
+            ]}
+          />
+        )}
         <GradientOverlay stops={HERO_FADE_STOPS} />
       </View>
 
@@ -96,10 +121,13 @@ const styles = StyleSheet.create({
   },
   heroWrap: {
     width: "100%",
+    overflow: "hidden",
   },
   heroImage: {
+    position: "absolute",
+    top: 0,
+    left: 0,
     width: "100%",
-    height: "100%",
   },
   logoRow: {
     alignItems: "center",
@@ -111,7 +139,6 @@ const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    justifyContent: "space-between",
     paddingHorizontal: spacing["2xl"],
     paddingTop: spacing.md,
     paddingBottom: spacing.lg,
@@ -137,6 +164,7 @@ const styles = StyleSheet.create({
     width: "100%",
     gap: spacing.md,
     alignItems: "center",
+    marginTop: spacing["3xl"],
   },
   hint: {
     fontFamily: fontFamilies.body,
