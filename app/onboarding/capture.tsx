@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, Text, ScrollView, StyleSheet, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import * as DocumentPicker from "expo-document-picker";
@@ -91,6 +91,11 @@ export default function CapturePage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [uploadingChannel, setUploadingChannel] = useState<CaptureChannelName | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  // Extraction (lab/wearable) runs in the background so it doesn't block the
+  // upload UI — but submit() needs to wait for it before generating the AI
+  // draft, or the draft gets generated from zero biomarkers if the participant
+  // hits "Review my snapshot" before a slow extraction has finished writing.
+  const pendingExtractions = useRef<Promise<unknown>[]>([]);
 
   useEffect(() => {
     if (!participantId) return;
@@ -156,10 +161,15 @@ export default function CapturePage() {
       // Lab reports and Apple Health exports both get extracted in the background —
       // extraction failure isn't fatal to capture, so we don't block or alarm the
       // participant if it fails; the care team can retry from the admin screen.
+      // Tracked in pendingExtractions so submit() can wait for it first.
       if (kind === "lab_report" && session?.access_token) {
-        extractLabReport(session.access_token, participantId, fileRecord.id).catch(() => {});
+        pendingExtractions.current.push(
+          extractLabReport(session.access_token, participantId, fileRecord.id).catch(() => {})
+        );
       } else if (kind === "apple_health_export" && session?.access_token) {
-        extractWearableExport(session.access_token, participantId, fileRecord.id).catch(() => {});
+        pendingExtractions.current.push(
+          extractWearableExport(session.access_token, participantId, fileRecord.id).catch(() => {})
+        );
       }
     } catch (e) {
       setUploadError(e instanceof Error ? e.message : "Upload failed. Please try again.");
@@ -173,6 +183,10 @@ export default function CapturePage() {
     setSubmitError(null);
     setSubmitting(true);
     try {
+      // Make sure any in-flight lab/wearable extraction has finished writing its
+      // biomarkers before generating the draft — otherwise a slow extraction can
+      // lose the race and the draft gets generated from incomplete data.
+      await Promise.allSettled(pendingExtractions.current);
       await submitCaptureAction(participantId);
       // Turns the just-submitted capture into an actual draft health card (scores,
       // bio age, narrative) — the participant won't see it until care team signs

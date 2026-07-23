@@ -111,6 +111,11 @@ export default function ParticipantDetailPage() {
   const stateIdx = STATE_INDEX[pipeline.state];
   const isEditable =
     pipeline.state === "gp_review" || pipeline.state === "tcm_review";
+  const isDraftSparse =
+    !!aiDraft &&
+    aiDraft.strengths.length === 0 &&
+    aiDraft.areas_to_monitor.length === 0 &&
+    aiDraft.suggested_focus.length === 0;
 
   return (
     <AdminShell title={participant.name}>
@@ -195,6 +200,23 @@ export default function ParticipantDetailPage() {
               {generateError && <Text style={styles.attentionReason}>{generateError}</Text>}
               <Button size="sm" disabled={generating} onPress={onGenerateDraft}>
                 {generating ? "Generating…" : "Generate AI draft"}
+              </Button>
+            </Card>
+          </View>
+        )}
+
+        {aiDraft && isDraftSparse && isEditable && isSupabaseConfigured && (
+          <View style={styles.section}>
+            <Card>
+              <Text style={styles.sectionTitle}>This draft looks thin</Text>
+              <Text style={styles.meta}>
+                The draft was likely generated before all captured data had finished
+                processing (e.g. a wearable export that was still being extracted).
+                Now that more biomarkers are on file, you can regenerate it.
+              </Text>
+              {generateError && <Text style={styles.attentionReason}>{generateError}</Text>}
+              <Button size="sm" disabled={generating} onPress={onGenerateDraft}>
+                {generating ? "Regenerating…" : "Regenerate AI draft"}
               </Button>
             </Card>
           </View>
