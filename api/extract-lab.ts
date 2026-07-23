@@ -31,6 +31,23 @@ Skip any key not present in the document. Reply with ONLY a JSON object, no pros
 fences, in exactly this shape:
 {"results": [{"key": "total_cholesterol", "value": 4.9}, ...]}`;
 
+// Trusts the file extension first — we control storage_path ourselves at upload
+// time, so it's a more reliable signal than whatever content-type Supabase
+// Storage happens to echo back (which can come back as a generic
+// application/octet-stream depending on how the upload set it). Claude's vision
+// API rejects anything outside this exact set of media types, so a wrong guess
+// here fails the whole extraction with no visible reason.
+function detectMediaType(storagePath: string, blobType: string): string {
+  const lower = storagePath.toLowerCase();
+  if (lower.endsWith(".pdf")) return "application/pdf";
+  if (lower.endsWith(".png")) return "image/png";
+  if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+  if (lower.endsWith(".webp")) return "image/webp";
+  if (lower.endsWith(".gif")) return "image/gif";
+  if (blobType === "application/pdf" || blobType.startsWith("image/")) return blobType;
+  return "image/jpeg";
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
     res.status(405).json({ error: "Method not allowed" });
@@ -83,7 +100,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const arrayBuffer = await blob.arrayBuffer();
   const base64 = Buffer.from(arrayBuffer).toString("base64");
-  const mediaType = blob.type || (fileRow.storage_path.endsWith(".pdf") ? "application/pdf" : "image/jpeg");
+  const mediaType = detectMediaType(fileRow.storage_path, blob.type);
 
   const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 

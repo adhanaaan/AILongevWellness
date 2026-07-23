@@ -15,7 +15,7 @@ import { repository } from "@/lib/data/mock";
 import { resolveAttentionAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
-import { generateDraft } from "@/lib/ai/client";
+import { generateDraft, extractLabReport, extractWearableExport } from "@/lib/ai/client";
 import type {
   Participant,
   Pipeline,
@@ -24,6 +24,7 @@ import type {
   Review,
   PipelineState,
   Pillar,
+  FileRecord,
 } from "@/lib/types/db";
 import { colors, fontSizes, spacing, radii } from "@/lib/theme/tokens";
 
@@ -57,24 +58,50 @@ export default function ParticipantDetailPage() {
   const [biomarkers, setBiomarkers] = useState<Biomarker[]>([]);
   const [aiDraft, setAiDraft] = useState<AiDraft | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [files, setFiles] = useState<FileRecord[]>([]);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  const [extractingFileId, setExtractingFileId] = useState<string | null>(null);
+  const [extractErrors, setExtractErrors] = useState<Record<string, string>>({});
 
   const loadData = async () => {
     if (!id) return;
-    const [p, pipe, bm, draft, rev] = await Promise.all([
+    const [p, pipe, bm, draft, rev, f] = await Promise.all([
       repository.getParticipant(id),
       repository.getPipeline(id),
       repository.getBiomarkers(id),
       repository.getAiDraft(id),
       repository.getReviews(id),
+      repository.listFiles(id),
     ]);
     setParticipant(p);
     setPipeline(pipe);
     setBiomarkers(bm);
     setAiDraft(draft);
     setReviews(rev);
+    setFiles(f);
   };
+
+  async function onExtractFile(file: FileRecord) {
+    if (!id || !session?.access_token) return;
+    setExtractErrors((prev) => ({ ...prev, [file.id]: "" }));
+    setExtractingFileId(file.id);
+    try {
+      if (file.kind === "lab_report") {
+        await extractLabReport(session.access_token, id, file.id);
+      } else if (file.kind === "apple_health_export") {
+        await extractWearableExport(session.access_token, id, file.id);
+      }
+      await loadData();
+    } catch (e) {
+      setExtractErrors((prev) => ({
+        ...prev,
+        [file.id]: e instanceof Error ? e.message : "Extraction failed.",
+      }));
+    } finally {
+      setExtractingFileId(null);
+    }
+  }
 
   useEffect(() => {
     loadData();
@@ -222,6 +249,51 @@ export default function ParticipantDetailPage() {
           </View>
         )}
 
+        {files.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Uploaded files</Text>
+            <Card>
+              {files.map((file, i) => {
+                const label =
+                  file.kind === "lab_report"
+                    ? "Lab report"
+                    : file.kind === "apple_health_export"
+                    ? "Apple Health export"
+                    : "Body composition scan";
+                const canExtract = file.kind === "lab_report" || file.kind === "apple_health_export";
+                const error = extractErrors[file.id];
+                return (
+                  <View key={file.id} style={i > 0 ? styles.fileRow : undefined}>
+                    <View style={styles.fileRowContent}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.fileLabel}>{label}</Text>
+                        <Text style={styles.meta}>
+                          {file.extracted ? "Extracted" : "Not yet extracted"}
+                        </Text>
+                        {!!error && <Text style={styles.attentionReason}>{error}</Text>}
+                      </View>
+                      {canExtract && isSupabaseConfigured && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          disabled={extractingFileId === file.id}
+                          onPress={() => onExtractFile(file)}
+                        >
+                          {extractingFileId === file.id
+                            ? "Extracting…"
+                            : file.extracted
+                            ? "Re-extract"
+                            : "Extract now"}
+                        </Button>
+                      )}
+                    </View>
+                  </View>
+                );
+              })}
+            </Card>
+          </View>
+        )}
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Biomarkers</Text>
           {biomarkers.length === 0 ? (
@@ -349,6 +421,22 @@ const styles = StyleSheet.create({
   },
   pillarGroup: {
     marginBottom: spacing.md,
+  },
+  fileRow: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    marginTop: spacing.md,
+    paddingTop: spacing.md,
+  },
+  fileRowContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+  },
+  fileLabel: {
+    fontSize: fontSizes.bodyMd,
+    fontWeight: "600",
+    color: colors.charcoal,
   },
   pillarLabel: {
     fontSize: fontSizes.labelMd,
