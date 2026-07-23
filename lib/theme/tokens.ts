@@ -31,9 +31,9 @@ export const gray = {
 // ─── Semantic Colors ───
 
 export const colors = {
-  // Surfaces — warm off-white (bone), never pure white, so white cards read as elevated
-  cloud: "#FAF9F4",
-  cloudLight: "#FCFBF7",
+  // Surfaces — clean off-white, never pure white, so white cards read as elevated
+  cloud: "#FAFAFA",
+  cloudLight: "#FAFAFA",
   surface: "#FFFFFF",
   surfaceMuted: gray[100],
 
@@ -101,7 +101,7 @@ export const colors = {
   glassDarkBorder: "rgba(255,255,255,0.14)",
 
   // ─── Brand aliases (CLAUDE.md names — sage/bone/terracotta/charcoal) ───
-  bone: "#FAF9F4",
+  bone: "#FAFAFA",
   sage: teal[500],
   sageDark: teal[700],
   sageTint: teal[50],
