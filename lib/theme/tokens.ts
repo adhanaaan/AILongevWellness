@@ -1,16 +1,18 @@
 // ─── Primitive Scales ───
 
+// AI Wellness brand green (from the logo's "Wellness" wordmark) — replaces the
+// old Stitch-era teal. 500 is deliberately dark: it's the primary CTA fill.
 export const teal = {
-  50: "#EAF7F6",
-  100: "#D3EFED",
-  200: "#A8DFDB",
-  300: "#7DCFC8",
-  400: "#52BFB5",
-  500: "#2AAFAA",
-  600: "#218F8B",
-  700: "#1C7874",
-  800: "#16605D",
-  900: "#114A47",
+  50: "#EEF4EE",
+  100: "#DBE9DC",
+  200: "#B7D3B8",
+  300: "#93BD95",
+  400: "#6FA772",
+  500: "#2C4A38",
+  600: "#233D2D",
+  700: "#1A2F22",
+  800: "#122117",
+  900: "#0A140D",
 } as const;
 
 export const gray = {
@@ -29,9 +31,9 @@ export const gray = {
 // ─── Semantic Colors ───
 
 export const colors = {
-  // Surfaces
-  cloud: "#F4F6F8",
-  cloudLight: "#FAFBFC",
+  // Surfaces — warm off-white (bone), never pure white, so white cards read as elevated
+  cloud: "#FAF9F4",
+  cloudLight: "#FCFBF7",
   surface: "#FFFFFF",
   surfaceMuted: gray[100],
 
@@ -40,16 +42,16 @@ export const colors = {
   navyMid: "#132038",
   navyLight: "#1C2D4A",
 
-  // Primary — teal
+  // Primary — deep forest green (AI Wellness wordmark)
   teal: teal[500],
-  tealDark: "#1E8C88",
+  tealDark: teal[700],
   tealTint: teal[50],
 
-  // Accent — amber
-  amber: "#D4A853",
-  amberLight: "#E4C583",
-  amberLighter: "#FBF4E4",
-  amberDark: "#A8823A",
+  // Accent — peach (AI Wellness logo mark / "Embracing Longevity" lockup)
+  amber: "#E98A6D",
+  amberLight: "#F0AC93",
+  amberLighter: "#FBE4DA",
+  amberDark: "#B85F44",
 
   // Text
   ink: gray[900],
@@ -98,15 +100,15 @@ export const colors = {
   glassDark: "rgba(255,255,255,0.06)",
   glassDarkBorder: "rgba(255,255,255,0.14)",
 
-  // ─── Legacy aliases (keeps non-onboarding screens compiling) ───
-  bone: "#F4F6F8",
+  // ─── Brand aliases (CLAUDE.md names — sage/bone/terracotta/charcoal) ───
+  bone: "#FAF9F4",
   sage: teal[500],
-  sageDark: "#1E8C88",
+  sageDark: teal[700],
   sageTint: teal[50],
   charcoal: gray[900],
-  terracotta: "#E8924A",
-  terracottaInk: "#B8692F",
-  terracottaTint: "#FBE9D8",
+  terracotta: "#E98A6D",
+  terracottaInk: "#B85F44",
+  terracottaTint: "#FBE4DA",
 } as const;
 
 // ─── Typography ───
@@ -183,8 +185,8 @@ export const radii = {
 // ─── Gradient orbs (soft radial glow accents) ───
 
 export const gradientOrbs = {
-  teal: ["rgba(42,175,170,0.5)", "rgba(42,175,170,0)"] as [string, string],
-  amber: ["rgba(212,168,83,0.5)", "rgba(212,168,83,0)"] as [string, string],
+  teal: ["rgba(111,167,114,0.45)", "rgba(111,167,114,0)"] as [string, string],
+  amber: ["rgba(233,138,109,0.5)", "rgba(233,138,109,0)"] as [string, string],
   navy: ["rgba(19,32,56,0.6)", "rgba(19,32,56,0)"] as [string, string],
 } as const;
 
