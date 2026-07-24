@@ -143,7 +143,13 @@ lib/
       → Lifestyle) is the fixed, non-skippable start; Wearables/Body Composition/Lab
       Reports unlock together and can be done in any order; ReCOGnAIze unlocks once that
       trio is done and leads into a Calculating screen before Home.
-- [x] Health card screen (tab: Insights)
+- [x] Health card screen (tab: Insights), restructured as a narrative-led snapshot: a
+      one-line plain-English summary (`buildPillarNarrative` in `lib/ai/scoring.ts`) sits
+      under the biological-age hero, the care-team sign-off card moved up right below it,
+      the three pillar scores are demoted into a compact `PillarStrip`, and "next steps"
+      leads with a single ranked `TopRecommendation` (top focus + top discussion point)
+      with the full suggested-focus/discussion-point lists behind a "see all" toggle. A
+      persistent floating "Ask Ava" affordance replaces the old end-of-scroll button.
 - [x] AVA chat screen (tab: Concierge)
 - [x] Tracking screen (tab: Care Plan)
 - [x] Admin participant list + search + stat cards
