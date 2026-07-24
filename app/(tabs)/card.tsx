@@ -1,21 +1,22 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useRouter } from "expo-router";
+import { MessageCircle } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { BiologicalAgeHero } from "@/components/participant/BiologicalAgeHero";
-import { ScoreRing } from "@/components/participant/ScoreRing";
+import { PillarStrip } from "@/components/participant/PillarStrip";
 import { KeyContributorItem } from "@/components/participant/KeyContributorItem";
 import { SuggestedFocusGrid } from "@/components/participant/SuggestedFocusGrid";
 import { SnapshotPending } from "@/components/participant/SnapshotPending";
 import { CareTeamNotesCard } from "@/components/participant/CareTeamNotesCard";
+import { TopRecommendation } from "@/components/participant/TopRecommendation";
 import { NextStepsCard } from "@/components/participant/NextStepsCard";
-import { Button } from "@/components/ui/Button";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { pillarStatus } from "@/lib/ai/scoring";
+import { pillarStatus, buildPillarNarrative } from "@/lib/ai/scoring";
 import type { SignedCard } from "@/lib/data/repository";
 import type { Pipeline } from "@/lib/types/db";
-import { colors, fontSizes } from "@/lib/theme/tokens";
+import { colors, fontSizes, radii, shadows, spacing } from "@/lib/theme/tokens";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -30,6 +31,7 @@ export default function CardPage() {
   const { participantId } = useAuth();
   const [card, setCard] = useState<SignedCard | null | undefined>(undefined);
   const [pipeline, setPipeline] = useState<Pipeline | null | undefined>(undefined);
+  const [showAllRecommendations, setShowAllRecommendations] = useState(false);
 
   useEffect(() => {
     if (!participantId) return;
@@ -55,6 +57,45 @@ export default function CardPage() {
   const gp = reviews.find((r) => r.stage === "gp");
   const tcm = reviews.find((r) => r.stage === "tcm");
 
+  const askAva = () =>
+    router.push({
+      pathname: "/(tabs)/ava",
+      params: { q: "Can you walk me through what's driving my scores?" },
+    });
+
+  const topFocus = aiDraft.suggested_focus[0];
+  const topDiscussionPoint = aiDraft.discussion_points[0];
+  const totalRecommendations = aiDraft.suggested_focus.length + aiDraft.discussion_points.length;
+  const consumedRecommendations = (topFocus ? 1 : 0) + (topDiscussionPoint ? 1 : 0);
+  const remainingRecommendations = Math.max(0, totalRecommendations - consumedRecommendations);
+
+  const pillarItems = [
+    {
+      key: "vascular",
+      label: "Vascular",
+      value: aiDraft.scores.vascular,
+      status: pillarStatus(aiDraft.scores.vascular),
+      onPress: () => router.push("/pillar/vascular"),
+      accessibilityLabel: "View details for Vascular score",
+    },
+    {
+      key: "metabolic",
+      label: "Metabolic",
+      value: aiDraft.scores.metabolic,
+      status: pillarStatus(aiDraft.scores.metabolic),
+      onPress: () => router.push("/pillar/metabolic"),
+      accessibilityLabel: "View details for Metabolic score",
+    },
+    {
+      key: "mental",
+      label: "Mental",
+      value: aiDraft.scores.mental,
+      status: pillarStatus(aiDraft.scores.mental),
+      onPress: () => router.push("/pillar/mental"),
+      accessibilityLabel: "View details for Mental score",
+    },
+  ] as const;
+
   return (
     <MobileShell>
       <ScrollView
@@ -73,44 +114,17 @@ export default function CardPage() {
           />
         </View>
 
-        <View style={styles.rings}>
-          <Pressable
-            onPress={() => router.push("/pillar/vascular")}
-            accessibilityRole="button"
-            accessibilityLabel="View details for Vascular score"
-          >
-            <ScoreRing
-              value={aiDraft.scores.vascular}
-              label="Vascular"
-              status={pillarStatus(aiDraft.scores.vascular)}
-            />
-          </Pressable>
-          <Pressable
-            onPress={() => router.push("/pillar/metabolic")}
-            accessibilityRole="button"
-            accessibilityLabel="View details for Metabolic score"
-          >
-            <ScoreRing
-              value={aiDraft.scores.metabolic}
-              label="Metabolic"
-              status={pillarStatus(aiDraft.scores.metabolic)}
-            />
-          </Pressable>
-          <Pressable
-            onPress={() => router.push("/pillar/mental")}
-            accessibilityRole="button"
-            accessibilityLabel="View details for Mental score"
-          >
-            <ScoreRing
-              value={aiDraft.scores.mental}
-              label="Mental"
-              status={pillarStatus(aiDraft.scores.mental)}
-            />
-          </Pressable>
+        <Text style={styles.narrative}>{buildPillarNarrative(aiDraft.scores)}</Text>
+
+        {(gp || tcm) && (
+          <View style={styles.section}>
+            <CareTeamNotesCard gp={gp} tcm={tcm} />
+          </View>
+        )}
+
+        <View style={styles.section}>
+          <PillarStrip items={[...pillarItems]} />
         </View>
-        <Text style={styles.ringsCaption}>
-          Tap a score to see what's driving it
-        </Text>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Key contributors</Text>
@@ -121,42 +135,43 @@ export default function CardPage() {
           </View>
         </View>
 
-        {(gp || tcm) && (
+        {(topFocus || topDiscussionPoint) && (
           <View style={styles.section}>
-            <CareTeamNotesCard gp={gp} tcm={tcm} />
+            <Text style={styles.sectionTitle}>Your next steps</Text>
+            <TopRecommendation
+              topFocus={topFocus}
+              topDiscussionPoint={topDiscussionPoint}
+              remainingCount={remainingRecommendations}
+              expanded={showAllRecommendations}
+              onToggleExpanded={() => setShowAllRecommendations((v) => !v)}
+            />
+            {showAllRecommendations && (
+              <View style={styles.expanded}>
+                <SuggestedFocusGrid items={aiDraft.suggested_focus} />
+                <View style={styles.nextStepsCard}>
+                  <NextStepsCard points={aiDraft.discussion_points} />
+                </View>
+              </View>
+            )}
           </View>
         )}
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your next steps</Text>
-          <SuggestedFocusGrid items={aiDraft.suggested_focus} />
-          <View style={styles.nextStepsCard}>
-            <NextStepsCard points={aiDraft.discussion_points} />
-          </View>
-        </View>
-
-        <View style={styles.section}>
-          <Button
-            size="lg"
-            onPress={() =>
-              router.push({
-                pathname: "/(tabs)/ava",
-                params: {
-                  q: "Can you walk me through what's driving my scores?",
-                },
-              })
-            }
-          >
-            Ask Ava a follow-up
-          </Button>
-        </View>
       </ScrollView>
+
+      <Pressable
+        onPress={askAva}
+        accessibilityRole="button"
+        accessibilityLabel="Ask Ava a follow-up question"
+        style={styles.askAvaFab}
+      >
+        <MessageCircle size={18} color={colors.white} />
+        <Text style={styles.askAvaFabText}>Ask Ava</Text>
+      </Pressable>
     </MobileShell>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: { paddingBottom: 32 },
+  scrollContent: { paddingBottom: 96 },
   title: {
     fontSize: fontSizes.headlineLg,
     fontWeight: "600",
@@ -174,17 +189,32 @@ const styles = StyleSheet.create({
     color: colors.charcoal,
     marginBottom: 12,
   },
-  rings: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginTop: 24,
-  },
-  ringsCaption: {
-    fontSize: fontSizes.caption,
-    color: colors.inkMuted,
+  narrative: {
+    fontSize: fontSizes.bodyMd,
+    color: colors.charcoal,
+    lineHeight: 22,
+    marginTop: 16,
     textAlign: "center",
-    marginTop: 8,
   },
   contributorList: { gap: 8 },
+  expanded: { marginTop: 16 },
   nextStepsCard: { marginTop: 12 },
+  askAvaFab: {
+    position: "absolute",
+    right: spacing.xl,
+    bottom: spacing.xl,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    backgroundColor: colors.sage,
+    borderRadius: radii.full,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.xl,
+    ...shadows.elevated,
+  },
+  askAvaFabText: {
+    fontSize: fontSizes.bodyMd,
+    fontWeight: "600",
+    color: colors.white,
+  },
 });

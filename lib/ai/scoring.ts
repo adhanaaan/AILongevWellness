@@ -56,6 +56,39 @@ export function pillarStatus(score: number): "good" | "monitor" {
   return score >= PILLAR_STATUS_THRESHOLD ? "good" : "monitor";
 }
 
+const PILLAR_LABEL: Record<Pillar, string> = {
+  vascular: "Vascular",
+  metabolic: "Metabolic",
+  mental: "Mental",
+};
+
+function joinPillarNames(pillars: Pillar[]): string {
+  const names = pillars.map((p) => PILLAR_LABEL[p]);
+  if (names.length === 1) return names[0];
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
+}
+
+/**
+ * One plain-English sentence summarizing all three pillars at once, so a
+ * first-time reader doesn't have to mentally combine three separate ring
+ * values to know "am I okay?".
+ */
+export function buildPillarNarrative(scores: PillarScores): string {
+  const pillars = Object.keys(scores) as Pillar[];
+  const good = pillars.filter((p) => pillarStatus(scores[p]) === "good");
+  const monitor = pillars.filter((p) => pillarStatus(scores[p]) === "monitor");
+
+  if (monitor.length === 0) {
+    return `${joinPillarNames(good)} scores are all within the optimal range for your age.`;
+  }
+  if (good.length === 0) {
+    return `${joinPillarNames(monitor)} scores are worth monitoring over the next few months.`;
+  }
+  const monitorVerb = monitor.length === 1 ? "is" : "are";
+  return `${joinPillarNames(good)} scores are strong; ${joinPillarNames(monitor)} ${monitorVerb} worth monitoring over the next few months.`;
+}
+
 export function computeOutOfRange(biomarkers: Biomarker[]): OutOfRangeBiomarker[] {
   return biomarkers
     .filter((b) => b.flagged && b.value !== null && b.ref_high !== null)
