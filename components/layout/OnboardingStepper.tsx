@@ -10,7 +10,7 @@ const STEPS = [
   { href: "/", label: "Welcome" },
   { href: "/onboarding/consent", label: "Consent" },
   { href: "/onboarding/auth", label: "Account" },
-  { href: "/onboarding/profile", label: "Profile" },
+  { href: "/onboarding/profile", label: "Personal Info" },
   { href: "/onboarding/capture", label: "Capture" },
 ];
 

@@ -10,6 +10,9 @@ export type { AvatarProps, AvatarSize } from "./Avatar";
 export { Input, Textarea, Select } from "./Field";
 export type { InputProps, TextareaProps, SelectProps } from "./Field";
 
+export { SelectField } from "./SelectField";
+export type { SelectFieldProps, SelectFieldOption } from "./SelectField";
+
 export { Chip } from "./Chip";
 export type { ChipProps } from "./Chip";
 
