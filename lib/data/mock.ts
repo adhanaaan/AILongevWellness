@@ -265,6 +265,9 @@ class MockRepository implements Repository {
       height_cm: 178,
       weight_kg: 82,
       goals: ["Longevity", "Energy & focus", "Cardiovascular fitness"],
+      exercise_frequency: "sometimes",
+      smoking: false,
+      alcohol_drinks_per_week: "1_to_7",
       created_at: nowIso(),
     };
     this.participants.set(james.id, james);
