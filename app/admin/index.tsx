@@ -5,15 +5,17 @@ import { AdminShell } from "@/components/layout/AdminShell";
 import { SummaryStatCard } from "@/components/admin/SummaryStatCard";
 import { ParticipantTableRow } from "@/components/admin/ParticipantTableRow";
 import { repository } from "@/lib/data/mock";
-import type { ParticipantSummary, PipelineState } from "@/lib/types/db";
+import type { ParticipantSummary } from "@/lib/types/db";
 import { colors, fontSizes, radii } from "@/lib/theme/tokens";
 import { useRouter } from "expo-router";
+
+type DashboardFilter = "all" | "awaiting_review" | "delivered" | "needs_attention";
 
 export default function AdminParticipantsPage() {
   const router = useRouter();
   const [summaries, setSummaries] = useState<ParticipantSummary[]>([]);
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState<DashboardFilter>("all");
 
   useEffect(() => {
     repository.listParticipants().then(setSummaries);
@@ -34,19 +36,43 @@ export default function AdminParticipantsPage() {
     (s) => s.pipeline.needs_attention
   ).length;
 
+  const toggleFilter = (next: DashboardFilter) =>
+    setFilter((current) => (current === next ? "all" : next));
+
   const filtered = useMemo(() => {
-    return summaries.filter((s) => {
-      const matchesQuery = s.participant.name
-        .toLowerCase()
-        .includes(query.toLowerCase());
-      const matchesFilter =
-        filter === "all" ||
-        (filter === "needs_attention"
-          ? s.pipeline.needs_attention
-          : s.pipeline.state === (filter as PipelineState));
-      return matchesQuery && matchesFilter;
-    });
+    return summaries
+      .filter((s) => {
+        const matchesQuery = s.participant.name
+          .toLowerCase()
+          .includes(query.toLowerCase());
+        const matchesFilter =
+          filter === "all"
+            ? true
+            : filter === "needs_attention"
+            ? s.pipeline.needs_attention
+            : filter === "awaiting_review"
+            ? s.pipeline.state === "gp_review" || s.pipeline.state === "tcm_review"
+            : s.pipeline.state === "delivered";
+        return matchesQuery && matchesFilter;
+      })
+      .sort((a, b) => {
+        if (a.pipeline.needs_attention !== b.pipeline.needs_attention) {
+          return a.pipeline.needs_attention ? -1 : 1;
+        }
+        return a.participant.name.localeCompare(b.participant.name);
+      });
   }, [summaries, query, filter]);
+
+  const emptyMessage =
+    query.length > 0
+      ? `No participants match "${query}".`
+      : filter === "needs_attention"
+      ? "Nothing needs attention right now."
+      : filter === "awaiting_review"
+      ? "No one is currently awaiting GP or TCM review."
+      : filter === "delivered"
+      ? "No health cards have been delivered yet."
+      : "No participants yet.";
 
   return (
     <AdminShell title="Participants">
@@ -56,24 +82,32 @@ export default function AdminParticipantsPage() {
           label="Total"
           value={total}
           tone="neutral"
+          active={filter === "all"}
+          onPress={() => setFilter("all")}
         />
         <SummaryStatCard
-          icon={<ClipboardCheck size={20} color={colors.sageDark} />}
+          icon={<ClipboardCheck size={20} color={colors.metabolicDark} />}
           label="Awaiting GP/TCM"
           value={awaiting}
-          tone="sage"
+          tone="terracotta"
+          active={filter === "awaiting_review"}
+          onPress={() => toggleFilter("awaiting_review")}
         />
         <SummaryStatCard
           icon={<CheckCircle2 size={20} color={colors.sageDark} />}
           label="Delivered"
           value={delivered}
           tone="sage"
+          active={filter === "delivered"}
+          onPress={() => toggleFilter("delivered")}
         />
         <SummaryStatCard
           icon={<AlertTriangle size={20} color={colors.danger} />}
           label="Needs attention"
           value={needsAttention}
           tone="danger"
+          active={filter === "needs_attention"}
+          onPress={() => toggleFilter("needs_attention")}
         />
       </View>
 
@@ -109,9 +143,7 @@ export default function AdminParticipantsPage() {
           />
         ))}
         {filtered.length === 0 && (
-          <Text style={styles.emptyText}>
-            No participants match your search.
-          </Text>
+          <Text style={styles.emptyText}>{emptyMessage}</Text>
         )}
       </View>
     </AdminShell>

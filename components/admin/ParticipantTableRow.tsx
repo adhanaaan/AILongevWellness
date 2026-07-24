@@ -6,12 +6,23 @@ import { CaptureCompletionBar } from "./CaptureCompletionBar";
 import { PipelineStatusBadge } from "./PipelineStatusBadge";
 import { colors, fontSizes, fontWeights, spacing, radii } from "@/lib/theme/tokens";
 import { resolveAttentionAction } from "@/lib/data/actions";
-import type { ParticipantSummary } from "@/lib/types/db";
+import type { ParticipantSummary, PipelineState } from "@/lib/types/db";
 
 interface ParticipantTableRowProps {
   summary: ParticipantSummary;
   onPress: () => void;
 }
+
+// Left-edge rail color: where a participant sits in the pipeline, at a glance,
+// before reading the status badge text. Amber = actionable by the care team now.
+const railColorByState: Record<PipelineState, string> = {
+  capturing: colors.borderStrong,
+  ai_drafted: colors.borderStrong,
+  gp_review: colors.warning,
+  tcm_review: colors.warning,
+  signed: colors.teal,
+  delivered: colors.tealDark,
+};
 
 export function ParticipantTableRow({
   summary,
@@ -19,6 +30,7 @@ export function ParticipantTableRow({
 }: ParticipantTableRowProps) {
   const { participant, pipeline, captureCompletionPct } = summary;
   const needsAttention = pipeline.needs_attention;
+  const railColor = needsAttention ? colors.danger : railColorByState[pipeline.state];
 
   const handleResolve = async () => {
     await resolveAttentionAction(participant.id);
@@ -26,7 +38,11 @@ export function ParticipantTableRow({
 
   return (
     <TouchableOpacity
-      style={[styles.row, needsAttention && styles.rowAttention]}
+      style={[
+        styles.row,
+        { borderLeftColor: railColor },
+        needsAttention && styles.rowAttention,
+      ]}
       onPress={onPress}
       activeOpacity={0.7}
     >
@@ -70,11 +86,12 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm + 2,
     paddingHorizontal: spacing.lg,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+    borderLeftWidth: 3,
   },
   rowAttention: {
     backgroundColor: colors.terracottaTint,
