@@ -1,82 +1,39 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, TextInput, ScrollView, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { User } from "lucide-react-native";
+import { User, Plus } from "lucide-react-native";
 import { OnboardingStepper } from "@/components/layout/OnboardingStepper";
-import { Input } from "@/components/ui/Field";
-import { Chip } from "@/components/ui/Chip";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
-import { Toggle } from "@/components/ui/Toggle";
+import { SelectField, type SelectFieldOption } from "@/components/ui/SelectField";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { updateParticipantAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 
-const GOAL_OPTIONS = [
-  "Longevity",
-  "Energy & focus",
-  "Weight management",
-  "Stress resilience",
-  "Sleep quality",
-  "Cardiovascular fitness",
+const SEX_OPTIONS: SelectFieldOption[] = [
+  { label: "Male", value: "male" },
+  { label: "Female", value: "female" },
+  { label: "Other", value: "other" },
 ];
 
-const SEX_OPTIONS = ["Male", "Female", "Other"];
-const EXERCISE_OPTIONS = ["Rarely", "Sometimes", "Regularly"];
-const ALCOHOL_OPTIONS = ["Never", "Occasionally", "Regularly"];
-
-function SectionHeader({ title }: { title: string }) {
-  return (
-    <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <View style={styles.sectionLine} />
-    </View>
-  );
+function range(start: number, end: number): string[] {
+  return Array.from({ length: end - start + 1 }, (_, i) => String(start + i));
 }
 
-function OptionSelector({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string;
-  options: string[];
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  return (
-    <View style={styles.optionGroup}>
-      <Text style={styles.fieldLabel}>{label}</Text>
-      <View style={styles.optionRow}>
-        {options.map((opt) => {
-          const isSelected = value.toLowerCase() === opt.toLowerCase();
-          return (
-            <TouchableOpacity
-              key={opt}
-              style={[styles.optionChip, isSelected && styles.optionChipSelected]}
-              onPress={() => onChange(opt.toLowerCase())}
-              activeOpacity={0.7}
-            >
-              <Text
-                style={[
-                  styles.optionChipText,
-                  isSelected && styles.optionChipTextSelected,
-                ]}
-              >
-                {opt}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
+const AGE_OPTIONS: SelectFieldOption[] = range(18, 100).map((n) => ({ label: n, value: n }));
+const HEIGHT_OPTIONS: SelectFieldOption[] = range(140, 210).map((n) => ({
+  label: `${n} cm`,
+  value: n,
+}));
+const WEIGHT_OPTIONS: SelectFieldOption[] = range(40, 150).map((n) => ({
+  label: `${n} kg`,
+  value: n,
+}));
 
-export default function ProfilePage() {
+export default function ProfilePersonalPage() {
   const router = useRouter();
   const { participantId } = useAuth();
 
@@ -87,10 +44,6 @@ export default function ProfilePage() {
   const [sex, setSex] = useState("male");
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
-  const [goals, setGoals] = useState<string[]>([]);
-  const [exercise, setExercise] = useState("regularly");
-  const [smoking, setSmoking] = useState(false);
-  const [alcohol, setAlcohol] = useState("occasionally");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -106,17 +59,10 @@ export default function ProfilePage() {
         setSex(p.sex);
         setHeight(isUnfilled ? "" : String(p.height_cm));
         setWeight(isUnfilled ? "" : String(p.weight_kg));
-        setGoals(p.goals ?? []);
       }
       setLoading(false);
     });
   }, [participantId]);
-
-  function toggleGoal(goal: string) {
-    setGoals((prev) =>
-      prev.includes(goal) ? prev.filter((g) => g !== goal) : [...prev, goal]
-    );
-  }
 
   const ageNum = Number(age);
   const heightNum = Number(height);
@@ -140,7 +86,6 @@ export default function ProfilePage() {
         sex: sex as any,
         height_cm: heightNum,
         weight_kg: weightNum,
-        goals,
       });
       router.push("/onboarding/capture");
     } finally {
@@ -170,7 +115,7 @@ export default function ProfilePage() {
         </GlassCard>
 
         <View style={styles.headerRow}>
-          <Text style={styles.title}>Your Profile</Text>
+          <Text style={styles.title}>Personal Information</Text>
           <SegmentedControl
             options={[
               { value: "me", label: "Me" },
@@ -182,91 +127,67 @@ export default function ProfilePage() {
         </View>
         <Text style={styles.subtitle}>
           {enteredBy === "me"
-            ? "Tell us about yourself to personalise your wellness assessment."
+            ? "Let's start with a few basics about you."
             : "A care team member is entering this on your behalf."}
         </Text>
 
-        <SectionHeader title="Personal Information" />
-
-        <View style={styles.form}>
-          <Input label="Full name" value={name} onChangeText={setName} />
-          <View style={styles.row}>
-            <View style={styles.halfField}>
-              <Input
-                label="Age"
-                value={age}
-                onChangeText={setAge}
-                keyboardType="numeric"
-              />
+        <Card padding="lg" style={styles.profileCard}>
+          <View style={styles.avatarSection}>
+            <View style={styles.avatarCircle}>
+              <User size={32} color={colors.inkMuted} />
             </View>
-            <View style={styles.halfField}>
-              <OptionSelector
-                label="Sex"
-                options={SEX_OPTIONS}
-                value={sex}
-                onChange={setSex}
-              />
+            <View style={styles.avatarBadge}>
+              <Plus size={14} color={colors.white} />
             </View>
           </View>
-          <View style={styles.row}>
-            <View style={styles.halfField}>
-              <Input
-                label="Height (cm)"
-                value={height}
-                onChangeText={setHeight}
-                keyboardType="numeric"
-              />
-            </View>
-            <View style={styles.halfField}>
-              <Input
-                label="Weight (kg)"
-                value={weight}
-                onChangeText={setWeight}
-                keyboardType="numeric"
-              />
-            </View>
+
+          <View style={styles.nameField}>
+            <TextInput
+              style={styles.nameInput}
+              value={name}
+              onChangeText={setName}
+              placeholder="Your full name"
+              placeholderTextColor={colors.inkMuted}
+              textAlign="center"
+            />
           </View>
-        </View>
 
-        <SectionHeader title="Wellness Goals" />
-
-        <View style={styles.chips}>
-          {GOAL_OPTIONS.map((goal) => (
-            <Chip
-              key={goal}
-              selected={goals.includes(goal)}
-              onToggle={() => toggleGoal(goal)}
-            >
-              {goal}
-            </Chip>
-          ))}
-        </View>
-
-        <SectionHeader title="Lifestyle" />
-
-        <View style={styles.lifestyleSection}>
-          <OptionSelector
-            label="Exercise frequency"
-            options={EXERCISE_OPTIONS}
-            value={exercise}
-            onChange={setExercise}
+          <SelectField
+            label="Sex at Birth"
+            value={sex}
+            options={SEX_OPTIONS}
+            onChange={setSex}
           />
-          <View style={styles.toggleRow}>
-            <Text style={styles.toggleLabel}>Smoking</Text>
-            <Toggle checked={smoking} onChange={setSmoking} label="" />
+
+          <View style={styles.row}>
+            <SelectField
+              label="Age"
+              value={age}
+              options={AGE_OPTIONS}
+              onChange={setAge}
+              style={styles.rowField}
+            />
+            <SelectField
+              label="Height"
+              value={height}
+              options={HEIGHT_OPTIONS}
+              onChange={setHeight}
+              style={styles.rowField}
+            />
+            <SelectField
+              label="Weight"
+              value={weight}
+              options={WEIGHT_OPTIONS}
+              onChange={setWeight}
+              style={styles.rowField}
+            />
           </View>
-          <OptionSelector
-            label="Alcohol consumption"
-            options={ALCOHOL_OPTIONS}
-            value={alcohol}
-            onChange={setAlcohol}
-          />
-        </View>
+        </Card>
       </ScrollView>
 
       <View style={styles.footer}>
         <Button size="lg" disabled={saving || !isValid} onPress={onContinue}>
-          Continue to capture
+          Continue
         </Button>
       </View>
     </OnboardingStepper>
@@ -306,91 +227,55 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     lineHeight: 24,
   },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
+  profileCard: {
     marginTop: spacing["2xl"],
-    marginBottom: spacing.lg,
+    gap: spacing["2xl"],
   },
-  sectionTitle: {
-    fontFamily: fontFamilies.bodySemiBold,
-    fontSize: fontSizes.caption,
-    color: colors.inkMuted,
-    letterSpacing: 0.5,
-    textTransform: "uppercase",
+  avatarSection: {
+    alignSelf: "center",
+    width: 96,
+    height: 96,
   },
-  sectionLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.border,
+  avatarCircle: {
+    width: 96,
+    height: 96,
+    borderRadius: radii.full,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  form: {
-    gap: spacing.lg,
+  avatarBadge: {
+    position: "absolute",
+    right: 0,
+    bottom: 0,
+    width: 30,
+    height: 30,
+    borderRadius: radii.full,
+    backgroundColor: colors.teal,
+    borderWidth: 3,
+    borderColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  nameField: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.borderStrong,
+    borderStyle: "dashed",
+    paddingBottom: spacing.md,
+  },
+  nameInput: {
+    fontFamily: fontFamilies.displaySemiBold,
+    fontSize: fontSizes.headlineSm,
+    color: colors.ink,
+    paddingVertical: 0,
   },
   row: {
     flexDirection: "row",
-    gap: spacing.md,
-  },
-  halfField: {
-    flex: 1,
-  },
-  fieldLabel: {
-    fontFamily: fontFamilies.bodyMedium,
-    fontSize: fontSizes.labelMd,
-    color: colors.ink,
-    marginBottom: spacing.sm,
-  },
-  chips: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.sm,
-  },
-  lifestyleSection: {
     gap: spacing.lg,
   },
-  optionGroup: {},
-  optionRow: {
-    flexDirection: "row",
-    gap: spacing.sm,
-  },
-  optionChip: {
-    flex: 1,
-    paddingVertical: spacing.md,
-    alignItems: "center",
-    borderRadius: radii.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  optionChipSelected: {
-    backgroundColor: colors.tealTint,
-    borderColor: colors.teal,
-  },
-  optionChipText: {
-    fontFamily: fontFamilies.bodyMedium,
-    fontSize: fontSizes.labelMd,
-    color: colors.inkMuted,
-  },
-  optionChipTextSelected: {
-    fontFamily: fontFamilies.bodySemiBold,
-    color: colors.tealDark,
-  },
-  toggleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: colors.surface,
-    borderRadius: radii.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-  },
-  toggleLabel: {
-    fontFamily: fontFamilies.bodyMedium,
-    fontSize: fontSizes.bodyMd,
-    color: colors.ink,
+  rowField: {
+    flexGrow: 1,
+    flexBasis: 0,
   },
   footer: {
     paddingHorizontal: spacing["2xl"],
