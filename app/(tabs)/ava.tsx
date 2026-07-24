@@ -10,16 +10,18 @@ import {
   StyleSheet,
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
-import { Send, MessageCircleOff } from "lucide-react-native";
+import { Send } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { ChatBubble } from "@/components/participant/ChatBubble";
 import { SuggestionChips } from "@/components/participant/SuggestionChips";
+import { AvaPromo } from "@/components/participant/AvaPromo";
 import { respondAsAva } from "@/lib/ava/respond";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { askAva } from "@/lib/ai/client";
 import type { SignedCard } from "@/lib/data/repository";
+import type { Pipeline } from "@/lib/types/db";
 import { colors, fontSizes, radii } from "@/lib/theme/tokens";
 
 interface Message {
@@ -38,30 +40,24 @@ export default function AvaPage() {
   const { participantId } = useAuth();
   const { q } = useLocalSearchParams<{ q?: string }>();
   const [card, setCard] = useState<SignedCard | null | undefined>(undefined);
+  const [pipeline, setPipeline] = useState<Pipeline | null | undefined>(undefined);
 
   useEffect(() => {
     if (!participantId) return;
     repository.getSignedCard(participantId).then(setCard);
+    repository.getPipeline(participantId).then(setPipeline);
     return repository.subscribe(() => {
       repository.getSignedCard(participantId).then(setCard);
+      repository.getPipeline(participantId).then(setPipeline);
     });
   }, [participantId]);
 
-  if (card === undefined) return null;
+  if (card === undefined || pipeline === undefined) return null;
 
   if (!card) {
     return (
       <MobileShell>
-        <View style={styles.emptyContainer}>
-          <View style={styles.emptyIcon}>
-            <MessageCircleOff size={24} color={colors.inkMuted} />
-          </View>
-          <Text style={styles.emptyTitle}>AVA isn't ready yet</Text>
-          <Text style={styles.emptyText}>
-            AVA can only discuss your reviewed and signed health card. It will be
-            available once your care team has finished their review.
-          </Text>
-        </View>
+        <AvaPromo pipelineState={pipeline?.state ?? "capturing"} />
       </MobileShell>
     );
   }
@@ -226,32 +222,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.sage,
     alignItems: "center",
     justifyContent: "center",
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 24,
-  },
-  emptyIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.surfaceMuted,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  emptyTitle: {
-    fontSize: fontSizes.headlineMd,
-    fontWeight: "600",
-    color: colors.charcoal,
-    marginTop: 16,
-  },
-  emptyText: {
-    fontSize: fontSizes.bodyMd,
-    color: colors.inkMuted,
-    marginTop: 8,
-    textAlign: "center",
-    maxWidth: 280,
   },
 });
