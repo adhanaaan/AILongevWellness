@@ -6,14 +6,13 @@ import { ChevronLeft } from "lucide-react-native";
 import { GradientOrb } from "@/components/ui/GradientOrb";
 import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 
+// Personal Info/Goals/Lifestyle and Capture now live inside the Data Capture
+// hub-and-spoke sub-flow (see CaptureFlowStepper) — this linear stepper only
+// covers the screens before account verification.
 const STEPS = [
   { href: "/", label: "Welcome" },
   { href: "/onboarding/consent", label: "Consent" },
   { href: "/onboarding/auth", label: "Account" },
-  { href: "/onboarding/profile", label: "Personal Info" },
-  { href: "/onboarding/profile-goals", label: "Goals" },
-  { href: "/onboarding/profile-lifestyle", label: "Lifestyle" },
-  { href: "/onboarding/capture", label: "Capture" },
 ];
 
 interface OnboardingStepperProps {

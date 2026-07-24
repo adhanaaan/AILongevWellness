@@ -2,10 +2,10 @@ import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { Activity } from "lucide-react-native";
-import { OnboardingStepper } from "@/components/layout/OnboardingStepper";
+import { CaptureFlowStepper } from "@/components/layout/CaptureFlowStepper";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { updateParticipantAction } from "@/lib/data/actions";
+import { updateParticipantAction, updateSectionStatusAction, updateCaptureChannelAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import type { ExerciseFrequency, AlcoholDrinksPerWeek } from "@/lib/types/db";
@@ -64,6 +64,15 @@ export default function ProfileLifestylePage() {
         smoking,
         alcohol_drinks_per_week: alcohol,
       });
+      // Personal Info + Goals + Lifestyle together are the fixed-start
+      // "Questionnaire" pair from the hub's point of view — both tracked keys
+      // complete together here, which unlocks the free-order middle trio.
+      await updateSectionStatusAction("personal_info", "done", participantId);
+      await updateSectionStatusAction("lifestyle", "done", participantId);
+      await updateCaptureChannelAction(participantId, "manual", {
+        status: "complete",
+        entered_by: "participant",
+      });
       router.push("/onboarding/capture");
     } finally {
       setSaving(false);
@@ -72,16 +81,16 @@ export default function ProfileLifestylePage() {
 
   if (loading) {
     return (
-      <OnboardingStepper>
+      <CaptureFlowStepper activeSection="questionnaire">
         <View style={styles.center}>
           <Text style={styles.subtitle}>Loading…</Text>
         </View>
-      </OnboardingStepper>
+      </CaptureFlowStepper>
     );
   }
 
   return (
-    <OnboardingStepper>
+    <CaptureFlowStepper activeSection="questionnaire">
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
@@ -179,7 +188,7 @@ export default function ProfileLifestylePage() {
           Continue
         </Button>
       </View>
-    </OnboardingStepper>
+    </CaptureFlowStepper>
   );
 }
 

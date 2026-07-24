@@ -8,6 +8,9 @@ import type {
   EnteredBy,
   FileKind,
   FileRecord,
+  OnboardingProgress,
+  OnboardingSectionKey,
+  OnboardingSectionStatus,
   Participant,
   ParticipantSummary,
   Pipeline,
@@ -43,6 +46,13 @@ export interface Repository {
     patch: { status?: CaptureChannelStatus; entered_by?: EnteredBy }
   ): Promise<CaptureChannel>;
   submitCapture(participantId: string): Promise<Pipeline>;
+
+  getOnboardingProgress(participantId: string): Promise<OnboardingProgress>;
+  updateSectionStatus(
+    participantId: string,
+    section: OnboardingSectionKey,
+    status: OnboardingSectionStatus
+  ): Promise<OnboardingProgress>;
 
   getBiomarkers(participantId: string): Promise<Biomarker[]>;
   updateBiomarker(id: string, patch: Partial<Biomarker>): Promise<Biomarker>;

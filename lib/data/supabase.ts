@@ -14,6 +14,9 @@ import type {
   EnteredBy,
   FileKind,
   FileRecord,
+  OnboardingProgress,
+  OnboardingSectionKey,
+  OnboardingSectionStatus,
   Participant,
   ParticipantSummary,
   Pipeline,
@@ -22,6 +25,39 @@ import type {
 } from "../types/db";
 
 const CHANNELS: CaptureChannelName[] = ["manual", "wearables", "body_composition", "lab_report", "recognize"];
+
+const ONBOARDING_SECTIONS: OnboardingSectionKey[] = [
+  "personal_info",
+  "lifestyle",
+  "wearables",
+  "body_composition",
+  "lab_reports",
+  "recognize",
+];
+
+function computeUnlockedSections(
+  sections: Record<OnboardingSectionKey, OnboardingSectionStatus>
+): OnboardingSectionKey[] {
+  const unlocked: OnboardingSectionKey[] = ["personal_info", "lifestyle"];
+  if (sections.personal_info === "done" && sections.lifestyle === "done") {
+    unlocked.push("wearables", "body_composition", "lab_reports");
+  }
+  if (
+    sections.wearables === "done" &&
+    sections.body_composition === "done" &&
+    sections.lab_reports === "done"
+  ) {
+    unlocked.push("recognize");
+  }
+  return unlocked;
+}
+
+function freshOnboardingProgress(participantId: string): OnboardingProgress {
+  const sections = Object.fromEntries(
+    ONBOARDING_SECTIONS.map((s) => [s, "not_started" as OnboardingSectionStatus])
+  ) as Record<OnboardingSectionKey, OnboardingSectionStatus>;
+  return { participant_id: participantId, sections, unlocked: computeUnlockedSections(sections) };
+}
 
 function must<T>(data: T | null, error: { message: string } | null, label: string): T {
   if (error) throw new Error(error.message);
@@ -59,6 +95,10 @@ export function getSupabaseClient(): SupabaseClient | null {
 export class SupabaseRepository implements Repository {
   private client: SupabaseClient;
   private listeners: Array<() => void> = [];
+  // No onboarding_progress table/migration yet (this session scoped the hub-and-spoke
+  // capture sub-flow to the mock data layer only) — held in memory per session so the
+  // real-backend path still compiles and works, but progress won't survive a reload.
+  private onboardingProgress = new Map<string, OnboardingProgress>();
 
   constructor(client: SupabaseClient) {
     this.client = client;
@@ -143,6 +183,34 @@ export class SupabaseRepository implements Repository {
     const { data, error } = await this.client.rpc("submit_capture", { p_participant_id: participantId });
     if (error) throw new Error(error.message);
     return data as Pipeline;
+  }
+
+  async getOnboardingProgress(participantId: string): Promise<OnboardingProgress> {
+    const existing = this.onboardingProgress.get(participantId);
+    if (existing) return existing;
+    const fresh = freshOnboardingProgress(participantId);
+    this.onboardingProgress.set(participantId, fresh);
+    return fresh;
+  }
+
+  async updateSectionStatus(
+    participantId: string,
+    section: OnboardingSectionKey,
+    status: OnboardingSectionStatus
+  ): Promise<OnboardingProgress> {
+    const current = await this.getOnboardingProgress(participantId);
+    if (!current.unlocked.includes(section)) {
+      throw new Error(`${section} is locked for ${participantId}`);
+    }
+    const sections = { ...current.sections, [section]: status };
+    const updated: OnboardingProgress = {
+      participant_id: participantId,
+      sections,
+      unlocked: computeUnlockedSections(sections),
+    };
+    this.onboardingProgress.set(participantId, updated);
+    this.notify();
+    return updated;
   }
 
   async getBiomarkers(participantId: string): Promise<Biomarker[]> {
