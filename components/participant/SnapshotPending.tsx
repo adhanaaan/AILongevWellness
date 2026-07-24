@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, Easing, AccessibilityInfo, StyleSheet, Text, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
-import { Check, Clock, Leaf, Lock, ShieldCheck, Stethoscope } from "lucide-react-native";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { Check, FileCheck2, FilePen, FileSearch, Lock } from "lucide-react-native";
+import { GradientOrb } from "@/components/ui/GradientOrb";
 import { Button } from "@/components/ui/Button";
+import { CheckInCallout } from "@/components/participant/CheckInCallout";
 import type { PipelineState } from "@/lib/types/db";
 import {
   colors,
@@ -22,67 +23,46 @@ interface StageContent {
   headline: string;
   body: string;
   detail?: string;
-  primaryLabel: string;
-  primaryRoute: Href;
-  secondaryLabel?: string;
-  secondaryRoute?: Href;
+  primaryLabel?: string;
+  primaryRoute?: Href;
 }
 
-// Collapses the 5 pre-delivery pipeline states into 4 participant-facing
-// steps — the AI draft happens automatically and is invisible to the
-// participant, so it folds into the "GP review" step it feeds into.
+// Collapses the 5 pre-delivery pipeline states into 3 participant-facing
+// steps. The AI draft happens automatically and isn't named separately, and
+// GP vs TCM review isn't split out here either — both fold into "Review".
 const STEP_FROM_STATE: Record<PipelineState, number> = {
   capturing: 0,
   ai_drafted: 1,
   gp_review: 1,
-  tcm_review: 2,
-  signed: 3,
-  delivered: 3,
+  tcm_review: 1,
+  signed: 2,
+  delivered: 2,
 };
 
-const STEP_META: { label: string; Icon: typeof Clock }[] = [
-  { label: "Intake", Icon: Clock },
-  { label: "GP review", Icon: Stethoscope },
-  { label: "TCM review", Icon: Leaf },
-  { label: "Finalizing", Icon: ShieldCheck },
+// A small file-lifecycle icon family (edit -> search -> check) that mirrors
+// the real 3-step sequence, rather than decoration for its own sake.
+const STEP_META: { label: string; Icon: typeof FilePen }[] = [
+  { label: "Data capture", Icon: FilePen },
+  { label: "Review", Icon: FileSearch },
+  { label: "Get report", Icon: FileCheck2 },
 ];
-
-const REVIEW_DETAIL =
-  "Typically takes 1–2 business days. We'll notify you the moment there's an update — no need to check back.";
 
 const CONTENT: StageContent[] = [
   {
-    headline: "Let's finish your intake",
-    body: "A few details are still needed before your care team can begin their review.",
-    primaryLabel: "Continue your intake",
+    headline: "Finish your data capture",
+    body: "We still need some details before your care team can start reviewing.",
+    primaryLabel: "Continue your data capture",
     primaryRoute: "/onboarding/capture",
   },
   {
-    headline: "Your GP is reviewing your results",
-    body: "Your intake and biomarkers are with your GP for a full wellness review.",
-    detail: REVIEW_DETAIL,
-    primaryLabel: "Ask AVA a wellness question",
-    primaryRoute: "/(tabs)/ava",
-    secondaryLabel: "Log today's check-in",
-    secondaryRoute: "/(tabs)/tracking",
+    headline: "Your care team is reviewing your results",
+    body: "A GP and a TCM practitioner are going through your intake and biomarkers together.",
+    detail: "Usually takes 1 to 2 business days. We'll let you know the moment it's done.",
   },
   {
-    headline: "Your TCM practitioner is reviewing your results",
-    body: "Your GP's review is complete. A Traditional Chinese Medicine practitioner is now adding their perspective.",
-    detail: REVIEW_DETAIL,
-    primaryLabel: "Ask AVA a wellness question",
-    primaryRoute: "/(tabs)/ava",
-    secondaryLabel: "Log today's check-in",
-    secondaryRoute: "/(tabs)/tracking",
-  },
-  {
-    headline: "Your snapshot is being finalized",
-    body: "Both reviews are complete. Your care team is finalizing your wellness card for delivery.",
-    detail: "Almost ready — we'll notify you the second it's in your hands.",
-    primaryLabel: "Ask AVA a wellness question",
-    primaryRoute: "/(tabs)/ava",
-    secondaryLabel: "Log today's check-in",
-    secondaryRoute: "/(tabs)/tracking",
+    headline: "Your report is almost ready",
+    body: "Both reviews are done. We're putting together your wellness card now.",
+    detail: "You'll get a notification as soon as it's ready.",
   },
 ];
 
@@ -97,11 +77,14 @@ export function SnapshotPending({ pipelineState }: SnapshotPendingProps) {
 
   const enterOpacity = useRef(new Animated.Value(0)).current;
   const enterTranslate = useRef(new Animated.Value(12)).current;
+  const calloutOpacity = useRef(new Animated.Value(0)).current;
+  const calloutTranslate = useRef(new Animated.Value(12)).current;
   const progress = useRef(new Animated.Value(0)).current;
   const textOpacity = useRef(new Animated.Value(1)).current;
   const pulse = useRef(new Animated.Value(1)).current;
 
-  // Entrance: fade + rise on mount.
+  // Entrance: main content fades + rises first, the check-in callout follows
+  // ~100ms behind so it reads as a secondary, noticed-a-beat-later element.
   useEffect(() => {
     Animated.parallel([
       Animated.timing(enterOpacity, {
@@ -116,8 +99,22 @@ export function SnapshotPending({ pipelineState }: SnapshotPendingProps) {
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
+      Animated.timing(calloutOpacity, {
+        toValue: 1,
+        duration: 350,
+        delay: 100,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(calloutTranslate, {
+        toValue: 0,
+        duration: 350,
+        delay: 100,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
     ]).start();
-  }, [enterOpacity, enterTranslate]);
+  }, [enterOpacity, enterTranslate, calloutOpacity, calloutTranslate]);
 
   // Gentle breathing pulse on the active step, unless the OS asks for less motion.
   useEffect(() => {
@@ -188,10 +185,13 @@ export function SnapshotPending({ pipelineState }: SnapshotPendingProps) {
   }, [stepIndex]);
 
   return (
-    <Animated.View
-      style={{ opacity: enterOpacity, transform: [{ translateY: enterTranslate }] }}
-    >
-      <GlassCard tint="light" padding="lg" style={styles.card}>
+    <View style={styles.page}>
+      <GradientOrb tone="teal" size={220} style={styles.orbTop} />
+      <GradientOrb tone="amber" size={200} style={styles.orbBottom} />
+
+      <Animated.View
+        style={{ opacity: enterOpacity, transform: [{ translateY: enterTranslate }] }}
+      >
         <Text style={styles.overline}>YOUR WELLNESS SNAPSHOT</Text>
 
         <Animated.View style={{ opacity: textOpacity }}>
@@ -211,17 +211,17 @@ export function SnapshotPending({ pipelineState }: SnapshotPendingProps) {
                 <View style={styles.stepItem}>
                   {isDone ? (
                     <View style={[styles.circle, styles.circleDone]}>
-                      <Check size={16} color={colors.white} strokeWidth={3} />
+                      <Check size={18} color={colors.white} strokeWidth={3} />
                     </View>
                   ) : isActive ? (
                     <Animated.View
                       style={[styles.circle, styles.circleActive, { opacity: pulse }]}
                     >
-                      <StepIcon size={16} color={colors.sageDark} />
+                      <StepIcon size={18} color={colors.sageDark} />
                     </Animated.View>
                   ) : (
                     <View style={[styles.circle, styles.circleLocked]}>
-                      <Lock size={13} color={colors.inkMuted} />
+                      <Lock size={15} color={colors.inkMuted} />
                     </View>
                   )}
                   <Text
@@ -267,24 +267,37 @@ export function SnapshotPending({ pipelineState }: SnapshotPendingProps) {
           </Animated.Text>
         )}
 
-        <View style={styles.actions}>
-          <Button size="lg" onPress={() => router.push(content.primaryRoute)}>
+        {content.primaryLabel && content.primaryRoute && (
+          <Button size="lg" style={styles.primaryButton} onPress={() => router.push(content.primaryRoute!)}>
             {content.primaryLabel}
           </Button>
-          {content.secondaryLabel && content.secondaryRoute && (
-            <Button variant="ghost" size="md" onPress={() => router.push(content.secondaryRoute!)}>
-              {content.secondaryLabel}
-            </Button>
-          )}
-        </View>
-      </GlassCard>
-    </Animated.View>
+        )}
+      </Animated.View>
+
+      <Animated.View
+        style={{
+          opacity: calloutOpacity,
+          transform: [{ translateY: calloutTranslate }],
+          marginTop: spacing["2xl"],
+        }}
+      >
+        <CheckInCallout />
+      </Animated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    marginTop: spacing["2xl"],
+  page: {
+    marginTop: spacing.lg,
+  },
+  orbTop: {
+    top: -60,
+    right: -70,
+  },
+  orbBottom: {
+    bottom: 60,
+    left: -90,
   },
   overline: {
     fontFamily: fontFamilies.bodySemiBold,
@@ -295,8 +308,8 @@ const styles = StyleSheet.create({
   },
   headline: {
     fontFamily: fontFamilies.displayBold,
-    fontSize: fontSizes.headlineMd,
-    lineHeight: lineHeights.headlineMd,
+    fontSize: fontSizes.headlineLg,
+    lineHeight: lineHeights.headlineLg,
     color: colors.ink,
     letterSpacing: -0.3,
   },
@@ -310,15 +323,15 @@ const styles = StyleSheet.create({
   stepper: {
     flexDirection: "row",
     alignItems: "flex-start",
-    marginTop: spacing["2xl"],
+    marginTop: spacing["3xl"],
   },
   stepItem: {
     alignItems: "center",
-    width: 72,
+    flex: 1,
   },
   circle: {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     borderRadius: radii.full,
     alignItems: "center",
     justifyContent: "center",
@@ -338,7 +351,7 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
     textAlign: "center",
   },
   stepLabelDone: {
@@ -351,11 +364,11 @@ const styles = StyleSheet.create({
   stepLine: {
     height: 2,
     flex: 1,
-    marginTop: 15,
+    marginTop: 19,
     marginHorizontal: spacing.xs,
   },
   progressTrack: {
-    height: 6,
+    height: 8,
     borderRadius: radii.full,
     backgroundColor: colors.surfaceMuted,
     overflow: "hidden",
@@ -373,8 +386,7 @@ const styles = StyleSheet.create({
     color: colors.inkMuted,
     marginTop: spacing.lg,
   },
-  actions: {
+  primaryButton: {
     marginTop: spacing["2xl"],
-    gap: spacing.sm,
   },
 });
