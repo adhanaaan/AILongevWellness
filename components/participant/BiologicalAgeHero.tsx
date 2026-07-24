@@ -57,6 +57,9 @@ export function BiologicalAgeHero({ bioAge, chronoAge }: BiologicalAgeHeroProps)
         <Text style={styles.pillText}>{deltaLabel}</Text>
       </View>
       <TickRuler value={bioAge} />
+      <Text style={styles.explanation}>
+        Calculated from your vascular, metabolic, and mental markers, compared with people your age.
+      </Text>
     </GlassCard>
   );
 }
@@ -113,5 +116,12 @@ const styles = StyleSheet.create({
   tickActive: {
     height: 20,
     backgroundColor: colors.amber,
+  },
+  explanation: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkOnDarkMuted,
+    textAlign: "center",
+    marginTop: spacing.md,
   },
 });

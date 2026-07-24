@@ -9,6 +9,7 @@ import {
   Platform,
   StyleSheet,
 } from "react-native";
+import { useLocalSearchParams } from "expo-router";
 import { Send, MessageCircleOff } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { ChatBubble } from "@/components/participant/ChatBubble";
@@ -35,6 +36,7 @@ const SUGGESTIONS = [
 
 export default function AvaPage() {
   const { participantId } = useAuth();
+  const { q } = useLocalSearchParams<{ q?: string }>();
   const [card, setCard] = useState<SignedCard | null | undefined>(undefined);
 
   useEffect(() => {
@@ -64,21 +66,32 @@ export default function AvaPage() {
     );
   }
 
-  return <AvaChatContent card={card} />;
+  return <AvaChatContent card={card} seedQuestion={q} />;
 }
 
-function AvaChatContent({ card }: { card: SignedCard }) {
+function AvaChatContent({
+  card,
+  seedQuestion,
+}: {
+  card: SignedCard;
+  seedQuestion?: string;
+}) {
   const { session, participantId } = useAuth();
   const scrollRef = useRef<ScrollView>(null);
-  const [messages, setMessages] = useState<Message[]>(() => [
-    { role: "user", text: "What does my metabolic score mean?" },
-    {
-      role: "ava",
-      text: respondAsAva("What does my metabolic score mean?", card),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>(() =>
+    seedQuestion
+      ? []
+      : [
+          { role: "user", text: "What does my metabolic score mean?" },
+          {
+            role: "ava",
+            text: respondAsAva("What does my metabolic score mean?", card),
+          },
+        ]
+  );
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const seededRef = useRef(false);
 
   async function send(text: string) {
     const trimmed = text.trim();
@@ -109,6 +122,14 @@ function AvaChatContent({ card }: { card: SignedCard }) {
     setMessages((prev) => [...prev, { role: "ava", text: reply }]);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
   }
+
+  useEffect(() => {
+    if (seedQuestion && !seededRef.current) {
+      seededRef.current = true;
+      send(seedQuestion);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seedQuestion]);
 
   return (
     <MobileShell>
