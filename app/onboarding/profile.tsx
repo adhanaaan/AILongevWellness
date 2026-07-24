@@ -87,7 +87,7 @@ export default function ProfilePersonalPage() {
         height_cm: heightNum,
         weight_kg: weightNum,
       });
-      router.push("/onboarding/capture");
+      router.push("/onboarding/profile-goals");
     } finally {
       setSaving(false);
     }

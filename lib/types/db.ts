@@ -1,8 +1,13 @@
 // CHANGE LOG (newest first)
+// - 2026-07-24 Person 1: Added lifestyle fields (exercise_frequency, smoking, alcohol_drinks_per_week) to Participant.
 // - 2026-07-19 Person 3: Added missing_biomarkers/out_of_range to AiDraft (mock.ts populates them).
 // - 2026-07-19 Person 2: Added DailyLog type + expanded biomarker coverage (mock.ts).
 
 export type Sex = "male" | "female" | "other";
+
+export type ExerciseFrequency = "rarely" | "sometimes" | "regularly";
+
+export type AlcoholDrinksPerWeek = "none" | "1_to_7" | "8_to_14" | "15_to_21" | "21_plus";
 
 export interface Participant {
   id: string;
@@ -12,6 +17,9 @@ export interface Participant {
   height_cm: number;
   weight_kg: number;
   goals: string[];
+  exercise_frequency?: ExerciseFrequency;
+  smoking?: boolean;
+  alcohol_drinks_per_week?: AlcoholDrinksPerWeek;
   created_at: string;
 }
 
