@@ -136,6 +136,13 @@ lib/
 - [x] Mock data layer with 20 participants + pipeline states
 - [x] Repository pattern with subscribe/notify reactivity
 - [x] Welcome, Consent, Profile, Capture screens
+- [x] Onboarding Capture restructured into a hub-and-spoke sub-flow: Data Capture hub
+      (`app/onboarding/capture.tsx`) with a per-participant `OnboardingProgress` record
+      (`getOnboardingProgress`/`updateSectionStatus` in the repository) and a shared,
+      tappable `CaptureFlowStepper` on every screen. Questionnaire (Personal Info → Goals
+      → Lifestyle) is the fixed, non-skippable start; Wearables/Body Composition/Lab
+      Reports unlock together and can be done in any order; ReCOGnAIze unlocks once that
+      trio is done and leads into a Calculating screen before Home.
 - [x] Health card screen (tab: Insights)
 - [x] AVA chat screen (tab: Concierge)
 - [x] Tracking screen (tab: Care Plan)
@@ -151,4 +158,4 @@ lib/
 - [ ] Wearable aggregator connect
 - [ ] Consent tracking (consent_given, consented_at fields) — consent screen doesn't yet persist to a row
 - [ ] Body composition scan value extraction (currently uploads the file only, no parsing)
-- [ ] Manual questionnaire + ReCOGnAIze channels are still tap-to-complete placeholders
+- [ ] ReCOGnAIze is still an informational-only placeholder screen (no real assessment yet)
