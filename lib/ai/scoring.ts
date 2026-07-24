@@ -50,6 +50,12 @@ export function computeBiologicalAge(scores: PillarScores, chronologicalAge: num
   return chronologicalAge - delta;
 }
 
+export const PILLAR_STATUS_THRESHOLD = NEUTRAL_SCORE;
+
+export function pillarStatus(score: number): "good" | "monitor" {
+  return score >= PILLAR_STATUS_THRESHOLD ? "good" : "monitor";
+}
+
 export function computeOutOfRange(biomarkers: Biomarker[]): OutOfRangeBiomarker[] {
   return biomarkers
     .filter((b) => b.flagged && b.value !== null && b.ref_high !== null)

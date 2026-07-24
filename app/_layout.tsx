@@ -57,6 +57,7 @@ export default function RootLayout() {
           <Stack.Screen name="onboarding" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="admin" />
+          <Stack.Screen name="pillar" />
         </Stack>
       </AuthProvider>
     </View>
