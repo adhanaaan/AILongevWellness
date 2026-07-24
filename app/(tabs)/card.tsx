@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { Clock } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { BiologicalAgeHero } from "@/components/participant/BiologicalAgeHero";
 import { ScoreRing } from "@/components/participant/ScoreRing";
 import { KeyContributorItem } from "@/components/participant/KeyContributorItem";
 import { SuggestedFocusGrid } from "@/components/participant/SuggestedFocusGrid";
 import { CareTeamBadge } from "@/components/participant/CareTeamBadge";
+import { SnapshotPending } from "@/components/participant/SnapshotPending";
 import { Button } from "@/components/ui/Button";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import type { SignedCard } from "@/lib/data/repository";
+import type { Pipeline } from "@/lib/types/db";
 import { colors, fontSizes } from "@/lib/theme/tokens";
 
 function initialsOf(name: string) {
@@ -26,32 +27,24 @@ export default function CardPage() {
   const router = useRouter();
   const { participantId } = useAuth();
   const [card, setCard] = useState<SignedCard | null | undefined>(undefined);
+  const [pipeline, setPipeline] = useState<Pipeline | null | undefined>(undefined);
 
   useEffect(() => {
     if (!participantId) return;
     repository.getSignedCard(participantId).then(setCard);
+    repository.getPipeline(participantId).then(setPipeline);
     return repository.subscribe(() => {
       repository.getSignedCard(participantId).then(setCard);
+      repository.getPipeline(participantId).then(setPipeline);
     });
   }, [participantId]);
 
-  if (card === undefined) return null;
+  if (card === undefined || pipeline === undefined) return null;
 
   if (!card) {
     return (
       <MobileShell>
-        <View style={styles.emptyContainer}>
-          <View style={styles.emptyIcon}>
-            <Clock size={24} color={colors.sageDark} />
-          </View>
-          <Text style={styles.emptyTitle}>
-            Your snapshot is being prepared
-          </Text>
-          <Text style={styles.emptyText}>
-            Your care team is reviewing your results. We'll let you know as soon
-            as your health card is ready.
-          </Text>
-        </View>
+        <SnapshotPending pipelineState={pipeline?.state ?? "capturing"} />
       </MobileShell>
     );
   }
@@ -157,32 +150,4 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   contributorList: { gap: 8 },
-  emptyContainer: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 24,
-  },
-  emptyIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: colors.sageTint,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  emptyTitle: {
-    fontSize: fontSizes.headlineMd,
-    fontWeight: "600",
-    color: colors.charcoal,
-    marginTop: 16,
-    textAlign: "center",
-  },
-  emptyText: {
-    fontSize: fontSizes.bodyMd,
-    color: colors.inkMuted,
-    marginTop: 8,
-    textAlign: "center",
-    maxWidth: 280,
-  },
 });
