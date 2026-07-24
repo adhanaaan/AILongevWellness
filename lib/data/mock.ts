@@ -9,6 +9,9 @@ import type {
   EnteredBy,
   FileKind,
   FileRecord,
+  OnboardingProgress,
+  OnboardingSectionKey,
+  OnboardingSectionStatus,
   OutOfRangeBiomarker,
   Participant,
   ParticipantSummary,
@@ -68,6 +71,49 @@ const CHANNELS: CaptureChannelName[] = [
 ];
 
 const PILLARS: Pillar[] = ["vascular", "metabolic", "mental"];
+
+const ONBOARDING_SECTIONS: OnboardingSectionKey[] = [
+  "personal_info",
+  "lifestyle",
+  "wearables",
+  "body_composition",
+  "lab_reports",
+  "recognize",
+];
+
+/** personal_info + lifestyle (the fixed "Questionnaire" pair) are always open;
+ * the middle trio unlocks once both are done, and recognize unlocks once the
+ * middle trio are all done. */
+function computeUnlockedSections(
+  sections: Record<OnboardingSectionKey, OnboardingSectionStatus>
+): OnboardingSectionKey[] {
+  const unlocked: OnboardingSectionKey[] = ["personal_info", "lifestyle"];
+  if (sections.personal_info === "done" && sections.lifestyle === "done") {
+    unlocked.push("wearables", "body_composition", "lab_reports");
+  }
+  if (
+    sections.wearables === "done" &&
+    sections.body_composition === "done" &&
+    sections.lab_reports === "done"
+  ) {
+    unlocked.push("recognize");
+  }
+  return unlocked;
+}
+
+function freshOnboardingProgress(participantId: string): OnboardingProgress {
+  const sections = Object.fromEntries(
+    ONBOARDING_SECTIONS.map((s) => [s, "not_started" as OnboardingSectionStatus])
+  ) as Record<OnboardingSectionKey, OnboardingSectionStatus>;
+  return { participant_id: participantId, sections, unlocked: computeUnlockedSections(sections) };
+}
+
+function completeOnboardingProgress(participantId: string): OnboardingProgress {
+  const sections = Object.fromEntries(
+    ONBOARDING_SECTIONS.map((s) => [s, "done" as OnboardingSectionStatus])
+  ) as Record<OnboardingSectionKey, OnboardingSectionStatus>;
+  return { participant_id: participantId, sections, unlocked: computeUnlockedSections(sections) };
+}
 
 interface BiomarkerTemplate {
   key: string;
@@ -239,6 +285,7 @@ class MockRepository implements Repository {
   private pipelines = new Map<string, Pipeline>();
   private files = new Map<string, FileRecord[]>();
   private dailyLogs = new Map<string, DailyLog>(); // key: `${participantId}:${log_date}`
+  private onboardingProgress = new Map<string, OnboardingProgress>();
   private listeners: Array<() => void> = [];
 
   constructor() {
@@ -299,6 +346,23 @@ class MockRepository implements Repository {
         updated_at: nowIso(),
       });
     }
+
+    // Mirrors the capture-channel seed above: Questionnaire and Wearables are
+    // fully done, Body Composition and Lab Reports are in progress, and
+    // ReCOGnAIze stays locked until that middle trio all reach "done".
+    const jamesSections: Record<OnboardingSectionKey, OnboardingSectionStatus> = {
+      personal_info: "done",
+      lifestyle: "done",
+      wearables: "done",
+      body_composition: "in_progress",
+      lab_reports: "in_progress",
+      recognize: "not_started",
+    };
+    this.onboardingProgress.set(james.id, {
+      participant_id: james.id,
+      sections: jamesSections,
+      unlocked: computeUnlockedSections(jamesSections),
+    });
 
     const jamesBiomarkers: Biomarker[] = [
       // Vascular — Good (74): all core + expanded markers in range.
@@ -435,6 +499,12 @@ class MockRepository implements Repository {
         attention_reason: needsAttention ? pick(["Incomplete lab upload", "Wearable sync failed", "Missing body composition scan"], mulberry32(idx * 41 + 11)()) : null,
         delivered_at: state === "delivered" ? nowIso() : null,
       });
+      // Everyone past "capturing" already finished onboarding; the one demo row
+      // still "capturing" starts the sub-flow fresh, same as a brand-new sign-up.
+      this.onboardingProgress.set(
+        id,
+        state === "capturing" ? freshOnboardingProgress(id) : completeOnboardingProgress(id)
+      );
 
       if (state === "gp_review" || state === "tcm_review" || state === "signed" || state === "delivered") {
         this.reviews.get(id)!.push({
@@ -529,6 +599,34 @@ class MockRepository implements Repository {
     }
     const updated: Pipeline = { ...pipeline, state: "gp_review" };
     this.pipelines.set(participantId, updated);
+    this.notify();
+    return updated;
+  }
+
+  async getOnboardingProgress(participantId: string): Promise<OnboardingProgress> {
+    const existing = this.onboardingProgress.get(participantId);
+    if (existing) return existing;
+    const fresh = freshOnboardingProgress(participantId);
+    this.onboardingProgress.set(participantId, fresh);
+    return fresh;
+  }
+
+  async updateSectionStatus(
+    participantId: string,
+    section: OnboardingSectionKey,
+    status: OnboardingSectionStatus
+  ): Promise<OnboardingProgress> {
+    const current = await this.getOnboardingProgress(participantId);
+    if (!current.unlocked.includes(section)) {
+      throw new Error(`${section} is locked for ${participantId}`);
+    }
+    const sections = { ...current.sections, [section]: status };
+    const updated: OnboardingProgress = {
+      participant_id: participantId,
+      sections,
+      unlocked: computeUnlockedSections(sections),
+    };
+    this.onboardingProgress.set(participantId, updated);
     this.notify();
     return updated;
   }

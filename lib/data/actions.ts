@@ -8,6 +8,8 @@ import type {
   DailyLog,
   EnteredBy,
   FileKind,
+  OnboardingSectionKey,
+  OnboardingSectionStatus,
   Participant,
   ReviewStage,
 } from "../types/db";
@@ -28,6 +30,18 @@ export async function updateCaptureChannelAction(
 
 export async function submitCaptureAction(participantId: string = DEMO_PARTICIPANT_ID) {
   return repository.submitCapture(participantId);
+}
+
+export async function getOnboardingProgressAction(participantId: string = DEMO_PARTICIPANT_ID) {
+  return repository.getOnboardingProgress(participantId);
+}
+
+export async function updateSectionStatusAction(
+  section: OnboardingSectionKey,
+  status: OnboardingSectionStatus,
+  participantId: string = DEMO_PARTICIPANT_ID
+) {
+  return repository.updateSectionStatus(participantId, section, status);
 }
 
 export async function updateBiomarkerAction(

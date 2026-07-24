@@ -2,13 +2,13 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, ScrollView, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { User, Plus } from "lucide-react-native";
-import { OnboardingStepper } from "@/components/layout/OnboardingStepper";
+import { CaptureFlowStepper } from "@/components/layout/CaptureFlowStepper";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { SelectField, type SelectFieldOption } from "@/components/ui/SelectField";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { updateParticipantAction } from "@/lib/data/actions";
+import { updateParticipantAction, updateSectionStatusAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
@@ -87,6 +87,7 @@ export default function ProfilePersonalPage() {
         height_cm: heightNum,
         weight_kg: weightNum,
       });
+      await updateSectionStatusAction("personal_info", "in_progress", participantId);
       router.push("/onboarding/profile-goals");
     } finally {
       setSaving(false);
@@ -95,16 +96,16 @@ export default function ProfilePersonalPage() {
 
   if (loading) {
     return (
-      <OnboardingStepper>
+      <CaptureFlowStepper activeSection="questionnaire">
         <View style={styles.center}>
           <Text style={styles.subtitle}>Loading…</Text>
         </View>
-      </OnboardingStepper>
+      </CaptureFlowStepper>
     );
   }
 
   return (
-    <OnboardingStepper>
+    <CaptureFlowStepper activeSection="questionnaire">
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
@@ -190,7 +191,7 @@ export default function ProfilePersonalPage() {
           Continue
         </Button>
       </View>
-    </OnboardingStepper>
+    </CaptureFlowStepper>
   );
 }
 

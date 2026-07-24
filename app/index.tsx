@@ -47,9 +47,10 @@ export default function WelcomePage() {
         repository.getPipeline(participantId),
       ]);
       if (cancelled || !participant || !pipeline) return;
-      if (participant.name === "New participant") {
-        router.replace("/onboarding/profile");
-      } else if (pipeline.state === "capturing") {
+      // The Data Capture hub (now living at /onboarding/capture) is the landing
+      // point for any still-capturing participant, brand new or not — it routes
+      // on to Personal Info itself if the Questionnaire hasn't been started yet.
+      if (pipeline.state === "capturing") {
         router.replace("/onboarding/capture");
       } else {
         router.replace("/(tabs)/card");

@@ -29,7 +29,7 @@ export default function ParticipantAuthPage() {
       if (mode === "signup") {
         const hasSession = await signUpParticipant(email.trim(), password);
         if (hasSession) {
-          router.push("/onboarding/profile");
+          router.push("/onboarding/capture");
         } else {
           setAwaitingConfirmation(true);
         }

@@ -1,4 +1,5 @@
 // CHANGE LOG (newest first)
+// - 2026-07-24 Person 1: Added OnboardingProgress (hub-and-spoke capture sub-flow tracking).
 // - 2026-07-24 Person 1: Added lifestyle fields (exercise_frequency, smoking, alcohol_drinks_per_week) to Participant.
 // - 2026-07-19 Person 3: Added missing_biomarkers/out_of_range to AiDraft (mock.ts populates them).
 // - 2026-07-19 Person 2: Added DailyLog type + expanded biomarker coverage (mock.ts).
@@ -181,4 +182,27 @@ export interface DailyLog {
   weight_kg: number | null;
   supplements: string[];
   notes: string | null;
+}
+
+/**
+ * Sections of the onboarding "Data Capture" hub-and-spoke sub-flow.
+ * personal_info + lifestyle form the fixed, non-skippable "Questionnaire" pair;
+ * wearables/body_composition/lab_reports unlock together as a free-order middle
+ * trio; recognize is the fixed end, unlocked only once the trio are all done.
+ */
+export type OnboardingSectionKey =
+  | "personal_info"
+  | "lifestyle"
+  | "wearables"
+  | "body_composition"
+  | "lab_reports"
+  | "recognize";
+
+export type OnboardingSectionStatus = "not_started" | "in_progress" | "done";
+
+export interface OnboardingProgress {
+  participant_id: string;
+  sections: Record<OnboardingSectionKey, OnboardingSectionStatus>;
+  /** Section keys the participant is currently allowed to open. */
+  unlocked: OnboardingSectionKey[];
 }
