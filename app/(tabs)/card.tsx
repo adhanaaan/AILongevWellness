@@ -1,26 +1,28 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { BiologicalAgeHero } from "@/components/participant/BiologicalAgeHero";
 import { ScoreRing } from "@/components/participant/ScoreRing";
 import { KeyContributorItem } from "@/components/participant/KeyContributorItem";
 import { SuggestedFocusGrid } from "@/components/participant/SuggestedFocusGrid";
-import { CareTeamBadge } from "@/components/participant/CareTeamBadge";
 import { SnapshotPending } from "@/components/participant/SnapshotPending";
+import { CareTeamNotesCard } from "@/components/participant/CareTeamNotesCard";
+import { NextStepsCard } from "@/components/participant/NextStepsCard";
 import { Button } from "@/components/ui/Button";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { pillarStatus } from "@/lib/ai/scoring";
 import type { SignedCard } from "@/lib/data/repository";
 import type { Pipeline } from "@/lib/types/db";
 import { colors, fontSizes } from "@/lib/theme/tokens";
 
-function initialsOf(name: string) {
-  return name
-    .split(" ")
-    .map((p) => p[0])
-    .join("")
-    .toUpperCase();
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 export default function CardPage() {
@@ -59,9 +61,9 @@ export default function CardPage() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <Text style={styles.title}>Your executive wellness snapshot</Text>
+        <Text style={styles.title}>Your wellness snapshot</Text>
         <Text style={styles.subtitle}>
-          Reviewed and signed off by your care team.
+          Report generated {formatDate(aiDraft.generated_at)}
         </Text>
 
         <View style={styles.section}>
@@ -72,22 +74,43 @@ export default function CardPage() {
         </View>
 
         <View style={styles.rings}>
-          <ScoreRing
-            value={aiDraft.scores.vascular}
-            label="Vascular"
-            status={aiDraft.scores.vascular >= 70 ? "good" : "monitor"}
-          />
-          <ScoreRing
-            value={aiDraft.scores.metabolic}
-            label="Metabolic"
-            status={aiDraft.scores.metabolic >= 70 ? "good" : "monitor"}
-          />
-          <ScoreRing
-            value={aiDraft.scores.mental}
-            label="Mental"
-            status={aiDraft.scores.mental >= 70 ? "good" : "monitor"}
-          />
+          <Pressable
+            onPress={() => router.push("/pillar/vascular")}
+            accessibilityRole="button"
+            accessibilityLabel="View details for Vascular score"
+          >
+            <ScoreRing
+              value={aiDraft.scores.vascular}
+              label="Vascular"
+              status={pillarStatus(aiDraft.scores.vascular)}
+            />
+          </Pressable>
+          <Pressable
+            onPress={() => router.push("/pillar/metabolic")}
+            accessibilityRole="button"
+            accessibilityLabel="View details for Metabolic score"
+          >
+            <ScoreRing
+              value={aiDraft.scores.metabolic}
+              label="Metabolic"
+              status={pillarStatus(aiDraft.scores.metabolic)}
+            />
+          </Pressable>
+          <Pressable
+            onPress={() => router.push("/pillar/mental")}
+            accessibilityRole="button"
+            accessibilityLabel="View details for Mental score"
+          >
+            <ScoreRing
+              value={aiDraft.scores.mental}
+              label="Mental"
+              status={pillarStatus(aiDraft.scores.mental)}
+            />
+          </Pressable>
         </View>
+        <Text style={styles.ringsCaption}>
+          Tap a score to see what's driving it
+        </Text>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Key contributors</Text>
@@ -98,26 +121,33 @@ export default function CardPage() {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Suggested focus</Text>
-          <SuggestedFocusGrid items={aiDraft.suggested_focus} />
-        </View>
-
-        {gp && tcm && (
+        {(gp || tcm) && (
           <View style={styles.section}>
-            <CareTeamBadge
-              gpInitials={initialsOf(gp.reviewer_name)}
-              tcmInitials={initialsOf(tcm.reviewer_name)}
-            />
+            <CareTeamNotesCard gp={gp} tcm={tcm} />
           </View>
         )}
 
         <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Your next steps</Text>
+          <SuggestedFocusGrid items={aiDraft.suggested_focus} />
+          <View style={styles.nextStepsCard}>
+            <NextStepsCard points={aiDraft.discussion_points} />
+          </View>
+        </View>
+
+        <View style={styles.section}>
           <Button
             size="lg"
-            onPress={() => router.push("/(tabs)/ava")}
+            onPress={() =>
+              router.push({
+                pathname: "/(tabs)/ava",
+                params: {
+                  q: "Can you walk me through what's driving my scores?",
+                },
+              })
+            }
           >
-            Ask about my results
+            Ask Ava a follow-up
           </Button>
         </View>
       </ScrollView>
@@ -149,5 +179,12 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     marginTop: 24,
   },
+  ringsCaption: {
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    textAlign: "center",
+    marginTop: 8,
+  },
   contributorList: { gap: 8 },
+  nextStepsCard: { marginTop: 12 },
 });
