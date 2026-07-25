@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { User } from "lucide-react-native";
 import { SelectField, type SelectFieldOption } from "@/components/ui/SelectField";
 import { Button } from "@/components/ui/Button";
@@ -35,6 +35,8 @@ const WEIGHT_OPTIONS: SelectFieldOption[] = range(40, 150).map((n) => ({
 export default function ProfilePersonalPage() {
   const router = useRouter();
   const { participantId } = useAuth();
+  const { mode } = useLocalSearchParams<{ mode?: string }>();
+  const isEditing = mode === "edit";
 
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
@@ -85,8 +87,12 @@ export default function ProfilePersonalPage() {
         height_cm: heightNum,
         weight_kg: weightNum,
       });
-      await updateSectionStatusAction("personal_info", "in_progress", participantId);
-      router.push("/onboarding/profile-wellness-intro");
+      if (isEditing) {
+        router.back();
+      } else {
+        await updateSectionStatusAction("personal_info", "in_progress", participantId);
+        router.push("/onboarding/profile-wellness-intro");
+      }
     } finally {
       setSaving(false);
     }

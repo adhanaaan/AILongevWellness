@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import {
   Target,
   Check,
@@ -21,13 +21,13 @@ import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 
-interface Goal {
+export interface Goal {
   label: string;
   description: string;
   icon: LucideIcon;
 }
 
-const GOALS: Goal[] = [
+export const GOALS: Goal[] = [
   { label: "Longevity", description: "Build habits that add healthy years.", icon: InfinityIcon },
   { label: "Energy & focus", description: "Feel sharper and less drained.", icon: Zap },
   { label: "Weight management", description: "Find a sustainable, healthy weight.", icon: Scale },
@@ -48,6 +48,8 @@ const SELECTED_GRADIENT_STOPS = [
 export default function ProfileGoalsPage() {
   const router = useRouter();
   const { participantId } = useAuth();
+  const { mode } = useLocalSearchParams<{ mode?: string }>();
+  const isEditing = mode === "edit";
 
   const [loading, setLoading] = useState(true);
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
@@ -76,8 +78,12 @@ export default function ProfileGoalsPage() {
     setSaving(true);
     try {
       await updateParticipantAction(participantId, { goals: selectedGoals });
-      await updateSectionStatusAction("personal_info", "in_progress", participantId);
-      router.push("/onboarding/profile-lifestyle");
+      if (isEditing) {
+        router.back();
+      } else {
+        await updateSectionStatusAction("personal_info", "in_progress", participantId);
+        router.push("/onboarding/profile-lifestyle");
+      }
     } finally {
       setSaving(false);
     }

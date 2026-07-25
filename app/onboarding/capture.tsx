@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { ClipboardList, Watch, PersonStanding, FileText, Brain, type LucideIcon } from "lucide-react-native";
 import { CaptureFlowStepper } from "@/components/layout/CaptureFlowStepper";
 import { HubSectionCard } from "@/components/participant/HubSectionCard";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { GradientOverlay } from "@/components/ui/GradientOverlay";
@@ -12,6 +13,7 @@ import { getOnboardingProgressAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { CAPTURE_SECTIONS, deriveSectionState, type CaptureSectionId } from "@/lib/onboarding/flow";
+import { GOALS } from "@/app/onboarding/profile-goals";
 import type {
   AlcoholDrinksPerWeek,
   ExerciseFrequency,
@@ -42,24 +44,44 @@ const SEX_LABEL: Record<Participant["sex"], string> = {
   other: "Other",
 };
 
-const EXERCISE_PHRASE: Record<ExerciseFrequency, string> = {
-  rarely: "Rarely exercises",
-  sometimes: "Exercises sometimes",
-  regularly: "Exercises regularly",
+const EXERCISE_TITLE: Record<ExerciseFrequency, string> = {
+  rarely: "Rarely",
+  sometimes: "Sometimes",
+  regularly: "Regularly",
 };
 
-const ALCOHOL_PHRASE: Record<AlcoholDrinksPerWeek, string> = {
-  none: "No alcohol",
-  "1_to_7": "1 to 7 drinks a week",
-  "8_to_14": "8 to 14 drinks a week",
-  "15_to_21": "15 to 21 drinks a week",
-  "21_plus": "21+ drinks a week",
+const ALCOHOL_LABEL: Record<AlcoholDrinksPerWeek, string> = {
+  none: "None",
+  "1_to_7": "1 to 7",
+  "8_to_14": "8 to 14",
+  "15_to_21": "15 to 21",
+  "21_plus": "More than 21",
 };
 
 const ZONE_GRADIENT_STOPS = [
   { offset: "0", color: teal[50] },
   { offset: "1", color: teal[100] },
 ];
+
+function SubcardHeader({ label, onEdit }: { label: string; onEdit: () => void }) {
+  return (
+    <View style={styles.subcardHeader}>
+      <Text style={styles.subcardLabel}>{label}</Text>
+      <Button variant="ghost" size="sm" onPress={onEdit}>
+        Edit
+      </Button>
+    </View>
+  );
+}
+
+function Field({ label, value }: { label: string; value: string }) {
+  return (
+    <View style={styles.field}>
+      <Text style={styles.fieldLabel}>{label}</Text>
+      <Text style={styles.fieldValue}>{value}</Text>
+    </View>
+  );
+}
 
 export default function CaptureHubPage() {
   const router = useRouter();
@@ -86,10 +108,14 @@ export default function CaptureHubPage() {
     : 0;
   const completionPercent = Math.round((doneCount / CAPTURE_SECTIONS.length) * 100);
 
-  const showLifestyleLine =
+  const hasLifestyleData =
     participant?.exercise_frequency !== undefined &&
     participant?.smoking !== undefined &&
     participant?.alcohol_drinks_per_week !== undefined;
+
+  function editRoute(pathname: string) {
+    return () => router.push({ pathname: pathname as never, params: { mode: "edit" } });
+  }
 
   return (
     <CaptureFlowStepper>
@@ -99,36 +125,61 @@ export default function CaptureHubPage() {
         </GlassCard>
         <Text style={styles.title}>Data Capture</Text>
         <Text style={styles.subtitle}>
-          Complete each section below to build your wellness snapshot. Start
-          with the Questionnaire, then the rest unlock as you go.
+          Complete each section below to build your wellness snapshot.
         </Text>
 
         <Card padding="lg" style={styles.outerCard}>
           {questionnaireDone && participant && (
             <View style={styles.profileBlock}>
-              <Text style={styles.profileHeading}>Your profile</Text>
-              <Text style={styles.profileLine}>
-                {participant.name} · {SEX_LABEL[participant.sex]} · {participant.age} ·{" "}
-                {participant.height_cm} cm · {participant.weight_kg} kg
-              </Text>
-
-              {participant.goals.length > 0 && (
-                <View style={styles.goalsRow}>
-                  {participant.goals.map((goal) => (
-                    <View key={goal} style={styles.goalPill}>
-                      <Text style={styles.goalPillText}>{goal}</Text>
-                    </View>
-                  ))}
+              <View style={styles.subcard}>
+                <SubcardHeader label="Personal Info" onEdit={editRoute("/onboarding/profile")} />
+                <Text style={styles.participantName}>{participant.name}</Text>
+                <Field label="Sex at Birth" value={SEX_LABEL[participant.sex]} />
+                <View style={styles.fieldRow}>
+                  <Field label="Age" value={String(participant.age)} />
+                  <Field label="Height" value={`${participant.height_cm} cm`} />
+                  <Field label="Weight" value={`${participant.weight_kg} kg`} />
                 </View>
-              )}
+              </View>
 
-              {showLifestyleLine && (
-                <Text style={styles.profileLine}>
-                  {EXERCISE_PHRASE[participant.exercise_frequency!]} ·{" "}
-                  {participant.smoking ? "Smoker" : "Non-smoker"} ·{" "}
-                  {ALCOHOL_PHRASE[participant.alcohol_drinks_per_week!]}
-                </Text>
-              )}
+              <View style={styles.subcardDivider} />
+
+              <View style={styles.subcard}>
+                <SubcardHeader
+                  label="Wellness Goals"
+                  onEdit={editRoute("/onboarding/profile-goals")}
+                />
+                {participant.goals.map((goalLabel) => {
+                  const goal = GOALS.find((g) => g.label === goalLabel);
+                  return (
+                    <View key={goalLabel} style={styles.goalRow}>
+                      <Text style={styles.goalRowLabel}>{goalLabel}</Text>
+                      {goal && (
+                        <Text style={styles.goalRowDescription}>{goal.description}</Text>
+                      )}
+                    </View>
+                  );
+                })}
+              </View>
+
+              <View style={styles.subcardDivider} />
+
+              <View style={styles.subcard}>
+                <SubcardHeader
+                  label="Lifestyle"
+                  onEdit={editRoute("/onboarding/profile-lifestyle")}
+                />
+                {hasLifestyleData && (
+                  <>
+                    <Field label="Exercise" value={EXERCISE_TITLE[participant.exercise_frequency!]} />
+                    <Field label="Smoking" value={participant.smoking ? "Yes" : "No"} />
+                    <Field
+                      label="Alcohol (drinks/week)"
+                      value={ALCOHOL_LABEL[participant.alcohol_drinks_per_week!]}
+                    />
+                  </>
+                )}
+              </View>
             </View>
           )}
 
@@ -201,35 +252,60 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  profileHeading: {
+  subcard: {
+    gap: spacing.md,
+  },
+  subcardDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: spacing.xl,
+  },
+  subcardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  subcardLabel: {
     fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.labelMd,
     color: colors.ink,
-    marginBottom: spacing.sm,
   },
-  profileLine: {
+  participantName: {
+    fontFamily: fontFamilies.displaySemiBold,
+    fontSize: fontSizes.headlineSm,
+    color: colors.ink,
+  },
+  fieldRow: {
+    flexDirection: "row",
+    gap: spacing.lg,
+  },
+  field: {
+    flex: 1,
+  },
+  fieldLabel: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    marginBottom: 2,
+  },
+  fieldValue: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.bodyMd,
+    color: colors.ink,
+  },
+  goalRow: {
+    marginBottom: spacing.xs,
+  },
+  goalRowLabel: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.bodyMd,
+    color: colors.ink,
+  },
+  goalRowDescription: {
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.labelMd,
     color: colors.inkMuted,
-    lineHeight: 20,
-    marginTop: spacing.xs,
-  },
-  goalsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.xs,
-    marginTop: spacing.sm,
-  },
-  goalPill: {
-    borderRadius: radii.full,
-    paddingVertical: 4,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.tealTint,
-  },
-  goalPillText: {
-    fontFamily: fontFamilies.bodyMedium,
-    fontSize: fontSizes.caption,
-    color: colors.tealDark,
+    marginTop: 2,
   },
   completionBlock: {
     gap: spacing.sm,
