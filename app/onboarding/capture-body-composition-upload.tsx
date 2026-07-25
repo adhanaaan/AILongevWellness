@@ -74,7 +74,7 @@ export default function CaptureBodyCompositionUploadPage() {
   const busy = uploading || processing;
 
   return (
-    <CaptureFlowStepper activeSection="body_composition">
+    <CaptureFlowStepper>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         <GlassCard tint="light" padding="none" radius="full" style={styles.headerIcon}>
           <UploadCloud size={24} color={colors.teal} />

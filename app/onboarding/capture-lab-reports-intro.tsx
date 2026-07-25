@@ -28,7 +28,7 @@ export default function CaptureLabReportsIntroPage() {
   }
 
   return (
-    <CaptureFlowStepper activeSection="lab_reports">
+    <CaptureFlowStepper>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         <GlassCard tint="light" padding="none" radius="full" style={styles.headerIcon}>
           <FileText size={24} color={colors.teal} />

@@ -64,7 +64,7 @@ export default function CaptureCalculatingPage() {
 
   if (error) {
     return (
-      <CaptureFlowStepper disabled>
+      <CaptureFlowStepper>
         <View style={styles.center}>
           <GlassCard tint="light" padding="none" radius="full" style={styles.headerIcon}>
             <Sparkles size={24} color={colors.teal} />
@@ -82,7 +82,7 @@ export default function CaptureCalculatingPage() {
   }
 
   return (
-    <CaptureFlowStepper activeSection="recognize" disabled>
+    <CaptureFlowStepper>
       <View style={styles.center}>
         <GlassCard tint="light" padding="none" radius="full" style={styles.headerIcon}>
           <Sparkles size={24} color={colors.teal} />

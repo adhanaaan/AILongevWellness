@@ -199,6 +199,22 @@ lib/
       WELLNESS SNAPSHOT" explainer, and the same "data capture isn't finished yet"
       status line AVA's own promo uses, tap-through "Continue" button, no
       auto-advance) before landing back on the Data Capture hub.
+- [x] Data Capture hub revamp: `CaptureFlowStepper` (shared by every capture-*
+      screen) dropped its tappable section pill row entirely and simplified its
+      back button from a chevron + "Back" label + "Data Capture" caption down to a
+      plain icon-only chevron, since the pill row was fully redundant with the
+      hub's own section list. `HubSectionCard` (only used by the hub) is now a
+      borderless full-row tap target instead of its own bordered `GlassCard`, with
+      a prominent dark-green-fill + white-text/icon treatment once a section is
+      done (was: a small icon-circle color change), sitting in a light-green
+      gradient zone (`teal[50]` → `teal[100]`) inside one consolidated `Card`. Once
+      the Questionnaire is done, that same card also shows a "Your profile"
+      summary (name/sex/age/height/weight, goal pills, lifestyle line) built from
+      the real saved `Participant` fields, plus a completion-percentage bar
+      (`doneCount / 5`) that's always visible. Hub copy also got a humanizer/
+      ux-copywriter pass (dropped an em dash, replaced "Capture body composition
+      metrics."/"Upload a recent lab report for AI extraction." with plainer,
+      outcome-first phrasing).
 - [ ] Wearable aggregator connect
 - [ ] Consent tracking (consent_given, consented_at fields) — consent screen doesn't yet persist to a row
 - [ ] Body composition scan value extraction (currently uploads the file only, no parsing)

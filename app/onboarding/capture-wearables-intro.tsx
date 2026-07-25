@@ -28,7 +28,7 @@ export default function CaptureWearablesIntroPage() {
   }
 
   return (
-    <CaptureFlowStepper activeSection="wearables">
+    <CaptureFlowStepper>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         <GlassCard tint="light" padding="none" radius="full" style={styles.headerIcon}>
           <Watch size={24} color={colors.teal} />

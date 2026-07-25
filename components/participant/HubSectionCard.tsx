@@ -1,13 +1,11 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { Lock } from "lucide-react-native";
-import { GlassCard } from "@/components/ui/GlassCard";
-import { Button } from "@/components/ui/Button";
+import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Check, ChevronRight, Lock, type LucideIcon } from "lucide-react-native";
 import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 import type { CaptureSectionState } from "@/lib/onboarding/flow";
 
 export interface HubSectionCardProps {
-  icon: React.ReactNode;
+  icon: LucideIcon;
   title: string;
   description: string;
   state: CaptureSectionState;
@@ -21,86 +19,102 @@ const STATUS_LABEL: Record<CaptureSectionState, string> = {
   done: "Done",
 };
 
-const ACTION_LABEL: Record<CaptureSectionState, string> = {
-  locked: "Locked",
-  available: "Start",
-  in_progress: "Continue",
-  done: "Review",
-};
-
-export function HubSectionCard({ icon, title, description, state, onPress }: HubSectionCardProps) {
+export function HubSectionCard({
+  icon: Icon,
+  title,
+  description,
+  state,
+  onPress,
+}: HubSectionCardProps) {
   const locked = state === "locked";
+  const done = state === "done";
 
   return (
-    <GlassCard tint="light" padding="md" radius="2xl" style={locked ? styles.lockedCard : undefined}>
-      <View style={styles.topRow}>
-        <View style={[styles.iconCircle, state === "done" && styles.iconCircleDone]}>
-          {locked ? <Lock size={18} color={colors.inkMuted} /> : icon}
-        </View>
-        <View style={styles.info}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.description}>{description}</Text>
-        </View>
+    <TouchableOpacity
+      style={[styles.row, done && styles.rowDone]}
+      onPress={onPress}
+      disabled={locked}
+      activeOpacity={0.7}
+    >
+      <View style={[styles.iconCircle, done && styles.iconCircleDone]}>
+        {locked ? (
+          <Lock size={18} color={colors.inkMuted} />
+        ) : (
+          <Icon size={20} color={done ? colors.white : colors.tealDark} />
+        )}
       </View>
 
-      <View style={styles.metaRow}>
-        <View
-          style={[
-            styles.statusBadge,
-            state === "done" && styles.statusBadgeDone,
-            state === "in_progress" && styles.statusBadgeInProgress,
-          ]}
-        >
-          <Text
-            style={[
-              styles.statusText,
-              state === "done" && styles.statusTextDone,
-              state === "in_progress" && styles.statusTextInProgress,
-            ]}
-          >
+      <View style={styles.info}>
+        <Text style={[styles.title, done && styles.titleDone]}>{title}</Text>
+        <Text style={[styles.description, done && styles.descriptionDone]}>{description}</Text>
+        <View style={[styles.statusBadge, done && styles.statusBadgeDone]}>
+          <Text style={[styles.statusText, done && styles.statusTextDone]}>
             {STATUS_LABEL[state]}
           </Text>
         </View>
       </View>
 
-      <Button variant={locked ? "secondary" : "secondary"} size="sm" disabled={locked} onPress={onPress}>
-        {ACTION_LABEL[state]}
-      </Button>
-    </GlassCard>
+      {locked ? (
+        <Lock size={18} color={colors.inkMuted} />
+      ) : done ? (
+        <Check size={20} color={colors.white} />
+      ) : (
+        <ChevronRight size={20} color={colors.inkMuted} />
+      )}
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  lockedCard: { opacity: 0.6 },
-  topRow: { flexDirection: "row", alignItems: "flex-start", marginBottom: spacing.md },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radii.xl,
+    gap: spacing.md,
+  },
+  rowDone: {
+    backgroundColor: colors.teal,
+  },
   iconCircle: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.tealTint,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: spacing.md,
   },
-  iconCircleDone: { backgroundColor: colors.teal },
+  iconCircleDone: {
+    backgroundColor: "rgba(255,255,255,0.18)",
+  },
   info: { flex: 1 },
   title: {
     fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.bodyMd,
     color: colors.ink,
+    marginBottom: 2,
+  },
+  titleDone: { color: colors.white },
+  description: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.labelMd,
+    color: colors.inkMuted,
     marginBottom: spacing.xs,
   },
-  description: { fontFamily: fontFamilies.body, fontSize: fontSizes.labelMd, color: colors.inkMuted },
-  metaRow: { flexDirection: "row", alignItems: "center", marginBottom: spacing.md },
+  descriptionDone: { color: "rgba(255,255,255,0.75)" },
   statusBadge: {
+    alignSelf: "flex-start",
     borderRadius: radii.full,
-    paddingVertical: 3,
-    paddingHorizontal: spacing.md,
-    backgroundColor: colors.surfaceMuted,
+    paddingVertical: 2,
+    paddingHorizontal: spacing.sm,
+    backgroundColor: colors.surface,
   },
-  statusBadgeDone: { backgroundColor: colors.tealTint },
-  statusBadgeInProgress: { backgroundColor: colors.warningTint },
-  statusText: { fontFamily: fontFamilies.bodySemiBold, fontSize: fontSizes.caption, color: colors.inkMuted },
-  statusTextDone: { color: colors.tealDark },
-  statusTextInProgress: { color: colors.metabolicDark },
+  statusBadgeDone: { backgroundColor: "rgba(255,255,255,0.18)" },
+  statusText: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    color: colors.inkMuted,
+  },
+  statusTextDone: { color: colors.white },
 });
