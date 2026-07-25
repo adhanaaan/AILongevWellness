@@ -31,7 +31,7 @@ export default function CaptureBodyCompositionUploadPage() {
       status: "complete",
       entered_by: "participant",
     });
-    router.replace("/onboarding/capture");
+    router.replace("/onboarding/capture-transition");
   }
 
   async function onPickFile() {

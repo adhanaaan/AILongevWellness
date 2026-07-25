@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { Mail } from "lucide-react-native";
+import { Mail, Check } from "lucide-react-native";
 import { OnboardingStepper } from "@/components/layout/OnboardingStepper";
 import { Input } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
@@ -9,6 +9,27 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
+
+const CONSENT_ITEMS = [
+  {
+    key: "wellness",
+    title: "Wellness programme",
+    description:
+      "I understand this is a wellness programme, not a medical diagnosis or treatment plan.",
+  },
+  {
+    key: "reviewed",
+    title: "Care team review",
+    description:
+      "I consent to my data being reviewed by the care team (GP and TCM practitioner) for personalised wellness insights.",
+  },
+  {
+    key: "privacy",
+    title: "Privacy & data handling",
+    description:
+      "I have read and agree to the privacy terms and data handling policy.",
+  },
+];
 
 export default function ParticipantAuthPage() {
   const router = useRouter();
@@ -22,6 +43,9 @@ export default function ParticipantAuthPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
+  const [consentChecked, setConsentChecked] = useState<Record<string, boolean>>({});
+
+  const allConsentChecked = CONSENT_ITEMS.every((item) => consentChecked[item.key]);
 
   async function onContinue() {
     setError(null);
@@ -118,6 +142,44 @@ export default function ParticipantAuthPage() {
           {error && <Text style={styles.error}>{error}</Text>}
         </View>
 
+        {mode === "signup" && (
+          <View style={styles.consentItems}>
+            {CONSENT_ITEMS.map((item) => {
+              const isChecked = Boolean(consentChecked[item.key]);
+              return (
+                <TouchableOpacity
+                  key={item.key}
+                  onPress={() =>
+                    setConsentChecked((prev) => ({
+                      ...prev,
+                      [item.key]: !prev[item.key],
+                    }))
+                  }
+                  activeOpacity={0.8}
+                >
+                  <GlassCard
+                    tint="light"
+                    padding="md"
+                    radius="2xl"
+                    tintColor={isChecked ? "rgba(42,175,170,0.16)" : undefined}
+                    tintBorderColor={isChecked ? colors.teal : undefined}
+                  >
+                    <View style={styles.consentRow}>
+                      <View style={[styles.checkbox, isChecked && styles.checkboxChecked]}>
+                        {isChecked && <Check size={14} color={colors.white} />}
+                      </View>
+                      <View style={styles.consentContent}>
+                        <Text style={styles.consentTitle}>{item.title}</Text>
+                        <Text style={styles.consentDescription}>{item.description}</Text>
+                      </View>
+                    </View>
+                  </GlassCard>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+
         <Button
           variant="ghost"
           size="sm"
@@ -135,7 +197,12 @@ export default function ParticipantAuthPage() {
       <View style={styles.footer}>
         <Button
           size="lg"
-          disabled={submitting || !email.trim() || password.length < 6}
+          disabled={
+            submitting ||
+            !email.trim() ||
+            password.length < 6 ||
+            (mode === "signup" && !allConsentChecked)
+          }
           onPress={onContinue}
         >
           {mode === "signup" ? "Create account" : "Sign in"}
@@ -180,6 +247,44 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.danger,
+  },
+  consentItems: {
+    marginTop: spacing["2xl"],
+    gap: spacing.md,
+  },
+  consentRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.md,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: colors.borderStrong,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
+  },
+  checkboxChecked: {
+    backgroundColor: colors.teal,
+    borderColor: colors.teal,
+  },
+  consentContent: {
+    flex: 1,
+  },
+  consentTitle: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.bodyMd,
+    color: colors.ink,
+    marginBottom: spacing.xs,
+  },
+  consentDescription: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.labelMd,
+    color: colors.inkMuted,
+    lineHeight: 20,
   },
   footer: {
     paddingHorizontal: spacing["2xl"],

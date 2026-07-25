@@ -135,14 +135,26 @@ lib/
 - [x] Navigation: bottom tabs + admin stack + onboarding stack
 - [x] Mock data layer with 20 participants + pipeline states
 - [x] Repository pattern with subscribe/notify reactivity
-- [x] Welcome, Consent, Profile, Capture screens
-- [x] Onboarding Capture restructured into a hub-and-spoke sub-flow: Data Capture hub
-      (`app/onboarding/capture.tsx`) with a per-participant `OnboardingProgress` record
-      (`getOnboardingProgress`/`updateSectionStatus` in the repository) and a shared,
-      tappable `CaptureFlowStepper` on every screen. Questionnaire (Personal Info → Goals
-      → Lifestyle) is the fixed, non-skippable start; Wearables/Body Composition/Lab
-      Reports unlock together and can be done in any order; ReCOGnAIze unlocks once that
-      trio is done and leads into a Calculating screen before Home.
+- [x] Welcome, Profile, Capture screens
+- [x] Onboarding restructured into a 15-step narrative flow: Intro (`intro.tsx`, a from-scratch
+      swipeable carousel, no pager library needed), Account Creation (`auth.tsx`, now also
+      carrying the wellness/care-team/privacy consent checkboxes — `consent.tsx` was folded in
+      and deleted), then the Data Capture hub-and-spoke sub-flow. Create Profile and Wellness &
+      Lifestyle are now two distinct, separately-tracked flow steps (previously bundled as one
+      "Questionnaire" section) though Wellness & Lifestyle still spans two screens (Goals →
+      Lifestyle). A one-time "Intro Wellness Snapshot" screen shows once, right before the first
+      hub visit. Wearables/Body Composition/Lab Reports unlock together and can be done in any
+      order; completing Body Composition specifically routes through a "Transition" (almost
+      there) interstitial; whichever of the three finishes last skips the hub bounce and heads
+      straight into ReCOGnAIze. ReCOGnAIze is now two screens (an intro + the roadmap-placeholder
+      acknowledgment, writing an honest `"acknowledged"` status instead of a false `"done"`) and
+      leads into the Calculating screen before Home. The two progress-chrome components
+      (`OnboardingStepper`, `CaptureFlowStepper`) now share one `OnboardingChrome` base, and the
+      repeated icon-badge/title/subtitle block used across intro/explainer screens is a shared
+      `CalmConfirmation` component. `lib/onboarding/flow.ts`'s `ONBOARDING_FLOW_STEPS` is the
+      single source of truth for all 12 distinct tracked screens (the 3 hub revisits collapse to
+      one route each), on top of the unchanged `OnboardingProgress`/`OnboardingSectionKey` data
+      model — no new section keys were introduced.
 - [x] Health card screen (tab: Insights), restructured as a narrative-led snapshot: a
       one-line plain-English summary (`buildPillarNarrative` in `lib/ai/scoring.ts`) sits
       under the biological-age hero, the care-team sign-off card moved up right below it,
@@ -162,6 +174,8 @@ lib/
 - [x] AVA grounding against real signed card data (Claude, `/api/ava.ts`, mock rule-based engine stays as the no-Supabase-configured fallback)
 - [x] Daily log persistence
 - [ ] Wearable aggregator connect
-- [ ] Consent tracking (consent_given, consented_at fields) — consent screen doesn't yet persist to a row
+- [ ] Consent tracking (consent_given, consented_at fields) — the consent checkboxes on
+      `auth.tsx` (sign-up) still don't persist to a row
 - [ ] Body composition scan value extraction (currently uploads the file only, no parsing)
-- [ ] ReCOGnAIze is still an informational-only placeholder screen (no real assessment yet)
+- [ ] ReCOGnAIze is still an informational-only placeholder across both its screens (intro +
+      acknowledgment) — no real assessment yet

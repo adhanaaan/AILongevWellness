@@ -16,7 +16,7 @@ import { CaptureFlowStepper } from "@/components/layout/CaptureFlowStepper";
 import { GradientOverlay } from "@/components/ui/GradientOverlay";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { updateParticipantAction, updateSectionStatusAction } from "@/lib/data/actions";
+import { updateParticipantAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
@@ -71,7 +71,6 @@ export default function ProfileGoalsPage() {
     setSaving(true);
     try {
       await updateParticipantAction(participantId, { goals: selectedGoals });
-      await updateSectionStatusAction("personal_info", "in_progress", participantId);
       router.push("/onboarding/profile-lifestyle");
     } finally {
       setSaving(false);
@@ -80,7 +79,7 @@ export default function ProfileGoalsPage() {
 
   if (loading) {
     return (
-      <CaptureFlowStepper activeSection="questionnaire">
+      <CaptureFlowStepper activeSection="wellness_lifestyle">
         <View style={styles.center}>
           <Text style={styles.subtitle}>Loading…</Text>
         </View>
@@ -89,7 +88,7 @@ export default function ProfileGoalsPage() {
   }
 
   return (
-    <CaptureFlowStepper activeSection="questionnaire">
+    <CaptureFlowStepper activeSection="wellness_lifestyle">
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         <GlassCard tint="light" padding="none" radius="full" style={styles.headerIcon}>
           <Target size={24} color={colors.teal} />

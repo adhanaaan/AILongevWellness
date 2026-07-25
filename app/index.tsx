@@ -114,7 +114,7 @@ export default function WelcomePage() {
             Login
           </Button>
           <TouchableOpacity
-            onPress={() => router.push("/onboarding/consent")}
+            onPress={() => router.push("/onboarding/intro")}
             activeOpacity={0.7}
             style={styles.signUpButton}
           >

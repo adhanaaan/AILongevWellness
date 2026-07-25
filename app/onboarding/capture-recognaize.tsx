@@ -1,10 +1,10 @@
 import React from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { Brain, Sparkles } from "lucide-react-native";
+import { Sparkles } from "lucide-react-native";
 import { CaptureFlowStepper } from "@/components/layout/CaptureFlowStepper";
+import { CalmConfirmation } from "@/components/onboarding/CalmConfirmation";
 import { Button } from "@/components/ui/Button";
-import { GlassCard } from "@/components/ui/GlassCard";
 import { Card } from "@/components/ui/Card";
 import { updateSectionStatusAction, updateCaptureChannelAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -16,7 +16,7 @@ export default function CaptureRecognaizePage() {
 
   async function onContinue() {
     if (participantId) {
-      await updateSectionStatusAction("recognize", "done", participantId);
+      await updateSectionStatusAction("recognize", "acknowledged", participantId);
       await updateCaptureChannelAction(participantId, "recognize", {
         status: "complete",
         entered_by: "participant",
@@ -30,14 +30,11 @@ export default function CaptureRecognaizePage() {
   return (
     <CaptureFlowStepper activeSection="recognize">
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-        <GlassCard tint="light" padding="none" radius="full" style={styles.headerIcon}>
-          <Brain size={24} color={colors.teal} />
-        </GlassCard>
-        <Text style={styles.title}>ReCOGnAIze</Text>
-        <Text style={styles.subtitle}>
-          ReCOGnAIze is a cognitive assessment that feeds into your Mental pillar score, alongside
-          your questionnaire, wearables, and lab data.
-        </Text>
+        <CalmConfirmation
+          icon={<Sparkles size={24} color={colors.teal} />}
+          title="You're all set here"
+          subtitle="There's nothing to complete on this screen yet."
+        />
 
         <Card padding="lg" style={styles.noticeCard}>
           <View style={styles.noticeHeader}>
@@ -69,26 +66,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing["2xl"],
     paddingTop: spacing.lg,
     paddingBottom: spacing.lg,
-  },
-  headerIcon: {
-    width: 48,
-    height: 48,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: spacing.lg,
-  },
-  title: {
-    fontFamily: fontFamilies.displayBold,
-    fontSize: fontSizes.headlineMd,
-    color: colors.ink,
-    letterSpacing: -0.3,
-  },
-  subtitle: {
-    fontFamily: fontFamilies.body,
-    fontSize: fontSizes.bodyMd,
-    color: colors.inkMuted,
-    marginTop: spacing.sm,
-    lineHeight: 24,
   },
   noticeCard: {
     marginTop: spacing["2xl"],

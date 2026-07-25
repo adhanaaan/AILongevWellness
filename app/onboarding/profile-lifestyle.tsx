@@ -5,7 +5,12 @@ import { Activity } from "lucide-react-native";
 import { CaptureFlowStepper } from "@/components/layout/CaptureFlowStepper";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { updateParticipantAction, updateSectionStatusAction, updateCaptureChannelAction } from "@/lib/data/actions";
+import {
+  updateParticipantAction,
+  updateSectionStatusAction,
+  updateCaptureChannelAction,
+  getOnboardingProgressAction,
+} from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import type { ExerciseFrequency, AlcoholDrinksPerWeek } from "@/lib/types/db";
@@ -59,21 +64,23 @@ export default function ProfileLifestylePage() {
     if (!participantId) return;
     setSaving(true);
     try {
+      const prevProgress = await getOnboardingProgressAction(participantId);
+      const firstCompletion = prevProgress.sections.lifestyle !== "done";
       await updateParticipantAction(participantId, {
         exercise_frequency: exercise,
         smoking,
         alcohol_drinks_per_week: alcohol,
       });
-      // Personal Info + Goals + Lifestyle together are the fixed-start
-      // "Questionnaire" pair from the hub's point of view — both tracked keys
-      // complete together here, which unlocks the free-order middle trio.
-      await updateSectionStatusAction("personal_info", "done", participantId);
+      // personal_info itself is marked done back on profile.tsx now that
+      // Create Profile and Wellness & Lifestyle are two distinct flow steps —
+      // this screen owns only the lifestyle key, which unlocks the free-order
+      // middle trio once personal_info is also done.
       await updateSectionStatusAction("lifestyle", "done", participantId);
       await updateCaptureChannelAction(participantId, "manual", {
         status: "complete",
         entered_by: "participant",
       });
-      router.push("/onboarding/capture");
+      router.push(firstCompletion ? "/onboarding/intro-wellness-snapshot" : "/onboarding/capture");
     } finally {
       setSaving(false);
     }
@@ -81,7 +88,7 @@ export default function ProfileLifestylePage() {
 
   if (loading) {
     return (
-      <CaptureFlowStepper activeSection="questionnaire">
+      <CaptureFlowStepper activeSection="wellness_lifestyle">
         <View style={styles.center}>
           <Text style={styles.subtitle}>Loading…</Text>
         </View>
@@ -90,7 +97,7 @@ export default function ProfileLifestylePage() {
   }
 
   return (
-    <CaptureFlowStepper activeSection="questionnaire">
+    <CaptureFlowStepper activeSection="wellness_lifestyle">
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}

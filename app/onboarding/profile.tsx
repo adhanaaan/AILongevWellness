@@ -87,7 +87,7 @@ export default function ProfilePersonalPage() {
         height_cm: heightNum,
         weight_kg: weightNum,
       });
-      await updateSectionStatusAction("personal_info", "in_progress", participantId);
+      await updateSectionStatusAction("personal_info", "done", participantId);
       router.push("/onboarding/profile-goals");
     } finally {
       setSaving(false);
@@ -96,7 +96,7 @@ export default function ProfilePersonalPage() {
 
   if (loading) {
     return (
-      <CaptureFlowStepper activeSection="questionnaire">
+      <CaptureFlowStepper activeSection="profile">
         <View style={styles.center}>
           <Text style={styles.subtitle}>Loading…</Text>
         </View>
@@ -105,7 +105,7 @@ export default function ProfilePersonalPage() {
   }
 
   return (
-    <CaptureFlowStepper activeSection="questionnaire">
+    <CaptureFlowStepper activeSection="profile">
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}

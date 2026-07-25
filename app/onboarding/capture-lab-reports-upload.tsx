@@ -11,6 +11,7 @@ import { updateSectionStatusAction, updateCaptureChannelAction, uploadFileAction
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { extractLabReport } from "@/lib/ai/client";
+import { isTrioComplete } from "@/lib/onboarding/flow";
 import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 
 const FORMATS = [
@@ -33,12 +34,12 @@ export default function CaptureLabReportsUploadPage() {
     // wait on, so this just gives the participant a brief, honest "working on it"
     // beat before we mark the section done.
     await new Promise((resolve) => setTimeout(resolve, 400));
-    await updateSectionStatusAction("lab_reports", "done", participantId);
+    const updated = await updateSectionStatusAction("lab_reports", "done", participantId);
     await updateCaptureChannelAction(participantId, "lab_report", {
       status: "complete",
       entered_by: "participant",
     });
-    router.replace("/onboarding/capture");
+    router.replace(isTrioComplete(updated) ? "/onboarding/capture-recognaize-intro" : "/onboarding/capture");
   }
 
   async function onPickFile() {

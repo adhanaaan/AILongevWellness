@@ -1,4 +1,5 @@
 // CHANGE LOG (newest first)
+// - 2026-07-25 Person 1: Added "acknowledged" OnboardingSectionStatus (ReCOGnAIze placeholder).
 // - 2026-07-24 Person 1: Added OnboardingProgress (hub-and-spoke capture sub-flow tracking).
 // - 2026-07-24 Person 1: Added lifestyle fields (exercise_frequency, smoking, alcohol_drinks_per_week) to Participant.
 // - 2026-07-19 Person 3: Added missing_biomarkers/out_of_range to AiDraft (mock.ts populates them).
@@ -198,7 +199,7 @@ export type OnboardingSectionKey =
   | "lab_reports"
   | "recognize";
 
-export type OnboardingSectionStatus = "not_started" | "in_progress" | "done";
+export type OnboardingSectionStatus = "not_started" | "in_progress" | "done" | "acknowledged";
 
 export interface OnboardingProgress {
   participant_id: string;

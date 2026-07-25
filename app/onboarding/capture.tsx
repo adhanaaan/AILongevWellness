@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { ClipboardList, Watch, PersonStanding, FileText, Brain } from "lucide-react-native";
+import { ClipboardList, User, Target, Watch, PersonStanding, FileText, Brain } from "lucide-react-native";
 import { CaptureFlowStepper } from "@/components/layout/CaptureFlowStepper";
 import { HubSectionCard } from "@/components/participant/HubSectionCard";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -13,7 +13,8 @@ import type { OnboardingProgress } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 
 const SECTION_ICON: Record<CaptureSectionId, any> = {
-  questionnaire: ClipboardList,
+  profile: User,
+  wellness_lifestyle: Target,
   wearables: Watch,
   body_composition: PersonStanding,
   lab_reports: FileText,
@@ -21,7 +22,8 @@ const SECTION_ICON: Record<CaptureSectionId, any> = {
 };
 
 const SECTION_DESCRIPTION: Record<CaptureSectionId, string> = {
-  questionnaire: "A few questions about you and your lifestyle.",
+  profile: "A few basics about you.",
+  wellness_lifestyle: "Your goals and everyday habits.",
   wearables: "Connect your Apple Health data.",
   body_composition: "Capture body composition metrics.",
   lab_reports: "Upload a recent lab report for AI extraction.",
@@ -50,8 +52,8 @@ export default function CaptureHubPage() {
         </GlassCard>
         <Text style={styles.title}>Data Capture</Text>
         <Text style={styles.subtitle}>
-          Complete each section to build your wellness snapshot. Start with the Questionnaire —
-          the rest unlock as you go.
+          Complete each section to build your wellness snapshot. Start with Create Profile — the
+          rest unlock as you go.
         </Text>
 
         <View style={styles.cards}>
