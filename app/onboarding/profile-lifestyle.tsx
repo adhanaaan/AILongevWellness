@@ -73,7 +73,7 @@ export default function ProfileLifestylePage() {
         status: "complete",
         entered_by: "participant",
       });
-      router.push("/onboarding/profile-congrats");
+      router.push("/onboarding/intro-wellness-snapshot");
     } finally {
       setSaving(false);
     }

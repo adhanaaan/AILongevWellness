@@ -18,7 +18,7 @@ export default function OnboardingLayout() {
       <Stack.Screen name="profile-wellness-intro" />
       <Stack.Screen name="profile-goals" />
       <Stack.Screen name="profile-lifestyle" />
-      <Stack.Screen name="profile-congrats" />
+      <Stack.Screen name="intro-wellness-snapshot" />
       <Stack.Screen name="capture" />
       <Stack.Screen name="capture-wearables-intro" />
       <Stack.Screen name="capture-wearables-upload" />

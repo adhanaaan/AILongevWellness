@@ -193,8 +193,12 @@ lib/
       toggle and the non-functional avatar/photo-upload placeholder. Wellness Goals
       gained a one-line description per goal tile and a reassurance line ("This won't
       limit what your care team reviews for you."). Lifestyle's completion now routes
-      to `app/onboarding/profile-congrats.tsx` (a calm "Congratulations!" screen,
-      auto-advances after ~2.5s) before landing back on the Data Capture hub.
+      to `app/onboarding/intro-wellness-snapshot.tsx` (mirrors the "PREVIEW card +
+      ABOUT section" pattern from `components/participant/AvaPromo.tsx`: an example
+      snapshot card with the consistent James Chen demo scores, an "ABOUT YOUR
+      WELLNESS SNAPSHOT" explainer, and the same "data capture isn't finished yet"
+      status line AVA's own promo uses, tap-through "Continue" button, no
+      auto-advance) before landing back on the Data Capture hub.
 - [ ] Wearable aggregator connect
 - [ ] Consent tracking (consent_given, consented_at fields) — consent screen doesn't yet persist to a row
 - [ ] Body composition scan value extraction (currently uploads the file only, no parsing)
