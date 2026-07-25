@@ -161,6 +161,14 @@ lib/
 - [x] Lab report extraction (Claude vision, `/api/extract-lab.ts`, writes `needs_review` biomarkers)
 - [x] AVA grounding against real signed card data (Claude, `/api/ava.ts`, mock rule-based engine stays as the no-Supabase-configured fallback)
 - [x] Daily log persistence
+- [x] Pre-auth Intro revamp: the entry screen (`app/index.tsx`) now leads with a
+      "Get started" primary CTA (was: Login) and a floating longevity-snapshot
+      mockup (`ScoreRing` trio) over the hero photo; "Get started" moves into two
+      new screens, `app/onboarding/intro-hook.tsx` (brief "busy world" hook,
+      auto-advances after ~3s) then `app/onboarding/intro-longevity.tsx` ("what is
+      longevity" explainer with the real Get Started CTA into `/onboarding/consent`).
+      "Login" on the entry screen bypasses both, going straight to
+      `/onboarding/auth?mode=signin` as before.
 - [ ] Wearable aggregator connect
 - [ ] Consent tracking (consent_given, consented_at fields) — consent screen doesn't yet persist to a row
 - [ ] Body composition scan value extraction (currently uploads the file only, no parsing)

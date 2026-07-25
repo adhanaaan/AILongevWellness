@@ -3,12 +3,24 @@ import { View, Text, Image, TouchableOpacity, StyleSheet, useWindowDimensions, t
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { GradientOverlay } from "@/components/ui/GradientOverlay";
+import { ScoreRing } from "@/components/participant/ScoreRing";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { repository } from "@/lib/data/mock";
 import { isCaptureComplete } from "@/lib/onboarding/flow";
+import { pillarStatus } from "@/lib/ai/scoring";
 import { colors, fontFamilies, fontSizes, lineHeights, spacing } from "@/lib/theme/tokens";
+
+// The consistent James Chen demo scores (see CLAUDE.md) shown as a static
+// "mock up of longevity data" over the hero photo -- a preview of what the
+// programme produces, not live data (there's no signed-in participant yet).
+const SNAPSHOT_SCORES = [
+  { key: "vascular", label: "Vascular", value: 74 },
+  { key: "metabolic", label: "Metabolic", value: 68 },
+  { key: "mental", label: "Mental", value: 81 },
+] as const;
 
 const HERO_FADE_STOPS = [
   { offset: "0", color: "rgba(250,250,250,0)" },
@@ -87,6 +99,23 @@ export default function WelcomePage() {
         <GradientOverlay stops={HERO_FADE_STOPS} />
       </View>
 
+      <View style={styles.snapshotRow}>
+        <Card padding="lg" style={styles.snapshotCard}>
+          <Text style={styles.snapshotTitle}>Your longevity snapshot</Text>
+          <View style={styles.snapshotRings}>
+            {SNAPSHOT_SCORES.map((score) => (
+              <ScoreRing
+                key={score.key}
+                value={score.value}
+                label={score.label}
+                status={pillarStatus(score.value)}
+                size={56}
+              />
+            ))}
+          </View>
+        </Card>
+      </View>
+
       <View style={styles.logoRow}>
         <Image
           source={require("@/assets/images/aiw-logo.png")}
@@ -108,17 +137,17 @@ export default function WelcomePage() {
         <View style={styles.actions}>
           <Button
             size="lg"
-            style={styles.loginButton}
-            onPress={() => router.push({ pathname: "/onboarding/auth", params: { mode: "signin" } })}
+            style={styles.getStartedButton}
+            onPress={() => router.push("/onboarding/intro-hook")}
           >
-            Login
+            Get started
           </Button>
           <TouchableOpacity
-            onPress={() => router.push("/onboarding/consent")}
+            onPress={() => router.push({ pathname: "/onboarding/auth", params: { mode: "signin" } })}
             activeOpacity={0.7}
-            style={styles.signUpButton}
+            style={styles.loginLink}
           >
-            <Text style={styles.signUpText}>Sign up</Text>
+            <Text style={styles.loginLinkText}>Login</Text>
           </TouchableOpacity>
           <Text style={styles.hint}>
             Your data is encrypted and handled in accordance with our privacy
@@ -149,9 +178,26 @@ const styles = StyleSheet.create({
     left: 0,
     width: "100%",
   },
+  snapshotRow: {
+    paddingHorizontal: spacing["2xl"],
+    marginTop: -56,
+  },
+  snapshotCard: {
+    width: "100%",
+  },
+  snapshotTitle: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.labelMd,
+    color: colors.ink,
+    marginBottom: spacing.md,
+  },
+  snapshotRings: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+  },
   logoRow: {
     alignItems: "center",
-    marginTop: -40,
+    marginTop: spacing.xl,
   },
   logo: {
     width: 200,
@@ -186,13 +232,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: spacing["6xl"],
   },
-  loginButton: {
+  getStartedButton: {
     width: "100%",
   },
-  signUpButton: {
+  loginLink: {
     paddingVertical: spacing.xs,
   },
-  signUpText: {
+  loginLinkText: {
     fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.bodyLg,
     color: colors.ink,
