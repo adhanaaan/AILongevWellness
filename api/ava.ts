@@ -2,12 +2,11 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
 import { extractText } from "../lib/ai/extractText";
+import { AVA_DISCLAIMER } from "../lib/ava/constants";
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!;
-
-const DISCLAIMER = "This is general wellness information, not medical advice.";
 
 function systemPrompt(card: unknown) {
   return `You are AVA, a wellness concierge for an executive health retreat. You may ONLY discuss
@@ -21,7 +20,7 @@ Hard rules:
   or their data exist.
 - If asked something not covered by SIGNED_CARD, say you don't have that on their card and
   suggest they raise it with their care team.
-- End every substantive answer with exactly this sentence: "${DISCLAIMER}"
+- Do NOT append any disclaimer sentence yourself — that is added separately by the app.
 - Keep answers to 2-4 sentences, plain language, warm and concise.
 
 SIGNED_CARD:
@@ -94,8 +93,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       system: systemPrompt(card),
       messages: [...priorMessages, { role: "user", content: message }],
     });
-    const reply = extractText(response.content) || DISCLAIMER;
-    res.status(200).json({ reply });
+    const reply = extractText(response.content) || "I'm not able to answer that right now.";
+    res.status(200).json({ reply, disclaimer: AVA_DISCLAIMER });
   } catch (e) {
     res.status(502).json({ error: e instanceof Error ? e.message : "AVA is unavailable right now" });
   }

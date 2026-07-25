@@ -1,51 +1,18 @@
 import React, { useEffect, useRef } from "react";
-import { Animated, Easing, StyleSheet, View } from "react-native";
-import { colors, radii, spacing } from "@/lib/theme/tokens";
-
-function Dot({ delay }: { delay: number }) {
-  const bounce = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.delay(delay),
-        Animated.timing(bounce, {
-          toValue: 1,
-          duration: 300,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.timing(bounce, {
-          toValue: 0,
-          duration: 300,
-          easing: Easing.in(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.delay(600 - delay),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [bounce, delay]);
-
-  const translateY = bounce.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, -4],
-  });
-  const opacity = bounce.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.4, 1],
-  });
-
-  return (
-    <Animated.View
-      style={[styles.dot, { transform: [{ translateY }], opacity }]}
-    />
-  );
-}
+import { Animated, Easing, StyleSheet, Text, View } from "react-native";
+import { Loader2 } from "lucide-react-native";
+import { AVA_DISCLAIMER } from "@/lib/ava/constants";
+import {
+  colors,
+  fontSizes,
+  fontWeights,
+  radii,
+  spacing,
+} from "@/lib/theme/tokens";
 
 export function TypingIndicator() {
   const enterOpacity = useRef(new Animated.Value(0)).current;
+  const spin = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.timing(enterOpacity, {
@@ -53,14 +20,34 @@ export function TypingIndicator() {
       duration: 200,
       useNativeDriver: true,
     }).start();
-  }, [enterOpacity]);
+
+    const loop = Animated.loop(
+      Animated.timing(spin, {
+        toValue: 1,
+        duration: 900,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [enterOpacity, spin]);
+
+  const rotate = spin.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "360deg"],
+  });
 
   return (
     <Animated.View style={[styles.wrapper, { opacity: enterOpacity }]}>
       <View style={styles.bubble}>
-        <Dot delay={0} />
-        <Dot delay={150} />
-        <Dot delay={300} />
+        <View style={styles.row}>
+          <Animated.View style={{ transform: [{ rotate }] }}>
+            <Loader2 size={16} color={colors.inkMuted} />
+          </Animated.View>
+          <Text style={styles.label}>Thinking...</Text>
+        </View>
+        <Text style={styles.disclaimer}>{AVA_DISCLAIMER}</Text>
       </View>
     </Animated.View>
   );
@@ -72,9 +59,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   bubble: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
@@ -82,11 +66,22 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: radii.sm,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
+    maxWidth: "80%",
   },
-  dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: colors.inkMuted,
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  label: {
+    fontSize: fontSizes.bodyMd,
+    fontWeight: fontWeights.medium,
+    color: colors.charcoal,
+  },
+  disclaimer: {
+    fontSize: fontSizes.caption,
+    fontWeight: fontWeights.regular,
+    color: colors.inkMuted,
+    marginTop: spacing.xs,
   },
 });

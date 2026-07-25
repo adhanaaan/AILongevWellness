@@ -19,7 +19,7 @@ export function askAva(
   participantId: string,
   message: string,
   history: Array<{ role: "user" | "ava"; text: string }>
-): Promise<{ reply: string }> {
+): Promise<{ reply: string; disclaimer: string }> {
   return postJson("/api/ava", token, { participantId, message, history });
 }
 
