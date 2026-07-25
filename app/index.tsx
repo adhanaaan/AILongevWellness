@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Image, TouchableOpacity, StyleSheet, useWindowDimensions, type LayoutChangeEvent } from "react-native";
+import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, useWindowDimensions, type LayoutChangeEvent } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
@@ -80,7 +80,7 @@ export default function WelcomePage() {
   return (
     <SafeAreaView style={styles.safe} edges={["bottom"]}>
       <View
-        style={[styles.heroWrap, { height: windowHeight * 0.5 }]}
+        style={[styles.heroWrap, { height: windowHeight * 0.34 }]}
         onLayout={onHeroLayout}
       >
         {heroWidth > 0 && (
@@ -116,45 +116,51 @@ export default function WelcomePage() {
         </Card>
       </View>
 
-      <View style={styles.logoRow}>
-        <Image
-          source={require("@/assets/images/aiw-logo.png")}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-      </View>
-
-      <View style={styles.container}>
-        <View style={styles.textBlock}>
-          <Text style={styles.title}>
-            Your Executive{"\n"}Health Intelligence
-          </Text>
-          <Text style={styles.subtitle}>
-            All your health data, in one place.
-          </Text>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.logoRow}>
+          <Image
+            source={require("@/assets/images/aiw-logo.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </View>
 
-        <View style={styles.actions}>
-          <Button
-            size="lg"
-            style={styles.getStartedButton}
-            onPress={() => router.push("/onboarding/intro-hook")}
-          >
-            Get started
-          </Button>
-          <TouchableOpacity
-            onPress={() => router.push({ pathname: "/onboarding/auth", params: { mode: "signin" } })}
-            activeOpacity={0.7}
-            style={styles.loginLink}
-          >
-            <Text style={styles.loginLinkText}>Login</Text>
-          </TouchableOpacity>
-          <Text style={styles.hint}>
-            Your data is encrypted and handled in accordance with our privacy
-            policy.
-          </Text>
+        <View style={styles.container}>
+          <View style={styles.textBlock}>
+            <Text style={styles.title}>
+              Your Executive{"\n"}Health Intelligence
+            </Text>
+            <Text style={styles.subtitle}>
+              All your health data, in one place.
+            </Text>
+          </View>
+
+          <View style={styles.actions}>
+            <Button
+              size="lg"
+              style={styles.getStartedButton}
+              onPress={() => router.push("/onboarding/intro-hook")}
+            >
+              Get started
+            </Button>
+            <TouchableOpacity
+              onPress={() => router.push({ pathname: "/onboarding/auth", params: { mode: "signin" } })}
+              activeOpacity={0.7}
+              style={styles.loginLink}
+            >
+              <Text style={styles.loginLinkText}>Login</Text>
+            </TouchableOpacity>
+            <Text style={styles.hint}>
+              Your data is encrypted and handled in accordance with our privacy
+              policy.
+            </Text>
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -178,6 +184,13 @@ const styles = StyleSheet.create({
     left: 0,
     width: "100%",
   },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: spacing.lg,
+  },
   snapshotRow: {
     paddingHorizontal: spacing["2xl"],
     marginTop: -56,
@@ -197,14 +210,13 @@ const styles = StyleSheet.create({
   },
   logoRow: {
     alignItems: "center",
-    marginTop: spacing.xl,
+    marginTop: spacing.lg,
   },
   logo: {
-    width: 200,
-    height: 112,
+    width: 170,
+    height: 95,
   },
   container: {
-    flex: 1,
     paddingHorizontal: spacing["2xl"],
     paddingTop: spacing.md,
     paddingBottom: spacing.lg,
@@ -228,9 +240,9 @@ const styles = StyleSheet.create({
   },
   actions: {
     width: "100%",
-    gap: spacing.lg,
+    gap: spacing.md,
     alignItems: "center",
-    marginTop: spacing["6xl"],
+    marginTop: spacing["2xl"],
   },
   getStartedButton: {
     width: "100%",
