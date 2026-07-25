@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Activity } from "lucide-react-native";
-import { CaptureFlowStepper } from "@/components/layout/CaptureFlowStepper";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { updateParticipantAction, updateSectionStatusAction, updateCaptureChannelAction } from "@/lib/data/actions";
@@ -73,7 +73,7 @@ export default function ProfileLifestylePage() {
         status: "complete",
         entered_by: "participant",
       });
-      router.push("/onboarding/capture");
+      router.push("/onboarding/intro-wellness-snapshot");
     } finally {
       setSaving(false);
     }
@@ -81,16 +81,16 @@ export default function ProfileLifestylePage() {
 
   if (loading) {
     return (
-      <CaptureFlowStepper activeSection="questionnaire">
+      <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
         <View style={styles.center}>
           <Text style={styles.subtitle}>Loading…</Text>
         </View>
-      </CaptureFlowStepper>
+      </SafeAreaView>
     );
   }
 
   return (
-    <CaptureFlowStepper activeSection="questionnaire">
+    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
@@ -188,11 +188,18 @@ export default function ProfileLifestylePage() {
           Continue
         </Button>
       </View>
-    </CaptureFlowStepper>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: colors.bone,
+    maxWidth: 448,
+    alignSelf: "center",
+    width: "100%",
+  },
   scroll: { flex: 1 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   scrollContent: {

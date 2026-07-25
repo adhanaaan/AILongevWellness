@@ -180,6 +180,25 @@ lib/
       field (signup only, inline mismatch error) and a short legal disclaimer line
       above the submit button; the post-signup no-session state is retitled "Verify
       your email" (was "Check your email").
+- [x] Create Profile revamp: the Questionnaire trio (`profile.tsx`, `profile-goals.tsx`,
+      `profile-lifestyle.tsx`) dropped the `CaptureFlowStepper` chrome (back button +
+      section pill row — the component itself stays, still used by every other
+      capture-* screen) for a plain full-bleed layout, bookended by two new chrome-free
+      transition screens: `app/onboarding/profile-intro.tsx` ("Let's create your
+      profile") before Personal Info, and `app/onboarding/profile-wellness-intro.tsx`
+      ("A bit about your wellness and lifestyle") between Personal Info and Goals. The
+      hub's `questionnaire` section now routes to `profile-intro` first
+      (`lib/onboarding/flow.ts`), matching how every other section already routes to
+      its own `-intro` screen. Personal Info also dropped the inert "Me"/"Admin"
+      toggle and the non-functional avatar/photo-upload placeholder. Wellness Goals
+      gained a one-line description per goal tile and a reassurance line ("This won't
+      limit what your care team reviews for you."). Lifestyle's completion now routes
+      to `app/onboarding/intro-wellness-snapshot.tsx` (mirrors the "PREVIEW card +
+      ABOUT section" pattern from `components/participant/AvaPromo.tsx`: an example
+      snapshot card with the consistent James Chen demo scores, an "ABOUT YOUR
+      WELLNESS SNAPSHOT" explainer, and the same "data capture isn't finished yet"
+      status line AVA's own promo uses, tap-through "Continue" button, no
+      auto-advance) before landing back on the Data Capture hub.
 - [ ] Wearable aggregator connect
 - [ ] Consent tracking (consent_given, consented_at fields) — consent screen doesn't yet persist to a row
 - [ ] Body composition scan value extraction (currently uploads the file only, no parsing)

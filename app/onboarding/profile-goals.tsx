@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import {
   Target,
@@ -12,7 +13,6 @@ import {
   HeartPulse,
   type LucideIcon,
 } from "lucide-react-native";
-import { CaptureFlowStepper } from "@/components/layout/CaptureFlowStepper";
 import { GradientOverlay } from "@/components/ui/GradientOverlay";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -23,16 +23,21 @@ import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tok
 
 interface Goal {
   label: string;
+  description: string;
   icon: LucideIcon;
 }
 
 const GOALS: Goal[] = [
-  { label: "Longevity", icon: InfinityIcon },
-  { label: "Energy & focus", icon: Zap },
-  { label: "Weight management", icon: Scale },
-  { label: "Stress resilience", icon: Shield },
-  { label: "Sleep quality", icon: Moon },
-  { label: "Cardiovascular fitness", icon: HeartPulse },
+  { label: "Longevity", description: "Build habits that add healthy years.", icon: InfinityIcon },
+  { label: "Energy & focus", description: "Feel sharper and less drained.", icon: Zap },
+  { label: "Weight management", description: "Find a sustainable, healthy weight.", icon: Scale },
+  { label: "Stress resilience", description: "Handle pressure with more ease.", icon: Shield },
+  { label: "Sleep quality", description: "Fall asleep faster and rest deeper.", icon: Moon },
+  {
+    label: "Cardiovascular fitness",
+    description: "Strengthen your heart and stamina.",
+    icon: HeartPulse,
+  },
 ];
 
 const SELECTED_GRADIENT_STOPS = [
@@ -80,16 +85,16 @@ export default function ProfileGoalsPage() {
 
   if (loading) {
     return (
-      <CaptureFlowStepper activeSection="questionnaire">
+      <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
         <View style={styles.center}>
           <Text style={styles.subtitle}>Loading…</Text>
         </View>
-      </CaptureFlowStepper>
+      </SafeAreaView>
     );
   }
 
   return (
-    <CaptureFlowStepper activeSection="questionnaire">
+    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         <GlassCard tint="light" padding="none" radius="full" style={styles.headerIcon}>
           <Target size={24} color={colors.teal} />
@@ -118,6 +123,7 @@ export default function ProfileGoalsPage() {
                 <Text style={[styles.tileLabel, selected && styles.tileLabelSelected]}>
                   {goal.label}
                 </Text>
+                <Text style={styles.tileDescription}>{goal.description}</Text>
                 {selected && (
                   <View style={styles.checkBadge}>
                     <Check size={14} color={colors.white} />
@@ -127,6 +133,10 @@ export default function ProfileGoalsPage() {
             );
           })}
         </View>
+
+        <Text style={styles.reassurance}>
+          This won't limit what your care team reviews for you.
+        </Text>
       </ScrollView>
 
       <View style={styles.footer}>
@@ -134,11 +144,18 @@ export default function ProfileGoalsPage() {
           Continue
         </Button>
       </View>
-    </CaptureFlowStepper>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: colors.bone,
+    maxWidth: 448,
+    alignSelf: "center",
+    width: "100%",
+  },
   scroll: { flex: 1 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   scrollContent: {
@@ -175,7 +192,8 @@ const styles = StyleSheet.create({
   },
   tile: {
     width: "47%",
-    aspectRatio: 1,
+    minHeight: 140,
+    paddingVertical: spacing.xl,
     borderRadius: radii.xl,
     backgroundColor: colors.surfaceMuted,
     borderWidth: 2,
@@ -209,6 +227,21 @@ const styles = StyleSheet.create({
   },
   tileLabelSelected: {
     color: colors.ink,
+  },
+  tileDescription: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    textAlign: "center",
+    paddingHorizontal: spacing.md,
+    lineHeight: 16,
+  },
+  reassurance: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    textAlign: "center",
+    marginTop: spacing.xl,
   },
   checkBadge: {
     position: "absolute",
