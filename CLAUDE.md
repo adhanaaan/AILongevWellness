@@ -199,6 +199,50 @@ lib/
       WELLNESS SNAPSHOT" explainer, and the same "data capture isn't finished yet"
       status line AVA's own promo uses, tap-through "Continue" button, no
       auto-advance) before landing back on the Data Capture hub.
+- [x] Data Capture hub revamp: `CaptureFlowStepper` (shared by every capture-*
+      screen) dropped its tappable section pill row entirely and simplified its
+      back button from a chevron + "Back" label + "Data Capture" caption down to a
+      plain icon-only chevron, since the pill row was fully redundant with the
+      hub's own section list. `HubSectionCard` (only used by the hub) is now a
+      borderless full-row tap target instead of its own bordered `GlassCard`, with
+      a prominent dark-green-fill + white-text/icon treatment once a section is
+      done (was: a small icon-circle color change), sitting in a light-green
+      gradient zone (`teal[50]` → `teal[100]`) inside one consolidated `Card`. Once
+      the Questionnaire is done, that same card also shows a "Your profile"
+      summary built from the real saved `Participant` fields, plus a
+      completion-percentage bar (`doneCount / 5`) that's always visible. Hub
+      copy also got a humanizer/ux-copywriter pass (dropped an em dash, replaced
+      "Capture body composition metrics."/"Upload a recent lab report for AI
+      extraction." with plainer, outcome-first phrasing).
+- [x] Data Capture hub "Your profile" summary split into three subcards
+      (Personal Info / Wellness Goals / Lifestyle), each showing real detail
+      (Personal Info mirrors `profile.tsx`'s own name/Sex at Birth/Age-Height-
+      Weight grouping as read-only text; Goals lists each selected goal with its
+      description reused from `profile-goals.tsx`'s exported `GOALS`; Lifestyle
+      shows Exercise/Smoking/Alcohol as separate labeled rows) and its own
+      "Edit" button routing to that screen with a `?mode=edit` param.
+      `profile.tsx`/`profile-goals.tsx`/`profile-lifestyle.tsx` all read that
+      param — in edit mode, "Continue" still saves but calls `router.back()`
+      to return straight to the hub instead of chaining forward through the
+      rest of onboarding (and skips re-marking already-`"done"` sections as
+      `"in_progress"`). The hub subtitle also dropped its "Start with the
+      Questionnaire" clause.
+- [x] Data Capture channel screens (Wearables, Body Composition, Lab Reports) each
+      merged their `-intro.tsx` + `-upload.tsx` pair into a single scrolling
+      `-intro.tsx` file (both screens' content stacked, one file-choose button
+      running the real upload logic; the `-upload.tsx` files are deleted).
+      `CaptureFlowStepper` traded its bare icon-only back chevron for a labeled
+      "‹ Back to Data Capture" button that navigates explicitly to
+      `/onboarding/capture` (`showBackButton` prop, default true; the hub itself
+      passes `false` since a button back to Data Capture doesn't belong on Data
+      Capture). Each channel's file-choose button is now a light `teal[200]` →
+      `teal[400]` gradient (dark `tealDark` text) instead of the flat solid-teal
+      `Button`, to stand out as the primary action. Copy pass: every "What this
+      feeds into" card lost its em dashes and dense clinical-abbreviation lists
+      (e.g. Lab Reports' body now says "cholesterol, blood sugar, and
+      inflammation levels" instead of "lipids... hs-CRP, HbA1c... insulin"), and
+      Wearables' export subtitle dropped its "isn't available over the cloud"
+      negative framing for a positive one.
 - [ ] Wearable aggregator connect
 - [ ] Consent tracking (consent_given, consented_at fields) — consent screen doesn't yet persist to a row
 - [ ] Body composition scan value extraction (currently uploads the file only, no parsing)

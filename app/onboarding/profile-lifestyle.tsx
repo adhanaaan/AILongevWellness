@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { Activity } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -36,6 +36,8 @@ function SectionLabel({ children }: { children: string }) {
 export default function ProfileLifestylePage() {
   const router = useRouter();
   const { participantId } = useAuth();
+  const { mode } = useLocalSearchParams<{ mode?: string }>();
+  const isEditing = mode === "edit";
 
   const [loading, setLoading] = useState(true);
   const [exercise, setExercise] = useState<ExerciseFrequency>("sometimes");
@@ -64,16 +66,20 @@ export default function ProfileLifestylePage() {
         smoking,
         alcohol_drinks_per_week: alcohol,
       });
-      // Personal Info + Goals + Lifestyle together are the fixed-start
-      // "Questionnaire" pair from the hub's point of view — both tracked keys
-      // complete together here, which unlocks the free-order middle trio.
-      await updateSectionStatusAction("personal_info", "done", participantId);
-      await updateSectionStatusAction("lifestyle", "done", participantId);
-      await updateCaptureChannelAction(participantId, "manual", {
-        status: "complete",
-        entered_by: "participant",
-      });
-      router.push("/onboarding/intro-wellness-snapshot");
+      if (isEditing) {
+        router.back();
+      } else {
+        // Personal Info + Goals + Lifestyle together are the fixed-start
+        // "Questionnaire" pair from the hub's point of view — both tracked keys
+        // complete together here, which unlocks the free-order middle trio.
+        await updateSectionStatusAction("personal_info", "done", participantId);
+        await updateSectionStatusAction("lifestyle", "done", participantId);
+        await updateCaptureChannelAction(participantId, "manual", {
+          status: "complete",
+          entered_by: "participant",
+        });
+        router.push("/onboarding/intro-wellness-snapshot");
+      }
     } finally {
       setSaving(false);
     }

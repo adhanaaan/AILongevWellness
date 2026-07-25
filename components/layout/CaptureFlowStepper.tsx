@@ -1,98 +1,43 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { ChevronLeft, Lock, Check } from "lucide-react-native";
+import { ChevronLeft } from "lucide-react-native";
 import { GradientOrb } from "@/components/ui/GradientOrb";
-import { getOnboardingProgressAction } from "@/lib/data/actions";
-import { repository } from "@/lib/data/mock";
-import { useAuth } from "@/lib/auth/AuthProvider";
-import { CAPTURE_SECTIONS, deriveSectionState, type CaptureSectionId } from "@/lib/onboarding/flow";
-import type { OnboardingProgress } from "@/lib/types/db";
-import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 
 export interface CaptureFlowStepperProps {
-  /** Which hub section this screen belongs to — highlighted in the shortcut row. Omit on the hub itself. */
-  activeSection?: CaptureSectionId;
   children: React.ReactNode;
-  /** Disables all taps (e.g. during the Calculating screen's animation). */
-  disabled?: boolean;
+  /** Hides the back button — only the hub itself should pass false. */
+  showBackButton?: boolean;
 }
 
 /**
- * Persistent, tappable progress shortcut for every screen in the Data Capture
- * hub-and-spoke sub-flow (hub, Questionnaire pair, the middle trio, ReCOGnAIze,
- * Calculating). Tapping a segment jumps straight to that section, except
- * ReCOGnAIze, which stays locked until the middle trio are all done.
+ * Shared full-bleed shell for every screen in the Data Capture hub-and-spoke
+ * sub-flow (hub, Questionnaire pair, the middle trio, ReCOGnAIze, Calculating):
+ * a labeled back-to-hub button plus decorative gradient orbs. Cross-section
+ * jump navigation lives on the hub itself (its own section list), not here.
  */
-export function CaptureFlowStepper({ activeSection, children, disabled = false }: CaptureFlowStepperProps) {
+export function CaptureFlowStepper({ children, showBackButton = true }: CaptureFlowStepperProps) {
   const router = useRouter();
-  const { participantId } = useAuth();
-  const [progress, setProgress] = useState<OnboardingProgress | null>(null);
-
-  useEffect(() => {
-    if (!participantId) return;
-    let cancelled = false;
-    function load() {
-      getOnboardingProgressAction(participantId!).then((p) => {
-        if (!cancelled) setProgress(p);
-      });
-    }
-    load();
-    return repository.subscribe(load);
-  }, [participantId]);
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <GradientOrb tone="teal" size={280} style={styles.orbTopLeft} />
       <GradientOrb tone="amber" size={260} style={styles.orbBottomRight} />
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
-          <ChevronLeft size={20} color={colors.ink} />
-          <Text style={styles.backLabel}>Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.stepLabel}>Data Capture</Text>
-      </View>
-
-      <View style={styles.shortcutRow}>
-        {CAPTURE_SECTIONS.map((section) => {
-          const state = progress ? deriveSectionState(progress, section) : "available";
-          const isActive = section.id === activeSection;
-          const isLocked = state === "locked";
-          return (
-            <TouchableOpacity
-              key={section.id}
-              style={[
-                styles.pill,
-                state === "done" && styles.pillDone,
-                state === "in_progress" && styles.pillInProgress,
-                isLocked && styles.pillLocked,
-                isActive && styles.pillActive,
-              ]}
-              disabled={disabled || isLocked}
-              onPress={() => router.push(section.route as never)}
-              activeOpacity={0.7}
-            >
-              {state === "done" ? (
-                <Check size={11} color={colors.white} />
-              ) : isLocked ? (
-                <Lock size={11} color={colors.inkMuted} />
-              ) : null}
-              <Text
-                style={[
-                  styles.pillLabel,
-                  state === "done" && styles.pillLabelDone,
-                  isLocked && styles.pillLabelLocked,
-                  isActive && styles.pillLabelActive,
-                ]}
-                numberOfLines={1}
-              >
-                {section.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+      {showBackButton && (
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.replace("/onboarding/capture")}
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <ChevronLeft size={20} color={colors.ink} />
+            <Text style={styles.backLabel}>Back to Data Capture</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <View style={styles.content}>{children}</View>
     </SafeAreaView>
@@ -111,41 +56,22 @@ const styles = StyleSheet.create({
   orbTopLeft: { top: -80, left: -100, opacity: 0.5 },
   orbBottomRight: { bottom: -60, right: -100, opacity: 0.4 },
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.lg,
     paddingBottom: spacing.sm,
   },
-  backButton: { flexDirection: "row", alignItems: "center", gap: spacing.xs },
-  backLabel: { fontFamily: fontFamilies.bodyMedium, fontSize: fontSizes.labelMd, color: colors.ink },
-  stepLabel: { fontFamily: fontFamilies.bodyMedium, fontSize: fontSizes.caption, color: colors.inkMuted },
-  shortcutRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing.xs,
-    paddingHorizontal: spacing.xl,
-    paddingBottom: spacing.lg,
-  },
-  pill: {
+  backButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingVertical: 6,
-    paddingHorizontal: spacing.md,
-    borderRadius: radii.full,
-    backgroundColor: colors.surfaceMuted,
-    borderWidth: 1,
-    borderColor: colors.transparent,
+    gap: 2,
+    alignSelf: "flex-start",
+    paddingVertical: spacing.xs,
+    paddingRight: spacing.sm,
   },
-  pillDone: { backgroundColor: colors.teal },
-  pillInProgress: { backgroundColor: colors.tealTint, borderColor: colors.teal },
-  pillLocked: { backgroundColor: colors.surfaceMuted, opacity: 0.6 },
-  pillActive: { borderColor: colors.ink },
-  pillLabel: { fontFamily: fontFamilies.bodySemiBold, fontSize: 11, color: colors.inkMuted },
-  pillLabelDone: { color: colors.white },
-  pillLabelLocked: { color: colors.inkMuted },
-  pillLabelActive: { color: colors.ink },
+  backLabel: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.labelMd,
+    color: colors.ink,
+  },
   content: { flex: 1 },
 });
