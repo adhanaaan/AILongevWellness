@@ -227,6 +227,22 @@ lib/
       rest of onboarding (and skips re-marking already-`"done"` sections as
       `"in_progress"`). The hub subtitle also dropped its "Start with the
       Questionnaire" clause.
+- [x] Data Capture channel screens (Wearables, Body Composition, Lab Reports) each
+      merged their `-intro.tsx` + `-upload.tsx` pair into a single scrolling
+      `-intro.tsx` file (both screens' content stacked, one file-choose button
+      running the real upload logic; the `-upload.tsx` files are deleted).
+      `CaptureFlowStepper` traded its bare icon-only back chevron for a labeled
+      "‹ Back to Data Capture" button that navigates explicitly to
+      `/onboarding/capture` (`showBackButton` prop, default true; the hub itself
+      passes `false` since a button back to Data Capture doesn't belong on Data
+      Capture). Each channel's file-choose button is now a light `teal[200]` →
+      `teal[400]` gradient (dark `tealDark` text) instead of the flat solid-teal
+      `Button`, to stand out as the primary action. Copy pass: every "What this
+      feeds into" card lost its em dashes and dense clinical-abbreviation lists
+      (e.g. Lab Reports' body now says "cholesterol, blood sugar, and
+      inflammation levels" instead of "lipids... hs-CRP, HbA1c... insulin"), and
+      Wearables' export subtitle dropped its "isn't available over the cloud"
+      negative framing for a positive one.
 - [ ] Wearable aggregator connect
 - [ ] Consent tracking (consent_given, consented_at fields) — consent screen doesn't yet persist to a row
 - [ ] Body composition scan value extraction (currently uploads the file only, no parsing)

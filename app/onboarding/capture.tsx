@@ -118,7 +118,7 @@ export default function CaptureHubPage() {
   }
 
   return (
-    <CaptureFlowStepper>
+    <CaptureFlowStepper showBackButton={false}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         <GlassCard tint="light" padding="none" radius="full" style={styles.headerIcon}>
           <ClipboardList size={24} color={colors.teal} />
