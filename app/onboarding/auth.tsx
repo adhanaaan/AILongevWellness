@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { isSupabaseConfigured } from "@/lib/config/env";
 import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 
 export default function ParticipantAuthPage() {
@@ -35,7 +36,15 @@ export default function ParticipantAuthPage() {
         }
       } else {
         await signIn(email.trim(), password);
-        router.push("/(tabs)/card");
+        if (isSupabaseConfigured) {
+          // Bounce through "/" rather than assuming completion — its landing
+          // effect is progress-aware and is the single source of truth for
+          // where a signed-in participant belongs (mirrors the email-
+          // confirmation-link precedent in app/index.tsx).
+          router.replace("/");
+        } else {
+          router.push("/(tabs)/card");
+        }
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
