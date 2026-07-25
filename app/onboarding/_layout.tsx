@@ -9,6 +9,8 @@ export default function OnboardingLayout() {
         contentStyle: { backgroundColor: colors.cloud },
       }}
     >
+      <Stack.Screen name="intro-hook" />
+      <Stack.Screen name="intro-longevity" />
       <Stack.Screen name="consent" />
       <Stack.Screen name="auth" />
       <Stack.Screen name="profile" />

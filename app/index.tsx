@@ -1,14 +1,26 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Image, TouchableOpacity, StyleSheet, useWindowDimensions, type LayoutChangeEvent } from "react-native";
+import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, useWindowDimensions, type LayoutChangeEvent } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { GradientOverlay } from "@/components/ui/GradientOverlay";
+import { ScoreRing } from "@/components/participant/ScoreRing";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { repository } from "@/lib/data/mock";
 import { isCaptureComplete } from "@/lib/onboarding/flow";
+import { pillarStatus } from "@/lib/ai/scoring";
 import { colors, fontFamilies, fontSizes, lineHeights, spacing } from "@/lib/theme/tokens";
+
+// The consistent James Chen demo scores (see CLAUDE.md) shown as a static
+// "mock up of longevity data" over the hero photo -- a preview of what the
+// programme produces, not live data (there's no signed-in participant yet).
+const SNAPSHOT_SCORES = [
+  { key: "vascular", label: "Vascular", value: 74 },
+  { key: "metabolic", label: "Metabolic", value: 68 },
+  { key: "mental", label: "Mental", value: 81 },
+] as const;
 
 const HERO_FADE_STOPS = [
   { offset: "0", color: "rgba(250,250,250,0)" },
@@ -68,7 +80,7 @@ export default function WelcomePage() {
   return (
     <SafeAreaView style={styles.safe} edges={["bottom"]}>
       <View
-        style={[styles.heroWrap, { height: windowHeight * 0.5 }]}
+        style={[styles.heroWrap, { height: windowHeight * 0.34 }]}
         onLayout={onHeroLayout}
       >
         {heroWidth > 0 && (
@@ -87,45 +99,68 @@ export default function WelcomePage() {
         <GradientOverlay stops={HERO_FADE_STOPS} />
       </View>
 
-      <View style={styles.logoRow}>
-        <Image
-          source={require("@/assets/images/aiw-logo.png")}
-          style={styles.logo}
-          resizeMode="contain"
-        />
+      <View style={styles.snapshotRow}>
+        <Card padding="lg" style={styles.snapshotCard}>
+          <Text style={styles.snapshotTitle}>Your longevity snapshot</Text>
+          <View style={styles.snapshotRings}>
+            {SNAPSHOT_SCORES.map((score) => (
+              <ScoreRing
+                key={score.key}
+                value={score.value}
+                label={score.label}
+                status={pillarStatus(score.value)}
+                size={56}
+              />
+            ))}
+          </View>
+        </Card>
       </View>
 
-      <View style={styles.container}>
-        <View style={styles.textBlock}>
-          <Text style={styles.title}>
-            Your Executive{"\n"}Health Intelligence
-          </Text>
-          <Text style={styles.subtitle}>
-            All your health data, in one place.
-          </Text>
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.logoRow}>
+          <Image
+            source={require("@/assets/images/aiw-logo.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </View>
 
-        <View style={styles.actions}>
-          <Button
-            size="lg"
-            style={styles.loginButton}
-            onPress={() => router.push({ pathname: "/onboarding/auth", params: { mode: "signin" } })}
-          >
-            Login
-          </Button>
-          <TouchableOpacity
-            onPress={() => router.push("/onboarding/consent")}
-            activeOpacity={0.7}
-            style={styles.signUpButton}
-          >
-            <Text style={styles.signUpText}>Sign up</Text>
-          </TouchableOpacity>
-          <Text style={styles.hint}>
-            Your data is encrypted and handled in accordance with our privacy
-            policy.
-          </Text>
+        <View style={styles.container}>
+          <View style={styles.textBlock}>
+            <Text style={styles.title}>
+              Your Executive{"\n"}Health Intelligence
+            </Text>
+            <Text style={styles.subtitle}>
+              All your health data, in one place.
+            </Text>
+          </View>
+
+          <View style={styles.actions}>
+            <Button
+              size="lg"
+              style={styles.getStartedButton}
+              onPress={() => router.push("/onboarding/intro-hook")}
+            >
+              Get started
+            </Button>
+            <TouchableOpacity
+              onPress={() => router.push({ pathname: "/onboarding/auth", params: { mode: "signin" } })}
+              activeOpacity={0.7}
+              style={styles.loginLink}
+            >
+              <Text style={styles.loginLinkText}>Login</Text>
+            </TouchableOpacity>
+            <Text style={styles.hint}>
+              Your data is encrypted and handled in accordance with our privacy
+              policy.
+            </Text>
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -149,16 +184,39 @@ const styles = StyleSheet.create({
     left: 0,
     width: "100%",
   },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: spacing.lg,
+  },
+  snapshotRow: {
+    paddingHorizontal: spacing["2xl"],
+    marginTop: -56,
+  },
+  snapshotCard: {
+    width: "100%",
+  },
+  snapshotTitle: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.labelMd,
+    color: colors.ink,
+    marginBottom: spacing.md,
+  },
+  snapshotRings: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+  },
   logoRow: {
     alignItems: "center",
-    marginTop: -40,
+    marginTop: spacing.lg,
   },
   logo: {
-    width: 200,
-    height: 112,
+    width: 170,
+    height: 95,
   },
   container: {
-    flex: 1,
     paddingHorizontal: spacing["2xl"],
     paddingTop: spacing.md,
     paddingBottom: spacing.lg,
@@ -182,17 +240,17 @@ const styles = StyleSheet.create({
   },
   actions: {
     width: "100%",
-    gap: spacing.lg,
+    gap: spacing.md,
     alignItems: "center",
-    marginTop: spacing["6xl"],
+    marginTop: spacing["2xl"],
   },
-  loginButton: {
+  getStartedButton: {
     width: "100%",
   },
-  signUpButton: {
+  loginLink: {
     paddingVertical: spacing.xs,
   },
-  signUpText: {
+  loginLinkText: {
     fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.bodyLg,
     color: colors.ink,
