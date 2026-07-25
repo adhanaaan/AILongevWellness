@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Mail } from "lucide-react-native";
-import { OnboardingStepper } from "@/components/layout/OnboardingStepper";
 import { Input } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -19,9 +19,13 @@ export default function ParticipantAuthPage() {
   );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
+
+  const passwordsMismatch =
+    mode === "signup" && confirmPassword.length > 0 && password !== confirmPassword;
 
   async function onContinue() {
     setError(null);
@@ -55,12 +59,12 @@ export default function ParticipantAuthPage() {
 
   if (awaitingConfirmation) {
     return (
-      <OnboardingStepper>
+      <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
         <View style={styles.scrollContent}>
           <GlassCard tint="light" padding="none" radius="full" style={styles.headerIcon}>
             <Mail size={24} color={colors.teal} />
           </GlassCard>
-          <Text style={styles.title}>Check your email</Text>
+          <Text style={styles.title}>Verify your email</Text>
           <Text style={styles.subtitle}>
             We sent a confirmation link to {email.trim()}. Click it, then come
             back and sign in below.
@@ -76,12 +80,12 @@ export default function ParticipantAuthPage() {
             Back to sign in
           </Button>
         </View>
-      </OnboardingStepper>
+      </SafeAreaView>
     );
   }
 
   return (
-    <OnboardingStepper>
+    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
@@ -115,6 +119,16 @@ export default function ParticipantAuthPage() {
             secureTextEntry
             placeholder="At least 6 characters"
           />
+          {mode === "signup" && (
+            <Input
+              label="Confirm password"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+              placeholder="Re-enter your password"
+              error={passwordsMismatch ? "Passwords don't match." : undefined}
+            />
+          )}
           {error && <Text style={styles.error}>{error}</Text>}
         </View>
 
@@ -133,19 +147,37 @@ export default function ParticipantAuthPage() {
       </ScrollView>
 
       <View style={styles.footer}>
+        {mode === "signup" && (
+          <Text style={styles.legal}>
+            By creating an account, you agree to our terms and acknowledge our
+            privacy policy.
+          </Text>
+        )}
         <Button
           size="lg"
-          disabled={submitting || !email.trim() || password.length < 6}
+          disabled={
+            submitting ||
+            !email.trim() ||
+            password.length < 6 ||
+            (mode === "signup" && password !== confirmPassword)
+          }
           onPress={onContinue}
         >
           {mode === "signup" ? "Create account" : "Sign in"}
         </Button>
       </View>
-    </OnboardingStepper>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: colors.bone,
+    maxWidth: 448,
+    alignSelf: "center",
+    width: "100%",
+  },
   scroll: { flex: 1 },
   scrollContent: {
     paddingHorizontal: spacing["2xl"],
@@ -180,6 +212,14 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.danger,
+  },
+  legal: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    textAlign: "center",
+    lineHeight: 18,
+    marginBottom: spacing.sm,
   },
   footer: {
     paddingHorizontal: spacing["2xl"],

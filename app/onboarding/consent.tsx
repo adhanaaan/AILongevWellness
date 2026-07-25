@@ -1,11 +1,28 @@
 import React, { useState } from "react";
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { Check, ShieldCheck } from "lucide-react-native";
-import { OnboardingStepper } from "@/components/layout/OnboardingStepper";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { TermsModal } from "@/components/ui/TermsModal";
 import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
+
+const PRIVACY_POLICY_BODY = `We take the security of your wellness data seriously. This summary explains what we collect, how it's used, and who can see it during your time in the programme.
+
+What we collect
+We collect the information you provide during onboarding (profile, goals, lifestyle), any wearable, body composition, or lab data you choose to upload, and your ongoing check-ins inside the app.
+
+How it's used
+Your data is used to generate your personal wellness snapshot and to support the suggested discussion points your care team prepares for you. We never use your data for any purpose outside this programme.
+
+Who can see it
+Your assigned GP and TCM practitioner review your wellness snapshot before it's shared with you. No one outside your care team has access to your individual data.
+
+Data handling
+All data is encrypted in transit and at rest. You can request a copy of your data or ask for it to be deleted at any time by contacting the programme team.
+
+By accepting, you confirm you've read this summary and agree to how your data will be handled during the programme.`;
 
 const ITEMS = [
   {
@@ -31,10 +48,19 @@ const ITEMS = [
 export default function ConsentPage() {
   const router = useRouter();
   const [checked, setChecked] = useState<Record<string, boolean>>({});
+  const [termsOpen, setTermsOpen] = useState(false);
   const allChecked = ITEMS.every((item) => checked[item.key]);
 
+  function onItemPress(key: string) {
+    if (key === "privacy") {
+      setTermsOpen(true);
+      return;
+    }
+    setChecked((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
   return (
-    <OnboardingStepper>
+    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
@@ -58,12 +84,7 @@ export default function ConsentPage() {
             return (
               <TouchableOpacity
                 key={item.key}
-                onPress={() =>
-                  setChecked((prev) => ({
-                    ...prev,
-                    [item.key]: !prev[item.key],
-                  }))
-                }
+                onPress={() => onItemPress(item.key)}
                 activeOpacity={0.8}
               >
                 <GlassCard
@@ -96,20 +117,36 @@ export default function ConsentPage() {
         </View>
       </ScrollView>
 
-      <View style={styles.footer}>
-        <Button
-          size="lg"
-          disabled={!allChecked}
-          onPress={() => router.push("/onboarding/auth")}
-        >
-          Agree and continue
-        </Button>
-      </View>
-    </OnboardingStepper>
+      {allChecked && (
+        <View style={styles.footer}>
+          <Button size="lg" onPress={() => router.push("/onboarding/auth")}>
+            Agree and continue
+          </Button>
+        </View>
+      )}
+
+      <TermsModal
+        visible={termsOpen}
+        title="Privacy & Data Handling"
+        body={PRIVACY_POLICY_BODY}
+        onClose={() => setTermsOpen(false)}
+        onAccept={() => {
+          setChecked((prev) => ({ ...prev, privacy: true }));
+          setTermsOpen(false);
+        }}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: colors.bone,
+    maxWidth: 448,
+    alignSelf: "center",
+    width: "100%",
+  },
   scroll: {
     flex: 1,
   },

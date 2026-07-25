@@ -80,8 +80,7 @@ ai-wellness/
 │   │   └── index.ts
 │   └── layout/                   # Shell layouts
 │       ├── MobileShell.tsx       # SafeAreaView + header for participant screens
-│       ├── AdminShell.tsx        # Sidebar nav (desktop) / modal drawer (mobile)
-│       └── OnboardingStepper.tsx # Progress dots for onboarding
+│       └── AdminShell.tsx        # Sidebar nav (desktop) / modal drawer (mobile)
 ├── lib/
 │   ├── theme/
 │   │   └── tokens.ts             # Design tokens (colors, fontSizes, radii, shadows, spacing)

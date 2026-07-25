@@ -169,6 +169,17 @@ lib/
       longevity" explainer with the real Get Started CTA into `/onboarding/consent`).
       "Login" on the entry screen bypasses both, going straight to
       `/onboarding/auth?mode=signin` as before.
+- [x] Account creation revamp: `consent.tsx` and `auth.tsx` dropped the
+      `OnboardingStepper` chrome (back button + step segments, now deleted, zero
+      remaining callers) for a plain full-bleed layout. Tapping "Privacy & data
+      handling" on the consent screen opens a new `components/ui/TermsModal.tsx`
+      (scrollable body gated "Scroll to bottom" → "Accept and continue" once the
+      user reaches the end) instead of toggling directly; the "Agree and continue"
+      footer button no longer renders at all until all three items are checked
+      (was: always visible, just disabled). `auth.tsx` gained a "Confirm password"
+      field (signup only, inline mismatch error) and a short legal disclaimer line
+      above the submit button; the post-signup no-session state is retitled "Verify
+      your email" (was "Check your email").
 - [ ] Wearable aggregator connect
 - [ ] Consent tracking (consent_given, consented_at fields) — consent screen doesn't yet persist to a row
 - [ ] Body composition scan value extraction (currently uploads the file only, no parsing)
