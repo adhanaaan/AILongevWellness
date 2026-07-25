@@ -5,30 +5,19 @@ import { useRouter } from "expo-router";
 import { Infinity as InfinityIcon } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { GradientOverlay } from "@/components/ui/GradientOverlay";
-import { colors, fontFamilies, fontSizes, gray, lineHeights, spacing } from "@/lib/theme/tokens";
-
-const BACKGROUND_STOPS = [
-  { offset: "0", color: colors.charcoal },
-  { offset: "1", color: gray[800] },
-];
+import { GradientOrb } from "@/components/ui/GradientOrb";
+import { colors, fontFamilies, fontSizes, lineHeights, spacing } from "@/lib/theme/tokens";
 
 export default function IntroLongevityPage() {
   const router = useRouter();
 
   return (
     <View style={styles.page}>
-      <GradientOverlay stops={BACKGROUND_STOPS} />
+      <GradientOrb tone="teal" size={280} style={styles.orbTopLeft} />
+      <GradientOrb tone="amber" size={260} style={styles.orbBottomRight} />
       <SafeAreaView style={styles.safe}>
         <View style={styles.content}>
-          <GlassCard
-            tint="dark"
-            padding="none"
-            radius="full"
-            tintColor="rgba(233,138,109,0.18)"
-            tintBorderColor="rgba(233,138,109,0.4)"
-            style={styles.iconBadge}
-          >
+          <GlassCard tint="light" padding="none" radius="full" style={styles.iconBadge}>
             <InfinityIcon size={28} color={colors.terracotta} />
           </GlassCard>
           <Text style={styles.title}>What is longevity, really?</Text>
@@ -63,7 +52,17 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     width: "100%",
     overflow: "hidden",
-    backgroundColor: colors.charcoal,
+    backgroundColor: colors.bone,
+  },
+  orbTopLeft: {
+    top: -80,
+    left: -100,
+    opacity: 0.5,
+  },
+  orbBottomRight: {
+    bottom: -60,
+    right: -100,
+    opacity: 0.4,
   },
   safe: {
     flex: 1,
@@ -84,14 +83,14 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: fontFamilies.displayBold,
     fontSize: fontSizes.headlineLg,
-    color: colors.inkOnDark,
+    color: colors.ink,
     textAlign: "center",
     letterSpacing: -0.3,
   },
   body: {
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyLg,
-    color: colors.inkOnDarkMuted,
+    color: colors.inkMuted,
     textAlign: "center",
     marginTop: spacing.lg,
     lineHeight: lineHeights.bodyLg,
@@ -99,7 +98,7 @@ const styles = StyleSheet.create({
   benefit: {
     fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.bodyMd,
-    color: colors.inkOnDark,
+    color: colors.ink,
     textAlign: "center",
     marginTop: spacing.xl,
     lineHeight: lineHeights.bodyMd,
@@ -110,6 +109,5 @@ const styles = StyleSheet.create({
   },
   getStartedButton: {
     width: "100%",
-    backgroundColor: colors.terracotta,
   },
 });
