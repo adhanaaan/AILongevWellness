@@ -51,7 +51,6 @@ Shared components pulled from the nine Stitch screens, de-duplicated. Build thes
 |---|---|
 | `MobileShell` | max-width phone canvas, sticky top bar (avatar + greeting), bottom nav: **Insights** (`/card`), **Concierge** (`/ava`), **Care Plan** (`/tracking`), **Settings**. |
 | `AdminShell` | left sidebar (AI Wellness wordmark + "Admin Portal"; nav: Participants, Review queue, Exports, Settings; clinician profile footer) + top bar (title, search, filter). |
-| `OnboardingStepper` | welcome → consent → profile → capture; minimal progress dots; not part of bottom nav. |
 
 ## 5. Icon mapping (Material Symbols → lucide-react)
 
