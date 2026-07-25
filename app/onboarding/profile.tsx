@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, ScrollView, StyleSheet } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { User, Plus } from "lucide-react-native";
-import { CaptureFlowStepper } from "@/components/layout/CaptureFlowStepper";
-import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { User } from "lucide-react-native";
 import { SelectField, type SelectFieldOption } from "@/components/ui/SelectField";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -11,7 +10,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { updateParticipantAction, updateSectionStatusAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 
 const SEX_OPTIONS: SelectFieldOption[] = [
   { label: "Male", value: "male" },
@@ -38,7 +37,6 @@ export default function ProfilePersonalPage() {
   const { participantId } = useAuth();
 
   const [loading, setLoading] = useState(true);
-  const [enteredBy, setEnteredBy] = useState("me");
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [sex, setSex] = useState("male");
@@ -88,7 +86,7 @@ export default function ProfilePersonalPage() {
         weight_kg: weightNum,
       });
       await updateSectionStatusAction("personal_info", "in_progress", participantId);
-      router.push("/onboarding/profile-goals");
+      router.push("/onboarding/profile-wellness-intro");
     } finally {
       setSaving(false);
     }
@@ -96,16 +94,16 @@ export default function ProfilePersonalPage() {
 
   if (loading) {
     return (
-      <CaptureFlowStepper activeSection="questionnaire">
+      <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
         <View style={styles.center}>
           <Text style={styles.subtitle}>Loading…</Text>
         </View>
-      </CaptureFlowStepper>
+      </SafeAreaView>
     );
   }
 
   return (
-    <CaptureFlowStepper activeSection="questionnaire">
+    <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
@@ -115,33 +113,10 @@ export default function ProfilePersonalPage() {
           <User size={24} color={colors.teal} />
         </GlassCard>
 
-        <View style={styles.headerRow}>
-          <Text style={styles.title}>Personal Information</Text>
-          <SegmentedControl
-            options={[
-              { value: "me", label: "Me" },
-              { value: "admin", label: "Admin" },
-            ]}
-            value={enteredBy}
-            onChange={setEnteredBy}
-          />
-        </View>
-        <Text style={styles.subtitle}>
-          {enteredBy === "me"
-            ? "Let's start with a few basics about you."
-            : "A care team member is entering this on your behalf."}
-        </Text>
+        <Text style={styles.title}>Personal Information</Text>
+        <Text style={styles.subtitle}>Let's start with a few basics about you.</Text>
 
         <Card padding="lg" style={styles.profileCard}>
-          <View style={styles.avatarSection}>
-            <View style={styles.avatarCircle}>
-              <User size={32} color={colors.inkMuted} />
-            </View>
-            <View style={styles.avatarBadge}>
-              <Plus size={14} color={colors.white} />
-            </View>
-          </View>
-
           <View style={styles.nameField}>
             <TextInput
               style={styles.nameInput}
@@ -191,11 +166,18 @@ export default function ProfilePersonalPage() {
           Continue
         </Button>
       </View>
-    </CaptureFlowStepper>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: colors.bone,
+    maxWidth: 448,
+    alignSelf: "center",
+    width: "100%",
+  },
   scroll: { flex: 1 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   scrollContent: {
@@ -209,11 +191,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     marginBottom: spacing.lg,
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
   },
   title: {
     fontFamily: fontFamilies.displayBold,
@@ -231,32 +208,6 @@ const styles = StyleSheet.create({
   profileCard: {
     marginTop: spacing["2xl"],
     gap: spacing["2xl"],
-  },
-  avatarSection: {
-    alignSelf: "center",
-    width: 96,
-    height: 96,
-  },
-  avatarCircle: {
-    width: 96,
-    height: 96,
-    borderRadius: radii.full,
-    backgroundColor: colors.surfaceMuted,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarBadge: {
-    position: "absolute",
-    right: 0,
-    bottom: 0,
-    width: 30,
-    height: 30,
-    borderRadius: radii.full,
-    backgroundColor: colors.teal,
-    borderWidth: 3,
-    borderColor: colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
   },
   nameField: {
     borderBottomWidth: 1,

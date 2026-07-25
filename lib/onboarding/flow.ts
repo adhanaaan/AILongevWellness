@@ -23,7 +23,7 @@ export interface CaptureSectionDef {
 }
 
 export const CAPTURE_SECTIONS: CaptureSectionDef[] = [
-  { id: "questionnaire", label: "Questionnaire", keys: ["personal_info", "lifestyle"], route: "/onboarding/profile" },
+  { id: "questionnaire", label: "Questionnaire", keys: ["personal_info", "lifestyle"], route: "/onboarding/profile-intro" },
   { id: "wearables", label: "Wearables", keys: ["wearables"], route: "/onboarding/capture-wearables-intro" },
   {
     id: "body_composition",
