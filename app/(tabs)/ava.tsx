@@ -13,6 +13,7 @@ import { useLocalSearchParams } from "expo-router";
 import { Send } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { ChatBubble } from "@/components/participant/ChatBubble";
+import { TypingIndicator } from "@/components/participant/TypingIndicator";
 import { SuggestionChips } from "@/components/participant/SuggestionChips";
 import { AvaPromo } from "@/components/participant/AvaPromo";
 import { respondAsAva } from "@/lib/ava/respond";
@@ -21,12 +22,13 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { askAva } from "@/lib/ai/client";
 import type { SignedCard } from "@/lib/data/repository";
-import type { Pipeline } from "@/lib/types/db";
+import type { Participant, Pipeline } from "@/lib/types/db";
 import { colors, fontSizes, radii } from "@/lib/theme/tokens";
 
 interface Message {
   role: "user" | "ava";
   text: string;
+  disclaimer?: string;
 }
 
 const SUGGESTIONS = [
@@ -41,14 +43,17 @@ export default function AvaPage() {
   const { q } = useLocalSearchParams<{ q?: string }>();
   const [card, setCard] = useState<SignedCard | null | undefined>(undefined);
   const [pipeline, setPipeline] = useState<Pipeline | null | undefined>(undefined);
+  const [participant, setParticipant] = useState<Participant | null>(null);
 
   useEffect(() => {
     if (!participantId) return;
     repository.getSignedCard(participantId).then(setCard);
     repository.getPipeline(participantId).then(setPipeline);
+    repository.getParticipant(participantId).then(setParticipant);
     return repository.subscribe(() => {
       repository.getSignedCard(participantId).then(setCard);
       repository.getPipeline(participantId).then(setPipeline);
+      repository.getParticipant(participantId).then(setParticipant);
     });
   }, [participantId]);
 
@@ -62,29 +67,28 @@ export default function AvaPage() {
     );
   }
 
-  return <AvaChatContent card={card} seedQuestion={q} />;
+  return <AvaChatContent card={card} seedQuestion={q} participant={participant} />;
 }
 
 function AvaChatContent({
   card,
   seedQuestion,
+  participant,
 }: {
   card: SignedCard;
   seedQuestion?: string;
+  participant: Participant | null;
 }) {
   const { session, participantId } = useAuth();
   const scrollRef = useRef<ScrollView>(null);
-  const [messages, setMessages] = useState<Message[]>(() =>
-    seedQuestion
-      ? []
-      : [
-          { role: "user", text: "What does my metabolic score mean?" },
-          {
-            role: "ava",
-            text: respondAsAva("What does my metabolic score mean?", card),
-          },
-        ]
-  );
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (seedQuestion) return [];
+    const seedReply = respondAsAva("What does my metabolic score mean?", card);
+    return [
+      { role: "user", text: "What does my metabolic score mean?" },
+      { role: "ava", text: seedReply.text, disclaimer: seedReply.disclaimer },
+    ];
+  });
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const seededRef = useRef(false);
@@ -99,9 +103,10 @@ function AvaChatContent({
 
     if (isSupabaseConfigured && session?.access_token && participantId) {
       setSending(true);
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150);
       try {
-        const { reply } = await askAva(session.access_token, participantId, trimmed, history);
-        setMessages((prev) => [...prev, { role: "ava", text: reply }]);
+        const { reply, disclaimer } = await askAva(session.access_token, participantId, trimmed, history);
+        setMessages((prev) => [...prev, { role: "ava", text: reply, disclaimer }]);
       } catch (e) {
         setMessages((prev) => [
           ...prev,
@@ -115,7 +120,7 @@ function AvaChatContent({
     }
 
     const reply = respondAsAva(trimmed, card);
-    setMessages((prev) => [...prev, { role: "ava", text: reply }]);
+    setMessages((prev) => [...prev, { role: "ava", text: reply.text, disclaimer: reply.disclaimer }]);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
   }
 
@@ -135,9 +140,14 @@ function AvaChatContent({
         keyboardVerticalOffset={100}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>Ask AVA about your results</Text>
+          <Text style={styles.title}>
+            {participant
+              ? `Hi ${participant.name.split(" ")[0]}, let's go through your results`
+              : "Ask AVA about your results"}
+          </Text>
           <Text style={styles.subtitle}>
-            Read-only · based on your reviewed card
+            Ask about your reviewed wellness card — this is general information, not medical
+            advice.
           </Text>
         </View>
 
@@ -148,10 +158,11 @@ function AvaChatContent({
           showsVerticalScrollIndicator={false}
         >
           {messages.map((m, i) => (
-            <ChatBubble key={i} role={m.role}>
+            <ChatBubble key={i} role={m.role} disclaimer={m.disclaimer}>
               {m.text}
             </ChatBubble>
           ))}
+          {sending && <TypingIndicator />}
         </ScrollView>
 
         <View style={styles.inputArea}>
@@ -167,8 +178,9 @@ function AvaChatContent({
               returnKeyType="send"
             />
             <TouchableOpacity
-              style={styles.sendButton}
+              style={[styles.sendButton, sending && styles.sendButtonDisabled]}
               onPress={() => send(input)}
+              disabled={sending}
             >
               <Send size={18} color={colors.white} />
             </TouchableOpacity>
@@ -222,5 +234,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.sage,
     alignItems: "center",
     justifyContent: "center",
+  },
+  sendButtonDisabled: {
+    opacity: 0.5,
   },
 });
