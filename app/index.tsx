@@ -7,6 +7,7 @@ import { GradientOverlay } from "@/components/ui/GradientOverlay";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { repository } from "@/lib/data/mock";
+import { isCaptureComplete } from "@/lib/onboarding/flow";
 import { colors, fontFamilies, fontSizes, lineHeights, spacing } from "@/lib/theme/tokens";
 
 const HERO_FADE_STOPS = [
@@ -42,15 +43,18 @@ export default function WelcomePage() {
     if (!isSupabaseConfigured || !participantId) return;
     let cancelled = false;
     (async () => {
-      const [participant, pipeline] = await Promise.all([
+      const [participant, pipeline, progress] = await Promise.all([
         repository.getParticipant(participantId),
         repository.getPipeline(participantId),
+        repository.getOnboardingProgress(participantId),
       ]);
       if (cancelled || !participant || !pipeline) return;
       // The Data Capture hub (now living at /onboarding/capture) is the landing
       // point for any still-capturing participant, brand new or not — it routes
       // on to Personal Info itself if the Questionnaire hasn't been started yet.
-      if (pipeline.state === "capturing") {
+      // The isCaptureComplete check catches a participant whose pipeline state
+      // has already advanced while their capture data genuinely isn't done.
+      if (pipeline.state === "capturing" || !isCaptureComplete(progress)) {
         router.replace("/onboarding/capture");
       } else {
         router.replace("/(tabs)/card");
