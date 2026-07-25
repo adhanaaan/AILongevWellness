@@ -13,6 +13,7 @@ import { useLocalSearchParams } from "expo-router";
 import { Send } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { ChatBubble } from "@/components/participant/ChatBubble";
+import { TypingIndicator } from "@/components/participant/TypingIndicator";
 import { SuggestionChips } from "@/components/participant/SuggestionChips";
 import { AvaPromo } from "@/components/participant/AvaPromo";
 import { respondAsAva } from "@/lib/ava/respond";
@@ -99,6 +100,7 @@ function AvaChatContent({
 
     if (isSupabaseConfigured && session?.access_token && participantId) {
       setSending(true);
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150);
       try {
         const { reply } = await askAva(session.access_token, participantId, trimmed, history);
         setMessages((prev) => [...prev, { role: "ava", text: reply }]);
@@ -152,6 +154,7 @@ function AvaChatContent({
               {m.text}
             </ChatBubble>
           ))}
+          {sending && <TypingIndicator />}
         </ScrollView>
 
         <View style={styles.inputArea}>
@@ -167,8 +170,9 @@ function AvaChatContent({
               returnKeyType="send"
             />
             <TouchableOpacity
-              style={styles.sendButton}
+              style={[styles.sendButton, sending && styles.sendButtonDisabled]}
               onPress={() => send(input)}
+              disabled={sending}
             >
               <Send size={18} color={colors.white} />
             </TouchableOpacity>
@@ -222,5 +226,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.sage,
     alignItems: "center",
     justifyContent: "center",
+  },
+  sendButtonDisabled: {
+    opacity: 0.5,
   },
 });

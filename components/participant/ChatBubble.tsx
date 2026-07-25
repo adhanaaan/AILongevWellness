@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { Animated, Easing, Text, View, StyleSheet } from "react-native";
 import { colors, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
 
 export interface ChatBubbleProps {
@@ -11,6 +11,33 @@ export interface ChatBubbleProps {
 export function ChatBubble({ role, children, disclaimer }: ChatBubbleProps) {
   const isUser = role === "user";
 
+  const enterOpacity = useRef(new Animated.Value(0)).current;
+  const enterTranslate = useRef(new Animated.Value(8)).current;
+  const enterScale = useRef(new Animated.Value(0.96)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(enterOpacity, {
+        toValue: 1,
+        duration: 220,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.spring(enterTranslate, {
+        toValue: 0,
+        friction: 8,
+        tension: 60,
+        useNativeDriver: true,
+      }),
+      Animated.spring(enterScale, {
+        toValue: 1,
+        friction: 8,
+        tension: 60,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [enterOpacity, enterTranslate, enterScale]);
+
   return (
     <View
       style={[
@@ -18,11 +45,20 @@ export function ChatBubble({ role, children, disclaimer }: ChatBubbleProps) {
         { alignItems: isUser ? "flex-end" : "flex-start" },
       ]}
     >
-      <View style={[styles.bubble, isUser ? styles.userBubble : styles.avaBubble]}>
+      <Animated.View
+        style={[
+          styles.bubble,
+          isUser ? styles.userBubble : styles.avaBubble,
+          {
+            opacity: enterOpacity,
+            transform: [{ translateY: enterTranslate }, { scale: enterScale }],
+          },
+        ]}
+      >
         <Text style={[styles.text, isUser ? styles.userText : styles.avaText]}>
           {children}
         </Text>
-      </View>
+      </Animated.View>
       {disclaimer && (
         <Text style={styles.disclaimer}>{disclaimer}</Text>
       )}
