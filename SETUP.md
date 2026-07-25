@@ -17,13 +17,15 @@ supabase.com → sign in → **New Project** → name it, set a DB password (sav
 it somewhere safe), pick a region close to Nanjing (Singapore `ap-southeast-1`
 is closest). Takes ~2 minutes to provision.
 
-## 2. Run the schema migration
+## 2. Run the schema migrations
 
 Dashboard → **SQL Editor** → paste the entire contents of
-`supabase/migrations/0001_init.sql` → **Run**.
+`supabase/migrations/0001_init.sql` → **Run**, then do the same for
+`supabase/migrations/0002_add_lifestyle_columns.sql`.
 
-This creates every table, RLS policy, and the RPC functions the app calls for
+0001 creates every table, RLS policy, and the RPC functions the app calls for
 sign-off/release/etc. Safe to re-run (uses `create table if not exists`).
+0002 adds the lifestyle questionnaire columns; also safe to re-run.
 
 ## 3. Turn off email confirmation (recommended for this pilot)
 
