@@ -9,8 +9,8 @@ import { GradientOverlay } from "@/components/ui/GradientOverlay";
 import { colors, fontFamilies, fontSizes, gray, lineHeights, spacing } from "@/lib/theme/tokens";
 
 const BACKGROUND_STOPS = [
-  { offset: "0", color: gray[900] },
-  { offset: "1", color: colors.navy },
+  { offset: "0", color: colors.charcoal },
+  { offset: "1", color: gray[800] },
 ];
 
 export default function IntroLongevityPage() {
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
     alignSelf: "center",
     width: "100%",
     overflow: "hidden",
-    backgroundColor: colors.navy,
+    backgroundColor: colors.charcoal,
   },
   safe: {
     flex: 1,
