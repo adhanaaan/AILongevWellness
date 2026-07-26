@@ -1,13 +1,13 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { ArrowRight } from "lucide-react-native";
-import { GlassCard } from "@/components/ui/GlassCard";
 import { GradientOrb } from "@/components/ui/GradientOrb";
 import {
   colors,
   fontFamilies,
   fontSizes,
   radii,
+  shadows,
   spacing,
 } from "@/lib/theme/tokens";
 
@@ -45,7 +45,7 @@ export function BiologicalAgeHero({ bioAge, chronoAge }: BiologicalAgeHeroProps)
         : "On pace with your age";
 
   return (
-    <GlassCard tint="dark" radius="3xl" padding="lg" style={styles.card}>
+    <View style={styles.card}>
       <GradientOrb tone="amber" size={220} style={styles.orb} />
       <Text style={styles.label}>Biological age</Text>
       <Text style={styles.bioAge}>{bioAge}</Text>
@@ -56,7 +56,7 @@ export function BiologicalAgeHero({ bioAge, chronoAge }: BiologicalAgeHeroProps)
       <Text style={styles.explanation}>
         Calculated from your vascular, metabolic, and mental markers, compared with people your age.
       </Text>
-    </GlassCard>
+    </View>
   );
 }
 
@@ -64,6 +64,10 @@ const styles = StyleSheet.create({
   card: {
     alignItems: "center",
     overflow: "hidden",
+    backgroundColor: colors.navy,
+    borderRadius: radii["3xl"],
+    padding: spacing["2xl"],
+    ...shadows.soft,
   },
   orb: {
     top: -20,
