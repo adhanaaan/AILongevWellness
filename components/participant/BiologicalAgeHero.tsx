@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { ArrowRight } from "lucide-react-native";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { GradientOrb } from "@/components/ui/GradientOrb";
 import {
@@ -15,48 +16,20 @@ export interface BiologicalAgeHeroProps {
   chronoAge: number;
 }
 
-const RULER_MIN = 20;
-const RULER_MAX = 90;
-
-function positionPct(value: number): number {
-  return Math.max(0, Math.min(100, ((value - RULER_MIN) / (RULER_MAX - RULER_MIN)) * 100));
-}
-
-// Plots both ages on one track instead of highlighting a single abstract tick
-// -- the whole "biological vs. chronological" story only lands if you can
-// actually see how far the two positions sit apart, not just read a delta
-// pill on its own. Bio's label sits above the track, chrono's below, so they
-// never collide even when the gap between them is small.
-function AgeCompareRuler({ bioAge, chronoAge }: { bioAge: number; chronoAge: number }) {
-  const bioPct = positionPct(bioAge);
-  const chronoPct = positionPct(chronoAge);
-  const fillLeft = Math.min(bioPct, chronoPct);
-  const fillWidth = Math.abs(bioPct - chronoPct);
-
+// A tick-based ruler with two markers close together (a small delta) reads
+// as cluttered on a phone-width card -- a plain side-by-side comparison
+// scales cleanly at any delta and reads at a glance, so this replaces it.
+function AgeCompareRow({ bioAge, chronoAge }: { bioAge: number; chronoAge: number }) {
   return (
-    <View style={styles.rulerWrap}>
-      <View style={styles.labelRow}>
-        <View style={[styles.bioLabelAnchor, { left: `${bioPct}%` }]}>
-          <Text style={styles.bioLabelText} numberOfLines={1}>
-            Biological {bioAge}
-          </Text>
-        </View>
+    <View style={styles.compareRow}>
+      <View style={styles.compareItem}>
+        <Text style={styles.compareValue}>{chronoAge}</Text>
+        <Text style={styles.compareLabel}>Your age</Text>
       </View>
-
-      <View style={styles.track}>
-        {fillWidth > 0 && (
-          <View style={[styles.trackFill, { left: `${fillLeft}%`, width: `${fillWidth}%` }]} />
-        )}
-        <View style={[styles.dot, styles.chronoDot, { left: `${chronoPct}%` }]} />
-        <View style={[styles.dot, styles.bioDot, { left: `${bioPct}%` }]} />
-      </View>
-
-      <View style={styles.labelRow}>
-        <View style={[styles.chronoLabelAnchor, { left: `${chronoPct}%` }]}>
-          <Text style={styles.chronoLabelText} numberOfLines={1}>
-            Your age {chronoAge}
-          </Text>
-        </View>
+      <ArrowRight size={18} color={colors.inkOnDarkMuted} />
+      <View style={styles.compareItem}>
+        <Text style={[styles.compareValue, styles.compareValueBio]}>{bioAge}</Text>
+        <Text style={styles.compareLabel}>Biological</Text>
       </View>
     </View>
   );
@@ -79,7 +52,7 @@ export function BiologicalAgeHero({ bioAge, chronoAge }: BiologicalAgeHeroProps)
       <View style={styles.pill}>
         <Text style={styles.pillText}>{deltaLabel}</Text>
       </View>
-      <AgeCompareRuler bioAge={bioAge} chronoAge={chronoAge} />
+      <AgeCompareRow bioAge={bioAge} chronoAge={chronoAge} />
       <Text style={styles.explanation}>
         Calculated from your vascular, metabolic, and mental markers, compared with people your age.
       </Text>
@@ -122,61 +95,32 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.labelMd,
     color: colors.navy,
   },
-  rulerWrap: {
+  compareRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.xl,
     width: "100%",
+    paddingTop: spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.15)",
   },
-  labelRow: {
-    height: 18,
-    position: "relative",
+  compareItem: {
+    alignItems: "center",
   },
-  bioLabelAnchor: {
-    position: "absolute",
-    top: 0,
+  compareValue: {
+    fontFamily: fontFamilies.displayBold,
+    fontSize: fontSizes.headlineMd,
+    color: colors.inkOnDarkMuted,
   },
-  bioLabelText: {
-    fontFamily: fontFamilies.bodySemiBold,
-    fontSize: fontSizes.caption,
-    color: colors.inkOnDark,
+  compareValueBio: {
+    color: colors.amberLight,
   },
-  chronoLabelAnchor: {
-    position: "absolute",
-    top: 4,
-  },
-  chronoLabelText: {
+  compareLabel: {
     fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.caption,
     color: colors.inkOnDarkMuted,
-  },
-  track: {
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    position: "relative",
-  },
-  trackFill: {
-    position: "absolute",
-    top: 0,
-    bottom: 0,
-    borderRadius: 2,
-    backgroundColor: colors.amber,
-  },
-  dot: {
-    position: "absolute",
-    top: -4,
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    marginLeft: -6,
-  },
-  bioDot: {
-    backgroundColor: colors.amber,
-    borderWidth: 2,
-    borderColor: colors.navy,
-  },
-  chronoDot: {
-    backgroundColor: colors.navy,
-    borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.6)",
+    marginTop: 2,
   },
   explanation: {
     fontFamily: fontFamilies.body,
