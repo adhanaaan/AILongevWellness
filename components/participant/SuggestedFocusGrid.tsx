@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Sparkles } from "lucide-react-native";
+import { Footprints, Moon, Wind, Utensils, Dumbbell, Apple, Sparkles, type LucideIcon } from "lucide-react-native";
 import {
   colors,
   fontSizes,
@@ -14,17 +14,37 @@ export interface SuggestedFocusGridProps {
   items: string[];
 }
 
+// Every focus item used to share one identical Sparkles icon regardless of
+// topic — matched by keyword instead, so the grid actually looks like four
+// distinct areas rather than four copies of the same tile. Falls back to
+// Sparkles for any phrasing that doesn't match a known topic.
+const ICON_KEYWORDS: Array<[RegExp, LucideIcon]> = [
+  [/movement|activity|walk|step/i, Footprints],
+  [/sleep|rest/i, Moon],
+  [/stress|recovery|breath|mind/i, Wind],
+  [/nutrition|diet|meal|food/i, Utensils],
+  [/exercise|fitness|strength|gym/i, Dumbbell],
+  [/weight|metabolic/i, Apple],
+];
+
+function iconFor(label: string): LucideIcon {
+  return ICON_KEYWORDS.find(([pattern]) => pattern.test(label))?.[1] ?? Sparkles;
+}
+
 export function SuggestedFocusGrid({ items }: SuggestedFocusGridProps) {
   return (
     <View style={styles.grid}>
-      {items.map((item, index) => (
-        <View key={index} style={styles.card}>
-          <View style={styles.iconCircle}>
-            <Sparkles size={18} color={colors.sage} />
+      {items.map((item, index) => {
+        const Icon = iconFor(item);
+        return (
+          <View key={index} style={styles.card}>
+            <View style={styles.iconCircle}>
+              <Icon size={18} color={colors.sage} />
+            </View>
+            <Text style={styles.label}>{item}</Text>
           </View>
-          <Text style={styles.label}>{item}</Text>
-        </View>
-      ))}
+        );
+      })}
     </View>
   );
 }
