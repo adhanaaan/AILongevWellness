@@ -17,24 +17,47 @@ export interface BiologicalAgeHeroProps {
 
 const RULER_MIN = 20;
 const RULER_MAX = 90;
-const RULER_TICKS = 28;
 
-function TickRuler({ value }: { value: number }) {
-  const markerIndex = Math.round(
-    ((value - RULER_MIN) / (RULER_MAX - RULER_MIN)) * (RULER_TICKS - 1)
-  );
+function positionPct(value: number): number {
+  return Math.max(0, Math.min(100, ((value - RULER_MIN) / (RULER_MAX - RULER_MIN)) * 100));
+}
+
+// Plots both ages on one track instead of highlighting a single abstract tick
+// -- the whole "biological vs. chronological" story only lands if you can
+// actually see how far the two positions sit apart, not just read a delta
+// pill on its own. Bio's label sits above the track, chrono's below, so they
+// never collide even when the gap between them is small.
+function AgeCompareRuler({ bioAge, chronoAge }: { bioAge: number; chronoAge: number }) {
+  const bioPct = positionPct(bioAge);
+  const chronoPct = positionPct(chronoAge);
+  const fillLeft = Math.min(bioPct, chronoPct);
+  const fillWidth = Math.abs(bioPct - chronoPct);
 
   return (
-    <View style={styles.ruler}>
-      {Array.from({ length: RULER_TICKS }).map((_, i) => (
-        <View
-          key={i}
-          style={[
-            styles.tick,
-            i === markerIndex ? styles.tickActive : styles.tickInactive,
-          ]}
-        />
-      ))}
+    <View style={styles.rulerWrap}>
+      <View style={styles.labelRow}>
+        <View style={[styles.bioLabelAnchor, { left: `${bioPct}%` }]}>
+          <Text style={styles.bioLabelText} numberOfLines={1}>
+            Biological {bioAge}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.track}>
+        {fillWidth > 0 && (
+          <View style={[styles.trackFill, { left: `${fillLeft}%`, width: `${fillWidth}%` }]} />
+        )}
+        <View style={[styles.dot, styles.chronoDot, { left: `${chronoPct}%` }]} />
+        <View style={[styles.dot, styles.bioDot, { left: `${bioPct}%` }]} />
+      </View>
+
+      <View style={styles.labelRow}>
+        <View style={[styles.chronoLabelAnchor, { left: `${chronoPct}%` }]}>
+          <Text style={styles.chronoLabelText} numberOfLines={1}>
+            Your age {chronoAge}
+          </Text>
+        </View>
+      </View>
     </View>
   );
 }
@@ -46,7 +69,7 @@ export function BiologicalAgeHero({ bioAge, chronoAge }: BiologicalAgeHeroProps)
       ? `${delta} years younger`
       : delta < 0
         ? `${Math.abs(delta)} years older`
-        : "On pace with age";
+        : "On pace with your age";
 
   return (
     <GlassCard tint="dark" radius="3xl" padding="lg" style={styles.card}>
@@ -56,7 +79,7 @@ export function BiologicalAgeHero({ bioAge, chronoAge }: BiologicalAgeHeroProps)
       <View style={styles.pill}>
         <Text style={styles.pillText}>{deltaLabel}</Text>
       </View>
-      <TickRuler value={bioAge} />
+      <AgeCompareRuler bioAge={bioAge} chronoAge={chronoAge} />
       <Text style={styles.explanation}>
         Calculated from your vascular, metabolic, and mental markers, compared with people your age.
       </Text>
@@ -99,29 +122,67 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.labelMd,
     color: colors.navy,
   },
-  ruler: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 4,
+  rulerWrap: {
     width: "100%",
   },
-  tick: {
-    flex: 1,
-    borderRadius: 1,
+  labelRow: {
+    height: 18,
+    position: "relative",
   },
-  tickInactive: {
-    height: 10,
-    backgroundColor: "rgba(255,255,255,0.25)",
+  bioLabelAnchor: {
+    position: "absolute",
+    top: 0,
   },
-  tickActive: {
-    height: 20,
+  bioLabelText: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.caption,
+    color: colors.inkOnDark,
+  },
+  chronoLabelAnchor: {
+    position: "absolute",
+    top: 4,
+  },
+  chronoLabelText: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.caption,
+    color: colors.inkOnDarkMuted,
+  },
+  track: {
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    position: "relative",
+  },
+  trackFill: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    borderRadius: 2,
     backgroundColor: colors.amber,
+  },
+  dot: {
+    position: "absolute",
+    top: -4,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginLeft: -6,
+  },
+  bioDot: {
+    backgroundColor: colors.amber,
+    borderWidth: 2,
+    borderColor: colors.navy,
+  },
+  chronoDot: {
+    backgroundColor: colors.navy,
+    borderWidth: 2,
+    borderColor: "rgba(255,255,255,0.6)",
   },
   explanation: {
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.inkOnDarkMuted,
     textAlign: "center",
-    marginTop: spacing.md,
+    marginTop: spacing.lg,
   },
 });
