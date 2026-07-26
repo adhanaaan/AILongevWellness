@@ -25,6 +25,7 @@ import type {
 } from "../types/db";
 import type { Repository, SignedCard } from "./repository";
 import { createSupabaseRepository } from "./supabase";
+import { computeUnlockedSections } from "../onboarding/flow";
 
 export const DEMO_PARTICIPANT_ID = "james-chen";
 
@@ -80,26 +81,6 @@ const ONBOARDING_SECTIONS: OnboardingSectionKey[] = [
   "lab_reports",
   "recognize",
 ];
-
-/** personal_info + lifestyle (the fixed "Questionnaire" pair) are always open;
- * the middle trio unlocks once both are done, and recognize unlocks once the
- * middle trio are all done. */
-function computeUnlockedSections(
-  sections: Record<OnboardingSectionKey, OnboardingSectionStatus>
-): OnboardingSectionKey[] {
-  const unlocked: OnboardingSectionKey[] = ["personal_info", "lifestyle"];
-  if (sections.personal_info === "done" && sections.lifestyle === "done") {
-    unlocked.push("wearables", "body_composition", "lab_reports");
-  }
-  if (
-    sections.wearables === "done" &&
-    sections.body_composition === "done" &&
-    sections.lab_reports === "done"
-  ) {
-    unlocked.push("recognize");
-  }
-  return unlocked;
-}
 
 function freshOnboardingProgress(participantId: string): OnboardingProgress {
   const sections = Object.fromEntries(
