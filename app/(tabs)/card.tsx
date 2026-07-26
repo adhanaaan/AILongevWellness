@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useRouter } from "expo-router";
-import { MessageCircle } from "lucide-react-native";
+import { MessageCircle, ListChecks, Target } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { BiologicalAgeHero } from "@/components/participant/BiologicalAgeHero";
 import { PillarStrip } from "@/components/participant/PillarStrip";
@@ -127,7 +127,12 @@ export default function CardPage() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Key contributors</Text>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionIconCircle}>
+              <ListChecks size={16} color={colors.sageDark} />
+            </View>
+            <Text style={styles.sectionTitle}>Key contributors</Text>
+          </View>
           <View style={styles.contributorList}>
             {aiDraft.key_contributors.map((c) => (
               <KeyContributorItem key={c.text} text={c.text} tone={c.tone} />
@@ -137,7 +142,12 @@ export default function CardPage() {
 
         {(topFocus || topDiscussionPoint) && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Your next steps</Text>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionIconCircle}>
+                <Target size={16} color={colors.sageDark} />
+              </View>
+              <Text style={styles.sectionTitle}>Your next steps</Text>
+            </View>
             <TopRecommendation
               topFocus={topFocus}
               topDiscussionPoint={topDiscussionPoint}
@@ -183,11 +193,24 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   section: { marginTop: 24 },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: 12,
+  },
+  sectionIconCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: radii.full,
+    backgroundColor: colors.sageTint,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   sectionTitle: {
     fontSize: fontSizes.labelMd,
     fontWeight: "600",
     color: colors.charcoal,
-    marginBottom: 12,
   },
   narrative: {
     fontSize: fontSizes.bodyMd,
