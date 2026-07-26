@@ -1,12 +1,13 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { GlassCard } from "@/components/ui/GlassCard";
+import { ArrowRight } from "lucide-react-native";
 import { GradientOrb } from "@/components/ui/GradientOrb";
 import {
   colors,
   fontFamilies,
   fontSizes,
   radii,
+  shadows,
   spacing,
 } from "@/lib/theme/tokens";
 
@@ -15,26 +16,21 @@ export interface BiologicalAgeHeroProps {
   chronoAge: number;
 }
 
-const RULER_MIN = 20;
-const RULER_MAX = 90;
-const RULER_TICKS = 28;
-
-function TickRuler({ value }: { value: number }) {
-  const markerIndex = Math.round(
-    ((value - RULER_MIN) / (RULER_MAX - RULER_MIN)) * (RULER_TICKS - 1)
-  );
-
+// A tick-based ruler with two markers close together (a small delta) reads
+// as cluttered on a phone-width card -- a plain side-by-side comparison
+// scales cleanly at any delta and reads at a glance, so this replaces it.
+function AgeCompareRow({ bioAge, chronoAge }: { bioAge: number; chronoAge: number }) {
   return (
-    <View style={styles.ruler}>
-      {Array.from({ length: RULER_TICKS }).map((_, i) => (
-        <View
-          key={i}
-          style={[
-            styles.tick,
-            i === markerIndex ? styles.tickActive : styles.tickInactive,
-          ]}
-        />
-      ))}
+    <View style={styles.compareRow}>
+      <View style={styles.compareItem}>
+        <Text style={styles.compareValue}>{chronoAge}</Text>
+        <Text style={styles.compareLabel}>Your age</Text>
+      </View>
+      <ArrowRight size={18} color={colors.inkOnDarkMuted} />
+      <View style={styles.compareItem}>
+        <Text style={[styles.compareValue, styles.compareValueBio]}>{bioAge}</Text>
+        <Text style={styles.compareLabel}>Biological</Text>
+      </View>
     </View>
   );
 }
@@ -46,21 +42,21 @@ export function BiologicalAgeHero({ bioAge, chronoAge }: BiologicalAgeHeroProps)
       ? `${delta} years younger`
       : delta < 0
         ? `${Math.abs(delta)} years older`
-        : "On pace with age";
+        : "On pace with your age";
 
   return (
-    <GlassCard tint="dark" radius="3xl" padding="lg" style={styles.card}>
+    <View style={styles.card}>
       <GradientOrb tone="amber" size={220} style={styles.orb} />
       <Text style={styles.label}>Biological age</Text>
       <Text style={styles.bioAge}>{bioAge}</Text>
       <View style={styles.pill}>
         <Text style={styles.pillText}>{deltaLabel}</Text>
       </View>
-      <TickRuler value={bioAge} />
+      <AgeCompareRow bioAge={bioAge} chronoAge={chronoAge} />
       <Text style={styles.explanation}>
         Calculated from your vascular, metabolic, and mental markers, compared with people your age.
       </Text>
-    </GlassCard>
+    </View>
   );
 }
 
@@ -68,6 +64,10 @@ const styles = StyleSheet.create({
   card: {
     alignItems: "center",
     overflow: "hidden",
+    backgroundColor: colors.navy,
+    borderRadius: radii["3xl"],
+    padding: spacing["2xl"],
+    ...shadows.soft,
   },
   orb: {
     top: -20,
@@ -99,29 +99,38 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.labelMd,
     color: colors.navy,
   },
-  ruler: {
+  compareRow: {
     flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 4,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.xl,
     width: "100%",
+    paddingTop: spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255,255,255,0.15)",
   },
-  tick: {
-    flex: 1,
-    borderRadius: 1,
+  compareItem: {
+    alignItems: "center",
   },
-  tickInactive: {
-    height: 10,
-    backgroundColor: "rgba(255,255,255,0.25)",
+  compareValue: {
+    fontFamily: fontFamilies.displayBold,
+    fontSize: fontSizes.headlineMd,
+    color: colors.inkOnDarkMuted,
   },
-  tickActive: {
-    height: 20,
-    backgroundColor: colors.amber,
+  compareValueBio: {
+    color: colors.amberLight,
+  },
+  compareLabel: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.caption,
+    color: colors.inkOnDarkMuted,
+    marginTop: 2,
   },
   explanation: {
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.inkOnDarkMuted,
     textAlign: "center",
-    marginTop: spacing.md,
+    marginTop: spacing.lg,
   },
 });
