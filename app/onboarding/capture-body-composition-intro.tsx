@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform, ActivityIndicator } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import * as DocumentPicker from "expo-document-picker";
 import { PersonStanding, Scale, Flame, Droplets, UploadCloud, FileImage } from "lucide-react-native";
 import { CaptureFlowStepper } from "@/components/layout/CaptureFlowStepper";
@@ -26,6 +26,8 @@ const BUTTON_GRADIENT_STOPS = [
 export default function CaptureBodyCompositionIntroPage() {
   const router = useRouter();
   const { participantId } = useAuth();
+  const { mode } = useLocalSearchParams<{ mode?: string }>();
+  const isEditing = mode === "edit";
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,12 +39,21 @@ export default function CaptureBodyCompositionIntroPage() {
     // composition scans yet, so this just gives the participant a brief, honest
     // "working on it" beat before we mark the section done.
     await new Promise((resolve) => setTimeout(resolve, 400));
-    await updateSectionStatusAction("body_composition", "done", participantId);
     await updateCaptureChannelAction(participantId, "body_composition", {
       status: "complete",
       entered_by: "participant",
     });
-    router.replace("/onboarding/capture");
+    if (isEditing) {
+      // Reached from outside onboarding (e.g. Tracking tab, post-onboarding) —
+      // onboarding progress is a per-session in-memory record on the real backend
+      // (doesn't survive a reload), so marking a section "done" here could throw
+      // if it's no longer in the unlocked list. Just go back to wherever this
+      // was opened from.
+      router.back();
+    } else {
+      await updateSectionStatusAction("body_composition", "done", participantId);
+      router.replace("/onboarding/capture");
+    }
   }
 
   async function onPickFile() {

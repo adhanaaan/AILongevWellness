@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform, ActivityIndicator } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import * as DocumentPicker from "expo-document-picker";
 import { FileText, Droplet, Activity, HeartPulse, UploadCloud, Camera } from "lucide-react-native";
 import { CaptureFlowStepper } from "@/components/layout/CaptureFlowStepper";
@@ -33,6 +33,8 @@ const BUTTON_GRADIENT_STOPS = [
 export default function CaptureLabReportsIntroPage() {
   const router = useRouter();
   const { participantId, session } = useAuth();
+  const { mode } = useLocalSearchParams<{ mode?: string }>();
+  const isEditing = mode === "edit";
   const [uploading, setUploading] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,12 +46,21 @@ export default function CaptureLabReportsIntroPage() {
     // wait on, so this just gives the participant a brief, honest "working on it"
     // beat before we mark the section done.
     await new Promise((resolve) => setTimeout(resolve, 400));
-    await updateSectionStatusAction("lab_reports", "done", participantId);
     await updateCaptureChannelAction(participantId, "lab_report", {
       status: "complete",
       entered_by: "participant",
     });
-    router.replace("/onboarding/capture");
+    if (isEditing) {
+      // Reached from outside onboarding (e.g. Tracking tab, post-onboarding) —
+      // onboarding progress is a per-session in-memory record on the real backend
+      // (doesn't survive a reload), so marking a section "done" here could throw
+      // if it's no longer in the unlocked list. Just go back to wherever this
+      // was opened from.
+      router.back();
+    } else {
+      await updateSectionStatusAction("lab_reports", "done", participantId);
+      router.replace("/onboarding/capture");
+    }
   }
 
   async function onPickFile() {

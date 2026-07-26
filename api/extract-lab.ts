@@ -4,6 +4,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { LAB_CATALOG_BY_KEY } from "../lib/ai/labCatalog";
 import { BUCKET_BY_KIND } from "../lib/data/storageBuckets";
 import { convertToTargetUnit } from "../lib/ai/unitConversion";
+import { flagIfPastSignoff } from "../lib/data/pipelineAttention";
 
 // This is a Vercel serverless function (not an Expo Router API route) — see
 // vercel.json's rewrite, which excludes /api/* from the SPA catch-all so
@@ -229,6 +230,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.status(500).json({ error: upsertErr.message });
       return;
     }
+    await flagIfPastSignoff(serviceClient, participantId, "New lab report uploaded — biomarkers pending review");
   }
 
   await serviceClient.from("files").update({ extracted: true }).eq("id", fileId);

@@ -4,6 +4,7 @@ import JSZip from "jszip";
 import { parseAppleHealthExport } from "../lib/ai/appleHealthParser";
 import { WEARABLE_CATALOG_BY_KEY } from "../lib/ai/wearableCatalog";
 import { BUCKET_BY_KIND } from "../lib/data/storageBuckets";
+import { flagIfPastSignoff } from "../lib/data/pipelineAttention";
 
 // This is a Vercel serverless function — see vercel.json's rewrite excluding /api/*
 // from the SPA catch-all.
@@ -115,6 +116,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       res.status(500).json({ error: upsertErr.message });
       return;
     }
+    await flagIfPastSignoff(serviceClient, participantId, "New wearable export uploaded — biomarkers pending review");
   }
 
   await serviceClient.from("files").update({ extracted: true }).eq("id", fileId);

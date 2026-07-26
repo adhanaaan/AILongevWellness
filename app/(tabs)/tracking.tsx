@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
+import { useRouter } from "expo-router";
 import {
   Moon,
   Activity,
@@ -11,6 +12,11 @@ import {
   Frown,
   Minus,
   Plus,
+  Watch,
+  PersonStanding,
+  FileText,
+  ChevronRight,
+  type LucideIcon,
 } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { Card } from "@/components/ui/Card";
@@ -34,6 +40,27 @@ const MOODS = [
 ] as const;
 
 const SUPPLEMENTS = ["Omega-3", "Vitamin D", "Magnesium"];
+
+const ADD_DATA_ROWS: Array<{ Icon: LucideIcon; label: string; description: string; route: string }> = [
+  {
+    Icon: FileText,
+    label: "Lab or CGM report",
+    description: "New screening, lab panel, or glucose monitor summary",
+    route: "/onboarding/capture-lab-reports-intro",
+  },
+  {
+    Icon: Watch,
+    label: "Wearable export",
+    description: "Apple Health export — heart rate, sleep, activity",
+    route: "/onboarding/capture-wearables-intro",
+  },
+  {
+    Icon: PersonStanding,
+    label: "Body composition scan",
+    description: "A new scan printout or photo",
+    route: "/onboarding/capture-body-composition-intro",
+  },
+];
 
 // Fixed pixel height for the trend bar track: percentage heights on a flex-column
 // child don't reliably resolve on react-native-web, so bar fill is computed in px.
@@ -72,9 +99,14 @@ function dayLabel(dateStr: string): string {
 }
 
 export default function TrackingPage() {
+  const router = useRouter();
   const { participantId } = useAuth();
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [loading, setLoading] = useState(true);
+
+  function uploadMoreData(route: string) {
+    router.push({ pathname: route as never, params: { mode: "edit" } });
+  }
 
   const loadLogs = useCallback(() => {
     if (!participantId) return;
@@ -283,6 +315,27 @@ export default function TrackingPage() {
           Wearable data syncs automatically — no need to log steps or sleep
           manually.
         </Text>
+
+        <Text style={styles.sectionTitle}>Add more data</Text>
+        <Card style={styles.addDataCard}>
+          {ADD_DATA_ROWS.map(({ Icon, label, description, route }, i) => (
+            <TouchableOpacity
+              key={route}
+              style={[styles.addDataRow, i > 0 && styles.addDataRowDivider]}
+              onPress={() => uploadMoreData(route)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.addDataIcon}>
+                <Icon size={18} color={colors.sageDark} />
+              </View>
+              <View style={styles.addDataText}>
+                <Text style={styles.addDataLabel}>{label}</Text>
+                <Text style={styles.addDataDescription}>{description}</Text>
+              </View>
+              <ChevronRight size={18} color={colors.inkMuted} />
+            </TouchableOpacity>
+          ))}
+        </Card>
       </ScrollView>
     </MobileShell>
   );
@@ -414,5 +467,41 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
     marginTop: 24,
+  },
+  sectionTitle: {
+    fontSize: fontSizes.labelMd,
+    fontWeight: "600",
+    color: colors.charcoal,
+    marginTop: 24,
+    marginBottom: 8,
+  },
+  addDataCard: { padding: 0 },
+  addDataRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    padding: 16,
+  },
+  addDataRowDivider: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  addDataIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: radii.full,
+    backgroundColor: colors.sageTint,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  addDataText: { flex: 1, gap: 2 },
+  addDataLabel: {
+    fontSize: fontSizes.bodyMd,
+    fontWeight: "600",
+    color: colors.charcoal,
+  },
+  addDataDescription: {
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
   },
 });
