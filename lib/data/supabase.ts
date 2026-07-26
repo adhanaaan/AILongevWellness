@@ -4,6 +4,7 @@ import { Platform } from "react-native";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/config/env";
 import type { Repository, SignedCard, UploadableFile } from "./repository";
 import { BUCKET_BY_KIND } from "./storageBuckets";
+import { computeUnlockedSections, deriveOnboardingProgress } from "../onboarding/flow";
 import type {
   AiDraft,
   Biomarker,
@@ -25,39 +26,6 @@ import type {
 } from "../types/db";
 
 const CHANNELS: CaptureChannelName[] = ["manual", "wearables", "body_composition", "lab_report", "recognize"];
-
-const ONBOARDING_SECTIONS: OnboardingSectionKey[] = [
-  "personal_info",
-  "lifestyle",
-  "wearables",
-  "body_composition",
-  "lab_reports",
-  "recognize",
-];
-
-function computeUnlockedSections(
-  sections: Record<OnboardingSectionKey, OnboardingSectionStatus>
-): OnboardingSectionKey[] {
-  const unlocked: OnboardingSectionKey[] = ["personal_info", "lifestyle"];
-  if (sections.personal_info === "done" && sections.lifestyle === "done") {
-    unlocked.push("wearables", "body_composition", "lab_reports");
-  }
-  if (
-    sections.wearables === "done" &&
-    sections.body_composition === "done" &&
-    sections.lab_reports === "done"
-  ) {
-    unlocked.push("recognize");
-  }
-  return unlocked;
-}
-
-function freshOnboardingProgress(participantId: string): OnboardingProgress {
-  const sections = Object.fromEntries(
-    ONBOARDING_SECTIONS.map((s) => [s, "not_started" as OnboardingSectionStatus])
-  ) as Record<OnboardingSectionKey, OnboardingSectionStatus>;
-  return { participant_id: participantId, sections, unlocked: computeUnlockedSections(sections) };
-}
 
 function must<T>(data: T | null, error: { message: string } | null, label: string): T {
   if (error) throw new Error(error.message);
@@ -95,9 +63,12 @@ export function getSupabaseClient(): SupabaseClient | null {
 export class SupabaseRepository implements Repository {
   private client: SupabaseClient;
   private listeners: Array<() => void> = [];
-  // No onboarding_progress table/migration yet (this session scoped the hub-and-spoke
-  // capture sub-flow to the mock data layer only) — held in memory per session so the
-  // real-backend path still compiles and works, but progress won't survive a reload.
+  // No onboarding_progress table/migration yet — cached in memory per session
+  // rather than round-tripping capture_channels on every read. Safe to do
+  // because getOnboardingProgress() below always seeds a cache miss by
+  // deriving from the real, persisted capture_channels table (never from a
+  // blank slate), so a fresh sign-in reconstructs a returning participant's
+  // actual progress instead of looking like onboarding was never done.
   private onboardingProgress = new Map<string, OnboardingProgress>();
 
   constructor(client: SupabaseClient) {
@@ -188,9 +159,10 @@ export class SupabaseRepository implements Repository {
   async getOnboardingProgress(participantId: string): Promise<OnboardingProgress> {
     const existing = this.onboardingProgress.get(participantId);
     if (existing) return existing;
-    const fresh = freshOnboardingProgress(participantId);
-    this.onboardingProgress.set(participantId, fresh);
-    return fresh;
+    const channels = await this.getCaptureChannels(participantId);
+    const derived = deriveOnboardingProgress(participantId, channels);
+    this.onboardingProgress.set(participantId, derived);
+    return derived;
   }
 
   async updateSectionStatus(
