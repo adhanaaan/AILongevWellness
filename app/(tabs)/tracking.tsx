@@ -304,7 +304,6 @@ export default function TrackingPage() {
                 <Toggle
                   checked={(todayLog?.supplements ?? []).includes(s)}
                   onChange={(v) => toggleSupplement(s, v)}
-                  label={s}
                 />
               </View>
             ))}

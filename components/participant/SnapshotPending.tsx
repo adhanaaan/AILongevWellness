@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, Easing, AccessibilityInfo, StyleSheet, Text, View } from "react-native";
+import { Animated, Easing, AccessibilityInfo, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { Check, FileCheck2, FilePen, FileSearch, Lock } from "lucide-react-native";
 import { GradientOrb } from "@/components/ui/GradientOrb";
@@ -227,111 +227,124 @@ export function SnapshotPending({ pipelineState, preview }: SnapshotPendingProps
   }, [stepIndex]);
 
   return (
-    <View style={styles.page}>
-      <GradientOrb tone="teal" size={220} style={styles.orbTop} />
-      <GradientOrb tone="amber" size={200} style={styles.orbBottom} />
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.page}>
+        <GradientOrb tone="teal" size={220} style={styles.orbTop} />
+        <GradientOrb tone="amber" size={200} style={styles.orbBottom} />
 
-      <Animated.View
-        style={{ opacity: enterOpacity, transform: [{ translateY: enterTranslate }] }}
-      >
-        <Text style={styles.overline}>YOUR WELLNESS SNAPSHOT</Text>
+        <Animated.View
+          style={{ opacity: enterOpacity, transform: [{ translateY: enterTranslate }] }}
+        >
+          <Text style={styles.overline}>YOUR WELLNESS SNAPSHOT</Text>
 
-        <Animated.View style={{ opacity: textOpacity }}>
-          <Text style={styles.headline}>{content.headline}</Text>
-          <Text style={styles.body}>{content.body}</Text>
+          <Animated.View style={{ opacity: textOpacity }}>
+            <Text style={styles.headline}>{content.headline}</Text>
+            <Text style={styles.body}>{content.body}</Text>
+          </Animated.View>
+
+          <View style={styles.stepper}>
+            {STEP_META.map((step, index) => {
+              const isDone = index < stepIndex;
+              const isActive = index === stepIndex;
+              const isLast = index === STEP_META.length - 1;
+              const StepIcon = step.Icon;
+
+              return (
+                <React.Fragment key={step.label}>
+                  <View style={styles.stepItem}>
+                    {isDone ? (
+                      <View style={[styles.circle, styles.circleDone]}>
+                        <Check size={18} color={colors.white} strokeWidth={3} />
+                      </View>
+                    ) : isActive ? (
+                      <Animated.View
+                        style={[styles.circle, styles.circleActive, { opacity: pulse }]}
+                      >
+                        <StepIcon size={18} color={colors.sageDark} />
+                      </Animated.View>
+                    ) : (
+                      <View style={[styles.circle, styles.circleLocked]}>
+                        <Lock size={15} color={colors.inkMuted} />
+                      </View>
+                    )}
+                    <Text
+                      style={[
+                        styles.stepLabel,
+                        isDone && styles.stepLabelDone,
+                        isActive && styles.stepLabelActive,
+                      ]}
+                    >
+                      {step.label}
+                    </Text>
+                  </View>
+                  {!isLast && (
+                    <View
+                      style={[
+                        styles.stepLine,
+                        { backgroundColor: isDone ? colors.sage : colors.border },
+                      ]}
+                    />
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </View>
+
+          <View style={styles.progressTrack}>
+            <Animated.View
+              style={[
+                styles.progressFill,
+                {
+                  width: progress.interpolate({
+                    inputRange: [0, 100],
+                    outputRange: ["0%", "100%"],
+                  }),
+                },
+              ]}
+            />
+          </View>
+
+          {content.detail && (
+            <Animated.Text style={[styles.detail, { opacity: textOpacity }]}>
+              {content.detail}
+            </Animated.Text>
+          )}
+
+          {content.primaryLabel && content.primaryRoute && (
+            <Button size="lg" style={styles.primaryButton} onPress={() => router.push(content.primaryRoute!)}>
+              {content.primaryLabel}
+            </Button>
+          )}
         </Animated.View>
 
-        <View style={styles.stepper}>
-          {STEP_META.map((step, index) => {
-            const isDone = index < stepIndex;
-            const isActive = index === stepIndex;
-            const isLast = index === STEP_META.length - 1;
-            const StepIcon = step.Icon;
+        {preview && <PreliminaryPreview preview={preview} />}
 
-            return (
-              <React.Fragment key={step.label}>
-                <View style={styles.stepItem}>
-                  {isDone ? (
-                    <View style={[styles.circle, styles.circleDone]}>
-                      <Check size={18} color={colors.white} strokeWidth={3} />
-                    </View>
-                  ) : isActive ? (
-                    <Animated.View
-                      style={[styles.circle, styles.circleActive, { opacity: pulse }]}
-                    >
-                      <StepIcon size={18} color={colors.sageDark} />
-                    </Animated.View>
-                  ) : (
-                    <View style={[styles.circle, styles.circleLocked]}>
-                      <Lock size={15} color={colors.inkMuted} />
-                    </View>
-                  )}
-                  <Text
-                    style={[
-                      styles.stepLabel,
-                      isDone && styles.stepLabelDone,
-                      isActive && styles.stepLabelActive,
-                    ]}
-                  >
-                    {step.label}
-                  </Text>
-                </View>
-                {!isLast && (
-                  <View
-                    style={[
-                      styles.stepLine,
-                      { backgroundColor: isDone ? colors.sage : colors.border },
-                    ]}
-                  />
-                )}
-              </React.Fragment>
-            );
-          })}
-        </View>
-
-        <View style={styles.progressTrack}>
-          <Animated.View
-            style={[
-              styles.progressFill,
-              {
-                width: progress.interpolate({
-                  inputRange: [0, 100],
-                  outputRange: ["0%", "100%"],
-                }),
-              },
-            ]}
-          />
-        </View>
-
-        {content.detail && (
-          <Animated.Text style={[styles.detail, { opacity: textOpacity }]}>
-            {content.detail}
-          </Animated.Text>
-        )}
-
-        {content.primaryLabel && content.primaryRoute && (
-          <Button size="lg" style={styles.primaryButton} onPress={() => router.push(content.primaryRoute!)}>
-            {content.primaryLabel}
-          </Button>
-        )}
-      </Animated.View>
-
-      {preview && <PreliminaryPreview preview={preview} />}
-
-      <Animated.View
-        style={{
-          opacity: calloutOpacity,
-          transform: [{ translateY: calloutTranslate }],
-          marginTop: spacing["2xl"],
-        }}
-      >
-        <CheckInCallout />
-      </Animated.View>
-    </View>
+        <Animated.View
+          style={{
+            opacity: calloutOpacity,
+            transform: [{ translateY: calloutTranslate }],
+            marginTop: spacing["2xl"],
+          }}
+        >
+          <CheckInCallout />
+        </Animated.View>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: spacing["3xl"],
+  },
   page: {
     marginTop: spacing.lg,
   },
