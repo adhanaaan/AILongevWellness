@@ -8,6 +8,8 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { submitCaptureAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { isSupabaseConfigured } from "@/lib/config/env";
+import { generateDraft } from "@/lib/ai/client";
 import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 
 const STATUS_LINES = [
@@ -24,7 +26,7 @@ function statusForProgress(progress: number): string {
 
 export default function CaptureCalculatingPage() {
   const router = useRouter();
-  const { participantId } = useAuth();
+  const { participantId, session } = useAuth();
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const submittedRef = useRef(false);
@@ -50,6 +52,13 @@ export default function CaptureCalculatingPage() {
     (async () => {
       try {
         await submitCaptureAction(participantId ?? undefined);
+        // Turns the just-submitted capture into an actual draft health card
+        // (scores, bio age, narrative) -- fire-and-forget so a slow or failed
+        // AI call doesn't block the participant from moving on; the care team
+        // can regenerate manually from the admin review queue if this fails.
+        if (isSupabaseConfigured && session?.access_token && participantId) {
+          generateDraft(session.access_token, participantId).catch(() => {});
+        }
         router.replace("/(tabs)/card");
       } catch (e) {
         submittedRef.current = false;
