@@ -112,6 +112,7 @@ export function AvaPromo({ pipelineState }: AvaPromoProps) {
 const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: spacing["3xl"],
   },
   page: {
     marginTop: spacing.lg,

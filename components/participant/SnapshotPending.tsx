@@ -1,11 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Animated, Easing, AccessibilityInfo, StyleSheet, Text, View } from "react-native";
+import { Animated, Easing, AccessibilityInfo, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useRouter, type Href } from "expo-router";
 import { Check, FileCheck2, FilePen, FileSearch, Lock } from "lucide-react-native";
 import { GradientOrb } from "@/components/ui/GradientOrb";
 import { Button } from "@/components/ui/Button";
 import { CheckInCallout } from "@/components/participant/CheckInCallout";
-import type { PipelineState } from "@/lib/types/db";
+import { BiologicalAgeHero } from "@/components/participant/BiologicalAgeHero";
+import { PillarStrip } from "@/components/participant/PillarStrip";
+import { pillarStatus } from "@/lib/ai/scoring";
+import type { PillarScores, PipelineState } from "@/lib/types/db";
 import {
   colors,
   fontFamilies,
@@ -15,8 +18,47 @@ import {
   spacing,
 } from "@/lib/theme/tokens";
 
+export interface SnapshotPreview {
+  scores: PillarScores;
+  biologicalAge: number;
+  chronologicalAge: number;
+}
+
 interface SnapshotPendingProps {
   pipelineState: PipelineState;
+  /** The AI draft's raw scores/bio age, shown before care-team review — undefined
+   * once nothing has been generated yet (still capturing). Deliberately excludes
+   * the narrative, key contributors, and discussion points, since those are the
+   * more interpretive parts a human review exists to catch if the AI got wrong. */
+  preview?: SnapshotPreview;
+}
+
+// Non-interactive here on purpose -- this is a preliminary, unreviewed look,
+// not the full drill-down the delivered card offers once a human has signed
+// off on it.
+function PreliminaryPreview({ preview }: { preview: SnapshotPreview }) {
+  const pillarItems = (Object.keys(preview.scores) as Array<keyof PillarScores>).map((key) => ({
+    key,
+    label: key.charAt(0).toUpperCase() + key.slice(1),
+    value: preview.scores[key],
+    status: pillarStatus(preview.scores[key]),
+  }));
+
+  return (
+    <View style={styles.previewWrap}>
+      <View style={styles.previewBadge}>
+        <Text style={styles.previewBadgeText}>PRELIMINARY · PENDING CARE TEAM REVIEW</Text>
+      </View>
+      <BiologicalAgeHero bioAge={preview.biologicalAge} chronoAge={preview.chronologicalAge} />
+      <View style={styles.previewPillars}>
+        <PillarStrip items={pillarItems} />
+      </View>
+      <Text style={styles.previewNote}>
+        These are the AI&apos;s first-pass numbers. Your care team may adjust them before your
+        full report is ready.
+      </Text>
+    </View>
+  );
 }
 
 interface StageContent {
@@ -68,7 +110,7 @@ const CONTENT: StageContent[] = [
 
 const TOTAL_STEPS = STEP_META.length;
 
-export function SnapshotPending({ pipelineState }: SnapshotPendingProps) {
+export function SnapshotPending({ pipelineState, preview }: SnapshotPendingProps) {
   const router = useRouter();
   const stepIndex = STEP_FROM_STATE[pipelineState];
   const [displayedStep, setDisplayedStep] = useState(stepIndex);
@@ -185,109 +227,124 @@ export function SnapshotPending({ pipelineState }: SnapshotPendingProps) {
   }, [stepIndex]);
 
   return (
-    <View style={styles.page}>
-      <GradientOrb tone="teal" size={220} style={styles.orbTop} />
-      <GradientOrb tone="amber" size={200} style={styles.orbBottom} />
+    <ScrollView
+      style={styles.scroll}
+      contentContainerStyle={styles.scrollContent}
+      showsVerticalScrollIndicator={false}
+    >
+      <View style={styles.page}>
+        <GradientOrb tone="teal" size={220} style={styles.orbTop} />
+        <GradientOrb tone="amber" size={200} style={styles.orbBottom} />
 
-      <Animated.View
-        style={{ opacity: enterOpacity, transform: [{ translateY: enterTranslate }] }}
-      >
-        <Text style={styles.overline}>YOUR WELLNESS SNAPSHOT</Text>
+        <Animated.View
+          style={{ opacity: enterOpacity, transform: [{ translateY: enterTranslate }] }}
+        >
+          <Text style={styles.overline}>YOUR WELLNESS SNAPSHOT</Text>
 
-        <Animated.View style={{ opacity: textOpacity }}>
-          <Text style={styles.headline}>{content.headline}</Text>
-          <Text style={styles.body}>{content.body}</Text>
+          <Animated.View style={{ opacity: textOpacity }}>
+            <Text style={styles.headline}>{content.headline}</Text>
+            <Text style={styles.body}>{content.body}</Text>
+          </Animated.View>
+
+          <View style={styles.stepper}>
+            {STEP_META.map((step, index) => {
+              const isDone = index < stepIndex;
+              const isActive = index === stepIndex;
+              const isLast = index === STEP_META.length - 1;
+              const StepIcon = step.Icon;
+
+              return (
+                <React.Fragment key={step.label}>
+                  <View style={styles.stepItem}>
+                    {isDone ? (
+                      <View style={[styles.circle, styles.circleDone]}>
+                        <Check size={18} color={colors.white} strokeWidth={3} />
+                      </View>
+                    ) : isActive ? (
+                      <Animated.View
+                        style={[styles.circle, styles.circleActive, { opacity: pulse }]}
+                      >
+                        <StepIcon size={18} color={colors.sageDark} />
+                      </Animated.View>
+                    ) : (
+                      <View style={[styles.circle, styles.circleLocked]}>
+                        <Lock size={15} color={colors.inkMuted} />
+                      </View>
+                    )}
+                    <Text
+                      style={[
+                        styles.stepLabel,
+                        isDone && styles.stepLabelDone,
+                        isActive && styles.stepLabelActive,
+                      ]}
+                    >
+                      {step.label}
+                    </Text>
+                  </View>
+                  {!isLast && (
+                    <View
+                      style={[
+                        styles.stepLine,
+                        { backgroundColor: isDone ? colors.sage : colors.border },
+                      ]}
+                    />
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </View>
+
+          <View style={styles.progressTrack}>
+            <Animated.View
+              style={[
+                styles.progressFill,
+                {
+                  width: progress.interpolate({
+                    inputRange: [0, 100],
+                    outputRange: ["0%", "100%"],
+                  }),
+                },
+              ]}
+            />
+          </View>
+
+          {content.detail && (
+            <Animated.Text style={[styles.detail, { opacity: textOpacity }]}>
+              {content.detail}
+            </Animated.Text>
+          )}
+
+          {content.primaryLabel && content.primaryRoute && (
+            <Button size="lg" style={styles.primaryButton} onPress={() => router.push(content.primaryRoute!)}>
+              {content.primaryLabel}
+            </Button>
+          )}
         </Animated.View>
 
-        <View style={styles.stepper}>
-          {STEP_META.map((step, index) => {
-            const isDone = index < stepIndex;
-            const isActive = index === stepIndex;
-            const isLast = index === STEP_META.length - 1;
-            const StepIcon = step.Icon;
+        {preview && <PreliminaryPreview preview={preview} />}
 
-            return (
-              <React.Fragment key={step.label}>
-                <View style={styles.stepItem}>
-                  {isDone ? (
-                    <View style={[styles.circle, styles.circleDone]}>
-                      <Check size={18} color={colors.white} strokeWidth={3} />
-                    </View>
-                  ) : isActive ? (
-                    <Animated.View
-                      style={[styles.circle, styles.circleActive, { opacity: pulse }]}
-                    >
-                      <StepIcon size={18} color={colors.sageDark} />
-                    </Animated.View>
-                  ) : (
-                    <View style={[styles.circle, styles.circleLocked]}>
-                      <Lock size={15} color={colors.inkMuted} />
-                    </View>
-                  )}
-                  <Text
-                    style={[
-                      styles.stepLabel,
-                      isDone && styles.stepLabelDone,
-                      isActive && styles.stepLabelActive,
-                    ]}
-                  >
-                    {step.label}
-                  </Text>
-                </View>
-                {!isLast && (
-                  <View
-                    style={[
-                      styles.stepLine,
-                      { backgroundColor: isDone ? colors.sage : colors.border },
-                    ]}
-                  />
-                )}
-              </React.Fragment>
-            );
-          })}
-        </View>
-
-        <View style={styles.progressTrack}>
-          <Animated.View
-            style={[
-              styles.progressFill,
-              {
-                width: progress.interpolate({
-                  inputRange: [0, 100],
-                  outputRange: ["0%", "100%"],
-                }),
-              },
-            ]}
-          />
-        </View>
-
-        {content.detail && (
-          <Animated.Text style={[styles.detail, { opacity: textOpacity }]}>
-            {content.detail}
-          </Animated.Text>
-        )}
-
-        {content.primaryLabel && content.primaryRoute && (
-          <Button size="lg" style={styles.primaryButton} onPress={() => router.push(content.primaryRoute!)}>
-            {content.primaryLabel}
-          </Button>
-        )}
-      </Animated.View>
-
-      <Animated.View
-        style={{
-          opacity: calloutOpacity,
-          transform: [{ translateY: calloutTranslate }],
-          marginTop: spacing["2xl"],
-        }}
-      >
-        <CheckInCallout />
-      </Animated.View>
-    </View>
+        <Animated.View
+          style={{
+            opacity: calloutOpacity,
+            transform: [{ translateY: calloutTranslate }],
+            marginTop: spacing["2xl"],
+          }}
+        >
+          <CheckInCallout />
+        </Animated.View>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: spacing["3xl"],
+  },
   page: {
     marginTop: spacing.lg,
   },
@@ -388,5 +445,33 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     marginTop: spacing["2xl"],
+  },
+  previewWrap: {
+    marginTop: spacing["3xl"],
+  },
+  previewBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: colors.terracottaTint,
+    borderRadius: radii.full,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+  },
+  previewBadgeText: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    letterSpacing: 0.6,
+    color: colors.terracottaInk,
+  },
+  previewPillars: {
+    marginTop: spacing.xl,
+  },
+  previewNote: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    textAlign: "center",
+    marginTop: spacing.md,
+    lineHeight: lineHeights.caption,
   },
 });
