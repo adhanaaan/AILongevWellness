@@ -5,7 +5,10 @@ import { Check, FileCheck2, FilePen, FileSearch, Lock } from "lucide-react-nativ
 import { GradientOrb } from "@/components/ui/GradientOrb";
 import { Button } from "@/components/ui/Button";
 import { CheckInCallout } from "@/components/participant/CheckInCallout";
-import type { PipelineState } from "@/lib/types/db";
+import { BiologicalAgeHero } from "@/components/participant/BiologicalAgeHero";
+import { PillarStrip } from "@/components/participant/PillarStrip";
+import { pillarStatus } from "@/lib/ai/scoring";
+import type { PillarScores, PipelineState } from "@/lib/types/db";
 import {
   colors,
   fontFamilies,
@@ -15,8 +18,47 @@ import {
   spacing,
 } from "@/lib/theme/tokens";
 
+export interface SnapshotPreview {
+  scores: PillarScores;
+  biologicalAge: number;
+  chronologicalAge: number;
+}
+
 interface SnapshotPendingProps {
   pipelineState: PipelineState;
+  /** The AI draft's raw scores/bio age, shown before care-team review — undefined
+   * once nothing has been generated yet (still capturing). Deliberately excludes
+   * the narrative, key contributors, and discussion points, since those are the
+   * more interpretive parts a human review exists to catch if the AI got wrong. */
+  preview?: SnapshotPreview;
+}
+
+// Non-interactive here on purpose -- this is a preliminary, unreviewed look,
+// not the full drill-down the delivered card offers once a human has signed
+// off on it.
+function PreliminaryPreview({ preview }: { preview: SnapshotPreview }) {
+  const pillarItems = (Object.keys(preview.scores) as Array<keyof PillarScores>).map((key) => ({
+    key,
+    label: key.charAt(0).toUpperCase() + key.slice(1),
+    value: preview.scores[key],
+    status: pillarStatus(preview.scores[key]),
+  }));
+
+  return (
+    <View style={styles.previewWrap}>
+      <View style={styles.previewBadge}>
+        <Text style={styles.previewBadgeText}>PRELIMINARY · PENDING CARE TEAM REVIEW</Text>
+      </View>
+      <BiologicalAgeHero bioAge={preview.biologicalAge} chronoAge={preview.chronologicalAge} />
+      <View style={styles.previewPillars}>
+        <PillarStrip items={pillarItems} />
+      </View>
+      <Text style={styles.previewNote}>
+        These are the AI&apos;s first-pass numbers. Your care team may adjust them before your
+        full report is ready.
+      </Text>
+    </View>
+  );
 }
 
 interface StageContent {
@@ -68,7 +110,7 @@ const CONTENT: StageContent[] = [
 
 const TOTAL_STEPS = STEP_META.length;
 
-export function SnapshotPending({ pipelineState }: SnapshotPendingProps) {
+export function SnapshotPending({ pipelineState, preview }: SnapshotPendingProps) {
   const router = useRouter();
   const stepIndex = STEP_FROM_STATE[pipelineState];
   const [displayedStep, setDisplayedStep] = useState(stepIndex);
@@ -274,6 +316,8 @@ export function SnapshotPending({ pipelineState }: SnapshotPendingProps) {
         )}
       </Animated.View>
 
+      {preview && <PreliminaryPreview preview={preview} />}
+
       <Animated.View
         style={{
           opacity: calloutOpacity,
@@ -388,5 +432,33 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     marginTop: spacing["2xl"],
+  },
+  previewWrap: {
+    marginTop: spacing["3xl"],
+  },
+  previewBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: colors.terracottaTint,
+    borderRadius: radii.full,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+  },
+  previewBadgeText: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    letterSpacing: 0.6,
+    color: colors.terracottaInk,
+  },
+  previewPillars: {
+    marginTop: spacing.xl,
+  },
+  previewNote: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    textAlign: "center",
+    marginTop: spacing.md,
+    lineHeight: lineHeights.caption,
   },
 });

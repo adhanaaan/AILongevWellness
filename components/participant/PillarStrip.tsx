@@ -10,8 +10,9 @@ export interface PillarStripItem {
   label: string;
   value: number;
   status: "good" | "monitor";
-  onPress: () => void;
-  accessibilityLabel: string;
+  /** Omit for a non-interactive tile, e.g. the pre-review preliminary preview. */
+  onPress?: () => void;
+  accessibilityLabel?: string;
 }
 
 export interface PillarStripProps {
@@ -32,6 +33,7 @@ const PILLAR_ACCENT: Record<string, { Icon: LucideIcon; tint: string; icon: stri
 // narrative sentence above already carries the "am I okay" answer, so these
 // read as the supporting receipts, not a second headline.
 export function PillarStrip({ items }: PillarStripProps) {
+  const interactive = items.some((item) => item.onPress);
   return (
     <View>
       <Text style={styles.title}>Your pillar scores</Text>
@@ -39,6 +41,31 @@ export function PillarStrip({ items }: PillarStripProps) {
         {items.map((item) => {
           const accent = PILLAR_ACCENT[item.key];
           const statusColor = item.status === "good" ? colors.sage : colors.terracotta;
+          const tile = (
+            <Card
+              padding="md"
+              style={StyleSheet.flatten([styles.tile, accent && { backgroundColor: accent.tint }])}
+            >
+              {accent && (
+                <View style={[styles.iconCircle, { backgroundColor: colors.surface }]}>
+                  <accent.Icon size={16} color={accent.icon} />
+                </View>
+              )}
+              <ScoreRing value={item.value} label={item.label} status={item.status} size={68} />
+              <Text style={[styles.statusWord, { color: statusColor }]}>
+                {item.status === "good" ? "Strong" : "Monitor"}
+              </Text>
+            </Card>
+          );
+
+          if (!item.onPress) {
+            return (
+              <View key={item.key} style={styles.item}>
+                {tile}
+              </View>
+            );
+          }
+
           return (
             <Pressable
               key={item.key}
@@ -48,25 +75,12 @@ export function PillarStrip({ items }: PillarStripProps) {
               style={styles.item}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Card
-                padding="md"
-                style={StyleSheet.flatten([styles.tile, accent && { backgroundColor: accent.tint }])}
-              >
-                {accent && (
-                  <View style={[styles.iconCircle, { backgroundColor: colors.surface }]}>
-                    <accent.Icon size={16} color={accent.icon} />
-                  </View>
-                )}
-                <ScoreRing value={item.value} label={item.label} status={item.status} size={68} />
-                <Text style={[styles.statusWord, { color: statusColor }]}>
-                  {item.status === "good" ? "Strong" : "Monitor"}
-                </Text>
-              </Card>
+              {tile}
             </Pressable>
           );
         })}
       </View>
-      <Text style={styles.caption}>Tap a score to see what's driving it</Text>
+      {interactive && <Text style={styles.caption}>Tap a score to see what's driving it</Text>}
     </View>
   );
 }

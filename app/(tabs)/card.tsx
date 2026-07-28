@@ -7,7 +7,7 @@ import { BiologicalAgeHero } from "@/components/participant/BiologicalAgeHero";
 import { PillarStrip } from "@/components/participant/PillarStrip";
 import { KeyContributorItem } from "@/components/participant/KeyContributorItem";
 import { SuggestedFocusGrid } from "@/components/participant/SuggestedFocusGrid";
-import { SnapshotPending } from "@/components/participant/SnapshotPending";
+import { SnapshotPending, type SnapshotPreview } from "@/components/participant/SnapshotPending";
 import { CareTeamNotesCard } from "@/components/participant/CareTeamNotesCard";
 import { TopRecommendation } from "@/components/participant/TopRecommendation";
 import { NextStepsCard } from "@/components/participant/NextStepsCard";
@@ -15,7 +15,7 @@ import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { pillarStatus, buildPillarNarrative } from "@/lib/ai/scoring";
 import type { SignedCard } from "@/lib/data/repository";
-import type { Pipeline } from "@/lib/types/db";
+import type { AiDraft, Pipeline } from "@/lib/types/db";
 import { colors, fontSizes, radii, shadows, spacing } from "@/lib/theme/tokens";
 
 function formatDate(iso: string) {
@@ -31,24 +31,36 @@ export default function CardPage() {
   const { participantId } = useAuth();
   const [card, setCard] = useState<SignedCard | null | undefined>(undefined);
   const [pipeline, setPipeline] = useState<Pipeline | null | undefined>(undefined);
+  const [pendingDraft, setPendingDraft] = useState<AiDraft | null | undefined>(undefined);
   const [showAllRecommendations, setShowAllRecommendations] = useState(false);
 
   useEffect(() => {
     if (!participantId) return;
-    repository.getSignedCard(participantId).then(setCard);
-    repository.getPipeline(participantId).then(setPipeline);
-    return repository.subscribe(() => {
-      repository.getSignedCard(participantId).then(setCard);
-      repository.getPipeline(participantId).then(setPipeline);
-    });
+    function load() {
+      repository.getSignedCard(participantId!).then(setCard);
+      repository.getPipeline(participantId!).then(setPipeline);
+      // Only actually used pre-delivery (see the !card branch below) -- fetched
+      // unconditionally here so it's ready the moment the pipeline advances,
+      // rather than adding a second effect keyed on pipeline state.
+      repository.getAiDraft(participantId!).then(setPendingDraft);
+    }
+    load();
+    return repository.subscribe(load);
   }, [participantId]);
 
-  if (card === undefined || pipeline === undefined) return null;
+  if (card === undefined || pipeline === undefined || pendingDraft === undefined) return null;
 
   if (!card) {
+    const preview: SnapshotPreview | undefined = pendingDraft
+      ? {
+          scores: pendingDraft.scores,
+          biologicalAge: pendingDraft.biological_age,
+          chronologicalAge: pendingDraft.chronological_age,
+        }
+      : undefined;
     return (
       <MobileShell>
-        <SnapshotPending pipelineState={pipeline?.state ?? "capturing"} />
+        <SnapshotPending pipelineState={pipeline?.state ?? "capturing"} preview={preview} />
       </MobileShell>
     );
   }
