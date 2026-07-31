@@ -16,7 +16,7 @@ import { repository } from "@/lib/data/mock";
 import { resolveAttentionAction, getFileUrlAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
-import { generateDraft, extractLabReport, extractWearableExport } from "@/lib/ai/client";
+import { generateDraft, extractLabReport, extractWearableExport, extractBodyComp } from "@/lib/ai/client";
 import type {
   Participant,
   Pipeline,
@@ -26,6 +26,7 @@ import type {
   PipelineState,
   Pillar,
   FileRecord,
+  DailyLog,
 } from "@/lib/types/db";
 import { colors, fontSizes, spacing, radii } from "@/lib/theme/tokens";
 
@@ -64,6 +65,7 @@ export default function ParticipantDetailPage() {
   const [aiDraft, setAiDraft] = useState<AiDraft | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [files, setFiles] = useState<FileRecord[]>([]);
+  const [dailyLogs, setDailyLogs] = useState<DailyLog[]>([]);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [extractingFileId, setExtractingFileId] = useState<string | null>(null);
@@ -73,13 +75,14 @@ export default function ParticipantDetailPage() {
 
   const loadData = async () => {
     if (!id) return;
-    const [p, pipe, bm, draft, rev, f] = await Promise.all([
+    const [p, pipe, bm, draft, rev, f, logs] = await Promise.all([
       repository.getParticipant(id),
       repository.getPipeline(id),
       repository.getBiomarkers(id),
       repository.getAiDraft(id),
       repository.getReviews(id),
       repository.listFiles(id),
+      repository.listDailyLogs(id),
     ]);
     setParticipant(p);
     setPipeline(pipe);
@@ -87,6 +90,7 @@ export default function ParticipantDetailPage() {
     setAiDraft(draft);
     setReviews(rev);
     setFiles(f);
+    setDailyLogs(logs);
   };
 
   async function onExtractFile(file: FileRecord) {
@@ -98,6 +102,8 @@ export default function ParticipantDetailPage() {
         await extractLabReport(session.access_token, id, file.id);
       } else if (file.kind === "apple_health_export") {
         await extractWearableExport(session.access_token, id, file.id);
+      } else if (file.kind === "body_comp") {
+        await extractBodyComp(session.access_token, id, file.id);
       }
       await loadData();
     } catch (e) {
@@ -302,7 +308,10 @@ export default function ParticipantDetailPage() {
                     : file.kind === "apple_health_export"
                     ? "Apple Health export"
                     : "Body composition scan";
-                const canExtract = file.kind === "lab_report" || file.kind === "apple_health_export";
+                const canExtract =
+                  file.kind === "lab_report" ||
+                  file.kind === "apple_health_export" ||
+                  file.kind === "body_comp";
                 const error = extractErrors[file.id];
                 return (
                   <View key={file.id} style={i > 0 ? styles.fileRow : undefined}>
@@ -373,6 +382,40 @@ export default function ParticipantDetailPage() {
                 </View>
               );
             })
+          )}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Daily tracking</Text>
+          {dailyLogs.length === 0 ? (
+            <Card>
+              <Text style={styles.meta}>No daily check-ins logged yet.</Text>
+            </Card>
+          ) : (
+            <Card>
+              {[...dailyLogs]
+                .sort((a, b) => (a.log_date < b.log_date ? 1 : -1))
+                .slice(0, 7)
+                .map((log, i) => {
+                  const parts: string[] = [];
+                  if (log.sleep) parts.push(`Sleep ${log.sleep.hours}h (${log.sleep.quality}/100)`);
+                  if (log.activity) parts.push(`${log.activity.type} ${log.activity.duration_minutes}min`);
+                  if (log.mood) parts.push(`Mood ${log.mood.score}/10`);
+                  if (log.weight_kg != null) parts.push(`${log.weight_kg}kg`);
+                  return (
+                    <View key={log.log_date} style={i > 0 ? styles.fileRow : undefined}>
+                      <Text style={styles.fileLabel}>{formatDate(log.log_date)}</Text>
+                      <Text style={styles.meta}>
+                        {parts.length > 0 ? parts.join(" · ") : "No metrics logged"}
+                      </Text>
+                      {log.supplements.length > 0 && (
+                        <Text style={styles.meta}>Supplements: {log.supplements.join(", ")}</Text>
+                      )}
+                      {log.notes && <Text style={styles.meta}>{log.notes}</Text>}
+                    </View>
+                  );
+                })}
+            </Card>
           )}
         </View>
 
