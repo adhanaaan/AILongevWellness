@@ -296,6 +296,8 @@ class MockRepository implements Repository {
       exercise_frequency: "sometimes",
       smoking: false,
       alcohol_drinks_per_week: "1_to_7",
+      consent_given: true,
+      consented_at: nowIso(),
       created_at: nowIso(),
     };
     this.participants.set(james.id, james);
@@ -433,6 +435,8 @@ class MockRepository implements Repository {
         height_cm: 160 + Math.floor(mulberry32(idx * 3 + 1)() * 30),
         weight_kg: 60 + Math.floor(mulberry32(idx * 5 + 2)() * 35),
         goals: [pick(GOALS_POOL, mulberry32(idx * 7 + 3)()), pick(GOALS_POOL, mulberry32(idx * 11 + 4)())],
+        consent_given: true,
+        consented_at: nowIso(),
         created_at: nowIso(),
       };
       this.participants.set(id, participant);

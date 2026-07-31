@@ -1,4 +1,5 @@
 // CHANGE LOG (newest first)
+// - 2026-07-28 Added consent_given/consented_at to Participant (supabase/migrations/0002_consent_tracking.sql).
 // - 2026-07-24 Person 1: Added OnboardingProgress (hub-and-spoke capture sub-flow tracking).
 // - 2026-07-24 Person 1: Added lifestyle fields (exercise_frequency, smoking, alcohol_drinks_per_week) to Participant.
 // - 2026-07-19 Person 3: Added missing_biomarkers/out_of_range to AiDraft (mock.ts populates them).
@@ -21,6 +22,8 @@ export interface Participant {
   exercise_frequency?: ExerciseFrequency;
   smoking?: boolean;
   alcohol_drinks_per_week?: AlcoholDrinksPerWeek;
+  consent_given?: boolean;
+  consented_at?: string | null;
   created_at: string;
 }
 

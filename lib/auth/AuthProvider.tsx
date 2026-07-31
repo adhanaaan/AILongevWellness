@@ -56,6 +56,28 @@ function RealAuthProvider({ children }: { children: React.ReactNode }) {
       const { data } = await client.from("user_roles").select("role, participant_id").eq("user_id", userId).maybeSingle();
       setRole((data?.role as Role) ?? null);
       setParticipantId(data?.participant_id ?? null);
+
+      // Consent is enforced by the onboarding UI flow itself -- consent.tsx
+      // always precedes account creation, with no way to reach signup without
+      // passing it -- rather than at the database level. That makes the first
+      // time we ever see this participant successfully authenticated (whether
+      // that's an immediate post-signup session or their first sign-in after
+      // confirming their email) sufficient proof consent was given, so record
+      // it once here instead of threading a boolean through every signup/
+      // sign-in/email-confirmation branch. Guarded so it only ever writes once.
+      if (data?.role === "participant" && data.participant_id) {
+        const { data: participant } = await client
+          .from("participants")
+          .select("consent_given")
+          .eq("id", data.participant_id)
+          .maybeSingle();
+        if (participant && !participant.consent_given) {
+          await client
+            .from("participants")
+            .update({ consent_given: true, consented_at: new Date().toISOString() })
+            .eq("id", data.participant_id);
+        }
+      }
     },
     [client]
   );

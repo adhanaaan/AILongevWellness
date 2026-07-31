@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import * as Linking from "expo-linking";
-import { ArrowLeft, AlertTriangle } from "lucide-react-native";
+import { ArrowLeft, AlertTriangle, ShieldCheck, ShieldAlert } from "lucide-react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { StatusTimeline } from "@/components/admin/StatusTimeline";
@@ -48,6 +48,10 @@ const STATE_INDEX: Record<PipelineState, number> = {
 };
 
 const PILLAR_ORDER: Pillar[] = ["vascular", "metabolic", "mental"];
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
 
 export default function ParticipantDetailPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -172,6 +176,21 @@ export default function ParticipantDetailPage() {
               {participant.age} · {participant.sex} · {participant.height_cm}cm ·{" "}
               {participant.weight_kg}kg
             </Text>
+            <View style={styles.consentRow}>
+              {participant.consent_given ? (
+                <>
+                  <ShieldCheck size={14} color={colors.sage} />
+                  <Text style={styles.consentTextOk}>
+                    Consent given{participant.consented_at ? ` ${formatDate(participant.consented_at)}` : ""}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <ShieldAlert size={14} color={colors.danger} />
+                  <Text style={styles.consentTextMissing}>Consent not recorded</Text>
+                </>
+              )}
+            </View>
           </View>
           <PipelineStatusBadge state={pipeline.state} needsAttention={pipeline.needs_attention} />
         </View>
@@ -396,6 +415,21 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.labelMd,
     color: colors.inkMuted,
     marginTop: spacing.xs,
+  },
+  consentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  consentTextOk: {
+    fontSize: fontSizes.caption,
+    color: colors.sageDark,
+  },
+  consentTextMissing: {
+    fontSize: fontSizes.caption,
+    color: colors.danger,
+    fontWeight: "600",
   },
   attentionCard: {
     backgroundColor: colors.dangerTint,
