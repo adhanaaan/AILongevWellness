@@ -257,4 +257,13 @@ lib/
       mirrors `api/extract-lab.ts`) now runs in the background after upload, targeting
       the four keys `lib/ai/scoring.ts` already scores (`bmi`, `body_fat_pct`,
       `visceral_fat`, `waist_hip_ratio`).
-- [ ] ReCOGnAIze is still an informational-only placeholder screen (no real assessment yet)
+- [x] Admin visibility into daily tracking logs: participant detail page
+      (`app/admin/participants/[id].tsx`) now loads `listDailyLogs` and shows the last
+      7 entries (sleep/activity/mood/weight/supplements/notes), and its sign-off/
+      release/resolve-attention actions surface real errors instead of failing silently.
+- [x] Real ReCOGnAIze cognitive assessment: `app/onboarding/capture-recognaize.tsx` runs
+      an actual 5-trial reaction-time test (full-screen tap zone, discards false starts
+      without counting them), then submits results to `api/submit-recognize.ts`, which
+      derives a `cog_composite` score and writes both as `mental`-pillar biomarkers
+      (`lib/ai/recognizeCatalog.ts`). Mock mode (no Supabase configured) skips the
+      interactive test, matching the other capture-*-intro screens.

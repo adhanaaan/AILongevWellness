@@ -50,3 +50,11 @@ export function extractBodyComp(
 ): Promise<{ extracted: string[] }> {
   return postJson("/api/extract-body-comp", token, { participantId, fileId });
 }
+
+export function submitRecognizeResult(
+  token: string,
+  participantId: string,
+  trialsMs: number[]
+): Promise<{ reaction_time: number; cog_composite: number }> {
+  return postJson("/api/submit-recognize", token, { participantId, trialsMs });
+}
