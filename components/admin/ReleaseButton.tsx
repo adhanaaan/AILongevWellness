@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { Send } from "lucide-react-native";
 import { Button } from "@/components/ui";
-import { colors } from "@/lib/theme/tokens";
+import { colors, fontSizes, spacing } from "@/lib/theme/tokens";
 import { releaseCardAction } from "@/lib/data/actions";
 
 interface ReleaseButtonProps {
@@ -12,11 +12,15 @@ interface ReleaseButtonProps {
 
 export function ReleaseButton({ participantId, enabled }: ReleaseButtonProps) {
   const [releasing, setReleasing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleRelease = async () => {
+    setError(null);
     setReleasing(true);
     try {
       await releaseCardAction(participantId);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Release failed. Please try again.");
     } finally {
       setReleasing(false);
     }
@@ -24,6 +28,7 @@ export function ReleaseButton({ participantId, enabled }: ReleaseButtonProps) {
 
   return (
     <View style={styles.container}>
+      {error && <Text style={styles.error}>{error}</Text>}
       <Button
         variant="primary"
         size="lg"
@@ -40,5 +45,10 @@ export function ReleaseButton({ participantId, enabled }: ReleaseButtonProps) {
 const styles = StyleSheet.create({
   container: {
     width: "100%",
+  },
+  error: {
+    fontSize: fontSizes.labelMd,
+    color: colors.danger,
+    marginBottom: spacing.sm,
   },
 });

@@ -68,6 +68,8 @@ export default function ParticipantDetailPage() {
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [extractingFileId, setExtractingFileId] = useState<string | null>(null);
   const [extractErrors, setExtractErrors] = useState<Record<string, string>>({});
+  const [resolvingAttention, setResolvingAttention] = useState(false);
+  const [resolveError, setResolveError] = useState<string | null>(null);
 
   const loadData = async () => {
     if (!id) return;
@@ -132,6 +134,19 @@ export default function ParticipantDetailPage() {
       setGenerateError(e instanceof Error ? e.message : "Draft generation failed.");
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function onResolveAttention() {
+    if (!id) return;
+    setResolveError(null);
+    setResolvingAttention(true);
+    try {
+      await resolveAttentionAction(id);
+    } catch (e) {
+      setResolveError(e instanceof Error ? e.message : "Couldn't resolve — please try again.");
+    } finally {
+      setResolvingAttention(false);
     }
   }
 
@@ -204,13 +219,15 @@ export default function ParticipantDetailPage() {
                 <Text style={styles.attentionReason}>
                   {pipeline.attention_reason}
                 </Text>
+                {resolveError && <Text style={styles.attentionReason}>{resolveError}</Text>}
               </View>
               <Button
                 variant="secondary"
                 size="sm"
-                onPress={() => resolveAttentionAction(id!)}
+                disabled={resolvingAttention}
+                onPress={onResolveAttention}
               >
-                Resolve
+                {resolvingAttention ? "Resolving..." : "Resolve"}
               </Button>
             </View>
           </Card>
