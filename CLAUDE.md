@@ -244,6 +244,17 @@ lib/
       Wearables' export subtitle dropped its "isn't available over the cloud"
       negative framing for a positive one.
 - [ ] Wearable aggregator connect
-- [ ] Consent tracking (consent_given, consented_at fields) — consent screen doesn't yet persist to a row
-- [ ] Body composition scan value extraction (currently uploads the file only, no parsing)
+- [x] Consent tracking: `consent_given`/`consented_at` added to `participants`
+      (`supabase/migrations/0002_consent_tracking.sql`), recorded automatically the
+      first time a participant is ever seen authenticated (`AuthProvider.tsx`'s
+      `loadRole`) rather than threaded through every signup/sign-in/email-confirmation
+      branch — consent.tsx structurally precedes signup so that's sufficient proof.
+      Surfaced on the admin participant detail page.
+- [x] File upload size/type limits: bucket-level `file_size_limit`/`allowed_mime_types`
+      (`supabase/migrations/0003_upload_limits.sql`) plus a client-side size pre-check
+      (`lib/data/uploadLimits.ts`) before each capture-*-intro.tsx upload.
+- [x] Body composition scan value extraction: `api/extract-body-comp.ts` (Claude vision,
+      mirrors `api/extract-lab.ts`) now runs in the background after upload, targeting
+      the four keys `lib/ai/scoring.ts` already scores (`bmi`, `body_fat_pct`,
+      `visceral_fat`, `waist_hip_ratio`).
 - [ ] ReCOGnAIze is still an informational-only placeholder screen (no real assessment yet)

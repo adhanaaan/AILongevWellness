@@ -42,3 +42,11 @@ export function extractWearableExport(
 ): Promise<{ extracted: string[] }> {
   return postJson("/api/extract-wearables", token, { participantId, fileId });
 }
+
+export function extractBodyComp(
+  token: string,
+  participantId: string,
+  fileId: string
+): Promise<{ extracted: string[] }> {
+  return postJson("/api/extract-body-comp", token, { participantId, fileId });
+}
