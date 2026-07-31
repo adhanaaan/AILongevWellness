@@ -11,6 +11,7 @@ import { updateSectionStatusAction, updateCaptureChannelAction, uploadFileAction
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { extractWearableExport } from "@/lib/ai/client";
+import { validateUploadSize } from "@/lib/data/uploadLimits";
 import { colors, fontFamilies, fontSizes, radii, spacing, teal } from "@/lib/theme/tokens";
 
 const POINTS = [
@@ -87,6 +88,12 @@ export default function CaptureWearablesIntroPage() {
     try {
       const response = await fetch(asset.uri);
       const blob = await response.blob();
+      const sizeError = validateUploadSize("apple_health_export", blob.size);
+      if (sizeError) {
+        setError(sizeError);
+        setUploading(false);
+        return;
+      }
       const fileRecord = await uploadFileAction(participantId, "apple_health_export", {
         blob,
         filename: asset.name,

@@ -11,6 +11,7 @@ import { updateSectionStatusAction, updateCaptureChannelAction, uploadFileAction
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { extractLabReport } from "@/lib/ai/client";
+import { validateUploadSize } from "@/lib/data/uploadLimits";
 import { colors, fontFamilies, fontSizes, radii, spacing, teal } from "@/lib/theme/tokens";
 
 const POINTS = [
@@ -86,6 +87,12 @@ export default function CaptureLabReportsIntroPage() {
     try {
       const response = await fetch(asset.uri);
       const blob = await response.blob();
+      const sizeError = validateUploadSize("lab_report", blob.size);
+      if (sizeError) {
+        setError(sizeError);
+        setUploading(false);
+        return;
+      }
       const fileRecord = await uploadFileAction(participantId, "lab_report", {
         blob,
         filename: asset.name,

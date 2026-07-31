@@ -25,11 +25,15 @@ Dashboard → **SQL Editor** → paste the entire contents of
 This creates every table, RLS policy, and the RPC functions the app calls for
 sign-off/release/etc. Safe to re-run (uses `create table if not exists`).
 
-**If you already ran `0001_init.sql` before**, also run
-`supabase/migrations/0002_consent_tracking.sql` the same way (adds
-`consent_given`/`consented_at` to `participants` — new deploys will fail to
-write consent until this runs). Any future numbered migration file works the
-same way: run it once, in order, after pulling new code that references it.
+**If you already ran `0001_init.sql` before**, also run these in order, the
+same way:
+- `supabase/migrations/0002_consent_tracking.sql` — adds
+  `consent_given`/`consented_at` to `participants`.
+- `supabase/migrations/0003_upload_limits.sql` — adds a file-size cap and
+  allowed MIME types to the storage buckets (previously unlimited).
+
+Any future numbered migration file works the same way: run it once, in
+order, after pulling new code that references it.
 
 ## 3. Turn off email confirmation (recommended for this pilot)
 

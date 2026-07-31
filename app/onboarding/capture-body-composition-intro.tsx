@@ -10,6 +10,7 @@ import { GradientOverlay } from "@/components/ui/GradientOverlay";
 import { updateSectionStatusAction, updateCaptureChannelAction, uploadFileAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
+import { validateUploadSize } from "@/lib/data/uploadLimits";
 import { colors, fontFamilies, fontSizes, radii, spacing, teal } from "@/lib/theme/tokens";
 
 const POINTS = [
@@ -79,6 +80,12 @@ export default function CaptureBodyCompositionIntroPage() {
     try {
       const response = await fetch(asset.uri);
       const blob = await response.blob();
+      const sizeError = validateUploadSize("body_comp", blob.size);
+      if (sizeError) {
+        setError(sizeError);
+        setUploading(false);
+        return;
+      }
       await uploadFileAction(participantId, "body_comp", {
         blob,
         filename: asset.name,
