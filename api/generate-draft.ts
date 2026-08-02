@@ -7,7 +7,7 @@ import {
   computeOutOfRange,
   computePillarScores,
 } from "../lib/ai/scoring";
-import type { Biomarker, KeyContributor } from "../lib/types/db";
+import type { Biomarker, CarePlan, KeyContributor } from "../lib/types/db";
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
@@ -21,11 +21,22 @@ a treatment plan, or a risk factor warning.
 Use this language:
 - "areas to monitor", never "risk factors"
 - "suggested discussion points", never "treatment plan"
-- Never mention medications, dosages, or specific conditions/diseases.
+- Never mention specific medication names, dosages, or conditions/diseases.
 - Do not use double quotes for emphasis inside any text field — write around it instead.
 
 Call write_narrative with 3-5 key_contributors, 2-4 items in each other list. Ground every
-sentence in the data given — never invent a value that isn't there.`;
+sentence in the data given — never invent a value that isn't there.
+
+Also fill in care_plan: 1-3 short, imperative, non-prescriptive action items per category,
+grounded in the data given (or general wellness guidance where a category has no directly
+relevant data). This will be reviewed and edited by the participant's doctor before it's
+shown, so draft it as a starting point, not a final instruction:
+- nutrition: diet/weight-related suggestions
+- exercise: movement/activity suggestions
+- medications: only ever "continue current supplement routine" style or "discuss X with your
+  doctor" style — never suggest starting, stopping, or dosing anything
+- sleep: sleep habit suggestions
+- mindfulness: stress/recovery suggestions`;
 
 // Forcing a tool call instead of asking Claude to free-write a JSON string: the
 // API validates/constrains the output to this schema server-side, so there's no
@@ -52,8 +63,19 @@ const NARRATIVE_TOOL: Anthropic.Tool = {
       areas_to_monitor: { type: "array", items: { type: "string" } },
       suggested_focus: { type: "array", items: { type: "string" } },
       discussion_points: { type: "array", items: { type: "string" } },
+      care_plan: {
+        type: "object",
+        properties: {
+          nutrition: { type: "array", items: { type: "string" } },
+          exercise: { type: "array", items: { type: "string" } },
+          medications: { type: "array", items: { type: "string" } },
+          sleep: { type: "array", items: { type: "string" } },
+          mindfulness: { type: "array", items: { type: "string" } },
+        },
+        required: ["nutrition", "exercise", "medications", "sleep", "mindfulness"],
+      },
     },
-    required: ["key_contributors", "strengths", "areas_to_monitor", "suggested_focus", "discussion_points"],
+    required: ["key_contributors", "strengths", "areas_to_monitor", "suggested_focus", "discussion_points", "care_plan"],
   },
 };
 
@@ -130,6 +152,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     areas_to_monitor: string[];
     suggested_focus: string[];
     discussion_points: string[];
+    care_plan: CarePlan;
   };
   try {
     const message = await anthropic.messages.create({
@@ -186,6 +209,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         areas_to_monitor: narrative.areas_to_monitor ?? [],
         suggested_focus: narrative.suggested_focus ?? [],
         discussion_points: narrative.discussion_points ?? [],
+        care_plan: narrative.care_plan ?? null,
         missing_biomarkers: missingBiomarkers,
         out_of_range: outOfRange,
         generated_at: new Date().toISOString(),

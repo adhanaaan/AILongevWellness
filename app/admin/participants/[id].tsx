@@ -7,6 +7,7 @@ import { AdminShell } from "@/components/layout/AdminShell";
 import { StatusTimeline } from "@/components/admin/StatusTimeline";
 import { BiomarkerRow } from "@/components/admin/BiomarkerRow";
 import { AIDraftSummaryCard } from "@/components/admin/AIDraftSummaryCard";
+import { CarePlanEditor } from "@/components/admin/CarePlanEditor";
 import { SignOffStage } from "@/components/admin/SignOffStage";
 import { ReleaseButton } from "@/components/admin/ReleaseButton";
 import { DiscussionPointsCard } from "@/components/admin/DiscussionPointsCard";
@@ -250,6 +251,14 @@ export default function ParticipantDetailPage() {
           <>
             <View style={styles.section}>
               <AIDraftSummaryCard
+                aiDraft={aiDraft}
+                participantId={id!}
+                editable={isEditable}
+              />
+            </View>
+
+            <View style={styles.section}>
+              <CarePlanEditor
                 aiDraft={aiDraft}
                 participantId={id!}
                 editable={isEditable}

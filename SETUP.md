@@ -31,6 +31,9 @@ same way:
   `consent_given`/`consented_at` to `participants`.
 - `supabase/migrations/0003_upload_limits.sql` — adds a file-size cap and
   allowed MIME types to the storage buckets (previously unlimited).
+- `supabase/migrations/0004_care_plan.sql` — adds `medications` (self-reported
+  catalog) to `participants` and `care_plan` (doctor-verified, per-category
+  plan) to `ai_draft`.
 
 Any future numbered migration file works the same way: run it once, in
 order, after pulling new code that references it.
