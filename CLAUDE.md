@@ -299,6 +299,21 @@ lib/
       per-user clinician sign-off before release). A compact "Reviewed & signed off by
       [name] ([credential])" badge now sits directly above the biological-age hero, so
       trust is established before the participant sees any number.
+- [x] Methodology & Sources page (`app/methodology.tsx`, linked from participant Settings)
+      plus a tappable biological-age drill-down (`app/bio-age.tsx`, `BiologicalAgeHero`
+      gained an optional `onPress`): a real citation-research pass on every reference
+      range the app scores against caught actual bugs, not just missing sources — a
+      physiologically-impossible GMI floor (4.0% implies ~29 mg/dL average glucose),
+      an invented eGFR ceiling (KDIGO defines none), and body fat %/waist-hip ratio
+      using one unisex range when real sources (ACE, WHO) define meaningfully
+      different healthy ranges by sex. Fixed all three (`lib/ai/labCatalog.ts`,
+      new `lib/ai/sexAwareRanges.ts` applied at biomarker-write time in
+      `api/extract-body-comp.ts`/`api/extract-wearables.ts` and in the mock demo
+      generator). The methodology page (`lib/methodology/content.ts`) is static,
+      human-reviewed content, not AI-generated per request — citations are exactly
+      the kind of claim a model will confidently fabricate. Biological age is
+      explicitly labeled as our own composite estimate, not a named clinical
+      formula (e.g. PhenoAge) we don't actually implement.
 - [x] Real admin Settings page (`app/admin/settings.tsx` + `components/layout/AdminShell.tsx`):
       both previously showed a hardcoded fake identity ("Dr. Helena Marsh") and fabricated
       claims (a fake team roster, "email alerts" with no notification system behind them).

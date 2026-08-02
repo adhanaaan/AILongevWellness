@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
 import { BODY_COMP_CATALOG_BY_KEY } from "../lib/ai/bodyCompCatalog";
+import { sexAwareRange } from "../lib/ai/sexAwareRanges";
 import { BUCKET_BY_KIND } from "../lib/data/storageBuckets";
 import { flagIfPastSignoff } from "../lib/data/pipelineAttention";
 
@@ -115,6 +116,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // biomarkers are participant-read-only in RLS, so this needs the service-role key.
   const serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+  const { data: participant } = await serviceClient
+    .from("participants")
+    .select("sex")
+    .eq("id", participantId)
+    .maybeSingle();
+
   const bucket = BUCKET_BY_KIND[fileRow.kind as keyof typeof BUCKET_BY_KIND];
   const { data: blob, error: downloadErr } = await serviceClient.storage
     .from(bucket)
@@ -166,6 +173,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     .filter((r) => BODY_COMP_CATALOG_BY_KEY[r.key] && typeof r.value === "number")
     .map((r) => {
       const entry = BODY_COMP_CATALOG_BY_KEY[r.key];
+      const { ref_low, ref_high } = sexAwareRange(entry.key, participant?.sex, entry);
       return {
         participant_id: participantId,
         pillar: entry.pillar,
@@ -173,11 +181,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         label: entry.label,
         value: r.value,
         unit: entry.unit,
-        ref_low: entry.ref_low,
-        ref_high: entry.ref_high,
+        ref_low,
+        ref_high,
         source: "body_comp",
         status: "needs_review",
-        flagged: r.value < entry.ref_low || r.value > entry.ref_high,
+        flagged: r.value < ref_low || r.value > ref_high,
         updated_at: new Date().toISOString(),
       };
     });

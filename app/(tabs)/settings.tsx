@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
-import { User, ShieldCheck, FileText, LogOut } from "lucide-react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
+import { useRouter } from "expo-router";
+import { User, ShieldCheck, FileText, BookOpen, ChevronRight, LogOut } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
@@ -12,6 +13,7 @@ import type { Participant } from "@/lib/types/db";
 import { colors, fontSizes } from "@/lib/theme/tokens";
 
 export default function SettingsPage() {
+  const router = useRouter();
   const { participantId, signOut } = useAuth();
   const [participant, setParticipant] = useState<Participant | null>(null);
 
@@ -71,6 +73,19 @@ export default function SettingsPage() {
           </View>
         </Card>
 
+        <TouchableOpacity onPress={() => router.push("/methodology")} activeOpacity={0.7}>
+          <Card style={styles.infoCard}>
+            <BookOpen size={18} color={colors.sageDark} />
+            <View style={styles.infoTextGrow}>
+              <Text style={styles.infoLabel}>Methodology & Sources</Text>
+              <Text style={styles.infoValue}>
+                How your scores are calculated, and where the reference ranges come from.
+              </Text>
+            </View>
+            <ChevronRight size={18} color={colors.inkMuted} />
+          </Card>
+        </TouchableOpacity>
+
         {isSupabaseConfigured && (
           <Button variant="secondary" iconLeft={<LogOut size={16} color={colors.sageDark} />} onPress={signOut}>
             Sign out
@@ -107,6 +122,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
   },
+  infoTextGrow: { flex: 1 },
   infoLabel: {
     fontSize: fontSizes.labelMd,
     fontWeight: "600",

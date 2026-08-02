@@ -1,0 +1,101 @@
+export interface MethodologySection {
+  title: string;
+  /** Each string is one short paragraph — kept plain-language, not footnote-style. */
+  paragraphs: string[];
+}
+
+// Content here reflects real, checked sources (major guideline bodies where one
+// exists, standard clinical lab reference intervals where it doesn't) rather
+// than AI-generated citations -- specific journal citations are exactly the
+// kind of thing a model will confidently fabricate, so this file is written
+// and reviewed as static content, not generated per-request.
+export const METHODOLOGY_SECTIONS: MethodologySection[] = [
+  {
+    title: "How your scores are calculated",
+    paragraphs: [
+      "Each of your three pillar scores (Vascular, Metabolic, Mental) reflects how your captured biomarkers compare with their reference ranges: a value within range scores 100, and scores decrease the further a value sits outside its range. Your biological age reflects how your overall score compares with a neutral baseline for your chronological age.",
+      "This scoring approach is proprietary to AI Wellness. It is not a specific named clinical algorithm (for example, it is not the same thing as a published biological-age formula like PhenoAge), and it is not a diagnosis. The reference ranges it's measured against, listed below, are drawn from established clinical and scientific sources where one exists.",
+    ],
+  },
+  {
+    title: "Blood pressure & heart rate",
+    paragraphs: [
+      "Blood pressure's upper bounds align with the \"Normal\" category in the 2017 ACC/AHA hypertension guideline.",
+      "Resting heart rate is commonly cited as 60–100 bpm by the American Heart Association; our range is narrower than that general guidance.",
+      "Heart rate variability (HRV) has no single clinical reference range — ours reflects typical values reported by consumer wearables, not a clinical guideline.",
+    ],
+  },
+  {
+    title: "Lipid panel",
+    paragraphs: [
+      "Total cholesterol, LDL, HDL, and triglyceride ranges align closely with the classic NCEP ATP III lipid classification framework.",
+    ],
+  },
+  {
+    title: "Inflammation & vascular risk markers",
+    paragraphs: [
+      "hs-CRP aligns with AHA/CDC cardiovascular risk-stratification categories.",
+      "Homocysteine reflects a standard clinical laboratory reference interval rather than a single named guideline.",
+      "Lipoprotein(a) aligns with the National Lipid Association's 2024 risk-tier framework, using its lower-risk threshold.",
+    ],
+  },
+  {
+    title: "Glucose & metabolic",
+    paragraphs: [
+      "Fasting glucose and HbA1c align with American Diabetes Association Standards of Care diagnostic thresholds.",
+      "Fasting insulin has no standardized clinical guideline — immunoassays vary by manufacturer, so ours reflects a common commercial-lab reference interval.",
+    ],
+  },
+  {
+    title: "Vitamins & minerals",
+    paragraphs: [
+      "Vitamin D aligns with NIH/Institute of Medicine thresholds. Other bodies have used different thresholds over time — the Endocrine Society's 2024 guidance in particular argues against a single universal cutoff for the general population.",
+      "Vitamin B12, ferritin, and uric acid reflect standard clinical laboratory reference intervals rather than a single named guideline body.",
+    ],
+  },
+  {
+    title: "Liver & kidney function",
+    paragraphs: [
+      "ALT and AST reflect conventional clinical laboratory reference ranges. Some specialty guidelines (AASLD/ACG) argue the true biologically-normal range is stricter than the lab convention used here.",
+      "eGFR's lower bound aligns with the KDIGO chronic kidney disease staging guideline. KDIGO does not define a clinical upper bound for eGFR, so our displayed upper value is a practical display cap, not a guideline figure.",
+      "Creatinine reflects a standard clinical laboratory reference interval.",
+    ],
+  },
+  {
+    title: "Thyroid",
+    paragraphs: ["TSH aligns with the general adult range cited by the American Thyroid Association."],
+  },
+  {
+    title: "Body composition",
+    paragraphs: [
+      "BMI aligns with World Health Organization weight classifications.",
+      "Body fat % and waist-to-hip ratio use separate ranges for men and women, since healthy ranges genuinely differ by sex — aligned with the American Council on Exercise's body composition categories and the WHO's 2008 waist-to-hip ratio guidance, respectively.",
+      "Visceral fat level uses a device-specific scale (as reported by body composition scanners like InBody), not an external clinical guideline.",
+    ],
+  },
+  {
+    title: "Continuous glucose monitor (CGM) stats",
+    paragraphs: [
+      "Time in range, time above/below range, and glucose variability align with the 2019 International Consensus on Time in Range, endorsed by the ADA, EASD, and other diabetes organizations.",
+    ],
+  },
+  {
+    title: "Cognitive assessment (ReCOGnAIze)",
+    paragraphs: [
+      "Reaction time as a general concept is grounded in a substantial published research base linking simple reaction time to cognitive performance and long-term health outcomes (e.g. Deary & Der, 2005; Hagger-Johnson et al., 2014).",
+      "The specific timing thresholds used in this app's in-house assessment are our own calibration for a short, practical test — they are not derived from a specific published study's cutoffs.",
+    ],
+  },
+  {
+    title: "Composite scores without an external source",
+    paragraphs: [
+      "Sleep quality index, stress index, and cognitive composite score are calculated internally by AI Wellness from other captured measurements. They don't have an independent external clinical reference the way a lab value does.",
+    ],
+  },
+  {
+    title: "A note on all of this",
+    paragraphs: [
+      "This page describes how the platform's scoring works and where its reference ranges come from, for transparency. It is not medical advice. AI Wellness is a wellness platform, not a diagnostic or treatment service — always discuss your results with your care team.",
+    ],
+  },
+];

@@ -125,6 +125,7 @@ export default function CardPage() {
           <BiologicalAgeHero
             bioAge={aiDraft.biological_age}
             chronoAge={aiDraft.chronological_age}
+            onPress={() => router.push("/bio-age")}
           />
         </View>
 
