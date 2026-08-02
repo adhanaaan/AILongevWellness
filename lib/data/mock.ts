@@ -26,6 +26,7 @@ import type {
 import type { Repository, SignedCard } from "./repository";
 import { createSupabaseRepository } from "./supabase";
 import { computeUnlockedSections } from "../onboarding/flow";
+import { sexAwareRange } from "../ai/sexAwareRanges";
 
 export const DEMO_PARTICIPANT_ID = "james-chen";
 
@@ -120,9 +121,11 @@ const BIOMARKER_TEMPLATES: Record<Pillar, BiomarkerTemplate[]> = {
   metabolic: [
     { key: "fasting_glucose", label: "Fasting glucose", unit: "mg/dL", ref_low: 70, ref_high: 99, source: "lab_extract" },
     { key: "hba1c", label: "HbA1c", unit: "%", ref_low: 4.0, ref_high: 5.7, source: "lab_extract" },
+    // waist_hip_ratio/body_fat_pct's ref_low/ref_high below are display fallbacks
+    // only -- genBiomarkersForScore always overrides them via sexAwareRange().
     { key: "waist_hip_ratio", label: "Waist-to-hip ratio", unit: "ratio", ref_low: 0.7, ref_high: 0.9, source: "body_comp" },
     { key: "bmi", label: "BMI", unit: "kg/m²", ref_low: 18.5, ref_high: 25, source: "body_comp" },
-    { key: "body_fat_pct", label: "Body fat %", unit: "%", ref_low: 8, ref_high: 25, source: "body_comp" },
+    { key: "body_fat_pct", label: "Body fat %", unit: "%", ref_low: 8, ref_high: 24, source: "body_comp" },
     { key: "visceral_fat", label: "Visceral fat", unit: "level", ref_low: 1, ref_high: 12, source: "body_comp", lowerIsBetter: true },
     { key: "vitamin_d", label: "Vitamin D", unit: "nmol/L", ref_low: 50, ref_high: 125, source: "lab_extract" },
   ],
@@ -139,15 +142,16 @@ const BIOMARKER_TEMPLATES: Record<Pillar, BiomarkerTemplate[]> = {
   ],
 };
 
-function genBiomarkersForScore(participantId: string, pillar: Pillar, score: number, seed: number): Biomarker[] {
+function genBiomarkersForScore(participantId: string, pillar: Pillar, score: number, seed: number, sex: Sex): Biomarker[] {
   const templates = BIOMARKER_TEMPLATES[pillar];
   return templates.map((t, i) => {
+    const { ref_low, ref_high } = sexAwareRange(t.key, sex, t);
     const r = mulberry32(seed + i * 17)();
-    const span = t.ref_high - t.ref_low;
-    const center = t.lowerIsBetter ? t.ref_low + span * (1 - score / 100) : t.ref_low + span * (score / 100);
+    const span = ref_high - ref_low;
+    const center = t.lowerIsBetter ? ref_low + span * (1 - score / 100) : ref_low + span * (score / 100);
     const jitter = (r - 0.5) * span * 0.3;
     const value = Math.round((center + jitter) * 100) / 100;
-    const flagged = value < t.ref_low || value > t.ref_high;
+    const flagged = value < ref_low || value > ref_high;
     return {
       id: `bm-${participantId}-${t.key}`,
       participant_id: participantId,
@@ -156,8 +160,8 @@ function genBiomarkersForScore(participantId: string, pillar: Pillar, score: num
       label: t.label,
       value,
       unit: t.unit,
-      ref_low: t.ref_low,
-      ref_high: t.ref_high,
+      ref_low,
+      ref_high,
       source: t.source,
       status: t.source === "lab_extract" ? "extracted" : t.source === "wearable" ? "imported" : "entered",
       flagged,
@@ -375,7 +379,7 @@ class MockRepository implements Repository {
       { id: "bm-james-chen-hba1c", participant_id: james.id, pillar: "metabolic", key: "hba1c", label: "HbA1c", value: 5.6, unit: "%", ref_low: 4.0, ref_high: 5.7, source: "lab_extract", status: "extracted", flagged: false, updated_at: nowIso() },
       { id: "bm-james-chen-waist_hip_ratio", participant_id: james.id, pillar: "metabolic", key: "waist_hip_ratio", label: "Waist-to-hip ratio", value: 0.93, unit: "ratio", ref_low: 0.7, ref_high: 0.9, source: "body_comp", status: "entered", flagged: true, updated_at: nowIso() },
       { id: "bm-james-chen-bmi", participant_id: james.id, pillar: "metabolic", key: "bmi", label: "BMI", value: 26.1, unit: "kg/m²", ref_low: 18.5, ref_high: 25, source: "body_comp", status: "entered", flagged: true, updated_at: nowIso() },
-      { id: "bm-james-chen-body_fat_pct", participant_id: james.id, pillar: "metabolic", key: "body_fat_pct", label: "Body fat %", value: 24, unit: "%", ref_low: 8, ref_high: 25, source: "body_comp", status: "entered", flagged: false, updated_at: nowIso() },
+      { id: "bm-james-chen-body_fat_pct", participant_id: james.id, pillar: "metabolic", key: "body_fat_pct", label: "Body fat %", value: 24, unit: "%", ref_low: 8, ref_high: 24, source: "body_comp", status: "entered", flagged: false, updated_at: nowIso() },
       { id: "bm-james-chen-visceral_fat", participant_id: james.id, pillar: "metabolic", key: "visceral_fat", label: "Visceral fat", value: 13, unit: "level", ref_low: 1, ref_high: 12, source: "body_comp", status: "entered", flagged: true, updated_at: nowIso() },
       { id: "bm-james-chen-vitamin_d", participant_id: james.id, pillar: "metabolic", key: "vitamin_d", label: "Vitamin D", value: 58, unit: "nmol/L", ref_low: 50, ref_high: 125, source: "lab_extract", status: "extracted", flagged: false, updated_at: nowIso() },
 
@@ -492,7 +496,7 @@ class MockRepository implements Repository {
 
       const participantBiomarkers: Biomarker[] = [];
       for (const pillar of PILLARS) {
-        for (const bm of genBiomarkersForScore(id, pillar, scores[pillar], idx * 31 + PILLARS.indexOf(pillar))) {
+        for (const bm of genBiomarkersForScore(id, pillar, scores[pillar], idx * 31 + PILLARS.indexOf(pillar), participant.sex)) {
           this.biomarkers.set(bm.id, bm);
           participantBiomarkers.push(bm);
         }

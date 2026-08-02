@@ -282,6 +282,38 @@ lib/
       Medications & Supplements is deliberately self-report only (participant's own
       `Participant.medications` catalog, add/remove + daily adherence toggle) — never
       doctor-prescribed dosing, consistent with the wellness-not-clinical positioning.
+- [x] Care Plan rescoped to "only ask for what only you can report": Nutrition/Exercise/Sleep
+      dropped their manual daily-logging widgets (tap-to-cycle sleep hours, activity type,
+      meal/weight counters) — busywork re-entering data a wearable should already have, not
+      real product value for this audience. Only Medications (self-report catalog) and
+      Mindfulness (one-tap mood check-in) keep a daily interaction; the other three are
+      plan-only pages (`CarePlanCategoryConfig.tracked` in `lib/carePlan/categories.ts`
+      gates this everywhere). The main tab's "This week" trend is now mood-only instead of
+      a fabricated sleep+mood composite. Live wearable sync (still on the roadmap, see
+      "Wearable aggregator connect" below) is what would eventually make Sleep/Exercise
+      trackable again — with real passive data, not manual re-entry.
+- [x] Sign-off trust badge (`components/participant/SignOffBadge.tsx`): the Insights tab
+      only surfaced clinician review as a "Notes from your care team" card mid-scroll —
+      easy to skim past, and undersells the platform's real differentiator versus
+      AI-only competitors (which draft a plan with human escalation on request, not a
+      per-user clinician sign-off before release). A compact "Reviewed & signed off by
+      [name] ([credential])" badge now sits directly above the biological-age hero, so
+      trust is established before the participant sees any number.
+- [x] Methodology & Sources page (`app/methodology.tsx`, linked from participant Settings)
+      plus a tappable biological-age drill-down (`app/bio-age.tsx`, `BiologicalAgeHero`
+      gained an optional `onPress`): a real citation-research pass on every reference
+      range the app scores against caught actual bugs, not just missing sources — a
+      physiologically-impossible GMI floor (4.0% implies ~29 mg/dL average glucose),
+      an invented eGFR ceiling (KDIGO defines none), and body fat %/waist-hip ratio
+      using one unisex range when real sources (ACE, WHO) define meaningfully
+      different healthy ranges by sex. Fixed all three (`lib/ai/labCatalog.ts`,
+      new `lib/ai/sexAwareRanges.ts` applied at biomarker-write time in
+      `api/extract-body-comp.ts`/`api/extract-wearables.ts` and in the mock demo
+      generator). The methodology page (`lib/methodology/content.ts`) is static,
+      human-reviewed content, not AI-generated per request — citations are exactly
+      the kind of claim a model will confidently fabricate. Biological age is
+      explicitly labeled as our own composite estimate, not a named clinical
+      formula (e.g. PhenoAge) we don't actually implement.
 - [x] Real admin Settings page (`app/admin/settings.tsx` + `components/layout/AdminShell.tsx`):
       both previously showed a hardcoded fake identity ("Dr. Helena Marsh") and fabricated
       claims (a fake team roster, "email alerts" with no notification system behind them).

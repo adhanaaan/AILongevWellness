@@ -43,10 +43,9 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-function trendValue(log: DailyLog | undefined): number {
-  const sleepQuality = log?.sleep?.quality ?? 70;
-  const moodScore = log?.mood?.score ?? 5;
-  return Math.round((sleepQuality + moodScore * 10) / 2);
+function trendValue(log: DailyLog | undefined): number | null {
+  if (!log?.mood) return null;
+  return log.mood.score * 10;
 }
 
 function dayLabel(dateStr: string): string {
@@ -54,29 +53,19 @@ function dayLabel(dateStr: string): string {
   return DAYS[(weekday + 6) % 7]; // rotate so Monday is index 0, matching DAYS
 }
 
-function todayStatus(category: PlanCategory, todayLog: DailyLog | undefined, participant: Participant | null): string {
+/** Only medications and mindfulness have a daily self-report — see CarePlanCategoryConfig.tracked. */
+function todayStatus(category: PlanCategory, todayLog: DailyLog | undefined, participant: Participant | null): string | null {
   switch (category) {
-    case "nutrition": {
-      if (!todayLog?.food && todayLog?.weight_kg == null) return "Not logged yet";
-      const parts: string[] = [];
-      if (todayLog?.food) parts.push(`${todayLog.food.meals} meal${todayLog.food.meals === 1 ? "" : "s"}`);
-      if (todayLog?.weight_kg != null) parts.push(`${todayLog.weight_kg.toFixed(1)} kg`);
-      return parts.join(" · ");
-    }
-    case "exercise":
-      return todayLog?.activity ? `${todayLog.activity.type} · ${todayLog.activity.duration_minutes} min` : "Not logged yet";
     case "medications": {
       const catalog = participant?.medications ?? [];
       if (catalog.length === 0) return "Add what you take";
       const taken = (todayLog?.supplements ?? []).length;
       return `${taken}/${catalog.length} taken today`;
     }
-    case "sleep":
-      return todayLog?.sleep ? `${todayLog.sleep.hours}h · quality ${todayLog.sleep.quality}/100` : "Not logged yet";
     case "mindfulness":
-      return todayLog?.mood ? moodLabel(todayLog.mood.score) : "Not logged yet";
+      return todayLog?.mood ? moodLabel(todayLog.mood.score) : "Not checked in yet";
     default:
-      return "Not logged yet";
+      return null;
   }
 }
 
@@ -143,32 +132,40 @@ export default function TrackingPage() {
         <Text style={styles.subtitle}>
           {card
             ? "Verified by your care team — tap a category for the full plan."
-            : "Track your daily habits. Your personalized plan appears here once your care team has reviewed your results."}
+            : "Your personalized plan appears here once your care team has reviewed your results."}
         </Text>
 
-        <Card style={styles.section}>
-          <Text style={styles.cardLabel}>This week</Text>
-          <View style={styles.barsContainer}>
-            {last7.map((log) => (
-              <View key={log.log_date} style={styles.barColumn}>
-                <View style={styles.barTrack}>
-                  <View
-                    style={[
-                      styles.barFill,
-                      { height: Math.max(4, Math.round((trendValue(log) / 100) * TREND_BAR_TRACK_HEIGHT)) },
-                    ]}
-                  />
-                </View>
-                <Text style={styles.dayLabel}>{dayLabel(log.log_date)}</Text>
-              </View>
-            ))}
-          </View>
-        </Card>
+        {last7.some((log) => log.mood) && (
+          <Card style={styles.section}>
+            <Text style={styles.cardLabel}>Mood this week</Text>
+            <View style={styles.barsContainer}>
+              {last7.map((log) => {
+                const value = trendValue(log);
+                return (
+                  <View key={log.log_date} style={styles.barColumn}>
+                    <View style={styles.barTrack}>
+                      {value !== null && (
+                        <View
+                          style={[
+                            styles.barFill,
+                            { height: Math.max(4, Math.round((value / 100) * TREND_BAR_TRACK_HEIGHT)) },
+                          ]}
+                        />
+                      )}
+                    </View>
+                    <Text style={styles.dayLabel}>{dayLabel(log.log_date)}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          </Card>
+        )}
 
         <Card style={styles.categoriesCard}>
-          {CARE_PLAN_CATEGORIES.map(({ key, label, Icon, color, fallback }, i) => {
+          {CARE_PLAN_CATEGORIES.map(({ key, label, Icon, color, fallback, tracked }, i) => {
             const items = carePlan?.[key] ?? [];
             const planSnippet = items.length > 0 ? items[0] : fallback;
+            const status = tracked ? todayStatus(key, todayLog, participant) : null;
             return (
               <TouchableOpacity
                 key={key}
@@ -189,7 +186,7 @@ export default function TrackingPage() {
                   <Text style={styles.categoryPlan} numberOfLines={2}>
                     {planSnippet}
                   </Text>
-                  <Text style={styles.categoryStatus}>{todayStatus(key, todayLog, participant)}</Text>
+                  {status && <Text style={styles.categoryStatus}>{status}</Text>}
                 </View>
                 <ChevronRight size={18} color={colors.inkMuted} />
               </TouchableOpacity>

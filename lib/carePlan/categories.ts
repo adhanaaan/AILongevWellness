@@ -9,6 +9,15 @@ export interface CarePlanCategoryConfig {
   color: string;
   /** Shown when no doctor-verified plan exists yet for this category (before delivery, or a category the reviewer left blank). Generic, non-personalized wellness guidance only. */
   fallback: string;
+  /**
+   * Whether this category has a daily self-report interaction. Deliberately
+   * only true for things a wearable/lab capture can never tell us on its own
+   * (what you take, how you feel) — nutrition/exercise/sleep are plan-only
+   * until real wearable sync exists (still on the roadmap), rather than
+   * asking participants to manually re-enter data their wearable should
+   * already have.
+   */
+  tracked: boolean;
 }
 
 // Order here is the display order everywhere (Care Plan tab, drill-down nav,
@@ -22,6 +31,7 @@ export const CARE_PLAN_CATEGORIES: CarePlanCategoryConfig[] = [
     Icon: Utensils,
     color: colors.metabolic,
     fallback: "General guidance: favor balanced, whole-food meals with consistent timing.",
+    tracked: false,
   },
   {
     key: "exercise",
@@ -29,6 +39,7 @@ export const CARE_PLAN_CATEGORIES: CarePlanCategoryConfig[] = [
     Icon: Activity,
     color: colors.vascular,
     fallback: "General guidance: aim for regular movement most days of the week.",
+    tracked: false,
   },
   {
     key: "medications",
@@ -36,6 +47,7 @@ export const CARE_PLAN_CATEGORIES: CarePlanCategoryConfig[] = [
     Icon: Pill,
     color: colors.sageDark,
     fallback: "Track what you currently take below — your care team will weigh in once your card is reviewed.",
+    tracked: true,
   },
   {
     key: "sleep",
@@ -43,6 +55,7 @@ export const CARE_PLAN_CATEGORIES: CarePlanCategoryConfig[] = [
     Icon: Moon,
     color: colors.mental,
     fallback: "General guidance: protect a consistent 7-9 hour sleep window.",
+    tracked: false,
   },
   {
     key: "mindfulness",
@@ -50,6 +63,7 @@ export const CARE_PLAN_CATEGORIES: CarePlanCategoryConfig[] = [
     Icon: Wind,
     color: colors.mentalDark,
     fallback: "General guidance: build in a few minutes of rest or recovery each day.",
+    tracked: true,
   },
 ];
 

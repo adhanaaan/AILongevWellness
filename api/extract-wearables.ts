@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import JSZip from "jszip";
 import { parseAppleHealthExport } from "../lib/ai/appleHealthParser";
 import { WEARABLE_CATALOG_BY_KEY } from "../lib/ai/wearableCatalog";
+import { sexAwareRange } from "../lib/ai/sexAwareRanges";
 import { BUCKET_BY_KIND } from "../lib/data/storageBuckets";
 import { flagIfPastSignoff } from "../lib/data/pipelineAttention";
 
@@ -59,6 +60,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+  const { data: participant } = await serviceClient
+    .from("participants")
+    .select("sex")
+    .eq("id", participantId)
+    .maybeSingle();
+
   const bucket = BUCKET_BY_KIND[fileRow.kind as keyof typeof BUCKET_BY_KIND];
   const { data: blob, error: downloadErr } = await serviceClient.storage
     .from(bucket)
@@ -92,6 +99,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     .filter((v) => WEARABLE_CATALOG_BY_KEY[v.key])
     .map((v) => {
       const entry = WEARABLE_CATALOG_BY_KEY[v.key];
+      const { ref_low, ref_high } = sexAwareRange(entry.key, participant?.sex, entry);
       return {
         participant_id: participantId,
         pillar: entry.pillar,
@@ -99,11 +107,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         label: entry.label,
         value: v.value,
         unit: entry.unit,
-        ref_low: entry.ref_low,
-        ref_high: entry.ref_high,
+        ref_low,
+        ref_high,
         source: "wearable",
         status: "imported",
-        flagged: v.value < entry.ref_low || v.value > entry.ref_high,
+        flagged: v.value < ref_low || v.value > ref_high,
         updated_at: new Date().toISOString(),
       };
     });

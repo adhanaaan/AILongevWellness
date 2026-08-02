@@ -1,6 +1,6 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { ArrowRight } from "lucide-react-native";
+import { View, Text, Pressable, StyleSheet } from "react-native";
+import { ArrowRight, ChevronRight } from "lucide-react-native";
 import { GradientOrb } from "@/components/ui/GradientOrb";
 import {
   colors,
@@ -14,6 +14,8 @@ import {
 export interface BiologicalAgeHeroProps {
   bioAge: number;
   chronoAge: number;
+  /** Omit to render non-interactively (e.g. in the preliminary pre-review preview). */
+  onPress?: () => void;
 }
 
 // A tick-based ruler with two markers close together (a small delta) reads
@@ -35,7 +37,7 @@ function AgeCompareRow({ bioAge, chronoAge }: { bioAge: number; chronoAge: numbe
   );
 }
 
-export function BiologicalAgeHero({ bioAge, chronoAge }: BiologicalAgeHeroProps) {
+export function BiologicalAgeHero({ bioAge, chronoAge, onPress }: BiologicalAgeHeroProps) {
   const delta = chronoAge - bioAge;
   const deltaLabel =
     delta > 0
@@ -44,9 +46,15 @@ export function BiologicalAgeHero({ bioAge, chronoAge }: BiologicalAgeHeroProps)
         ? `${Math.abs(delta)} years older`
         : "On pace with your age";
 
-  return (
-    <View style={styles.card}>
+  const content = (
+    <>
       <GradientOrb tone="amber" size={220} style={styles.orb} />
+      {onPress && (
+        <View style={styles.exploreHint}>
+          <Text style={styles.exploreHintText}>See how this is calculated</Text>
+          <ChevronRight size={14} color={colors.inkOnDarkMuted} />
+        </View>
+      )}
       <Text style={styles.label}>Biological age</Text>
       <Text style={styles.bioAge}>{bioAge}</Text>
       <View style={styles.pill}>
@@ -56,7 +64,22 @@ export function BiologicalAgeHero({ bioAge, chronoAge }: BiologicalAgeHeroProps)
       <Text style={styles.explanation}>
         Calculated from your vascular, metabolic, and mental markers, compared with people your age.
       </Text>
-    </View>
+    </>
+  );
+
+  if (!onPress) {
+    return <View style={styles.card}>{content}</View>;
+  }
+
+  return (
+    <Pressable
+      style={styles.card}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel="See how your biological age is calculated"
+    >
+      {content}
+    </Pressable>
   );
 }
 
@@ -68,6 +91,19 @@ const styles = StyleSheet.create({
     borderRadius: radii["3xl"],
     padding: spacing["2xl"],
     ...shadows.soft,
+  },
+  exploreHint: {
+    position: "absolute",
+    top: spacing.lg,
+    right: spacing.lg,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+  },
+  exploreHintText: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkOnDarkMuted,
   },
   orb: {
     top: -20,

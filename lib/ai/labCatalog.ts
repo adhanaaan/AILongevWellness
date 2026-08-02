@@ -35,14 +35,20 @@ export const LAB_CATALOG: LabCatalogEntry[] = [
   { key: "alt", label: "ALT (liver)", pillar: "metabolic", unit: "U/L", ref_low: 7, ref_high: 56 },
   { key: "ast", label: "AST (liver)", pillar: "metabolic", unit: "U/L", ref_low: 8, ref_high: 48 },
   { key: "creatinine", label: "Creatinine", pillar: "metabolic", unit: "µmol/L", ref_low: 60, ref_high: 110 },
-  { key: "egfr", label: "eGFR (kidney function)", pillar: "metabolic", unit: "mL/min/1.73m²", ref_low: 90, ref_high: 200 },
+  // KDIGO's G1 category is "eGFR >= 90" with no defined ceiling (the test isn't
+  // clinically meaningful much above ~130) -- 130 is a realistic display cap,
+  // not a KDIGO-sourced value.
+  { key: "egfr", label: "eGFR (kidney function)", pillar: "metabolic", unit: "mL/min/1.73m²", ref_low: 90, ref_high: 130 },
   { key: "tsh", label: "TSH (thyroid)", pillar: "metabolic", unit: "mIU/L", ref_low: 0.4, ref_high: 4.0 },
 
   // CGM (continuous glucose monitor) summary stats — a different document shape
   // (e.g. a Buzud/Freestyle/Dexcom export) but same upload path and pillar as
   // the rest of the metabolic panel, so it lives in the same catalog.
   { key: "cgm_avg_glucose", label: "Average glucose (CGM)", pillar: "metabolic", unit: "mg/dL", ref_low: 70, ref_high: 140 },
-  { key: "cgm_gmi", label: "Glucose Management Indicator", pillar: "metabolic", unit: "%", ref_low: 4.0, ref_high: 7.0 },
+  // GMI(%) = 3.31 + 0.02392 x mean glucose(mg/dL) (Bergenstal et al.) -- a floor
+  // of 4.0% implies ~29 mg/dL average glucose, which isn't physiologically
+  // survivable. 5.0% (~70 mg/dL average) is the actual plausible floor.
+  { key: "cgm_gmi", label: "Glucose Management Indicator", pillar: "metabolic", unit: "%", ref_low: 5.0, ref_high: 7.0 },
   { key: "cgm_variability", label: "Glucose variability (%CV)", pillar: "metabolic", unit: "%", ref_low: 0, ref_high: 36 },
   { key: "cgm_time_in_range", label: "Time in range (CGM)", pillar: "metabolic", unit: "%", ref_low: 70, ref_high: 100 },
   { key: "cgm_time_above_range", label: "Time above range (CGM)", pillar: "metabolic", unit: "%", ref_low: 0, ref_high: 25 },

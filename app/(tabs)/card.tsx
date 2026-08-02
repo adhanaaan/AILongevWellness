@@ -9,6 +9,7 @@ import { KeyContributorItem } from "@/components/participant/KeyContributorItem"
 import { SuggestedFocusGrid } from "@/components/participant/SuggestedFocusGrid";
 import { SnapshotPending, type SnapshotPreview } from "@/components/participant/SnapshotPending";
 import { CareTeamNotesCard } from "@/components/participant/CareTeamNotesCard";
+import { SignOffBadge } from "@/components/participant/SignOffBadge";
 import { TopRecommendation } from "@/components/participant/TopRecommendation";
 import { NextStepsCard } from "@/components/participant/NextStepsCard";
 import { repository } from "@/lib/data/mock";
@@ -118,11 +119,13 @@ export default function CardPage() {
         <Text style={styles.subtitle}>
           Report generated {formatDate(aiDraft.generated_at)}
         </Text>
+        <SignOffBadge gp={gp} tcm={tcm} />
 
         <View style={styles.section}>
           <BiologicalAgeHero
             bioAge={aiDraft.biological_age}
             chronoAge={aiDraft.chronological_age}
+            onPress={() => router.push("/bio-age")}
           />
         </View>
 
