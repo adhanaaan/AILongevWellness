@@ -34,6 +34,9 @@ same way:
 - `supabase/migrations/0004_care_plan.sql` — adds `medications` (self-reported
   catalog) to `participants` and `care_plan` (doctor-verified, per-category
   plan) to `ai_draft`.
+- `supabase/migrations/0005_care_team_roster.sql` — lets care team accounts
+  read the full `user_roles` table (previously own-row-only), needed for the
+  admin Settings page's real registered-teammate count.
 
 Any future numbered migration file works the same way: run it once, in
 order, after pulling new code that references it.

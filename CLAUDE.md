@@ -282,3 +282,18 @@ lib/
       Medications & Supplements is deliberately self-report only (participant's own
       `Participant.medications` catalog, add/remove + daily adherence toggle) — never
       doctor-prescribed dosing, consistent with the wellness-not-clinical positioning.
+- [x] Real admin Settings page (`app/admin/settings.tsx` + `components/layout/AdminShell.tsx`):
+      both previously showed a hardcoded fake identity ("Dr. Helena Marsh") and fabricated
+      claims (a fake team roster, "email alerts" with no notification system behind them).
+      Now shows the real signed-in account's email + a working "Sign out" button, a "Data
+      source" line that reflects `isSupabaseConfigured` (and the real project host) instead
+      of a static claim, and a real registered-care-team-account count (new RLS policy,
+      `supabase/migrations/0005_care_team_roster.sql`, since `user_roles` was previously
+      own-row-read-only). Notifications honestly labeled "not yet built" rather than
+      claiming to work.
+- [x] Real admin Exports (`app/admin/exports.tsx`): all three buttons were no-ops before.
+      Participant data and the audit log now export as real CSVs (`lib/export/csv.ts` +
+      `lib/export/download.ts`, a Blob-URL download — web only, the actual deployment
+      target) built from live repository data. "Signed cards" exports as JSON, not PDF —
+      no PDF-generation dependency exists in the project, so a real JSON export of the
+      full delivered-card data shipped instead of a fake PDF button.

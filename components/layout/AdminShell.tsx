@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, usePathname } from "expo-router";
 import { Users, ClipboardCheck, Download, Settings, Menu, X } from "lucide-react-native";
 import { Avatar } from "@/components/ui/Avatar";
+import { useAuth } from "@/lib/auth/AuthProvider";
 import { colors, fontSizes, radii } from "@/lib/theme/tokens";
 
 const NAV_ITEMS = [
@@ -31,8 +32,12 @@ interface AdminShellProps {
 export function AdminShell({ children, title, headerActions }: AdminShellProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const { session } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const isWide = Dimensions.get("window").width >= 768;
+
+  const email = session?.user?.email ?? "Demo clinician";
+  const initials = email.slice(0, 2).toUpperCase();
 
   const sidebar = (
     <View style={styles.sidebar}>
@@ -74,13 +79,21 @@ export function AdminShell({ children, title, headerActions }: AdminShellProps) 
           );
         })}
       </View>
-      <View style={styles.sidebarFooter}>
-        <Avatar initials="HM" size="sm" />
-        <View>
-          <Text style={styles.footerName}>Dr. Helena Marsh</Text>
+      <TouchableOpacity
+        style={styles.sidebarFooter}
+        onPress={() => {
+          setMenuOpen(false);
+          router.push("/admin/settings");
+        }}
+      >
+        <Avatar initials={initials} size="sm" />
+        <View style={styles.footerText}>
+          <Text style={styles.footerName} numberOfLines={1}>
+            {email}
+          </Text>
           <Text style={styles.footerRole}>Care team</Text>
         </View>
-      </View>
+      </TouchableOpacity>
     </View>
   );
 
@@ -190,6 +203,9 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
     paddingHorizontal: 20,
     paddingVertical: 16,
+  },
+  footerText: {
+    flex: 1,
   },
   footerName: {
     fontSize: fontSizes.labelMd,
