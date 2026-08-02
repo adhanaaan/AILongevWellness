@@ -292,6 +292,13 @@ lib/
       a fabricated sleep+mood composite. Live wearable sync (still on the roadmap, see
       "Wearable aggregator connect" below) is what would eventually make Sleep/Exercise
       trackable again — with real passive data, not manual re-entry.
+- [x] Sign-off trust badge (`components/participant/SignOffBadge.tsx`): the Insights tab
+      only surfaced clinician review as a "Notes from your care team" card mid-scroll —
+      easy to skim past, and undersells the platform's real differentiator versus
+      AI-only competitors (which draft a plan with human escalation on request, not a
+      per-user clinician sign-off before release). A compact "Reviewed & signed off by
+      [name] ([credential])" badge now sits directly above the biological-age hero, so
+      trust is established before the participant sees any number.
 - [x] Real admin Settings page (`app/admin/settings.tsx` + `components/layout/AdminShell.tsx`):
       both previously showed a hardcoded fake identity ("Dr. Helena Marsh") and fabricated
       claims (a fake team roster, "email alerts" with no notification system behind them).
