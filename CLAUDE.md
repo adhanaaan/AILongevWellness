@@ -267,3 +267,18 @@ lib/
       derives a `cog_composite` score and writes both as `mental`-pillar biomarkers
       (`lib/ai/recognizeCatalog.ts`). Mock mode (no Supabase configured) skips the
       interactive test, matching the other capture-*-intro screens.
+- [x] Care Plan tab redesign (tab: Care Plan, `app/(tabs)/tracking.tsx`): previously just a
+      habit logger disconnected from anything the care team recommended. Now organized
+      around 5 categories (Nutrition / Exercise / Medications & Supplements / Sleep &
+      Recovery / Mindfulness & Stress, `lib/carePlan/categories.ts`), each mapping onto an
+      existing DailyLog field. `AiDraft.care_plan` (`PlanCategory`/`CarePlan` in `db.ts`) is
+      AI-drafted alongside the rest of the narrative (`api/generate-draft.ts`) and
+      doctor-verified before sign-off (`components/admin/CarePlanEditor.tsx`, same
+      edit/save pattern as `AIDraftSummaryCard`) — gated to the delivered card on the
+      participant side, generic wellness-guidance fallback text shown before that. The
+      main tab shows compact nav rows (plan snippet + today's status); tapping one opens
+      `app/care-plan/[category].tsx` (mirrors the `app/pillar/[pillar].tsx` drill-down
+      pattern) with the full plan text, the full logging widget, and a 7-day mini trend.
+      Medications & Supplements is deliberately self-report only (participant's own
+      `Participant.medications` catalog, add/remove + daily adherence toggle) — never
+      doctor-prescribed dosing, consistent with the wellness-not-clinical positioning.

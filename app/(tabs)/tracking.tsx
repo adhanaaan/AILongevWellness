@@ -1,45 +1,18 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import {
-  Moon,
-  Activity,
-  Utensils,
-  Scale,
-  ClipboardList,
-  Smile,
-  Meh,
-  Frown,
-  Minus,
-  Plus,
-  Watch,
-  PersonStanding,
-  FileText,
-  ChevronRight,
-  type LucideIcon,
-} from "lucide-react-native";
+import { Watch, PersonStanding, FileText, ChevronRight, type LucideIcon } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Toggle } from "@/components/ui/Toggle";
-import { colors, fontSizes, radii } from "@/lib/theme/tokens";
-import {
-  listDailyLogsAction,
-  upsertDailyLogAction,
-} from "@/lib/data/actions";
+import { colors, fontSizes, radii, spacing } from "@/lib/theme/tokens";
+import { listDailyLogsAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import type { DailyLog } from "@/lib/types/db";
+import { CARE_PLAN_CATEGORIES } from "@/lib/carePlan/categories";
+import type { DailyLog, Participant, PlanCategory } from "@/lib/types/db";
+import type { SignedCard } from "@/lib/data/repository";
 
 const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
-
-const MOODS = [
-  { key: "great", label: "Great", Icon: Smile, score: 9 },
-  { key: "okay", label: "Okay", Icon: Meh, score: 6 },
-  { key: "low", label: "Low", Icon: Frown, score: 3 },
-] as const;
-
-const SUPPLEMENTS = ["Omega-3", "Vitamin D", "Magnesium"];
 
 const ADD_DATA_ROWS: Array<{ Icon: LucideIcon; label: string; description: string; route: string }> = [
   {
@@ -66,25 +39,8 @@ const ADD_DATA_ROWS: Array<{ Icon: LucideIcon; label: string; description: strin
 // child don't reliably resolve on react-native-web, so bar fill is computed in px.
 const TREND_BAR_TRACK_HEIGHT = 44;
 
-const SLEEP_PRESETS = [6, 6.5, 7, 7.5, 8, 8.5, 9];
-const ACTIVITY_PRESETS: Array<{ type: string; duration_minutes: number }> = [
-  { type: "Rest", duration_minutes: 0 },
-  { type: "Walk", duration_minutes: 20 },
-  { type: "Run", duration_minutes: 35 },
-  { type: "Gym", duration_minutes: 45 },
-  { type: "Yoga", duration_minutes: 25 },
-];
-
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
-}
-
-function sleepQualityFromHours(hours: number): number {
-  return Math.max(0, Math.min(100, Math.round(((hours - 5) / 4) * 100)));
-}
-
-function moodKeyForScore(score: number): (typeof MOODS)[number]["key"] {
-  return MOODS.slice().sort((a, b) => Math.abs(a.score - score) - Math.abs(b.score - score))[0].key;
 }
 
 function trendValue(log: DailyLog | undefined): number {
@@ -98,82 +54,74 @@ function dayLabel(dateStr: string): string {
   return DAYS[(weekday + 6) % 7]; // rotate so Monday is index 0, matching DAYS
 }
 
+function todayStatus(category: PlanCategory, todayLog: DailyLog | undefined, participant: Participant | null): string {
+  switch (category) {
+    case "nutrition": {
+      if (!todayLog?.food && todayLog?.weight_kg == null) return "Not logged yet";
+      const parts: string[] = [];
+      if (todayLog?.food) parts.push(`${todayLog.food.meals} meal${todayLog.food.meals === 1 ? "" : "s"}`);
+      if (todayLog?.weight_kg != null) parts.push(`${todayLog.weight_kg.toFixed(1)} kg`);
+      return parts.join(" · ");
+    }
+    case "exercise":
+      return todayLog?.activity ? `${todayLog.activity.type} · ${todayLog.activity.duration_minutes} min` : "Not logged yet";
+    case "medications": {
+      const catalog = participant?.medications ?? [];
+      if (catalog.length === 0) return "Add what you take";
+      const taken = (todayLog?.supplements ?? []).length;
+      return `${taken}/${catalog.length} taken today`;
+    }
+    case "sleep":
+      return todayLog?.sleep ? `${todayLog.sleep.hours}h · quality ${todayLog.sleep.quality}/100` : "Not logged yet";
+    case "mindfulness":
+      return todayLog?.mood ? moodLabel(todayLog.mood.score) : "Not logged yet";
+    default:
+      return "Not logged yet";
+  }
+}
+
+function moodLabel(score: number): string {
+  if (score >= 8) return "Feeling great";
+  if (score >= 5) return "Feeling okay";
+  return "Feeling low";
+}
+
 export default function TrackingPage() {
   const router = useRouter();
   const { participantId } = useAuth();
   const [logs, setLogs] = useState<DailyLog[]>([]);
+  const [participant, setParticipant] = useState<Participant | null>(null);
+  const [card, setCard] = useState<SignedCard | null>(null);
   const [loading, setLoading] = useState(true);
 
   function uploadMoreData(route: string) {
     router.push({ pathname: route as never, params: { mode: "edit" } });
   }
 
-  const loadLogs = useCallback(() => {
+  const loadData = useCallback(() => {
     if (!participantId) return;
-    listDailyLogsAction(participantId).then((l) => {
+    Promise.all([
+      listDailyLogsAction(participantId),
+      repository.getParticipant(participantId),
+      repository.getSignedCard(participantId),
+    ]).then(([l, p, c]) => {
       setLogs(l);
+      setParticipant(p);
+      setCard(c);
       setLoading(false);
     });
   }, [participantId]);
 
   useEffect(() => {
     if (!participantId) return;
-    loadLogs();
-    return repository.subscribe(loadLogs);
-  }, [participantId, loadLogs]);
+    loadData();
+    return repository.subscribe(loadData);
+  }, [participantId, loadData]);
 
   const today = todayIso();
   const todayLog = logs.find((l) => l.log_date === today);
   const last7 = logs.slice(-7);
-
-  async function patchToday(patch: Partial<Omit<DailyLog, "id" | "participant_id" | "log_date">>) {
-    if (!participantId) return;
-    const updated = await upsertDailyLogAction(today, patch, participantId);
-    setLogs((prev) => {
-      const idx = prev.findIndex((l) => l.log_date === today);
-      if (idx === -1) return [...prev, updated];
-      const next = prev.slice();
-      next[idx] = updated;
-      return next;
-    });
-  }
-
-  function cycleSleep() {
-    const current = todayLog?.sleep?.hours ?? 7;
-    const currentIdx = SLEEP_PRESETS.findIndex((h) => h === current);
-    const nextHours = SLEEP_PRESETS[(currentIdx + 1 + SLEEP_PRESETS.length) % SLEEP_PRESETS.length];
-    patchToday({ sleep: { hours: nextHours, quality: sleepQualityFromHours(nextHours) } });
-  }
-
-  function cycleActivity() {
-    const current = todayLog?.activity;
-    const currentIdx = ACTIVITY_PRESETS.findIndex((a) => a.type === current?.type);
-    const next = ACTIVITY_PRESETS[(currentIdx + 1 + ACTIVITY_PRESETS.length) % ACTIVITY_PRESETS.length];
-    patchToday({ activity: next });
-  }
-
-  function setMood(key: (typeof MOODS)[number]["key"]) {
-    const mood = MOODS.find((m) => m.key === key)!;
-    patchToday({ mood: { score: mood.score } });
-  }
-
-  function addMeal() {
-    const meals = (todayLog?.food?.meals ?? 0) + 1;
-    patchToday({ food: { ...todayLog?.food, meals } });
-  }
-
-  function adjustWeight(delta: number) {
-    const current = todayLog?.weight_kg ?? 82;
-    patchToday({ weight_kg: Math.round((current + delta) * 10) / 10 });
-  }
-
-  function toggleSupplement(name: string, taken: boolean) {
-    const current = todayLog?.supplements ?? [];
-    const next = taken ? [...current, name] : current.filter((s) => s !== name);
-    patchToday({ supplements: next });
-  }
-
-  const mood = todayLog?.mood ? moodKeyForScore(todayLog.mood.score) : "okay";
+  const carePlan = card?.aiDraft.care_plan;
 
   if (loading) {
     return (
@@ -191,9 +139,11 @@ export default function TrackingPage() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <Text style={styles.title}>Daily tracking</Text>
+        <Text style={styles.title}>Care Plan</Text>
         <Text style={styles.subtitle}>
-          A quick log — wearable data syncs automatically.
+          {card
+            ? "Verified by your care team — tap a category for the full plan."
+            : "Track your daily habits. Your personalized plan appears here once your care team has reviewed your results."}
         </Text>
 
         <Card style={styles.section}>
@@ -215,105 +165,37 @@ export default function TrackingPage() {
           </View>
         </Card>
 
-        <View style={styles.grid}>
-          <TouchableOpacity style={styles.gridHalf} onPress={cycleSleep} activeOpacity={0.7}>
-            <Card padding="sm">
-              <Moon size={18} color={colors.sageDark} />
-              <Text style={styles.statValue}>
-                {todayLog?.sleep ? `${todayLog.sleep.hours}h` : "Tap to log"}
-              </Text>
-              <Text style={styles.statLabel}>
-                {todayLog?.sleep ? `Quality ${todayLog.sleep.quality}/100` : "Sleep last night"}
-              </Text>
-            </Card>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.gridHalf} onPress={cycleActivity} activeOpacity={0.7}>
-            <Card padding="sm">
-              <Activity size={18} color={colors.sageDark} />
-              <Text style={styles.statValue}>{todayLog?.activity?.type ?? "Tap to log"}</Text>
-              <Text style={styles.statLabel}>
-                {todayLog?.activity ? `${todayLog.activity.duration_minutes} min` : "Activity today"}
-              </Text>
-            </Card>
-          </TouchableOpacity>
-
-          <Card padding="sm" style={styles.gridFull}>
-            <View style={styles.moodHeader}>
-              <Smile size={18} color={colors.sageDark} />
-              <Text style={styles.cardLabel}>Mood</Text>
-            </View>
-            <View style={styles.moodRow}>
-              {MOODS.map(({ key, label, Icon }) => (
-                <TouchableOpacity
-                  key={key}
-                  style={[
-                    styles.moodOption,
-                    mood === key && styles.moodOptionActive,
-                  ]}
-                  onPress={() => setMood(key)}
-                >
-                  <Icon
-                    size={18}
-                    color={mood === key ? colors.sageDark : colors.inkMuted}
-                  />
-                  <Text
-                    style={[
-                      styles.moodLabel,
-                      mood === key && styles.moodLabelActive,
-                    ]}
-                  >
-                    {label}
+        <Card style={styles.categoriesCard}>
+          {CARE_PLAN_CATEGORIES.map(({ key, label, Icon, color, fallback }, i) => {
+            const items = carePlan?.[key] ?? [];
+            const planSnippet = items.length > 0 ? items[0] : fallback;
+            return (
+              <TouchableOpacity
+                key={key}
+                style={[styles.categoryRow, i > 0 && styles.categoryRowDivider]}
+                onPress={() => router.push(`/care-plan/${key}`)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.categoryIcon, { backgroundColor: `${color}1A` }]}>
+                  <Icon size={18} color={color} />
+                </View>
+                <View style={styles.categoryText}>
+                  <View style={styles.categoryHeaderRow}>
+                    <Text style={styles.categoryLabel}>{label}</Text>
+                    {items.length > 1 && (
+                      <Text style={styles.categoryMoreCount}>+{items.length - 1} more</Text>
+                    )}
+                  </View>
+                  <Text style={styles.categoryPlan} numberOfLines={2}>
+                    {planSnippet}
                   </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </Card>
-
-          <Card padding="sm" style={styles.gridHalf}>
-            <Utensils size={18} color={colors.sageDark} />
-            <Text style={styles.statValue}>{todayLog?.food?.meals ?? 0} logged</Text>
-            <Button size="sm" shape="md" variant="secondary" onPress={addMeal}>
-              Add meal
-            </Button>
-          </Card>
-
-          <Card padding="sm" style={styles.gridHalf}>
-            <Scale size={18} color={colors.sageDark} />
-            <Text style={styles.statValue}>
-              {todayLog?.weight_kg != null ? `${todayLog.weight_kg.toFixed(1)} kg` : "No data yet"}
-            </Text>
-            <View style={styles.weightRow}>
-              <TouchableOpacity style={styles.weightButton} onPress={() => adjustWeight(-0.1)}>
-                <Minus size={14} color={colors.sageDark} />
+                  <Text style={styles.categoryStatus}>{todayStatus(key, todayLog, participant)}</Text>
+                </View>
+                <ChevronRight size={18} color={colors.inkMuted} />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.weightButton} onPress={() => adjustWeight(0.1)}>
-                <Plus size={14} color={colors.sageDark} />
-              </TouchableOpacity>
-            </View>
-          </Card>
-
-          <Card padding="sm" style={styles.gridFull}>
-            <View style={styles.moodHeader}>
-              <ClipboardList size={18} color={colors.sageDark} />
-              <Text style={styles.cardLabel}>Supplements</Text>
-            </View>
-            {SUPPLEMENTS.map((s) => (
-              <View key={s} style={styles.suppRow}>
-                <Text style={styles.suppName}>{s}</Text>
-                <Toggle
-                  checked={(todayLog?.supplements ?? []).includes(s)}
-                  onChange={(v) => toggleSupplement(s, v)}
-                />
-              </View>
-            ))}
-          </Card>
-        </View>
-
-        <Text style={styles.hint}>
-          Wearable data syncs automatically — no need to log steps or sleep
-          manually.
-        </Text>
+            );
+          })}
+        </Card>
 
         <Text style={styles.sectionTitle}>Add more data</Text>
         <Card style={styles.addDataCard}>
@@ -386,86 +268,49 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
   },
-  grid: {
+  categoriesCard: { marginTop: 24, padding: 0 },
+  categoryRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
+    alignItems: "flex-start",
     gap: 12,
-    marginTop: 24,
+    padding: 16,
   },
-  gridHalf: {
-    width: "47%",
-    flexGrow: 1,
-    gap: 4,
+  categoryRowDivider: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
-  gridFull: {
-    width: "100%",
-    gap: 8,
-  },
-  statValue: {
-    fontSize: fontSizes.headlineMd,
-    fontWeight: "600",
-    color: colors.charcoal,
-  },
-  statLabel: {
-    fontSize: fontSizes.caption,
-    color: colors.inkMuted,
-  },
-  moodHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  moodRow: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  moodOption: {
-    flex: 1,
-    alignItems: "center",
-    gap: 4,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radii.md,
-    paddingVertical: 8,
-  },
-  moodOptionActive: {
-    borderColor: colors.sage,
-    backgroundColor: colors.sageTint,
-  },
-  moodLabel: {
-    fontSize: fontSizes.caption,
-    color: colors.inkMuted,
-  },
-  moodLabelActive: {
-    color: colors.sageDark,
-  },
-  weightRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 2,
-  },
-  weightButton: {
-    width: 28,
-    height: 28,
+  categoryIcon: {
+    width: 36,
+    height: 36,
     borderRadius: radii.full,
-    borderWidth: 1,
-    borderColor: colors.border,
     alignItems: "center",
     justifyContent: "center",
   },
-  suppRow: {
+  categoryText: { flex: 1, gap: 2 },
+  categoryHeaderRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  suppName: {
+  categoryLabel: {
     fontSize: fontSizes.bodyMd,
+    fontWeight: "600",
     color: colors.charcoal,
   },
-  hint: {
+  categoryMoreCount: {
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
-    marginTop: 24,
+  },
+  categoryPlan: {
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    lineHeight: 16,
+  },
+  categoryStatus: {
+    fontSize: fontSizes.caption,
+    color: colors.sageDark,
+    fontWeight: "600",
+    marginTop: 2,
   },
   sectionTitle: {
     fontSize: fontSizes.labelMd,

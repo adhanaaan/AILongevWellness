@@ -1,4 +1,5 @@
 // CHANGE LOG (newest first)
+// - 2026-08-02 Added care_plan to AiDraft + medications to Participant (supabase/migrations/0004_care_plan.sql).
 // - 2026-07-28 Added consent_given/consented_at to Participant (supabase/migrations/0002_consent_tracking.sql).
 // - 2026-07-24 Person 1: Added OnboardingProgress (hub-and-spoke capture sub-flow tracking).
 // - 2026-07-24 Person 1: Added lifestyle fields (exercise_frequency, smoking, alcohol_drinks_per_week) to Participant.
@@ -24,6 +25,8 @@ export interface Participant {
   alcohol_drinks_per_week?: AlcoholDrinksPerWeek;
   consent_given?: boolean;
   consented_at?: string | null;
+  /** Self-reported catalog of medications/supplements the participant currently takes (not doctor-prescribed dosing — a wellness platform never prescribes). Daily adherence lives in DailyLog.supplements. */
+  medications?: string[];
   created_at: string;
 }
 
@@ -92,6 +95,16 @@ export interface OutOfRangeBiomarker {
   ref_high: number;
 }
 
+/**
+ * The Care Plan tab's five tracks. Each maps onto an existing DailyLog field
+ * (nutrition -> food+weight, exercise -> activity, medications -> supplements,
+ * sleep -> sleep, mindfulness -> mood), so every category has something concrete
+ * for the participant to log against the plan, not just text to read.
+ */
+export type PlanCategory = "nutrition" | "exercise" | "medications" | "sleep" | "mindfulness";
+
+export type CarePlan = Record<PlanCategory, string[]>;
+
 export interface AiDraft {
   id: string;
   participant_id: string;
@@ -103,6 +116,8 @@ export interface AiDraft {
   areas_to_monitor: string[];
   suggested_focus: string[];
   discussion_points: string[];
+  /** Doctor-verified, category-tagged action items shown on the Care Plan tab. AI-drafted alongside the rest of the narrative, editable by the reviewer before sign-off. */
+  care_plan?: CarePlan;
   generated_at: string;
   edited_by_admin: boolean;
   /** Biomarker keys with no value captured at generation time. */

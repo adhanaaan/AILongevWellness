@@ -215,6 +215,16 @@ function genAiDraftForScores(
       `Review ${pillarLabel[weakest[0]]} trend at the next check-in`,
       "Discuss current recovery and stress load",
     ],
+    care_plan: {
+      nutrition: ["Aim for balanced, whole-food meals with consistent timing."],
+      exercise: ["Keep up regular movement most days of the week."],
+      medications: ["Log what you currently take, including any supplements."],
+      sleep: ["Protect a consistent 7-9 hour sleep window."],
+      mindfulness:
+        monitorPillar === "mental"
+          ? ["Build in daily stress-recovery time — mental markers are trending toward the reference boundary."]
+          : ["Build in moments of rest and recovery each day."],
+    },
     generated_at: nowIso(),
     edited_by_admin: false,
     missing_biomarkers: computeMissingBiomarkers(biomarkers),
@@ -298,6 +308,7 @@ class MockRepository implements Repository {
       alcohol_drinks_per_week: "1_to_7",
       consent_given: true,
       consented_at: nowIso(),
+      medications: ["Omega-3", "Vitamin D", "Magnesium"],
       created_at: nowIso(),
     };
     this.participants.set(james.id, james);
@@ -405,6 +416,22 @@ class MockRepository implements Repository {
         "Discuss current stress load and recovery practices",
         "Review family history relevant to metabolic health",
       ],
+      care_plan: {
+        nutrition: [
+          "Shift toward lower-glycemic-load meals given your fasting glucose trend — more fiber, less refined carbohydrate at breakfast.",
+          "Keep alcohol within your current range; consider a couple of extra alcohol-free days each week.",
+        ],
+        exercise: [
+          "Add one more strength session per week alongside your current cardio — supports the waist-hip ratio and visceral fat trend.",
+          "Keep up the daily movement that's already driving your strong vascular numbers.",
+        ],
+        medications: [
+          "Continue your current Omega-3 and Vitamin D routine.",
+          "Discuss whether a follow-up metabolic panel in 3 months is worth adding.",
+        ],
+        sleep: ["Your 7-8 hour average is a strength — protect it, especially on the nights you dip under 7."],
+        mindfulness: ["Build in a short daily wind-down practice — your stress index is in range but trending toward the upper half."],
+      },
       generated_at: nowIso(),
       edited_by_admin: false,
       missing_biomarkers: computeMissingBiomarkers(jamesBiomarkers),
