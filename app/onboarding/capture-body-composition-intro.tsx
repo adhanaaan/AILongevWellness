@@ -10,6 +10,8 @@ import { GradientOverlay } from "@/components/ui/GradientOverlay";
 import { updateSectionStatusAction, updateCaptureChannelAction, uploadFileAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
+import { validateUploadSize } from "@/lib/data/uploadLimits";
+import { extractBodyComp } from "@/lib/ai/client";
 import { colors, fontFamilies, fontSizes, radii, spacing, teal } from "@/lib/theme/tokens";
 
 const POINTS = [
@@ -25,7 +27,7 @@ const BUTTON_GRADIENT_STOPS = [
 
 export default function CaptureBodyCompositionIntroPage() {
   const router = useRouter();
-  const { participantId } = useAuth();
+  const { participantId, session } = useAuth();
   const { mode } = useLocalSearchParams<{ mode?: string }>();
   const isEditing = mode === "edit";
   const [uploading, setUploading] = useState(false);
@@ -35,9 +37,10 @@ export default function CaptureBodyCompositionIntroPage() {
   async function finishUp() {
     if (!participantId) return;
     setProcessing(true);
-    // Mocked processing state — there's no automated extraction for body
-    // composition scans yet, so this just gives the participant a brief, honest
-    // "working on it" beat before we mark the section done.
+    // Mocked processing state — the real extraction (when configured) runs in
+    // the background and isn't done by the time this resolves, so this is
+    // still just a brief, honest "working on it" beat before we mark the
+    // section done, not a wait for the AI call itself.
     await new Promise((resolve) => setTimeout(resolve, 400));
     await updateCaptureChannelAction(participantId, "body_composition", {
       status: "complete",
@@ -79,11 +82,24 @@ export default function CaptureBodyCompositionIntroPage() {
     try {
       const response = await fetch(asset.uri);
       const blob = await response.blob();
-      await uploadFileAction(participantId, "body_comp", {
+      const sizeError = validateUploadSize("body_comp", blob.size);
+      if (sizeError) {
+        setError(sizeError);
+        setUploading(false);
+        return;
+      }
+      const fileRecord = await uploadFileAction(participantId, "body_comp", {
         blob,
         filename: asset.name,
         contentType: asset.mimeType ?? (Platform.OS === "web" ? blob.type : undefined),
       });
+
+      if (session?.access_token) {
+        extractBodyComp(session.access_token, participantId, fileRecord.id).catch(() => {
+          // Extraction failure isn't fatal to capture — the care team can retry
+          // from the admin screen.
+        });
+      }
 
       await finishUp();
     } catch (e) {

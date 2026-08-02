@@ -28,11 +28,13 @@ export function SignOffStage({
   const [credential, setCredential] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const isSigned = review?.signed_at !== null && review?.signed_at !== undefined;
 
   const handleSignOff = async () => {
     if (!name.trim() || !credential.trim()) return;
+    setError(null);
     setSubmitting(true);
     try {
       await signOffAction(participantId, stage, {
@@ -40,6 +42,8 @@ export function SignOffStage({
         reviewer_credential: credential.trim(),
         notes: notes.trim(),
       });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Sign-off failed. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -112,6 +116,7 @@ export function SignOffStage({
           placeholder="Any review notes..."
           multiline
         />
+        {error && <Text style={styles.error}>{error}</Text>}
         <Button
           variant="primary"
           onPress={handleSignOff}
@@ -175,5 +180,9 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: spacing.lg,
+  },
+  error: {
+    fontSize: fontSizes.labelMd,
+    color: colors.danger,
   },
 });

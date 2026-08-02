@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import * as Linking from "expo-linking";
-import { ArrowLeft, AlertTriangle } from "lucide-react-native";
+import { ArrowLeft, AlertTriangle, ShieldCheck, ShieldAlert } from "lucide-react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { StatusTimeline } from "@/components/admin/StatusTimeline";
@@ -16,7 +16,7 @@ import { repository } from "@/lib/data/mock";
 import { resolveAttentionAction, getFileUrlAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
-import { generateDraft, extractLabReport, extractWearableExport } from "@/lib/ai/client";
+import { generateDraft, extractLabReport, extractWearableExport, extractBodyComp } from "@/lib/ai/client";
 import type {
   Participant,
   Pipeline,
@@ -26,6 +26,7 @@ import type {
   PipelineState,
   Pillar,
   FileRecord,
+  DailyLog,
 } from "@/lib/types/db";
 import { colors, fontSizes, spacing, radii } from "@/lib/theme/tokens";
 
@@ -49,6 +50,10 @@ const STATE_INDEX: Record<PipelineState, number> = {
 
 const PILLAR_ORDER: Pillar[] = ["vascular", "metabolic", "mental"];
 
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
 export default function ParticipantDetailPage() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -60,20 +65,24 @@ export default function ParticipantDetailPage() {
   const [aiDraft, setAiDraft] = useState<AiDraft | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [files, setFiles] = useState<FileRecord[]>([]);
+  const [dailyLogs, setDailyLogs] = useState<DailyLog[]>([]);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [extractingFileId, setExtractingFileId] = useState<string | null>(null);
   const [extractErrors, setExtractErrors] = useState<Record<string, string>>({});
+  const [resolvingAttention, setResolvingAttention] = useState(false);
+  const [resolveError, setResolveError] = useState<string | null>(null);
 
   const loadData = async () => {
     if (!id) return;
-    const [p, pipe, bm, draft, rev, f] = await Promise.all([
+    const [p, pipe, bm, draft, rev, f, logs] = await Promise.all([
       repository.getParticipant(id),
       repository.getPipeline(id),
       repository.getBiomarkers(id),
       repository.getAiDraft(id),
       repository.getReviews(id),
       repository.listFiles(id),
+      repository.listDailyLogs(id),
     ]);
     setParticipant(p);
     setPipeline(pipe);
@@ -81,6 +90,7 @@ export default function ParticipantDetailPage() {
     setAiDraft(draft);
     setReviews(rev);
     setFiles(f);
+    setDailyLogs(logs);
   };
 
   async function onExtractFile(file: FileRecord) {
@@ -92,6 +102,8 @@ export default function ParticipantDetailPage() {
         await extractLabReport(session.access_token, id, file.id);
       } else if (file.kind === "apple_health_export") {
         await extractWearableExport(session.access_token, id, file.id);
+      } else if (file.kind === "body_comp") {
+        await extractBodyComp(session.access_token, id, file.id);
       }
       await loadData();
     } catch (e) {
@@ -128,6 +140,19 @@ export default function ParticipantDetailPage() {
       setGenerateError(e instanceof Error ? e.message : "Draft generation failed.");
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function onResolveAttention() {
+    if (!id) return;
+    setResolveError(null);
+    setResolvingAttention(true);
+    try {
+      await resolveAttentionAction(id);
+    } catch (e) {
+      setResolveError(e instanceof Error ? e.message : "Couldn't resolve — please try again.");
+    } finally {
+      setResolvingAttention(false);
     }
   }
 
@@ -172,6 +197,21 @@ export default function ParticipantDetailPage() {
               {participant.age} · {participant.sex} · {participant.height_cm}cm ·{" "}
               {participant.weight_kg}kg
             </Text>
+            <View style={styles.consentRow}>
+              {participant.consent_given ? (
+                <>
+                  <ShieldCheck size={14} color={colors.sage} />
+                  <Text style={styles.consentTextOk}>
+                    Consent given{participant.consented_at ? ` ${formatDate(participant.consented_at)}` : ""}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <ShieldAlert size={14} color={colors.danger} />
+                  <Text style={styles.consentTextMissing}>Consent not recorded</Text>
+                </>
+              )}
+            </View>
           </View>
           <PipelineStatusBadge state={pipeline.state} needsAttention={pipeline.needs_attention} />
         </View>
@@ -185,13 +225,15 @@ export default function ParticipantDetailPage() {
                 <Text style={styles.attentionReason}>
                   {pipeline.attention_reason}
                 </Text>
+                {resolveError && <Text style={styles.attentionReason}>{resolveError}</Text>}
               </View>
               <Button
                 variant="secondary"
                 size="sm"
-                onPress={() => resolveAttentionAction(id!)}
+                disabled={resolvingAttention}
+                onPress={onResolveAttention}
               >
-                Resolve
+                {resolvingAttention ? "Resolving..." : "Resolve"}
               </Button>
             </View>
           </Card>
@@ -266,7 +308,10 @@ export default function ParticipantDetailPage() {
                     : file.kind === "apple_health_export"
                     ? "Apple Health export"
                     : "Body composition scan";
-                const canExtract = file.kind === "lab_report" || file.kind === "apple_health_export";
+                const canExtract =
+                  file.kind === "lab_report" ||
+                  file.kind === "apple_health_export" ||
+                  file.kind === "body_comp";
                 const error = extractErrors[file.id];
                 return (
                   <View key={file.id} style={i > 0 ? styles.fileRow : undefined}>
@@ -340,6 +385,40 @@ export default function ParticipantDetailPage() {
           )}
         </View>
 
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Daily tracking</Text>
+          {dailyLogs.length === 0 ? (
+            <Card>
+              <Text style={styles.meta}>No daily check-ins logged yet.</Text>
+            </Card>
+          ) : (
+            <Card>
+              {[...dailyLogs]
+                .sort((a, b) => (a.log_date < b.log_date ? 1 : -1))
+                .slice(0, 7)
+                .map((log, i) => {
+                  const parts: string[] = [];
+                  if (log.sleep) parts.push(`Sleep ${log.sleep.hours}h (${log.sleep.quality}/100)`);
+                  if (log.activity) parts.push(`${log.activity.type} ${log.activity.duration_minutes}min`);
+                  if (log.mood) parts.push(`Mood ${log.mood.score}/10`);
+                  if (log.weight_kg != null) parts.push(`${log.weight_kg}kg`);
+                  return (
+                    <View key={log.log_date} style={i > 0 ? styles.fileRow : undefined}>
+                      <Text style={styles.fileLabel}>{formatDate(log.log_date)}</Text>
+                      <Text style={styles.meta}>
+                        {parts.length > 0 ? parts.join(" · ") : "No metrics logged"}
+                      </Text>
+                      {log.supplements.length > 0 && (
+                        <Text style={styles.meta}>Supplements: {log.supplements.join(", ")}</Text>
+                      )}
+                      {log.notes && <Text style={styles.meta}>{log.notes}</Text>}
+                    </View>
+                  );
+                })}
+            </Card>
+          )}
+        </View>
+
         {pipeline.state !== "capturing" && pipeline.state !== "ai_drafted" && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Sign-off</Text>
@@ -396,6 +475,21 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.labelMd,
     color: colors.inkMuted,
     marginTop: spacing.xs,
+  },
+  consentRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  consentTextOk: {
+    fontSize: fontSizes.caption,
+    color: colors.sageDark,
+  },
+  consentTextMissing: {
+    fontSize: fontSizes.caption,
+    color: colors.danger,
+    fontWeight: "600",
   },
   attentionCard: {
     backgroundColor: colors.dangerTint,

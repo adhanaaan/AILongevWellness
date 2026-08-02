@@ -244,6 +244,26 @@ lib/
       Wearables' export subtitle dropped its "isn't available over the cloud"
       negative framing for a positive one.
 - [ ] Wearable aggregator connect
-- [ ] Consent tracking (consent_given, consented_at fields) — consent screen doesn't yet persist to a row
-- [ ] Body composition scan value extraction (currently uploads the file only, no parsing)
-- [ ] ReCOGnAIze is still an informational-only placeholder screen (no real assessment yet)
+- [x] Consent tracking: `consent_given`/`consented_at` added to `participants`
+      (`supabase/migrations/0002_consent_tracking.sql`), recorded automatically the
+      first time a participant is ever seen authenticated (`AuthProvider.tsx`'s
+      `loadRole`) rather than threaded through every signup/sign-in/email-confirmation
+      branch — consent.tsx structurally precedes signup so that's sufficient proof.
+      Surfaced on the admin participant detail page.
+- [x] File upload size/type limits: bucket-level `file_size_limit`/`allowed_mime_types`
+      (`supabase/migrations/0003_upload_limits.sql`) plus a client-side size pre-check
+      (`lib/data/uploadLimits.ts`) before each capture-*-intro.tsx upload.
+- [x] Body composition scan value extraction: `api/extract-body-comp.ts` (Claude vision,
+      mirrors `api/extract-lab.ts`) now runs in the background after upload, targeting
+      the four keys `lib/ai/scoring.ts` already scores (`bmi`, `body_fat_pct`,
+      `visceral_fat`, `waist_hip_ratio`).
+- [x] Admin visibility into daily tracking logs: participant detail page
+      (`app/admin/participants/[id].tsx`) now loads `listDailyLogs` and shows the last
+      7 entries (sleep/activity/mood/weight/supplements/notes), and its sign-off/
+      release/resolve-attention actions surface real errors instead of failing silently.
+- [x] Real ReCOGnAIze cognitive assessment: `app/onboarding/capture-recognaize.tsx` runs
+      an actual 5-trial reaction-time test (full-screen tap zone, discards false starts
+      without counting them), then submits results to `api/submit-recognize.ts`, which
+      derives a `cog_composite` score and writes both as `mental`-pillar biomarkers
+      (`lib/ai/recognizeCatalog.ts`). Mock mode (no Supabase configured) skips the
+      interactive test, matching the other capture-*-intro screens.

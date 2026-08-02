@@ -42,3 +42,19 @@ export function extractWearableExport(
 ): Promise<{ extracted: string[] }> {
   return postJson("/api/extract-wearables", token, { participantId, fileId });
 }
+
+export function extractBodyComp(
+  token: string,
+  participantId: string,
+  fileId: string
+): Promise<{ extracted: string[] }> {
+  return postJson("/api/extract-body-comp", token, { participantId, fileId });
+}
+
+export function submitRecognizeResult(
+  token: string,
+  participantId: string,
+  trialsMs: number[]
+): Promise<{ reaction_time: number; cog_composite: number }> {
+  return postJson("/api/submit-recognize", token, { participantId, trialsMs });
+}
