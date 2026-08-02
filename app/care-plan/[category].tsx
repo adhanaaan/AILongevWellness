@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft, Plus, Minus, X, Smile, Meh, Frown } from "lucide-react-native";
+import { ArrowLeft, X, Smile, Meh, Frown } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Toggle } from "@/components/ui/Toggle";
@@ -18,14 +18,6 @@ const VALID_CATEGORIES: PlanCategory[] = ["nutrition", "exercise", "medications"
 const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
 const HISTORY_BAR_TRACK_HEIGHT = 44;
 
-const SLEEP_PRESETS = [6, 6.5, 7, 7.5, 8, 8.5, 9];
-const ACTIVITY_PRESETS: Array<{ type: string; duration_minutes: number }> = [
-  { type: "Rest", duration_minutes: 0 },
-  { type: "Walk", duration_minutes: 20 },
-  { type: "Run", duration_minutes: 35 },
-  { type: "Gym", duration_minutes: 45 },
-  { type: "Yoga", duration_minutes: 25 },
-];
 const MOODS = [
   { key: "great", label: "Great", Icon: Smile, score: 9 },
   { key: "okay", label: "Okay", Icon: Meh, score: 6 },
@@ -34,10 +26,6 @@ const MOODS = [
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
-}
-
-function sleepQualityFromHours(hours: number): number {
-  return Math.max(0, Math.min(100, Math.round(((hours - 5) / 4) * 100)));
 }
 
 function moodKeyForScore(score: number): (typeof MOODS)[number]["key"] {
@@ -49,16 +37,11 @@ function dayLabel(dateStr: string): string {
   return DAYS[(weekday + 6) % 7]; // rotate so Monday is index 0, matching DAYS
 }
 
+/** Only medications and mindfulness are tracked — see CarePlanCategoryConfig.tracked. */
 function historyFraction(category: PlanCategory, log: DailyLog | undefined, medicationCount: number): number {
   switch (category) {
-    case "nutrition":
-      return Math.min(1, (log?.food?.meals ?? 0) / 3);
-    case "exercise":
-      return Math.min(1, (log?.activity?.duration_minutes ?? 0) / 60);
     case "medications":
       return medicationCount > 0 ? Math.min(1, (log?.supplements ?? []).length / medicationCount) : 0;
-    case "sleep":
-      return Math.min(1, (log?.sleep?.hours ?? 0) / 9);
     case "mindfulness":
       return Math.min(1, (log?.mood?.score ?? 0) / 10);
     default:
@@ -116,33 +99,9 @@ export default function CarePlanCategoryPage() {
     await upsertDailyLogAction(today, patch, participantId);
   }
 
-  function cycleSleep() {
-    const current = todayLog?.sleep?.hours ?? 7;
-    const currentIdx = SLEEP_PRESETS.findIndex((h) => h === current);
-    const nextHours = SLEEP_PRESETS[(currentIdx + 1 + SLEEP_PRESETS.length) % SLEEP_PRESETS.length];
-    patchToday({ sleep: { hours: nextHours, quality: sleepQualityFromHours(nextHours) } });
-  }
-
-  function cycleActivity() {
-    const current = todayLog?.activity;
-    const currentIdx = ACTIVITY_PRESETS.findIndex((a) => a.type === current?.type);
-    const next = ACTIVITY_PRESETS[(currentIdx + 1 + ACTIVITY_PRESETS.length) % ACTIVITY_PRESETS.length];
-    patchToday({ activity: next });
-  }
-
   function setMood(key: (typeof MOODS)[number]["key"]) {
     const mood = MOODS.find((m) => m.key === key)!;
     patchToday({ mood: { score: mood.score } });
-  }
-
-  function addMeal() {
-    const meals = (todayLog?.food?.meals ?? 0) + 1;
-    patchToday({ food: { ...todayLog?.food, meals } });
-  }
-
-  function adjustWeight(delta: number) {
-    const current = todayLog?.weight_kg ?? participant?.weight_kg ?? 70;
-    patchToday({ weight_kg: Math.round((current + delta) * 10) / 10 });
   }
 
   function toggleMedication(name: string, taken: boolean) {
@@ -210,136 +169,103 @@ export default function CarePlanCategoryPage() {
           )}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Track</Text>
-          <Card padding="lg">
-            {category === "sleep" && (
-              <TouchableOpacity onPress={cycleSleep} activeOpacity={0.7}>
-                <Text style={styles.trackValue}>{todayLog?.sleep ? `${todayLog.sleep.hours}h` : "Tap to log"}</Text>
-                <Text style={styles.trackLabel}>
-                  {todayLog?.sleep ? `Quality ${todayLog.sleep.quality}/100 — tap to change` : "Sleep last night"}
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            {category === "exercise" && (
-              <TouchableOpacity onPress={cycleActivity} activeOpacity={0.7}>
-                <Text style={styles.trackValue}>{todayLog?.activity?.type ?? "Tap to log"}</Text>
-                <Text style={styles.trackLabel}>
-                  {todayLog?.activity ? `${todayLog.activity.duration_minutes} min — tap to change` : "Activity today"}
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            {category === "mindfulness" && (
-              <>
-                <Text style={styles.trackLabel}>Mood today</Text>
-                <View style={styles.moodRow}>
-                  {MOODS.map(({ key, label, Icon: MoodIcon }) => (
-                    <TouchableOpacity
-                      key={key}
-                      style={[styles.moodOption, mood === key && styles.moodOptionActive]}
-                      onPress={() => setMood(key)}
-                    >
-                      <MoodIcon size={18} color={mood === key ? colors.sageDark : colors.inkMuted} />
-                      <Text style={[styles.moodOptionLabel, mood === key && styles.moodOptionLabelActive]}>{label}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </>
-            )}
-
-            {category === "nutrition" && (
-              <View style={styles.nutritionRow}>
-                <View style={styles.nutritionCol}>
-                  <Text style={styles.trackValue}>{todayLog?.food?.meals ?? 0} meals</Text>
-                  <Button size="sm" shape="md" variant="secondary" onPress={addMeal}>
-                    Add meal
-                  </Button>
-                </View>
-                <View style={styles.nutritionCol}>
-                  <Text style={styles.trackValue}>
-                    {todayLog?.weight_kg != null ? `${todayLog.weight_kg.toFixed(1)} kg` : "No data yet"}
-                  </Text>
-                  <View style={styles.weightRow}>
-                    <TouchableOpacity style={styles.weightButton} onPress={() => adjustWeight(-0.1)}>
-                      <Minus size={14} color={colors.sageDark} />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.weightButton} onPress={() => adjustWeight(0.1)}>
-                      <Plus size={14} color={colors.sageDark} />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
-            )}
-
-            {category === "medications" && (
-              <View>
-                {medicationCatalog.length === 0 && (
-                  <Text style={styles.fallbackText}>Add what you currently take below to start tracking it daily.</Text>
+        {config.tracked ? (
+          <>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Track</Text>
+              <Card padding="lg">
+                {category === "mindfulness" && (
+                  <>
+                    <Text style={styles.trackLabel}>Mood today</Text>
+                    <View style={styles.moodRow}>
+                      {MOODS.map(({ key, label, Icon: MoodIcon }) => (
+                        <TouchableOpacity
+                          key={key}
+                          style={[styles.moodOption, mood === key && styles.moodOptionActive]}
+                          onPress={() => setMood(key)}
+                        >
+                          <MoodIcon size={18} color={mood === key ? colors.sageDark : colors.inkMuted} />
+                          <Text style={[styles.moodOptionLabel, mood === key && styles.moodOptionLabelActive]}>{label}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </>
                 )}
-                {medicationCatalog.map((name) => (
-                  <View key={name} style={styles.medRow}>
-                    <Text style={styles.medName}>{name}</Text>
-                    <View style={styles.medRowRight}>
-                      <Toggle
-                        checked={(todayLog?.supplements ?? []).includes(name)}
-                        onChange={(v) => toggleMedication(name, v)}
-                      />
-                      <TouchableOpacity onPress={() => removeMedicationFromCatalog(name)} hitSlop={8}>
-                        <X size={16} color={colors.inkMuted} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                ))}
-                <View style={styles.addMedRow}>
-                  <TextInput
-                    style={styles.addMedInput}
-                    value={newMedication}
-                    onChangeText={setNewMedication}
-                    placeholder="e.g. Omega-3"
-                    placeholderTextColor={colors.inkMuted}
-                    onSubmitEditing={addMedicationToCatalog}
-                  />
-                  <Button size="sm" shape="md" variant="secondary" onPress={addMedicationToCatalog}>
-                    Add
-                  </Button>
-                </View>
-              </View>
-            )}
-          </Card>
-        </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>This week</Text>
-          <Card padding="lg">
-            {last7.length > 0 ? (
-              <View style={styles.barsContainer}>
-                {last7.map((log) => (
-                  <View key={log.log_date} style={styles.barColumn}>
-                    <View style={styles.barTrack}>
-                      <View
-                        style={[
-                          styles.barFill,
-                          {
-                            backgroundColor: config.color,
-                            height: Math.max(
-                              4,
-                              Math.round(historyFraction(category, log, medicationCatalog.length) * HISTORY_BAR_TRACK_HEIGHT)
-                            ),
-                          },
-                        ]}
+                {category === "medications" && (
+                  <View>
+                    {medicationCatalog.length === 0 && (
+                      <Text style={styles.fallbackText}>Add what you currently take below to start tracking it daily.</Text>
+                    )}
+                    {medicationCatalog.map((name) => (
+                      <View key={name} style={styles.medRow}>
+                        <Text style={styles.medName}>{name}</Text>
+                        <View style={styles.medRowRight}>
+                          <Toggle
+                            checked={(todayLog?.supplements ?? []).includes(name)}
+                            onChange={(v) => toggleMedication(name, v)}
+                          />
+                          <TouchableOpacity onPress={() => removeMedicationFromCatalog(name)} hitSlop={8}>
+                            <X size={16} color={colors.inkMuted} />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    ))}
+                    <View style={styles.addMedRow}>
+                      <TextInput
+                        style={styles.addMedInput}
+                        value={newMedication}
+                        onChangeText={setNewMedication}
+                        placeholder="e.g. Omega-3"
+                        placeholderTextColor={colors.inkMuted}
+                        onSubmitEditing={addMedicationToCatalog}
                       />
+                      <Button size="sm" shape="md" variant="secondary" onPress={addMedicationToCatalog}>
+                        Add
+                      </Button>
                     </View>
-                    <Text style={styles.dayLabel}>{dayLabel(log.log_date)}</Text>
                   </View>
-                ))}
-              </View>
-            ) : (
-              <Text style={styles.fallbackText}>Nothing logged yet this week.</Text>
-            )}
-          </Card>
-        </View>
+                )}
+              </Card>
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>This week</Text>
+              <Card padding="lg">
+                {last7.length > 0 ? (
+                  <View style={styles.barsContainer}>
+                    {last7.map((log) => (
+                      <View key={log.log_date} style={styles.barColumn}>
+                        <View style={styles.barTrack}>
+                          <View
+                            style={[
+                              styles.barFill,
+                              {
+                                backgroundColor: config.color,
+                                height: Math.max(
+                                  4,
+                                  Math.round(historyFraction(category, log, medicationCatalog.length) * HISTORY_BAR_TRACK_HEIGHT)
+                                ),
+                              },
+                            ]}
+                          />
+                        </View>
+                        <Text style={styles.dayLabel}>{dayLabel(log.log_date)}</Text>
+                      </View>
+                    ))}
+                  </View>
+                ) : (
+                  <Text style={styles.fallbackText}>Nothing logged yet this week.</Text>
+                )}
+              </Card>
+            </View>
+          </>
+        ) : (
+          <Text style={styles.untrackedNote}>
+            This reflects your onboarding wearable and lab data — daily tracking isn&apos;t part of this
+            category yet.
+          </Text>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -450,26 +376,13 @@ const styles = StyleSheet.create({
   moodOptionLabelActive: {
     color: colors.sageDark,
   },
-  nutritionRow: {
-    flexDirection: "row",
-    gap: spacing.xl,
-  },
-  nutritionCol: {
-    flex: 1,
-    gap: spacing.sm,
-  },
-  weightRow: {
-    flexDirection: "row",
-    gap: spacing.sm,
-  },
-  weightButton: {
-    width: 28,
-    height: 28,
-    borderRadius: radii.full,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: "center",
-    justifyContent: "center",
+  untrackedNote: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    fontStyle: "italic",
+    marginTop: spacing["2xl"],
+    lineHeight: 18,
   },
   medRow: {
     flexDirection: "row",

@@ -282,6 +282,16 @@ lib/
       Medications & Supplements is deliberately self-report only (participant's own
       `Participant.medications` catalog, add/remove + daily adherence toggle) — never
       doctor-prescribed dosing, consistent with the wellness-not-clinical positioning.
+- [x] Care Plan rescoped to "only ask for what only you can report": Nutrition/Exercise/Sleep
+      dropped their manual daily-logging widgets (tap-to-cycle sleep hours, activity type,
+      meal/weight counters) — busywork re-entering data a wearable should already have, not
+      real product value for this audience. Only Medications (self-report catalog) and
+      Mindfulness (one-tap mood check-in) keep a daily interaction; the other three are
+      plan-only pages (`CarePlanCategoryConfig.tracked` in `lib/carePlan/categories.ts`
+      gates this everywhere). The main tab's "This week" trend is now mood-only instead of
+      a fabricated sleep+mood composite. Live wearable sync (still on the roadmap, see
+      "Wearable aggregator connect" below) is what would eventually make Sleep/Exercise
+      trackable again — with real passive data, not manual re-entry.
 - [x] Real admin Settings page (`app/admin/settings.tsx` + `components/layout/AdminShell.tsx`):
       both previously showed a hardcoded fake identity ("Dr. Helena Marsh") and fabricated
       claims (a fake team roster, "email alerts" with no notification system behind them).
