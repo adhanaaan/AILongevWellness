@@ -1,23 +1,49 @@
-import React from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
-import { User, Shield, Bell, Database } from "lucide-react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { Shield, Bell, Database, Users, LogOut } from "lucide-react-native";
 import { AdminShell } from "@/components/layout/AdminShell";
-import { Card, Avatar } from "@/components/ui";
+import { Card, Avatar, Button } from "@/components/ui";
+import { useAuth } from "@/lib/auth/AuthProvider";
+import { isSupabaseConfigured, SUPABASE_URL } from "@/lib/config/env";
+import { getSupabaseClient } from "@/lib/data/supabase";
 import { colors, fontSizes, spacing } from "@/lib/theme/tokens";
 
+function projectHost(url: string | undefined): string {
+  if (!url) return "";
+  try {
+    return new URL(url).host;
+  } catch {
+    return url;
+  }
+}
+
 export default function AdminSettingsPage() {
+  const { session, signOut } = useAuth();
+  const [teamCount, setTeamCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    const client = getSupabaseClient();
+    if (!client) return;
+    client
+      .from("user_roles")
+      .select("user_id", { count: "exact", head: true })
+      .eq("role", "care_team")
+      .then(({ count }) => setTeamCount(count ?? null));
+  }, []);
+
+  const email = session?.user?.email ?? "Demo clinician";
+  const initials = email.slice(0, 2).toUpperCase();
+
   return (
     <AdminShell title="Settings">
       <Text style={styles.heading}>Admin settings</Text>
 
       <Card style={styles.profileCard}>
-        <Avatar initials="HM" size="lg" />
+        <Avatar initials={initials} size="lg" />
         <View style={styles.profileInfo}>
-          <Text style={styles.profileName}>Dr. Helena Marsh</Text>
-          <Text style={styles.profileRole}>
-            MBBS, General Practice · Lead Clinician
-          </Text>
-          <Text style={styles.profileMeta}>Admin since Jan 2025</Text>
+          <Text style={styles.profileName}>{email}</Text>
+          <Text style={styles.profileRole}>Care team member</Text>
         </View>
       </Card>
 
@@ -25,24 +51,45 @@ export default function AdminSettingsPage() {
         <SettingSection
           icon={<Shield size={20} color={colors.sageDark} />}
           title="Permissions"
-          description="Full admin access. Can review, sign off, and release participant cards."
-        />
-        <SettingSection
-          icon={<Bell size={20} color={colors.sageDark} />}
-          title="Notifications"
-          description="Email alerts for new review queue items and attention flags."
+          description="Full care team access. Can review, sign off, and release participant cards."
         />
         <SettingSection
           icon={<Database size={20} color={colors.sageDark} />}
           title="Data source"
-          description="Currently using in-memory mock data. Connect Supabase for production."
+          description={
+            isSupabaseConfigured
+              ? `Connected to Supabase (${projectHost(SUPABASE_URL)}).`
+              : "Using in-memory mock data — no Supabase project configured."
+          }
         />
         <SettingSection
-          icon={<User size={20} color={colors.sageDark} />}
+          icon={<Users size={20} color={colors.sageDark} />}
           title="Team"
-          description="Dr. Helena Marsh (GP) · Dr. Wei Lin (TCM) · 2 reviewers active."
+          description={
+            isSupabaseConfigured
+              ? teamCount !== null
+                ? `${teamCount} care team account${teamCount === 1 ? "" : "s"} registered.`
+                : "Loading…"
+              : "Connect Supabase to see your team roster."
+          }
+        />
+        <SettingSection
+          icon={<Bell size={20} color={colors.sageDark} />}
+          title="Notifications"
+          description="Not yet built — review queue and attention alerts are checked in-app for now, not by email."
         />
       </View>
+
+      {isSupabaseConfigured && (
+        <Button
+          variant="secondary"
+          iconLeft={<LogOut size={16} color={colors.sageDark} />}
+          onPress={signOut}
+          style={styles.signOut}
+        >
+          Sign out
+        </Button>
+      )}
     </AdminShell>
   );
 }
@@ -95,11 +142,6 @@ const styles = StyleSheet.create({
     color: colors.inkMuted,
     marginTop: 2,
   },
-  profileMeta: {
-    fontSize: fontSizes.caption,
-    color: colors.inkMuted,
-    marginTop: spacing.xs,
-  },
   sections: {
     gap: spacing.md,
   },
@@ -123,5 +165,9 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
     marginTop: 2,
+  },
+  signOut: {
+    marginTop: spacing["2xl"],
+    alignSelf: "flex-start",
   },
 });
