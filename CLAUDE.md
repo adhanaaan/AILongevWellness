@@ -329,3 +329,17 @@ lib/
       target) built from live repository data. "Signed cards" exports as JSON, not PDF —
       no PDF-generation dependency exists in the project, so a real JSON export of the
       full delivered-card data shipped instead of a fake PDF button.
+- [x] Deepened the AI draft narrative (`api/generate-draft.ts`): the actual per-participant
+      deliverable was too shallow to be worth paying for — 2-4 short generic bullets per
+      section. Rewrote the prompt to demand real depth (5-8 key_contributors, 4-6 strengths/
+      suggested_focus, 3-5 discussion_points, 2-4 care_plan items per category, `minItems`
+      enforced in the tool schema — `areas_to_monitor` deliberately has none, so the model
+      is never pressured to invent a concern the data doesn't support) and real substance:
+      each point now names the actual biomarker value and briefly explains why it matters,
+      citing a real guideline body by name (ADA, AHA, WHO, KDIGO, etc.) via a grounding
+      block built from `lib/methodology/content.ts` — the same human-verified source
+      content shown on the Methodology page, reused as context so the model can reference
+      real sources without ever inventing a specific study, author, or year. Mock data
+      (James Chen's hand-authored draft and the generic demo-participant generator) was
+      rewritten to the same depth standard, since that's what every preview/demo deploy
+      actually shows by default.

@@ -207,27 +207,48 @@ function genAiDraftForScores(
     chronological_age: chronologicalAge,
     key_contributors: [
       monitorPillar
-        ? { text: `${pillarLabel[monitorPillar]} markers are trending outside the optimal range`, tone: "monitor" as const }
-        : { text: `${pillarLabel[weakest[0]]} markers are within the optimal range`, tone: "good" as const },
-      { text: `${pillarLabel[strongest[0]]} health reflects strong overall condition for age`, tone: "good" as const },
-      { text: "Overall wellness trend is stable across the last capture cycle", tone: "good" as const },
+        ? { text: `${pillarLabel[monitorPillar]} markers are trending outside the optimal range for your age — worth tracking at your next check-in`, tone: "monitor" as const }
+        : { text: `${pillarLabel[weakest[0]]} markers are within the optimal range, though the lowest-scoring of your three pillars`, tone: "good" as const },
+      { text: `${pillarLabel[strongest[0]]} health reflects strong overall condition for your age, the standout of your three pillar scores`, tone: "good" as const },
+      { text: "Overall wellness trend is stable across the last capture cycle, with no sharp swings in any pillar", tone: "good" as const },
+      { text: "Capture completeness across wearables, labs, and body composition supports a reliable overall picture", tone: "good" as const },
+      { text: `Your ${chronologicalAge - Math.max(18, chronologicalAge - bioAgeOffset) >= 0 ? "biological age tracking younger than" : "biological age tracking close to"} your chronological age reflects the balance across all three pillars`, tone: "good" as const },
     ],
-    strengths: [`Strong ${pillarLabel[strongest[0]]} health for age`, "Consistent capture across all channels"],
-    areas_to_monitor: monitorPillar ? [`${pillarLabel[monitorPillar]} markers trending toward the reference boundary`] : [],
-    suggested_focus: ["Daily movement", "Sleep consistency", "Stress management", "Nutrition timing"],
+    strengths: [
+      `Strong ${pillarLabel[strongest[0]]} health for age`,
+      "Consistent capture across all channels, supporting a reliable composite score",
+      "No pillar shows a sharp or sudden decline from the last capture cycle",
+      "Overall biological age tracks closely with the pillar score composite",
+    ],
+    areas_to_monitor: monitorPillar
+      ? [
+          `${pillarLabel[monitorPillar]} markers are trending toward the reference boundary and are worth a follow-up conversation`,
+          `Consider a repeat capture for ${pillarLabel[monitorPillar]} markers at the next check-in to confirm the trend`,
+        ]
+      : [],
+    suggested_focus: [
+      "Maintain consistent daily movement, even on busy days.",
+      "Protect a regular sleep window — consistency matters as much as duration.",
+      "Build in brief daily stress-recovery time.",
+      "Keep meal timing consistent rather than skipping and over-compensating later.",
+    ],
     discussion_points: [
-      `Review ${pillarLabel[weakest[0]]} trend at the next check-in`,
-      "Discuss current recovery and stress load",
+      `Review the ${pillarLabel[weakest[0]]} trend at the next check-in to see whether it's stable or continuing to shift`,
+      "Discuss current recovery and stress load with your care team",
+      "Ask whether a repeat capture in three to six months would help confirm any early trends",
     ],
     care_plan: {
-      nutrition: ["Aim for balanced, whole-food meals with consistent timing."],
-      exercise: ["Keep up regular movement most days of the week."],
-      medications: ["Log what you currently take, including any supplements."],
-      sleep: ["Protect a consistent 7-9 hour sleep window."],
+      nutrition: ["Aim for balanced, whole-food meals with consistent timing.", "Keep hydration consistent through the day rather than front- or back-loaded."],
+      exercise: ["Keep up regular movement most days of the week.", "Mix cardio with at least one resistance session weekly."],
+      medications: ["Log what you currently take, including any supplements.", "Discuss any supplement changes with your care team before your next check-in."],
+      sleep: ["Protect a consistent 7-9 hour sleep window.", "Keep a consistent wind-down routine, especially on travel or high-stress days."],
       mindfulness:
         monitorPillar === "mental"
-          ? ["Build in daily stress-recovery time — mental markers are trending toward the reference boundary."]
-          : ["Build in moments of rest and recovery each day."],
+          ? [
+              "Build in daily stress-recovery time — mental markers are trending toward the reference boundary.",
+              "Consider a brief midday reset on high-demand days.",
+            ]
+          : ["Build in moments of rest and recovery each day.", "Notice which parts of your week feel most draining and build in recovery around them."],
     },
     generated_at: nowIso(),
     edited_by_admin: false,
@@ -401,40 +422,59 @@ class MockRepository implements Repository {
       biological_age: 54,
       chronological_age: 58,
       key_contributors: [
-        { text: "Fasting glucose is trending above the optimal range", tone: "monitor" },
-        { text: "Resting heart rate and HRV reflect strong cardiovascular fitness", tone: "good" },
-        { text: "Cognitive reaction time is well above the age-matched average", tone: "good" },
+        { text: "Fasting glucose sits at 108 mg/dL, above the ADA's normal range of 70-99 mg/dL — sustained levels here are one of the earliest signals of shifting metabolic health.", tone: "monitor" },
+        { text: "Waist-to-hip ratio is 0.93, above the WHO's healthy ceiling of 0.90 for men — this pattern of central fat distribution tracks more closely with metabolic risk than BMI alone.", tone: "monitor" },
+        { text: "Visceral fat reads 13 on your body composition scan, just above the reference ceiling of 12 — worth watching alongside the waist-to-hip trend.", tone: "monitor" },
+        { text: "Resting heart rate (58 bpm) and heart rate variability (62 ms) both sit comfortably within range, reflecting strong cardiovascular fitness for your age.", tone: "good" },
+        { text: "LDL (2.6 mmol/L) and HDL (1.4 mmol/L) cholesterol both fall within the standard lipid reference bands, with low inflammation (hs-CRP 1.2 mg/L, well under the AHA's 3.0 mg/L threshold).", tone: "good" },
+        { text: "Cognitive reaction time (320 ms) and composite score (88/100) are both strong, consistent with the sleep quality and duration you're getting.", tone: "good" },
+        { text: "Sleep duration (7.4 hours) and quality index (82/100) both sit within healthy ranges, supporting the strong mental pillar score overall.", tone: "good" },
       ],
       strengths: [
-        "Excellent cardiovascular fitness for age",
-        "Strong cognitive processing speed",
-        "Consistent sleep schedule",
+        "Vascular health is a clear strength — blood pressure, resting heart rate, HRV, and lipids are all within range.",
+        "Cognitive performance is strong, with reaction time and composite score both well above the healthy floor.",
+        "Sleep consistency (7.4 hours nightly, quality index 82/100) is clearly supporting the mental pillar's strong overall score.",
+        "Inflammation markers (hs-CRP) are low, a good sign for long-term cardiovascular health.",
       ],
       areas_to_monitor: [
-        "Fasting glucose trending toward the upper reference range",
-        "Waist-to-hip ratio slightly above target",
+        "Fasting glucose (108 mg/dL) is trending above the ADA's normal range and is worth tracking at your next check-in.",
+        "Waist-to-hip ratio (0.93) and visceral fat (13) both sit just outside their reference ranges, pointing toward the same central-fat-distribution pattern.",
+        "BMI (26.1) is in the WHO's overweight band, just above the healthy-weight ceiling of 25.",
       ],
-      suggested_focus: ["Daily movement", "Sleep consistency", "Stress management", "Nutrition timing"],
+      suggested_focus: [
+        "Shift toward lower-glycemic-load meals, particularly at breakfast, given the fasting glucose trend.",
+        "Add one additional day of resistance training weekly — one of the more consistently supported ways to improve waist-to-hip ratio and visceral fat over time.",
+        "Keep protecting your current sleep routine — it's clearly supporting your strong mental pillar score.",
+        "Continue your current cardiovascular activity level; your vascular markers reflect it well.",
+        "Moderate alcohol intake alongside diet changes, since both affect fasting glucose and visceral fat similarly.",
+      ],
       discussion_points: [
-        "Ask about a follow-up fasting glucose recheck in 3 months",
-        "Discuss current stress load and recovery practices",
-        "Review family history relevant to metabolic health",
+        "Ask your GP about a follow-up fasting glucose and HbA1c recheck in three to six months to see whether dietary changes are moving the trend.",
+        "Discuss whether your current activity mix (4 days/week) should shift toward more resistance training given the waist-to-hip and visceral fat pattern.",
+        "Review whether a continuous glucose monitor for a short period would help identify which meals are driving the glucose trend.",
+        "Ask about family history relevant to metabolic health, since that context isn't captured in this data alone.",
       ],
       care_plan: {
         nutrition: [
-          "Shift toward lower-glycemic-load meals given your fasting glucose trend — more fiber, less refined carbohydrate at breakfast.",
-          "Keep alcohol within your current range; consider a couple of extra alcohol-free days each week.",
+          "Favor lower-glycemic-load meals (more fiber, less refined carbohydrate) especially at breakfast — directly relevant given your fasting glucose trend.",
+          "Keep alcohol within your current range, and consider a couple of extra alcohol-free days weekly, since alcohol affects both glucose and visceral fat.",
         ],
         exercise: [
-          "Add one more strength session per week alongside your current cardio — supports the waist-hip ratio and visceral fat trend.",
-          "Keep up the daily movement that's already driving your strong vascular numbers.",
+          "Add one additional resistance-training session weekly alongside your current cardio — one of the more evidence-supported ways to shift waist-to-hip ratio and visceral fat over time.",
+          "Keep up your current cardio routine; it's clearly supporting your strong vascular numbers.",
         ],
         medications: [
-          "Continue your current Omega-3 and Vitamin D routine.",
-          "Discuss whether a follow-up metabolic panel in 3 months is worth adding.",
+          "Continue your current Omega-3 and Vitamin D routine — your Vitamin D level (58 nmol/L) is healthy per NIH/IOM thresholds.",
+          "Discuss whether a follow-up metabolic panel in three to six months is worth adding, given the fasting glucose trend.",
         ],
-        sleep: ["Your 7-8 hour average is a strength — protect it, especially on the nights you dip under 7."],
-        mindfulness: ["Build in a short daily wind-down practice — your stress index is in range but trending toward the upper half."],
+        sleep: [
+          "Protect your current 7-9 hour sleep window — it's clearly paying off in your mental pillar score.",
+          "Keep your wind-down routine consistent on travel days, since that's typically when sleep quality slips first.",
+        ],
+        mindfulness: [
+          "Build in a short daily wind-down practice — your stress index (34/100) is in range but trending toward the upper half.",
+          "Consider a brief midday reset on high-meeting days, since stress and glucose regulation are closely linked.",
+        ],
       },
       generated_at: nowIso(),
       edited_by_admin: false,

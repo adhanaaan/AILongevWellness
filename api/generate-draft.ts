@@ -8,15 +8,32 @@ import {
   computePillarScores,
 } from "../lib/ai/scoring";
 import type { Biomarker, CarePlan, KeyContributor } from "../lib/types/db";
+import { METHODOLOGY_SECTIONS } from "../lib/methodology/content";
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!;
 
-const NARRATIVE_PROMPT = `You are writing the narrative sections of an executive wellness card. This is a
-wellness programme, not a medical service — never write anything that reads as a diagnosis,
-a treatment plan, or a risk factor warning.
+// Reuses the same human-verified source content shown on the app's own
+// Methodology & Sources page (lib/methodology/content.ts) as grounding, so the
+// model can name a real guideline body (ADA, AHA, KDIGO, WHO, etc.) when
+// explaining why a biomarker matters, without ever inventing a specific paper,
+// author, or year -- letting an LLM freely generate citations per participant
+// is exactly the kind of thing that produces confident, plausible-sounding
+// fabrications, and this is a science-positioned product where that's a real
+// credibility risk, not just a nice-to-have to avoid.
+const SOURCE_GROUNDING = METHODOLOGY_SECTIONS.filter(
+  (s) => s.title !== "How your scores are calculated" && s.title !== "A note on all of this"
+)
+  .map((s) => `${s.title}: ${s.paragraphs.join(" ")}`)
+  .join("\n\n");
+
+const NARRATIVE_PROMPT = `You are writing the narrative sections of an executive wellness card for a
+science-based longevity platform. This is a wellness programme, not a medical service — never write
+anything that reads as a diagnosis, a treatment plan, or a risk factor warning. It should still read
+as substantive and specific, not generic filler — this is the core deliverable participants are paying
+for, so shallow one-liners are a real failure here.
 
 Use this language:
 - "areas to monitor", never "risk factors"
@@ -24,13 +41,35 @@ Use this language:
 - Never mention specific medication names, dosages, or conditions/diseases.
 - Do not use double quotes for emphasis inside any text field — write around it instead.
 
-Call write_narrative with 3-5 key_contributors, 2-4 items in each other list. Ground every
-sentence in the data given — never invent a value that isn't there.
+Grounding sources you may reference by name (a real guideline body — ADA, AHA, WHO, KDIGO, ACE, etc.)
+when explaining why a specific biomarker or category matters:
 
-Also fill in care_plan: 1-3 short, imperative, non-prescriptive action items per category,
-grounded in the data given (or general wellness guidance where a category has no directly
-relevant data). This will be reviewed and edited by the participant's doctor before it's
-shown, so draft it as a starting point, not a final instruction:
+${SOURCE_GROUNDING}
+
+Rules for using these sources:
+- You may name the guideline body itself (e.g. "per ADA guidelines" or "the WHO's classification").
+- Never invent a specific study, journal article, author name, or publication year — none of that
+  appears above, so none of it should appear in your output either.
+- If a biomarker or topic isn't covered by the sources above, write generally without naming a source
+  rather than guessing one.
+
+For key_contributors, strengths, and areas_to_monitor: ground each one in a specific captured value —
+name the biomarker, its actual value, and briefly explain (one clause, citing the relevant source by
+name where you can) what that pattern typically means. "Fasting glucose is elevated" is too thin;
+"Fasting glucose sits at 108 mg/dL, above the ADA's normal range of 70-99 mg/dL — sustained levels here
+are one of the earliest signals of shifting metabolic health" is the bar. Never invent a value that
+isn't in the data given.
+
+Call write_narrative with 5-8 key_contributors, 4-6 strengths, 4-6 suggested_focus items, and 3-5
+discussion_points — each a full sentence with real substance, not a 2-3 word label. areas_to_monitor
+should only include what the data actually supports (it's fine for this to be short, or empty, if
+nothing is genuinely concerning — never pad it with invented concerns).
+
+Also fill in care_plan: 2-4 substantive, imperative, non-prescriptive action items per category, each
+explaining briefly why it's being suggested (grounded in the data given, or general science-based
+guidance citing a source above where a category has no directly relevant captured data). This will be
+reviewed and edited by the participant's doctor before it's shown, so draft it as a strong starting
+point, not a final instruction:
 - nutrition: diet/weight-related suggestions
 - exercise: movement/activity suggestions
 - medications: only ever "continue current supplement routine" style or "discuss X with your
@@ -50,6 +89,7 @@ const NARRATIVE_TOOL: Anthropic.Tool = {
     properties: {
       key_contributors: {
         type: "array",
+        minItems: 5,
         items: {
           type: "object",
           properties: {
@@ -59,18 +99,20 @@ const NARRATIVE_TOOL: Anthropic.Tool = {
           required: ["text", "tone"],
         },
       },
-      strengths: { type: "array", items: { type: "string" } },
+      strengths: { type: "array", minItems: 4, items: { type: "string" } },
+      // No minItems -- forcing a minimum here would pressure the model to
+      // invent concerns the data doesn't actually support.
       areas_to_monitor: { type: "array", items: { type: "string" } },
-      suggested_focus: { type: "array", items: { type: "string" } },
-      discussion_points: { type: "array", items: { type: "string" } },
+      suggested_focus: { type: "array", minItems: 4, items: { type: "string" } },
+      discussion_points: { type: "array", minItems: 3, items: { type: "string" } },
       care_plan: {
         type: "object",
         properties: {
-          nutrition: { type: "array", items: { type: "string" } },
-          exercise: { type: "array", items: { type: "string" } },
-          medications: { type: "array", items: { type: "string" } },
-          sleep: { type: "array", items: { type: "string" } },
-          mindfulness: { type: "array", items: { type: "string" } },
+          nutrition: { type: "array", minItems: 2, items: { type: "string" } },
+          exercise: { type: "array", minItems: 2, items: { type: "string" } },
+          medications: { type: "array", minItems: 2, items: { type: "string" } },
+          sleep: { type: "array", minItems: 2, items: { type: "string" } },
+          mindfulness: { type: "array", minItems: 2, items: { type: "string" } },
         },
         required: ["nutrition", "exercise", "medications", "sleep", "mindfulness"],
       },
@@ -157,7 +199,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const message = await anthropic.messages.create({
       model: "claude-sonnet-5",
-      max_tokens: 800,
+      max_tokens: 2500,
       system: NARRATIVE_PROMPT,
       tools: [NARRATIVE_TOOL],
       tool_choice: { type: "tool", name: "write_narrative" },
