@@ -203,8 +203,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   };
   try {
     const message = await anthropic.messages.create({
-      model: "claude-sonnet-5",
-      max_tokens: 2500,
+      // Opus, not Sonnet -- this writes the clinical narrative a doctor signs
+      // off on, so accuracy outweighs the cost/latency difference. max_tokens
+      // covers Opus 5's adaptive thinking (on by default) plus the actual
+      // narrative -- thinking and response share one budget, so this has to
+      // be well above the old Sonnet-tuned 2500 or the tool call truncates.
+      model: "claude-opus-5",
+      max_tokens: 8000,
       system: NARRATIVE_PROMPT,
       tools: [NARRATIVE_TOOL],
       tool_choice: { type: "tool", name: "write_narrative" },
