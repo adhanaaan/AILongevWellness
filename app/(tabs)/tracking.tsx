@@ -9,7 +9,7 @@ import { listDailyLogsAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { CARE_PLAN_CATEGORIES } from "@/lib/carePlan/categories";
-import type { DailyLog, Participant, PlanCategory } from "@/lib/types/db";
+import type { AiDraft, DailyLog, Participant, PlanCategory } from "@/lib/types/db";
 import type { SignedCard } from "@/lib/data/repository";
 
 const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
@@ -81,6 +81,7 @@ export default function TrackingPage() {
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [participant, setParticipant] = useState<Participant | null>(null);
   const [card, setCard] = useState<SignedCard | null>(null);
+  const [pendingDraft, setPendingDraft] = useState<AiDraft | null>(null);
   const [loading, setLoading] = useState(true);
 
   function uploadMoreData(route: string) {
@@ -93,10 +94,12 @@ export default function TrackingPage() {
       listDailyLogsAction(participantId),
       repository.getParticipant(participantId),
       repository.getSignedCard(participantId),
-    ]).then(([l, p, c]) => {
+      repository.getAiDraft(participantId),
+    ]).then(([l, p, c, d]) => {
       setLogs(l);
       setParticipant(p);
       setCard(c);
+      setPendingDraft(d);
       setLoading(false);
     });
   }, [participantId]);
@@ -110,7 +113,8 @@ export default function TrackingPage() {
   const today = todayIso();
   const todayLog = logs.find((l) => l.log_date === today);
   const last7 = logs.slice(-7);
-  const carePlan = card?.aiDraft.care_plan;
+  const isDelivered = Boolean(card);
+  const carePlan = card?.aiDraft.care_plan ?? pendingDraft?.care_plan;
 
   if (loading) {
     return (
@@ -130,9 +134,11 @@ export default function TrackingPage() {
       >
         <Text style={styles.title}>Care Plan</Text>
         <Text style={styles.subtitle}>
-          {card
+          {isDelivered
             ? "Verified by your care team — tap a category for the full plan."
-            : "Your personalized plan appears here once your care team has reviewed your results."}
+            : carePlan
+              ? "AI-drafted — pending your care team's review. Tap a category for the full plan."
+              : "Your personalized plan appears here once you've captured some data."}
         </Text>
 
         {last7.some((log) => log.mood) && (
