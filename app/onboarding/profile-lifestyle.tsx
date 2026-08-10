@@ -8,6 +8,8 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { updateParticipantAction, updateSectionStatusAction, updateCaptureChannelAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { isSupabaseConfigured } from "@/lib/config/env";
+import { generateDraft } from "@/lib/ai/client";
 import type { ExerciseFrequency, AlcoholDrinksPerWeek } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 
@@ -35,7 +37,7 @@ function SectionLabel({ children }: { children: string }) {
 
 export default function ProfileLifestylePage() {
   const router = useRouter();
-  const { participantId } = useAuth();
+  const { participantId, session } = useAuth();
   const { mode } = useLocalSearchParams<{ mode?: string }>();
   const isEditing = mode === "edit";
 
@@ -78,6 +80,11 @@ export default function ProfileLifestylePage() {
           status: "complete",
           entered_by: "participant",
         });
+        // First insights as soon as basic info is in, not gated behind full
+        // capture -- fire-and-forget, refined further as more data comes in.
+        if (isSupabaseConfigured && session?.access_token) {
+          generateDraft(session.access_token, participantId).catch(() => {});
+        }
         router.push("/onboarding/intro-wellness-snapshot");
       }
     } finally {

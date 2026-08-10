@@ -7,9 +7,9 @@ import { BiologicalAgeHero } from "@/components/participant/BiologicalAgeHero";
 import { PillarStrip } from "@/components/participant/PillarStrip";
 import { KeyContributorItem } from "@/components/participant/KeyContributorItem";
 import { SuggestedFocusGrid } from "@/components/participant/SuggestedFocusGrid";
-import { SnapshotPending, type SnapshotPreview } from "@/components/participant/SnapshotPending";
+import { SnapshotPending } from "@/components/participant/SnapshotPending";
 import { CareTeamNotesCard } from "@/components/participant/CareTeamNotesCard";
-import { SignOffBadge } from "@/components/participant/SignOffBadge";
+import { DraftStatusBadge } from "@/components/participant/DraftStatusBadge";
 import { TopRecommendation } from "@/components/participant/TopRecommendation";
 import { NextStepsCard } from "@/components/participant/NextStepsCard";
 import { repository } from "@/lib/data/mock";
@@ -51,24 +51,23 @@ export default function CardPage() {
 
   if (card === undefined || pipeline === undefined || pendingDraft === undefined) return null;
 
-  if (!card) {
-    const preview: SnapshotPreview | undefined = pendingDraft
-      ? {
-          scores: pendingDraft.scores,
-          biologicalAge: pendingDraft.biological_age,
-          chronologicalAge: pendingDraft.chronological_age,
-        }
-      : undefined;
+  // Show the AI's first-pass draft the moment one exists, rather than hiding
+  // everything until full delivery -- DraftStatusBadge below is what keeps the
+  // "this hasn't been reviewed yet" line visible the whole time it's up.
+  if (!card && !pendingDraft) {
     return (
       <MobileShell>
-        <SnapshotPending pipelineState={pipeline?.state ?? "capturing"} preview={preview} />
+        <SnapshotPending pipelineState={pipeline?.state ?? "capturing"} />
       </MobileShell>
     );
   }
 
-  const { aiDraft, reviews } = card;
+  const isDelivered = Boolean(card);
+  const aiDraft = card?.aiDraft ?? pendingDraft!;
+  const reviews = card?.reviews ?? [];
   const gp = reviews.find((r) => r.stage === "gp");
   const tcm = reviews.find((r) => r.stage === "tcm");
+  const missingCount = aiDraft.missing_biomarkers?.length ?? 0;
 
   const askAva = () =>
     router.push({
@@ -117,9 +116,9 @@ export default function CardPage() {
       >
         <Text style={styles.title}>Your wellness snapshot</Text>
         <Text style={styles.subtitle}>
-          Report generated {formatDate(aiDraft.generated_at)}
+          {isDelivered ? "Report generated" : "Drafted"} {formatDate(aiDraft.generated_at)}
         </Text>
-        <SignOffBadge gp={gp} tcm={tcm} />
+        <DraftStatusBadge isDelivered={isDelivered} gp={gp} tcm={tcm} missingCount={missingCount} />
 
         <View style={styles.section}>
           <BiologicalAgeHero

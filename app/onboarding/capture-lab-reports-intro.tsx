@@ -10,7 +10,7 @@ import { GradientOverlay } from "@/components/ui/GradientOverlay";
 import { updateSectionStatusAction, updateCaptureChannelAction, uploadFileAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
-import { extractLabReport } from "@/lib/ai/client";
+import { extractLabReport, generateDraft } from "@/lib/ai/client";
 import { validateUploadSize } from "@/lib/data/uploadLimits";
 import { colors, fontFamilies, fontSizes, radii, spacing, teal } from "@/lib/theme/tokens";
 
@@ -51,6 +51,11 @@ export default function CaptureLabReportsIntroPage() {
       status: "complete",
       entered_by: "participant",
     });
+    // Refresh insights with whatever's captured so far -- fire-and-forget, gets
+    // richer again after each subsequent channel.
+    if (isSupabaseConfigured && session?.access_token) {
+      generateDraft(session.access_token, participantId).catch(() => {});
+    }
     if (isEditing) {
       // Reached from outside onboarding (e.g. Tracking tab, post-onboarding) —
       // onboarding progress is a per-session in-memory record on the real backend

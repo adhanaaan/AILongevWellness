@@ -8,7 +8,8 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { BIOMARKER_KEYS_BY_PILLAR, pillarStatus } from "@/lib/ai/scoring";
-import type { AiDraft, Biomarker, Pillar } from "@/lib/types/db";
+import { computeVascularAge, computeMetabolicAge, type AgeClockResult } from "@/lib/ai/ageClocks";
+import type { AiDraft, Biomarker, Participant, Pillar } from "@/lib/types/db";
 import {
   colors,
   fontFamilies,
@@ -44,6 +45,7 @@ export default function PillarDetailPage() {
   const { participantId } = useAuth();
   const [aiDraft, setAiDraft] = useState<AiDraft | null>(null);
   const [biomarkers, setBiomarkers] = useState<Biomarker[]>([]);
+  const [participant, setParticipant] = useState<Participant | null>(null);
 
   const pillar = VALID_PILLARS.includes(pillarParam as Pillar)
     ? (pillarParam as Pillar)
@@ -56,12 +58,14 @@ export default function PillarDetailPage() {
     }
     if (!participantId) return;
     const loadData = async () => {
-      const [draft, bm] = await Promise.all([
+      const [draft, bm, p] = await Promise.all([
         repository.getAiDraft(participantId),
         repository.getBiomarkers(participantId),
+        repository.getParticipant(participantId),
       ]);
       setAiDraft(draft);
       setBiomarkers(bm);
+      setParticipant(p);
     };
     loadData();
     return repository.subscribe(loadData);
@@ -82,6 +86,16 @@ export default function PillarDetailPage() {
   const missing = (aiDraft.missing_biomarkers ?? []).filter((key) =>
     pillarKeys.includes(key)
   );
+
+  let ageClock: AgeClockResult | null = null;
+  let ageClockLabel = "";
+  if (participant && pillar === "vascular") {
+    ageClock = computeVascularAge(aiDraft.chronological_age, biomarkers, participant.smoking);
+    ageClockLabel = "Vascular age";
+  } else if (participant && pillar === "metabolic") {
+    ageClock = computeMetabolicAge(aiDraft.chronological_age, biomarkers, participant.sex);
+    ageClockLabel = "Metabolic age";
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -108,6 +122,35 @@ export default function PillarDetailPage() {
           />
         </View>
         <Text style={[styles.score, { color: pillarColor }]}>{score}</Text>
+
+        {ageClock && (
+          <View style={styles.ageClockCard}>
+            <View style={styles.ageClockHeader}>
+              <Text style={styles.ageClockLabel}>{ageClockLabel}</Text>
+              <Text style={[styles.ageClockValue, { color: pillarColor }]}>{ageClock.age}</Text>
+            </View>
+            {ageClock.drivers.length > 0 ? (
+              <View style={styles.ageClockDrivers}>
+                {ageClock.drivers.map((d) => (
+                  <Text key={d.label} style={styles.ageClockDriverText}>
+                    {d.years >= 0 ? "+" : ""}
+                    {d.years}y — {d.label}
+                  </Text>
+                ))}
+              </View>
+            ) : (
+              <Text style={styles.ageClockDriverText}>No factors trending outside range right now.</Text>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              style={styles.ageClockLink}
+              onPress={() => router.push("/methodology")}
+            >
+              How this is calculated & referenced
+            </Button>
+          </View>
+        )}
 
         {pillarBiomarkers.length > 0 && (
           <View style={styles.section}>
@@ -209,6 +252,45 @@ const styles = StyleSheet.create({
   },
   section: {
     marginTop: spacing["2xl"],
+  },
+  ageClockCard: {
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.lg,
+    marginTop: spacing.xl,
+    ...shadows.card,
+  },
+  ageClockHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  ageClockLabel: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.labelMd,
+    fontWeight: fontWeights.semibold,
+    color: colors.charcoal,
+  },
+  ageClockValue: {
+    fontFamily: fontFamilies.displaySemiBold,
+    fontSize: fontSizes.headlineMd,
+    fontWeight: fontWeights.semibold,
+  },
+  ageClockDrivers: {
+    marginTop: spacing.sm,
+    gap: 4,
+  },
+  ageClockDriverText: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+  },
+  ageClockLink: {
+    alignSelf: "flex-start",
+    marginTop: spacing.sm,
+    paddingHorizontal: 0,
   },
   sectionTitle: {
     fontFamily: fontFamilies.bodySemiBold,

@@ -156,10 +156,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(403).json({ error: "Not authorized for this participant" });
     return;
   }
-  // Allowed any time before sign-off starts producing a permanent record — this
-  // also covers regenerating a draft that was created too early (e.g. before a
-  // slow biomarker extraction had finished writing its rows).
-  const REGENERATABLE_STATES = ["ai_drafted", "gp_review", "tcm_review"];
+  // Allowed any time before sign-off starts producing a permanent record --
+  // this also covers regenerating a draft that was created too early (e.g.
+  // before a slow biomarker extraction had finished writing its rows), and
+  // "capturing" specifically so a draft can populate progressively as data
+  // comes in during onboarding, not just once capture is fully submitted.
+  // Safe to call mid-"capturing": the pipeline-state update below is gated on
+  // the current state already being "ai_drafted", so calling this here never
+  // advances the pipeline early -- it only populates ai_draft.
+  const REGENERATABLE_STATES = ["capturing", "ai_drafted", "gp_review", "tcm_review"];
   if (!REGENERATABLE_STATES.includes(pipeline.state)) {
     res.status(409).json({ error: `Cannot generate a draft while pipeline is in state "${pipeline.state}"` });
     return;

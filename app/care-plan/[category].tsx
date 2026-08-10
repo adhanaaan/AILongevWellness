@@ -11,7 +11,7 @@ import { listDailyLogsAction, upsertDailyLogAction, updateParticipantAction } fr
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { CARE_PLAN_CATEGORIES_BY_KEY } from "@/lib/carePlan/categories";
 import type { SignedCard } from "@/lib/data/repository";
-import type { DailyLog, Participant, PlanCategory } from "@/lib/types/db";
+import type { AiDraft, DailyLog, Participant, PlanCategory } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
 
 const VALID_CATEGORIES: PlanCategory[] = ["nutrition", "exercise", "medications", "sleep", "mindfulness"];
@@ -56,6 +56,7 @@ export default function CarePlanCategoryPage() {
   const [logs, setLogs] = useState<DailyLog[]>([]);
   const [participant, setParticipant] = useState<Participant | null>(null);
   const [card, setCard] = useState<SignedCard | null>(null);
+  const [pendingDraft, setPendingDraft] = useState<AiDraft | null>(null);
   const [newMedication, setNewMedication] = useState("");
   const [loaded, setLoaded] = useState(false);
 
@@ -67,10 +68,12 @@ export default function CarePlanCategoryPage() {
       listDailyLogsAction(participantId),
       repository.getParticipant(participantId),
       repository.getSignedCard(participantId),
-    ]).then(([l, p, c]) => {
+      repository.getAiDraft(participantId),
+    ]).then(([l, p, c, d]) => {
       setLogs(l);
       setParticipant(p);
       setCard(c);
+      setPendingDraft(d);
       setLoaded(true);
     });
   }, [participantId]);
@@ -91,7 +94,7 @@ export default function CarePlanCategoryPage() {
   const today = todayIso();
   const todayLog = logs.find((l) => l.log_date === today);
   const last7 = logs.slice(-7);
-  const planItems = card?.aiDraft.care_plan?.[category] ?? [];
+  const planItems = card?.aiDraft.care_plan?.[category] ?? pendingDraft?.care_plan?.[category] ?? [];
   const medicationCatalog = participant?.medications ?? [];
 
   async function patchToday(patch: Partial<Omit<DailyLog, "id" | "participant_id" | "log_date">>) {
@@ -154,7 +157,12 @@ export default function CarePlanCategoryPage() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your plan</Text>
+          <View style={styles.planHeaderRow}>
+            <Text style={styles.sectionTitle}>Your plan</Text>
+            {planItems.length > 0 && !card && (
+              <Text style={styles.pendingNote}>AI-drafted · pending review</Text>
+            )}
+          </View>
           {planItems.length > 0 ? (
             <View style={styles.planList}>
               {planItems.map((item, i) => (
@@ -313,6 +321,17 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.labelMd,
     fontWeight: fontWeights.semibold,
     color: colors.charcoal,
+    marginBottom: spacing.md,
+  },
+  planHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  pendingNote: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.caption,
+    color: colors.terracottaInk,
     marginBottom: spacing.md,
   },
   planList: { gap: spacing.sm },

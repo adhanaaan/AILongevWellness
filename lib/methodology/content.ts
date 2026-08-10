@@ -18,6 +18,14 @@ export const METHODOLOGY_SECTIONS: MethodologySection[] = [
     ],
   },
   {
+    title: "Your age clocks (Vascular age, Metabolic age)",
+    paragraphs: [
+      "Vascular age is our own simplified, transparent points model, informed by the risk factors used in the Framingham General Cardiovascular Risk Score (D'Agostino et al., 2008, Circulation) and the CDC's related \"heart age\" tool (Yang et al., 2015, MMWR) — it is not a replication of their exact statistical model. Those models use inputs we don't capture as explicit fields, including diagnosed-diabetes status and blood-pressure-medication use; diabetes is proxied here from fasting glucose/HbA1c against the same ADA thresholds used elsewhere on this page, and blood-pressure medication isn't factored in at all, since we don't currently ask about it.",
+      "Metabolic age follows the same age-equivalent framing, built on real metabolic syndrome criteria (the IDF consensus definition, Alberti et al., 2006, and NCEP ATP III) rather than the body-composition-scale \"metabolic age\" some consumer devices report — that consumer version compares your metabolic rate to a population average with no published, peer-reviewed validation behind the specific number it produces, so it isn't what this is based on. The metabolic-syndrome criteria themselves are real and cited; converting that into an age-equivalent is our own construction, the same way it is for vascular age.",
+      "We deliberately do not report a \"cognitive age\" or \"brain age.\" Reaction time is a genuinely well-supported marker of cognitive processing speed and is linked in published research to long-term health outcomes (Deary & Der, 2005, Psychological Science; Hagger-Johnson et al., 2014, PLOS ONE) — but no peer-reviewed study converts a reaction-time result into an age-equivalent number the way vascular age can be derived from cardiovascular risk factors. Rather than invent that conversion, the Mental pillar stays a 0-100 score.",
+    ],
+  },
+  {
     title: "Blood pressure & heart rate",
     paragraphs: [
       "Blood pressure's upper bounds align with the \"Normal\" category in the 2017 ACC/AHA hypertension guideline.",

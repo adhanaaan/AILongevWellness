@@ -343,3 +343,43 @@ lib/
       (James Chen's hand-authored draft and the generic demo-participant generator) was
       rewritten to the same depth standard, since that's what every preview/demo deploy
       actually shows by default.
+- [x] Dr. Tong revamp — AI-drafted content shown pre-review, updated post-review:
+      the Insights tab (`app/(tabs)/card.tsx`), Care Plan tab (`app/(tabs)/tracking.tsx`)
+      and its category drill-down (`app/care-plan/[category].tsx`) previously showed
+      nothing at all until a signed, delivered card existed. All three now fall back to
+      `ai_draft` (already RLS-readable pre-delivery — no schema/RLS change) the moment
+      one exists, so a participant sees the AI's first-pass scores and care plan
+      immediately instead of waiting on the full GP → TCM sign-off chain. A new
+      `components/participant/DraftStatusBadge.tsx` replaces `SignOffBadge` above the
+      biological-age hero and renders either state: an orange "AI-drafted · pending
+      your care team's review" badge (with a live missing-biomarker count) before
+      delivery, or the existing green "Reviewed & signed off by [name]" badge after.
+      The moment the care team signs off, the same screens swap over to the reviewed
+      `card.aiDraft`/`card.reviews` data with no other UI change.
+- [x] Dr. Tong revamp — progressive insights during onboarding: `api/generate-draft.ts`'s
+      `REGENERATABLE_STATES` now includes `"capturing"` (was gated to
+      `ai_drafted`/`gp_review`/`tcm_review` only), safe because its pipeline-state
+      update is already conditioned on the current state being exactly `"ai_drafted"` —
+      calling it mid-`"capturing"` populates/refreshes `ai_draft` without ever
+      advancing the pipeline early. `generateDraft()` is now fired (fire-and-forget)
+      right after the Questionnaire completes (`profile-lifestyle.tsx`) and again after
+      each of Wearables/Body Composition/Lab Reports (`capture-wearables-intro.tsx`,
+      `capture-body-composition-intro.tsx`, `capture-lab-reports-intro.tsx`), so a
+      participant gets a first draft as soon as basic info is in and it sharpens with
+      each subsequent upload, instead of everything being gated behind full capture.
+- [x] Dr. Tong revamp — referenced vascular/metabolic age clocks: new
+      `lib/ai/ageClocks.ts` (`computeVascularAge`, `computeMetabolicAge`) derives a
+      points-based age-equivalent from real biomarkers already on file, informed by
+      cited published risk models (Framingham/D'Agostino et al. 2008 + CDC's "heart
+      age" per Yang et al. 2015 for vascular; IDF metabolic syndrome criteria/Alberti
+      et al. 2006 + NCEP ATP III for metabolic) — deliberately labeled everywhere
+      (in-code comments, `lib/methodology/content.ts`'s new "Your age clocks" section)
+      as our own simplified adaptation informed by those papers, not a replication of
+      their exact statistical models, since real inputs they use (diagnosed-diabetes
+      status, BP-medication use) aren't fields we capture. Surfaced on
+      `app/pillar/[pillar].tsx` as an age-clock card (age + list of driver factors,
+      each citing the real threshold it's based on) with a link into the Methodology
+      page. Deliberately did **not** build a "cognitive/brain age" number — no
+      peer-reviewed literature converts a reaction-time result into an age-equivalent,
+      so the Mental pillar intentionally stays a 0-100 score only (also documented on
+      the Methodology page).
