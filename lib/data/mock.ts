@@ -27,6 +27,7 @@ import type { Repository, SignedCard } from "./repository";
 import { createSupabaseRepository } from "./supabase";
 import { computeUnlockedSections } from "../onboarding/flow";
 import { sexAwareRange } from "../ai/sexAwareRanges";
+import { computePillarScores, computeBiologicalAge } from "../ai/scoring";
 
 export const DEMO_PARTICIPANT_ID = "james-chen";
 
@@ -281,10 +282,18 @@ const OTHER_NAMES: Array<{ name: string; age: number; sex: Sex }> = [
 
 const OTHER_STATES: PipelineState[] = [
   ...Array(9).fill("delivered"),
-  ...Array(4).fill("gp_review"),
-  ...Array(4).fill("tcm_review"),
+  ...Array(8).fill("gp_review"),
   "ai_drafted",
   "capturing",
+];
+
+// GP and TCM sign off independently -- these 8 "gp_review" demo rows show
+// all three in-progress combinations coexisting (neither signed yet, GP
+// signed first, TCM signed first), instead of implying GP always goes first.
+const GP_REVIEW_SIGNED_STAGES: ReviewStage[][] = [
+  [], [], [],
+  ["gp"], ["gp"], ["gp"],
+  ["tcm"], ["tcm"],
 ];
 
 const ATTENTION_INDEXES = new Set([2, 7, 13]);
@@ -562,7 +571,16 @@ class MockRepository implements Repository {
         state === "capturing" ? freshOnboardingProgress(id) : completeOnboardingProgress(id)
       );
 
-      if (state === "gp_review" || state === "tcm_review" || state === "signed" || state === "delivered") {
+      // "gp_review" rows vary in which stage(s) are already signed (see
+      // GP_REVIEW_SIGNED_STAGES); "signed"/"delivered" always have both.
+      const gpReviewIndex = OTHER_STATES.slice(0, idx).filter((s) => s === "gp_review").length;
+      const signedStages: ReviewStage[] =
+        state === "gp_review"
+          ? GP_REVIEW_SIGNED_STAGES[gpReviewIndex] ?? []
+          : state === "signed" || state === "delivered"
+          ? ["gp", "tcm"]
+          : [];
+      if (signedStages.includes("gp")) {
         this.reviews.get(id)!.push({
           id: `rv-${id}-gp`,
           participant_id: id,
@@ -573,7 +591,7 @@ class MockRepository implements Repository {
           signed_at: nowIso(),
         });
       }
-      if (state === "tcm_review" || state === "signed" || state === "delivered") {
+      if (signedStages.includes("tcm")) {
         this.reviews.get(id)!.push({
           id: `rv-${id}-tcm`,
           participant_id: id,
@@ -595,7 +613,16 @@ class MockRepository implements Repository {
       const completion =
         channels.reduce((sum, c) => sum + (c?.status === "complete" ? 1 : c?.status === "partial" ? 0.5 : 0), 0) /
         CHANNELS.length;
-      summaries.push({ participant, pipeline, captureCompletionPct: Math.round(completion * 100) });
+      const reviews = this.reviews.get(participant.id) ?? [];
+      const gpSigned = reviews.some((r) => r.stage === "gp" && r.signed_at);
+      const tcmSigned = reviews.some((r) => r.stage === "tcm" && r.signed_at);
+      summaries.push({
+        participant,
+        pipeline,
+        captureCompletionPct: Math.round(completion * 100),
+        gpSigned,
+        tcmSigned,
+      });
     }
     summaries.sort((a, b) => {
       if (a.participant.id === DEMO_PARTICIPANT_ID) return -1;
@@ -696,8 +723,30 @@ class MockRepository implements Repository {
   async updateBiomarker(id: string, patch: Partial<Biomarker>): Promise<Biomarker> {
     const existing = this.biomarkers.get(id);
     if (!existing) throw new Error(`Unknown biomarker ${id}`);
-    const updated: Biomarker = { ...existing, ...patch, updated_at: nowIso() };
+    const merged = { ...existing, ...patch };
+    // Re-derive flagged from the corrected value rather than trusting the
+    // old flag -- markerScore() (lib/ai/scoring.ts) reads flagged, not the
+    // raw value, so a stale flag after an edit silently keeps scoring the
+    // pre-correction reading.
+    const flagged =
+      merged.value !== null && merged.ref_low !== null && merged.ref_high !== null
+        ? merged.value < merged.ref_low || merged.value > merged.ref_high
+        : merged.flagged;
+    const updated: Biomarker = { ...merged, flagged, updated_at: nowIso() };
     this.biomarkers.set(id, updated);
+
+    // Scores and biological age are a deterministic function of biomarkers,
+    // not an AI call -- recompute them immediately so a reviewer who
+    // corrects a value sees it reflected right away, instead of a stale
+    // number sitting there until someone remembers to regenerate the draft.
+    const draft = this.aiDrafts.get(updated.participant_id);
+    if (draft) {
+      const allBiomarkers = await this.getBiomarkers(updated.participant_id);
+      const scores = computePillarScores(allBiomarkers);
+      const biological_age = computeBiologicalAge(scores, draft.chronological_age);
+      this.aiDrafts.set(updated.participant_id, { ...draft, scores, biological_age });
+    }
+
     this.notify();
     return updated;
   }
@@ -727,11 +776,11 @@ class MockRepository implements Repository {
     const pipeline = this.pipelines.get(participantId);
     if (!pipeline) throw new Error(`Unknown participant ${participantId}`);
 
-    if (stage === "gp" && pipeline.state !== "gp_review") {
-      throw new Error("GP sign-off is not available at this stage.");
-    }
-    if (stage === "tcm" && pipeline.state !== "tcm_review") {
-      throw new Error("TCM sign-off is locked until GP sign-off is complete.");
+    // GP and TCM sign off independently, in either order -- both are open
+    // any time the pipeline is in this review phase. "gp_review" now means
+    // "awaiting one or both signatures", not "GP's turn only".
+    if (pipeline.state !== "gp_review") {
+      throw new Error("Sign-off is not available at this stage.");
     }
 
     const review: Review = {
@@ -744,9 +793,13 @@ class MockRepository implements Repository {
       signed_at: nowIso(),
     };
     const list = this.reviews.get(participantId) ?? [];
-    this.reviews.set(participantId, [...list.filter((r) => r.stage !== stage), review]);
+    const updatedReviews = [...list.filter((r) => r.stage !== stage), review];
+    this.reviews.set(participantId, updatedReviews);
 
-    const nextState: PipelineState = stage === "gp" ? "tcm_review" : "signed";
+    const bothSigned =
+      updatedReviews.some((r) => r.stage === "gp" && r.signed_at) &&
+      updatedReviews.some((r) => r.stage === "tcm" && r.signed_at);
+    const nextState: PipelineState = bothSigned ? "signed" : "gp_review";
     this.pipelines.set(participantId, { ...pipeline, state: nextState });
     this.notify();
 

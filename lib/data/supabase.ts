@@ -5,6 +5,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/config/env";
 import type { Repository, SignedCard, UploadableFile } from "./repository";
 import { BUCKET_BY_KIND } from "./storageBuckets";
 import { computeUnlockedSections, deriveOnboardingProgress } from "../onboarding/flow";
+import { computePillarScores, computeBiologicalAge } from "../ai/scoring";
 import type {
   AiDraft,
   Biomarker,
@@ -95,10 +96,11 @@ export class SupabaseRepository implements Repository {
   }
 
   async listParticipants(): Promise<ParticipantSummary[]> {
-    const [{ data: participants, error: pErr }, { data: pipelines }, { data: channels }] = await Promise.all([
+    const [{ data: participants, error: pErr }, { data: pipelines }, { data: channels }, { data: reviews }] = await Promise.all([
       this.client.from("participants").select("*").order("name"),
       this.client.from("pipeline").select("*"),
       this.client.from("capture_channels").select("*"),
+      this.client.from("reviews").select("*"),
     ]);
     if (pErr) throw new Error(pErr.message);
 
@@ -110,7 +112,16 @@ export class SupabaseRepository implements Repository {
           const row = own.find((c: CaptureChannel) => c.channel === ch);
           return sum + (row?.status === "complete" ? 1 : row?.status === "partial" ? 0.5 : 0);
         }, 0) / CHANNELS.length;
-      return { participant: p, pipeline, captureCompletionPct: Math.round(completion * 100) };
+      const ownReviews = (reviews ?? []).filter((r: Review) => r.participant_id === p.id);
+      const gpSigned = ownReviews.some((r: Review) => r.stage === "gp" && r.signed_at);
+      const tcmSigned = ownReviews.some((r: Review) => r.stage === "tcm" && r.signed_at);
+      return {
+        participant: p,
+        pipeline,
+        captureCompletionPct: Math.round(completion * 100),
+        gpSigned,
+        tcmSigned,
+      };
     });
   }
 
@@ -197,13 +208,46 @@ export class SupabaseRepository implements Repository {
   }
 
   async updateBiomarker(id: string, patch: Partial<Biomarker>): Promise<Biomarker> {
+    // Re-derive flagged from the corrected value -- markerScore() (lib/ai/scoring.ts)
+    // reads flagged, not the raw value, so a stale flag after an edit would
+    // silently keep scoring the pre-correction reading.
+    const { data: existing, error: fetchError } = await this.client
+      .from("biomarkers")
+      .select("*")
+      .eq("id", id)
+      .single();
+    if (fetchError) throw new Error(fetchError.message);
+    const merged = { ...existing, ...patch };
+    const flagged =
+      merged.value !== null && merged.ref_low !== null && merged.ref_high !== null
+        ? merged.value < merged.ref_low || merged.value > merged.ref_high
+        : merged.flagged;
+
     const { data, error } = await this.client
       .from("biomarkers")
-      .update({ ...patch, updated_at: new Date().toISOString() })
+      .update({ ...patch, flagged, updated_at: new Date().toISOString() })
       .eq("id", id)
       .select()
       .single();
-    return must(data, error, "biomarker");
+    const updated = must(data, error, "biomarker");
+
+    // Scores and biological age are a deterministic function of biomarkers,
+    // not an AI call -- recompute them immediately so a reviewer who
+    // corrects a value sees it reflected right away. Written directly rather
+    // than via updateAiDraft so this doesn't flip edited_by_admin, which is
+    // reserved for an actual human rewrite of the narrative text.
+    const draft = await this.getAiDraft(updated.participant_id);
+    if (draft) {
+      const allBiomarkers = await this.getBiomarkers(updated.participant_id);
+      const scores = computePillarScores(allBiomarkers);
+      const biological_age = computeBiologicalAge(scores, draft.chronological_age);
+      await this.client
+        .from("ai_draft")
+        .update({ scores, biological_age })
+        .eq("participant_id", updated.participant_id);
+    }
+
+    return updated;
   }
 
   async getAiDraft(participantId: string): Promise<AiDraft | null> {

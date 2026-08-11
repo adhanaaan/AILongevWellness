@@ -4,6 +4,7 @@ import { Lock, CheckCircle2 } from "lucide-react-native";
 import { Card, Button, Input, Textarea } from "@/components/ui";
 import { colors, fontSizes, fontWeights, spacing, radii } from "@/lib/theme/tokens";
 import { signOffAction } from "@/lib/data/actions";
+import { getSavedReviewer, saveReviewer } from "@/lib/data/reviewerIdentity";
 import type { ReviewStage, Review } from "@/lib/types/db";
 
 interface SignOffStageProps {
@@ -24,8 +25,8 @@ export function SignOffStage({
   review,
   locked,
 }: SignOffStageProps) {
-  const [name, setName] = useState("");
-  const [credential, setCredential] = useState("");
+  const [name, setName] = useState(() => getSavedReviewer()?.name ?? "");
+  const [credential, setCredential] = useState(() => getSavedReviewer()?.credential ?? "");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,6 +43,7 @@ export function SignOffStage({
         reviewer_credential: credential.trim(),
         notes: notes.trim(),
       });
+      saveReviewer({ name: name.trim(), credential: credential.trim() });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Sign-off failed. Please try again.");
     } finally {

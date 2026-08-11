@@ -168,6 +168,12 @@ export interface ParticipantSummary {
   participant: Participant;
   pipeline: Pipeline;
   captureCompletionPct: number;
+  // GP and TCM sign off independently and in either order once the
+  // pipeline reaches "gp_review" (which now means "awaiting one or both
+  // signatures", not "GP's turn only") -- these let list views show which
+  // specific stage(s) are still outstanding without a per-row reviews fetch.
+  gpSigned: boolean;
+  tcmSigned: boolean;
 }
 
 export interface DailyLogSleep {

@@ -17,7 +17,7 @@ export function ParticipantTableRow({
   summary,
   onPress,
 }: ParticipantTableRowProps) {
-  const { participant, pipeline, captureCompletionPct } = summary;
+  const { participant, pipeline, captureCompletionPct, gpSigned, tcmSigned } = summary;
   const needsAttention = pipeline.needs_attention;
 
   const handleResolve = async () => {
@@ -45,6 +45,8 @@ export function ParticipantTableRow({
         <PipelineStatusBadge
           state={pipeline.state}
           needsAttention={needsAttention}
+          gpSigned={gpSigned}
+          tcmSigned={tcmSigned}
         />
       </View>
 

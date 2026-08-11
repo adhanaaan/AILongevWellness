@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import * as Linking from "expo-linking";
-import { ArrowLeft, AlertTriangle, ShieldCheck, ShieldAlert } from "lucide-react-native";
+import { ArrowLeft, ArrowRight, AlertTriangle, ShieldCheck, ShieldAlert } from "lucide-react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { StatusTimeline } from "@/components/admin/StatusTimeline";
@@ -28,25 +28,24 @@ import type {
   Pillar,
   FileRecord,
   DailyLog,
+  ParticipantSummary,
 } from "@/lib/types/db";
 import { colors, fontSizes, spacing, radii } from "@/lib/theme/tokens";
 
-const PIPELINE_STAGES = [
-  "Capturing",
-  "AI Draft",
-  "GP Review",
-  "TCM Review",
-  "Signed",
-  "Delivered",
-];
+// GP and TCM sign off independently, in either order -- collapsed into one
+// "Review" step rather than two sequential ones, since the pipeline no
+// longer implies GP must finish before TCM can start (or vice versa). Which
+// specific stage(s) are done is shown by the two SignOffStage cards below,
+// not by this high-level progress strip.
+const PIPELINE_STAGES = ["Capturing", "AI Draft", "Review", "Signed", "Delivered"];
 
 const STATE_INDEX: Record<PipelineState, number> = {
   capturing: 0,
   ai_drafted: 1,
   gp_review: 2,
-  tcm_review: 3,
-  signed: 4,
-  delivered: 5,
+  tcm_review: 2,
+  signed: 3,
+  delivered: 4,
 };
 
 const PILLAR_ORDER: Pillar[] = ["vascular", "metabolic", "mental"];
@@ -67,6 +66,7 @@ export default function ParticipantDetailPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [files, setFiles] = useState<FileRecord[]>([]);
   const [dailyLogs, setDailyLogs] = useState<DailyLog[]>([]);
+  const [queueSummaries, setQueueSummaries] = useState<ParticipantSummary[]>([]);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [extractingFileId, setExtractingFileId] = useState<string | null>(null);
@@ -76,7 +76,7 @@ export default function ParticipantDetailPage() {
 
   const loadData = async () => {
     if (!id) return;
-    const [p, pipe, bm, draft, rev, f, logs] = await Promise.all([
+    const [p, pipe, bm, draft, rev, f, logs, queue] = await Promise.all([
       repository.getParticipant(id),
       repository.getPipeline(id),
       repository.getBiomarkers(id),
@@ -84,6 +84,7 @@ export default function ParticipantDetailPage() {
       repository.getReviews(id),
       repository.listFiles(id),
       repository.listDailyLogs(id),
+      repository.listParticipants(),
     ]);
     setParticipant(p);
     setPipeline(pipe);
@@ -92,6 +93,7 @@ export default function ParticipantDetailPage() {
     setReviews(rev);
     setFiles(f);
     setDailyLogs(logs);
+    setQueueSummaries(queue);
   };
 
   async function onExtractFile(file: FileRecord) {
@@ -157,6 +159,15 @@ export default function ParticipantDetailPage() {
     }
   }
 
+  // The next participant still awaiting GP/TCM review, so a reviewer working
+  // through the whole cohort can move on without going back to the queue and
+  // re-finding their place after every sign-off.
+  const nextInQueue = useMemo(() => {
+    return (
+      queueSummaries.find((s) => s.participant.id !== id && s.pipeline.state === "gp_review") ?? null
+    );
+  }, [queueSummaries, id]);
+
   const biomarkersByPillar = useMemo(() => {
     const grouped: Record<string, Biomarker[]> = {};
     for (const pillar of PILLAR_ORDER) {
@@ -168,8 +179,7 @@ export default function ParticipantDetailPage() {
   if (!participant || !pipeline) return null;
 
   const stateIdx = STATE_INDEX[pipeline.state];
-  const isEditable =
-    pipeline.state === "gp_review" || pipeline.state === "tcm_review";
+  const isEditable = pipeline.state === "gp_review";
   const isDraftSparse =
     !!aiDraft &&
     aiDraft.strengths.length === 0 &&
@@ -177,7 +187,21 @@ export default function ParticipantDetailPage() {
     aiDraft.suggested_focus.length === 0;
 
   return (
-    <AdminShell title={participant.name}>
+    <AdminShell
+      title={participant.name}
+      headerActions={
+        nextInQueue ? (
+          <Button
+            variant="secondary"
+            size="sm"
+            iconRight={<ArrowRight size={16} color={colors.teal} />}
+            onPress={() => router.push(`/admin/participants/${nextInQueue.participant.id}`)}
+          >
+            {`Next: ${nextInQueue.participant.name}`}
+          </Button>
+        ) : undefined
+      }
+    >
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scroll}
@@ -214,7 +238,12 @@ export default function ParticipantDetailPage() {
               )}
             </View>
           </View>
-          <PipelineStatusBadge state={pipeline.state} needsAttention={pipeline.needs_attention} />
+          <PipelineStatusBadge
+            state={pipeline.state}
+            needsAttention={pipeline.needs_attention}
+            gpSigned={!!gpReview}
+            tcmSigned={!!tcmReview}
+          />
         </View>
 
         {pipeline.needs_attention && (
@@ -442,7 +471,7 @@ export default function ParticipantDetailPage() {
                 stage="tcm"
                 participantId={id!}
                 review={tcmReview}
-                locked={pipeline.state === "gp_review"}
+                locked={false}
               />
             </View>
           </View>
