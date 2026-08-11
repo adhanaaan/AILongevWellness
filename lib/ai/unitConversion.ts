@@ -21,6 +21,13 @@ const CONVERSIONS: Record<string, ConversionFn> = {
   "ferritin|ng/ml": (v) => v, // ng/mL is numerically equal to µg/L
   "fasting_insulin|pmol/l": (v) => v / 6.945,
   "fasting_insulin|miu/l": (v) => v, // numerically equal to µIU/mL
+  "albumin|g/dl": (v) => v * 10,
+  // WBC as "x10^9/L" (common on SI/international CBC panels) is numerically
+  // identical to the catalog's 10³/µL -- same count, different notation.
+  "wbc|x10^9/l": (v) => v,
+  "wbc|10^9/l": (v) => v,
+  "wbc|k/ul": (v) => v,
+  "wbc|k/µl": (v) => v,
 };
 
 function normalizeUnit(unit: string): string {

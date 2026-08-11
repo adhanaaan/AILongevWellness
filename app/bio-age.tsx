@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { pillarStatus } from "@/lib/ai/scoring";
+import { missingPhenoAgeInputs } from "@/lib/ai/phenoAge";
 import type { SignedCard } from "@/lib/data/repository";
 import type { Pillar } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, fontWeights, radii, shadows, spacing } from "@/lib/theme/tokens";
@@ -46,8 +47,9 @@ export default function BioAgePage() {
     return null;
   }
 
-  const { aiDraft } = card;
+  const { aiDraft, biomarkers } = card;
   const { scores, biological_age: bioAge, chronological_age: chronoAge } = aiDraft;
+  const usedPhenoAge = missingPhenoAgeInputs(biomarkers).length === 0;
   const avg = Math.round((scores.vascular + scores.metabolic + scores.mental) / 3);
   const rawDelta = avg - NEUTRAL_SCORE;
   const appliedDelta = Math.max(-15, Math.min(10, rawDelta));
@@ -79,17 +81,35 @@ export default function BioAgePage() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>How this is calculated</Text>
-          <Text style={styles.paragraph}>
-            Your three pillar scores average to {avg}, compared with a neutral baseline of {NEUTRAL_SCORE}. That
-            {rawDelta >= 0 ? " surplus" : " shortfall"} of {Math.abs(rawDelta)} points
-            {wasCapped ? `, capped to a maximum adjustment of ${Math.abs(appliedDelta)} years,` : ""} shifts your
-            biological age {appliedDelta >= 0 ? "younger" : "older"} than your chronological age of {chronoAge}.
-          </Text>
-          <Text style={styles.paragraph}>
-            This is a proprietary composite estimate, not a diagnosis and not the same as a specific named clinical
-            biological-age formula (like PhenoAge). It's meant to make your pillar scores easier to compare at a
-            glance, not a precise clinical measurement.
-          </Text>
+          {usedPhenoAge ? (
+            <>
+              <Text style={styles.paragraph}>
+                Your biological age of {bioAge} is calculated with PhenoAge (Levine et al., 2018), a published
+                formula built from nine blood biomarkers — albumin, creatinine, glucose, CRP, lymphocyte percent,
+                MCV, RDW, alkaline phosphatase, and white blood cell count — alongside your chronological age of{" "}
+                {chronoAge}. In the study it was developed on, it predicted 10-year mortality risk more accurately
+                than chronological age alone.
+              </Text>
+              <Text style={styles.paragraph}>
+                This is a real, published clinical formula computed directly from your lab values — not our own
+                estimate. See the full citation and calculation on the Methodology page.
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.paragraph}>
+                Your three pillar scores average to {avg}, compared with a neutral baseline of {NEUTRAL_SCORE}. That
+                {rawDelta >= 0 ? " surplus" : " shortfall"} of {Math.abs(rawDelta)} points
+                {wasCapped ? `, capped to a maximum adjustment of ${Math.abs(appliedDelta)} years,` : ""} shifts your
+                biological age {appliedDelta >= 0 ? "younger" : "older"} than your chronological age of {chronoAge}.
+              </Text>
+              <Text style={styles.paragraph}>
+                This is our own composite estimate, not a diagnosis and not the same as a specific named clinical
+                biological-age formula. A complete blood count and metabolic panel unlocks PhenoAge — a published
+                formula with a stronger evidence base — see the Methodology page for what's still needed.
+              </Text>
+            </>
+          )}
         </View>
 
         <View style={styles.section}>

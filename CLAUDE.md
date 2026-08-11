@@ -406,3 +406,36 @@ lib/
       peer-reviewed literature converts a reaction-time result into an age-equivalent,
       so the Mental pillar intentionally stays a 0-100 score only (also documented on
       the Methodology page).
+- [x] AI extraction/chat models upgraded to Opus: `api/extract-lab.ts` and
+      `api/extract-body-comp.ts` (misreading a value here silently corrupts a pillar
+      score and everything drafted from it) and `api/ava.ts` (grounding quality) now
+      call `claude-opus-5` instead of `claude-sonnet-5`, matching `generate-draft.ts`.
+      Extraction calls got `max_tokens` raised to 8000 for Opus's adaptive-thinking
+      headroom (thinking and output share one budget); `ava.ts` instead sets
+      `thinking: {type: "disabled"}` since it's plain-text chat with no tool call, so
+      none of the disabled-thinking pitfalls apply and it keeps replies fast.
+- [x] Real PhenoAge as the biological-age formula: `lib/ai/phenoAge.ts` implements the
+      actual published Levine et al. 2018 formula ("An epigenetic biomarker of aging
+      for lifespan and healthspan," *Aging*, 10(4):573–591) — the real coefficients and
+      Gompertz-based calculation, not our own adaptation of it (unlike the vascular/
+      metabolic age clocks above). Requires all 9 of its inputs (albumin, creatinine,
+      fasting glucose, hs-CRP, lymphocyte %, MCV, RDW, alkaline phosphatase, white
+      blood cell count) or returns `null` rather than guessing from a partial set.
+      Wired in wherever biological age is computed (`api/generate-draft.ts`, both
+      repositories' biomarker-edit score-resync path) as `computePhenoAge(...) ??`
+      falling back to the existing composite estimate — real formula when the data
+      supports it, honest fallback otherwise. Six new catalog entries added to power
+      this (`albumin`, `lymphocyte_pct`, `mcv`, `rdw`, `alp`, `wbc` in
+      `lib/ai/labCatalog.ts`, grouped under the metabolic pillar alongside the other
+      general-chemistry markers already there) with matching extraction support in
+      `api/extract-lab.ts` and unit-conversion entries in `lib/ai/unitConversion.ts`
+      (creatinine and hs-CRP were already stored in the units PhenoAge needs; only
+      fasting glucose needs converting, done inside `phenoAge.ts` itself). Demo data
+      (`lib/data/mock.ts`) extended with the same six markers so delivered demo
+      participants show the real formula rather than only the fallback — James Chen's
+      hand-authored draft is untouched, keeping his numbers consistent with rule #5.
+      `app/bio-age.tsx` and the Methodology page's "How your scores are calculated"
+      section both branch on `missingPhenoAgeInputs(biomarkers).length === 0` to
+      honestly describe whichever one actually produced the displayed number, instead
+      of always claiming the composite (which was true before this, but would have
+      become a false claim the moment PhenoAge could apply).

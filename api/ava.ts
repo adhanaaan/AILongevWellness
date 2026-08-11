@@ -88,8 +88,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-5",
-      max_tokens: 400,
+      // Opus, not Sonnet, for grounding quality against the real card data.
+      // Thinking explicitly off -- this is plain-text chat with no tool
+      // call, so none of the disabled-thinking pitfalls (tool calls written
+      // as text) apply, and it keeps a concierge chat reply fast.
+      model: "claude-opus-5",
+      max_tokens: 800,
+      thinking: { type: "disabled" },
       system: systemPrompt(card),
       messages: [...priorMessages, { role: "user", content: message }],
     });
