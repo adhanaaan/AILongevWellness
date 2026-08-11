@@ -6,6 +6,7 @@ import type { Repository, SignedCard, UploadableFile } from "./repository";
 import { BUCKET_BY_KIND } from "./storageBuckets";
 import { computeUnlockedSections, deriveOnboardingProgress } from "../onboarding/flow";
 import { computePillarScores, computeBiologicalAge } from "../ai/scoring";
+import { computePhenoAge } from "../ai/phenoAge";
 import type {
   AiDraft,
   Biomarker,
@@ -240,7 +241,8 @@ export class SupabaseRepository implements Repository {
     if (draft) {
       const allBiomarkers = await this.getBiomarkers(updated.participant_id);
       const scores = computePillarScores(allBiomarkers);
-      const biological_age = computeBiologicalAge(scores, draft.chronological_age);
+      const biological_age =
+        computePhenoAge(allBiomarkers, draft.chronological_age) ?? computeBiologicalAge(scores, draft.chronological_age);
       await this.client
         .from("ai_draft")
         .update({ scores, biological_age })

@@ -7,6 +7,7 @@ import {
   computeOutOfRange,
   computePillarScores,
 } from "../lib/ai/scoring";
+import { computePhenoAge } from "../lib/ai/phenoAge";
 import type { Biomarker, CarePlan, KeyContributor } from "../lib/types/db";
 import { METHODOLOGY_SECTIONS } from "../lib/methodology/content";
 
@@ -187,7 +188,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const rows: Biomarker[] = biomarkers ?? [];
   const scores = computePillarScores(rows);
-  const biologicalAge = computeBiologicalAge(scores, participant.age);
+  // Prefer the real, validated PhenoAge formula (Levine et al. 2018) whenever
+  // all 9 of its required biomarkers are on file; otherwise fall back to our
+  // own honestly-labeled composite estimate. See lib/ai/phenoAge.ts.
+  const biologicalAge = computePhenoAge(rows, participant.age) ?? computeBiologicalAge(scores, participant.age);
   const missingBiomarkers = computeMissingBiomarkers(rows);
   const outOfRange = computeOutOfRange(rows);
 

@@ -41,6 +41,19 @@ export const LAB_CATALOG: LabCatalogEntry[] = [
   { key: "egfr", label: "eGFR (kidney function)", pillar: "metabolic", unit: "mL/min/1.73m²", ref_low: 90, ref_high: 130 },
   { key: "tsh", label: "TSH (thyroid)", pillar: "metabolic", unit: "mIU/L", ref_low: 0.4, ref_high: 4.0 },
 
+  // CBC + general chemistry -- these six exist specifically to power the
+  // validated PhenoAge biological-age estimate (lib/ai/phenoAge.ts), which
+  // requires all of them plus fasting_glucose/hscrp/creatinine above.
+  // Grouped under "metabolic" since that's already this catalog's general-
+  // chemistry/systemic-health pillar, not because each one is individually
+  // "metabolic" in the narrow sense.
+  { key: "albumin", label: "Albumin", pillar: "metabolic", unit: "g/L", ref_low: 35, ref_high: 50 },
+  { key: "lymphocyte_pct", label: "Lymphocytes (%)", pillar: "metabolic", unit: "%", ref_low: 20, ref_high: 40 },
+  { key: "mcv", label: "MCV (mean cell volume)", pillar: "metabolic", unit: "fL", ref_low: 80, ref_high: 100 },
+  { key: "rdw", label: "RDW (red cell distribution width)", pillar: "metabolic", unit: "%", ref_low: 11.5, ref_high: 14.5 },
+  { key: "alp", label: "ALP (alkaline phosphatase)", pillar: "metabolic", unit: "U/L", ref_low: 44, ref_high: 147 },
+  { key: "wbc", label: "White blood cell count", pillar: "metabolic", unit: "10³/µL", ref_low: 4.5, ref_high: 11.0 },
+
   // CGM (continuous glucose monitor) summary stats — a different document shape
   // (e.g. a Buzud/Freestyle/Dexcom export) but same upload path and pillar as
   // the rest of the metabolic panel, so it lives in the same catalog.

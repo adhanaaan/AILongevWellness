@@ -145,8 +145,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         : ({ type: "image", source: { type: "base64", media_type: mediaType as any, data: base64 } } as const);
 
     const message = await anthropic.messages.create({
-      model: "claude-sonnet-5",
-      max_tokens: 1024,
+      // Opus, not Sonnet -- misreading a scan value here silently corrupts a
+      // pillar score and the AI draft built from it. max_tokens raised for
+      // headroom since Opus 5 thinks by default and thinking + output share
+      // one budget.
+      model: "claude-opus-5",
+      max_tokens: 4096,
       tools: [EXTRACTION_TOOL],
       tool_choice: { type: "tool", name: "report_body_comp_values" },
       messages: [

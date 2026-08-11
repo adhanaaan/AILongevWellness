@@ -28,6 +28,7 @@ import { createSupabaseRepository } from "./supabase";
 import { computeUnlockedSections } from "../onboarding/flow";
 import { sexAwareRange } from "../ai/sexAwareRanges";
 import { computePillarScores, computeBiologicalAge } from "../ai/scoring";
+import { computePhenoAge } from "../ai/phenoAge";
 
 export const DEMO_PARTICIPANT_ID = "james-chen";
 
@@ -129,6 +130,17 @@ const BIOMARKER_TEMPLATES: Record<Pillar, BiomarkerTemplate[]> = {
     { key: "body_fat_pct", label: "Body fat %", unit: "%", ref_low: 8, ref_high: 24, source: "body_comp" },
     { key: "visceral_fat", label: "Visceral fat", unit: "level", ref_low: 1, ref_high: 12, source: "body_comp", lowerIsBetter: true },
     { key: "vitamin_d", label: "Vitamin D", unit: "nmol/L", ref_low: 50, ref_high: 125, source: "lab_extract" },
+    { key: "creatinine", label: "Creatinine", unit: "µmol/L", ref_low: 60, ref_high: 110, source: "lab_extract" },
+    // CBC + general chemistry -- exist (with creatinine/fasting_glucose above
+    // and hscrp under vascular) so demo participants' synthesized data covers
+    // all 9 PhenoAge inputs and the health card shows the real formula, not
+    // just the fallback composite.
+    { key: "albumin", label: "Albumin", unit: "g/L", ref_low: 35, ref_high: 50, source: "lab_extract" },
+    { key: "lymphocyte_pct", label: "Lymphocytes (%)", unit: "%", ref_low: 20, ref_high: 40, source: "lab_extract", lowerIsBetter: true },
+    { key: "mcv", label: "MCV (mean cell volume)", unit: "fL", ref_low: 80, ref_high: 100, source: "lab_extract" },
+    { key: "rdw", label: "RDW (red cell distribution width)", unit: "%", ref_low: 11.5, ref_high: 14.5, source: "lab_extract", lowerIsBetter: true },
+    { key: "alp", label: "ALP (alkaline phosphatase)", unit: "U/L", ref_low: 44, ref_high: 147, source: "lab_extract", lowerIsBetter: true },
+    { key: "wbc", label: "White blood cell count", unit: "10³/µL", ref_low: 4.5, ref_high: 11.0, source: "lab_extract", lowerIsBetter: true },
   ],
   mental: [
     { key: "reaction_time", label: "Cognitive reaction time", unit: "ms", ref_low: 250, ref_high: 400, source: "recognize", lowerIsBetter: true },
@@ -204,7 +216,11 @@ function genAiDraftForScores(
     id: `draft-${participantId}`,
     participant_id: participantId,
     scores,
-    biological_age: Math.max(18, chronologicalAge - bioAgeOffset),
+    // Real PhenoAge when the demo participant's synthesized biomarkers happen
+    // to cover all 9 of its required inputs; otherwise the existing
+    // synthetic offset (James Chen's hand-authored draft is untouched --
+    // this function only generates the other 19 demo participants).
+    biological_age: computePhenoAge(biomarkers, chronologicalAge) ?? Math.max(18, chronologicalAge - bioAgeOffset),
     chronological_age: chronologicalAge,
     key_contributors: [
       monitorPillar
@@ -743,7 +759,8 @@ class MockRepository implements Repository {
     if (draft) {
       const allBiomarkers = await this.getBiomarkers(updated.participant_id);
       const scores = computePillarScores(allBiomarkers);
-      const biological_age = computeBiologicalAge(scores, draft.chronological_age);
+      const biological_age =
+        computePhenoAge(allBiomarkers, draft.chronological_age) ?? computeBiologicalAge(scores, draft.chronological_age);
       this.aiDrafts.set(updated.participant_id, { ...draft, scores, biological_age });
     }
 

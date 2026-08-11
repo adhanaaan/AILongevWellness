@@ -46,6 +46,16 @@ Metabolic (standard blood panel):
 - egfr (eGFR, Estimated GFR, GFR)
 - tsh (TSH, Thyroid Stimulating Hormone)
 
+Metabolic (CBC + general chemistry -- only present on a report that includes a full
+blood count, not every basic panel):
+- albumin (Albumin)
+- lymphocyte_pct (Lymphocytes %, Lymphocyte Percent, LYMPH%) -- only the percentage, never an absolute count
+- mcv (MCV, Mean Corpuscular Volume, Mean Cell Volume)
+- rdw (RDW, RDW-CV, Red Cell Distribution Width) -- only the percentage version (RDW-CV);
+  never RDW-SD, which is reported in fL, not %
+- alp (ALP, Alkaline Phosphatase)
+- wbc (WBC, White Blood Cell Count, White Cell Count, Total Leukocyte Count)
+
 Metabolic (CGM summary report only — these come from the report's summary/overview page,
 never from reading values off a chart):
 - cgm_avg_glucose (Average Glucose, Mean Glucose)
@@ -177,8 +187,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         : ({ type: "image", source: { type: "base64", media_type: mediaType as any, data: base64 } } as const);
 
     const message = await anthropic.messages.create({
-      model: "claude-sonnet-5",
-      max_tokens: 1024,
+      // Opus, not Sonnet -- misreading a lab value here silently corrupts a
+      // pillar score and the AI draft built from it. max_tokens raised for
+      // headroom since Opus 5 thinks by default and thinking + output share
+      // one budget.
+      model: "claude-opus-5",
+      max_tokens: 4096,
       tools: [EXTRACTION_TOOL],
       tool_choice: { type: "tool", name: "report_lab_values" },
       messages: [
