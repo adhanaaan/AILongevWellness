@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import * as Linking from "expo-linking";
-import { ArrowLeft, AlertTriangle, ShieldCheck, ShieldAlert } from "lucide-react-native";
+import { ArrowLeft, ArrowRight, AlertTriangle, ShieldCheck, ShieldAlert } from "lucide-react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { StatusTimeline } from "@/components/admin/StatusTimeline";
@@ -28,6 +28,7 @@ import type {
   Pillar,
   FileRecord,
   DailyLog,
+  ParticipantSummary,
 } from "@/lib/types/db";
 import { colors, fontSizes, spacing, radii } from "@/lib/theme/tokens";
 
@@ -67,6 +68,7 @@ export default function ParticipantDetailPage() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [files, setFiles] = useState<FileRecord[]>([]);
   const [dailyLogs, setDailyLogs] = useState<DailyLog[]>([]);
+  const [queueSummaries, setQueueSummaries] = useState<ParticipantSummary[]>([]);
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [extractingFileId, setExtractingFileId] = useState<string | null>(null);
@@ -76,7 +78,7 @@ export default function ParticipantDetailPage() {
 
   const loadData = async () => {
     if (!id) return;
-    const [p, pipe, bm, draft, rev, f, logs] = await Promise.all([
+    const [p, pipe, bm, draft, rev, f, logs, queue] = await Promise.all([
       repository.getParticipant(id),
       repository.getPipeline(id),
       repository.getBiomarkers(id),
@@ -84,6 +86,7 @@ export default function ParticipantDetailPage() {
       repository.getReviews(id),
       repository.listFiles(id),
       repository.listDailyLogs(id),
+      repository.listParticipants(),
     ]);
     setParticipant(p);
     setPipeline(pipe);
@@ -92,6 +95,7 @@ export default function ParticipantDetailPage() {
     setReviews(rev);
     setFiles(f);
     setDailyLogs(logs);
+    setQueueSummaries(queue);
   };
 
   async function onExtractFile(file: FileRecord) {
@@ -157,6 +161,19 @@ export default function ParticipantDetailPage() {
     }
   }
 
+  // The next participant still awaiting GP/TCM review, so a reviewer working
+  // through the whole cohort can move on without going back to the queue and
+  // re-finding their place after every sign-off.
+  const nextInQueue = useMemo(() => {
+    return (
+      queueSummaries.find(
+        (s) =>
+          s.participant.id !== id &&
+          (s.pipeline.state === "gp_review" || s.pipeline.state === "tcm_review")
+      ) ?? null
+    );
+  }, [queueSummaries, id]);
+
   const biomarkersByPillar = useMemo(() => {
     const grouped: Record<string, Biomarker[]> = {};
     for (const pillar of PILLAR_ORDER) {
@@ -177,7 +194,21 @@ export default function ParticipantDetailPage() {
     aiDraft.suggested_focus.length === 0;
 
   return (
-    <AdminShell title={participant.name}>
+    <AdminShell
+      title={participant.name}
+      headerActions={
+        nextInQueue ? (
+          <Button
+            variant="secondary"
+            size="sm"
+            iconRight={<ArrowRight size={16} color={colors.teal} />}
+            onPress={() => router.push(`/admin/participants/${nextInQueue.participant.id}`)}
+          >
+            {`Next: ${nextInQueue.participant.name}`}
+          </Button>
+        ) : undefined
+      }
+    >
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scroll}
