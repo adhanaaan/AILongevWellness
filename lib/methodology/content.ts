@@ -67,7 +67,13 @@ export const METHODOLOGY_SECTIONS: MethodologySection[] = [
     paragraphs: [
       "ALT and AST reflect conventional clinical laboratory reference ranges. Some specialty guidelines (AASLD/ACG) argue the true biologically-normal range is stricter than the lab convention used here.",
       "eGFR's lower bound aligns with the KDIGO chronic kidney disease staging guideline. KDIGO does not define a clinical upper bound for eGFR, so our displayed upper value is a practical display cap, not a guideline figure.",
-      "Creatinine reflects a standard clinical laboratory reference interval.",
+      "Creatinine, albumin, and alkaline phosphatase (ALP) reflect standard clinical laboratory reference intervals rather than a single named guideline body. Albumin and ALP exist in this app specifically as two of the nine required inputs to the PhenoAge calculation described above.",
+    ],
+  },
+  {
+    title: "Complete blood count (CBC)",
+    paragraphs: [
+      "Lymphocyte percent, mean cell volume (MCV), red cell distribution width (RDW), and white blood cell count reflect standard adult clinical laboratory reference intervals rather than a single named guideline body — the same category as creatinine or homocysteine above. All four exist in this app specifically to supply the remaining required inputs to the PhenoAge calculation described at the top of this page; on their own they are routine blood-count values, not used elsewhere in this app's scoring.",
     ],
   },
   {

@@ -12,6 +12,7 @@ import { SignOffStage } from "@/components/admin/SignOffStage";
 import { ReleaseButton } from "@/components/admin/ReleaseButton";
 import { DiscussionPointsCard } from "@/components/admin/DiscussionPointsCard";
 import { PipelineStatusBadge } from "@/components/admin/PipelineStatusBadge";
+import { PhenoAgeStatusCard } from "@/components/admin/PhenoAgeStatusCard";
 import { Button, Card } from "@/components/ui";
 import { repository } from "@/lib/data/mock";
 import { resolveAttentionAction, getFileUrlAction } from "@/lib/data/actions";
@@ -385,6 +386,12 @@ export default function ParticipantDetailPage() {
                 );
               })}
             </Card>
+          </View>
+        )}
+
+        {biomarkers.length > 0 && (
+          <View style={styles.section}>
+            <PhenoAgeStatusCard biomarkers={biomarkers} />
           </View>
         )}
 
