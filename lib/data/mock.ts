@@ -27,6 +27,7 @@ import type { Repository, SignedCard } from "./repository";
 import { createSupabaseRepository } from "./supabase";
 import { computeUnlockedSections } from "../onboarding/flow";
 import { sexAwareRange } from "../ai/sexAwareRanges";
+import { computePillarScores, computeBiologicalAge } from "../ai/scoring";
 
 export const DEMO_PARTICIPANT_ID = "james-chen";
 
@@ -696,8 +697,30 @@ class MockRepository implements Repository {
   async updateBiomarker(id: string, patch: Partial<Biomarker>): Promise<Biomarker> {
     const existing = this.biomarkers.get(id);
     if (!existing) throw new Error(`Unknown biomarker ${id}`);
-    const updated: Biomarker = { ...existing, ...patch, updated_at: nowIso() };
+    const merged = { ...existing, ...patch };
+    // Re-derive flagged from the corrected value rather than trusting the
+    // old flag -- markerScore() (lib/ai/scoring.ts) reads flagged, not the
+    // raw value, so a stale flag after an edit silently keeps scoring the
+    // pre-correction reading.
+    const flagged =
+      merged.value !== null && merged.ref_low !== null && merged.ref_high !== null
+        ? merged.value < merged.ref_low || merged.value > merged.ref_high
+        : merged.flagged;
+    const updated: Biomarker = { ...merged, flagged, updated_at: nowIso() };
     this.biomarkers.set(id, updated);
+
+    // Scores and biological age are a deterministic function of biomarkers,
+    // not an AI call -- recompute them immediately so a reviewer who
+    // corrects a value sees it reflected right away, instead of a stale
+    // number sitting there until someone remembers to regenerate the draft.
+    const draft = this.aiDrafts.get(updated.participant_id);
+    if (draft) {
+      const allBiomarkers = await this.getBiomarkers(updated.participant_id);
+      const scores = computePillarScores(allBiomarkers);
+      const biological_age = computeBiologicalAge(scores, draft.chronological_age);
+      this.aiDrafts.set(updated.participant_id, { ...draft, scores, biological_age });
+    }
+
     this.notify();
     return updated;
   }
