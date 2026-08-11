@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft } from "lucide-react-native";
+import { ArrowLeft, MessageCircle, ChevronRight } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { repository } from "@/lib/data/mock";
@@ -199,8 +199,31 @@ export default function PillarDetailPage() {
         )}
 
         <View style={styles.section}>
-          <Button
-            variant="ghost"
+          <Text style={styles.sectionTitle}>Ask Ava</Text>
+          {/* One targeted question per flagged marker (capped at 3 to avoid a
+              wall of chips), mirroring how contextual quick-questions read
+              elsewhere -- a generic "ask about this score" button makes the
+              participant do the work of framing a question themselves. */}
+          {outOfRange.slice(0, 3).map((o) => (
+            <Pressable
+              key={o.key}
+              style={styles.askAvaRow}
+              onPress={() =>
+                router.push({
+                  pathname: "/(tabs)/ava",
+                  params: { q: `What might help with my ${humanizeKey(o.key).toLowerCase()}?` },
+                })
+              }
+            >
+              <MessageCircle size={16} color={colors.sageDark} />
+              <Text style={styles.askAvaRowText}>
+                What might help with my {humanizeKey(o.key).toLowerCase()}?
+              </Text>
+              <ChevronRight size={16} color={colors.inkMuted} />
+            </Pressable>
+          ))}
+          <Pressable
+            style={styles.askAvaRow}
             onPress={() =>
               router.push({
                 pathname: "/(tabs)/ava",
@@ -210,8 +233,12 @@ export default function PillarDetailPage() {
               })
             }
           >
-            Ask Ava about this score
-          </Button>
+            <MessageCircle size={16} color={colors.sageDark} />
+            <Text style={styles.askAvaRowText}>
+              Ask about my {PILLAR_LABELS[pillar].toLowerCase()} score
+            </Text>
+            <ChevronRight size={16} color={colors.inkMuted} />
+          </Pressable>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -353,6 +380,24 @@ const styles = StyleSheet.create({
     borderLeftColor: colors.borderStrong,
   },
   flagText: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.bodyMd,
+    color: colors.charcoal,
+  },
+  askAvaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+  },
+  askAvaRowText: {
+    flex: 1,
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.charcoal,
