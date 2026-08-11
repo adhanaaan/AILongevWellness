@@ -5,6 +5,7 @@ import { LAB_CATALOG_BY_KEY } from "../lib/ai/labCatalog";
 import { BUCKET_BY_KIND } from "../lib/data/storageBuckets";
 import { convertToTargetUnit } from "../lib/ai/unitConversion";
 import { flagIfPastSignoff } from "../lib/data/pipelineAttention";
+import { writeBiomarkerReadings } from "../lib/data/biomarkerReadings";
 
 // This is a Vercel serverless function (not an Expo Router API route) — see
 // vercel.json's rewrite, which excludes /api/* from the SPA catch-all so
@@ -76,6 +77,11 @@ Rules:
 - Do NOT report tumor markers (e.g. AFP, CEA, CA19-9, CA15.3, PSA), cancer screening
   results, or infectious disease serology (e.g. Hepatitis, EBV) even if present in the
   document — this platform is wellness-only, not diagnostic.
+- Also look for the date this report is actually for -- usually printed as "Specimen
+  Collected", "Collection Date", "Report Date", or similar. Report it as report_date in
+  YYYY-MM-DD format. This is what a trend view uses to place this reading in time, so
+  it matters that it's the date on the document, not today's date. Omit report_date
+  entirely if no such date is printed anywhere on the document.
 
 Call report_lab_values with what you found.`;
 
@@ -101,10 +107,20 @@ const EXTRACTION_TOOL: Anthropic.Tool = {
           required: ["key", "value", "unit"],
         },
       },
+      report_date: {
+        type: "string",
+        description: "The specimen/collection/report date printed on the document, in YYYY-MM-DD format. Omit if not found.",
+      },
     },
     required: ["results"],
   },
 };
+
+const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
 
 // Trusts the file extension first — we control storage_path ourselves at upload
 // time, so it's a more reliable signal than whatever content-type Supabase
@@ -179,7 +195,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 
-  let parsed: { results: Array<{ key: string; value: number; unit: string }> };
+  let parsed: { results: Array<{ key: string; value: number; unit: string }>; report_date?: string };
   try {
     const content =
       mediaType === "application/pdf"
@@ -215,6 +231,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
+  const measuredAt = parsed.report_date && ISO_DATE_RE.test(parsed.report_date) ? parsed.report_date : todayIso();
+
   const rows = (parsed.results ?? [])
     .filter((r) => LAB_CATALOG_BY_KEY[r.key] && typeof r.value === "number")
     .map((r) => {
@@ -232,16 +250,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         source: "lab_extract",
         status: "needs_review",
         flagged: value < entry.ref_low || value > entry.ref_high,
-        updated_at: new Date().toISOString(),
+        measured_at: measuredAt,
       };
     });
 
   if (rows.length > 0) {
-    const { error: upsertErr } = await serviceClient
-      .from("biomarkers")
-      .upsert(rows, { onConflict: "participant_id,key" });
-    if (upsertErr) {
-      res.status(500).json({ error: upsertErr.message });
+    try {
+      await writeBiomarkerReadings(serviceClient, rows, fileId);
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed to write biomarker readings" });
       return;
     }
     await flagIfPastSignoff(serviceClient, participantId, "New lab report uploaded — biomarkers pending review");

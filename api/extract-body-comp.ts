@@ -5,6 +5,7 @@ import { BODY_COMP_CATALOG_BY_KEY } from "../lib/ai/bodyCompCatalog";
 import { sexAwareRange } from "../lib/ai/sexAwareRanges";
 import { BUCKET_BY_KIND } from "../lib/data/storageBuckets";
 import { flagIfPastSignoff } from "../lib/data/pipelineAttention";
+import { writeBiomarkerReadings } from "../lib/data/biomarkerReadings";
 
 // This is a Vercel serverless function — see vercel.json's rewrite, which
 // excludes /api/* from the SPA catch-all so requests here reach this file
@@ -173,6 +174,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
+  // No printed date on a body comp printout to parse the way a lab report has
+  // one, so this always records as of today -- the scan and the upload are
+  // effectively the same event.
+  const measuredAt = new Date().toISOString().slice(0, 10);
+
   const rows = (parsed.results ?? [])
     .filter((r) => BODY_COMP_CATALOG_BY_KEY[r.key] && typeof r.value === "number")
     .map((r) => {
@@ -190,16 +196,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         source: "body_comp",
         status: "needs_review",
         flagged: r.value < ref_low || r.value > ref_high,
-        updated_at: new Date().toISOString(),
+        measured_at: measuredAt,
       };
     });
 
   if (rows.length > 0) {
-    const { error: upsertErr } = await serviceClient
-      .from("biomarkers")
-      .upsert(rows, { onConflict: "participant_id,key" });
-    if (upsertErr) {
-      res.status(500).json({ error: upsertErr.message });
+    try {
+      await writeBiomarkerReadings(serviceClient, rows, fileId);
+    } catch (e) {
+      res.status(500).json({ error: e instanceof Error ? e.message : "Failed to write biomarker readings" });
       return;
     }
     await flagIfPastSignoff(serviceClient, participantId, "New body composition scan uploaded — biomarkers pending review");

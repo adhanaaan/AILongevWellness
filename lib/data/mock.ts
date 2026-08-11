@@ -1,6 +1,7 @@
 import type {
   AiDraft,
   Biomarker,
+  BiomarkerReading,
   BiomarkerSource,
   CaptureChannel,
   CaptureChannelName,
@@ -320,6 +321,7 @@ class MockRepository implements Repository {
   private participants = new Map<string, Participant>();
   private captureChannels = new Map<string, CaptureChannel>();
   private biomarkers = new Map<string, Biomarker>();
+  private biomarkerReadings = new Map<string, BiomarkerReading>();
   private aiDrafts = new Map<string, AiDraft>();
   private pendingAiDrafts = new Map<string, AiDraft>();
   private reviews = new Map<string, Review[]>();
@@ -439,6 +441,18 @@ class MockRepository implements Repository {
       { id: "bm-james-chen-exercise_freq", participant_id: james.id, pillar: "mental", key: "exercise_freq", label: "Exercise frequency", value: 4, unit: "days/wk", ref_low: 3, ref_high: 7, source: "manual", status: "entered", flagged: false, updated_at: nowIso() },
     ];
     for (const bm of jamesBiomarkers) this.biomarkers.set(bm.id, bm);
+
+    // A couple of demo history points so the trend line on the pillar detail
+    // page has something to show in mock mode too, not just live Supabase
+    // data -- one marker trending the wrong way (fasting glucose), one
+    // trending right (vitamin D), matching each marker's current jamesBiomarkers value.
+    const jamesReadings: BiomarkerReading[] = [
+      { id: "br-james-chen-fasting_glucose-1", participant_id: james.id, key: "fasting_glucose", value: 92, unit: "mg/dL", ref_low: 70, ref_high: 99, source: "lab_extract", measured_at: daysAgo(180), file_id: null, created_at: nowIso() },
+      { id: "br-james-chen-fasting_glucose-2", participant_id: james.id, key: "fasting_glucose", value: 108, unit: "mg/dL", ref_low: 70, ref_high: 99, source: "lab_extract", measured_at: daysAgo(3), file_id: null, created_at: nowIso() },
+      { id: "br-james-chen-vitamin_d-1", participant_id: james.id, key: "vitamin_d", value: 38, unit: "nmol/L", ref_low: 50, ref_high: 125, source: "lab_extract", measured_at: daysAgo(180), file_id: null, created_at: nowIso() },
+      { id: "br-james-chen-vitamin_d-2", participant_id: james.id, key: "vitamin_d", value: 58, unit: "nmol/L", ref_low: 50, ref_high: 125, source: "lab_extract", measured_at: daysAgo(3), file_id: null, created_at: nowIso() },
+    ];
+    for (const r of jamesReadings) this.biomarkerReadings.set(r.id, r);
 
     this.pendingAiDrafts.set(james.id, {
       id: "draft-james-chen",
@@ -766,6 +780,12 @@ class MockRepository implements Repository {
 
     this.notify();
     return updated;
+  }
+
+  async listBiomarkerHistory(participantId: string): Promise<BiomarkerReading[]> {
+    return Array.from(this.biomarkerReadings.values())
+      .filter((r) => r.participant_id === participantId)
+      .sort((a, b) => a.measured_at.localeCompare(b.measured_at));
   }
 
   async getAiDraft(participantId: string): Promise<AiDraft | null> {

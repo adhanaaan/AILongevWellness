@@ -1,6 +1,7 @@
 import type {
   AiDraft,
   Biomarker,
+  BiomarkerReading,
   CaptureChannel,
   CaptureChannelName,
   CaptureChannelStatus,
@@ -56,6 +57,8 @@ export interface Repository {
 
   getBiomarkers(participantId: string): Promise<Biomarker[]>;
   updateBiomarker(id: string, patch: Partial<Biomarker>): Promise<Biomarker>;
+  /** Every historical reading ever recorded, oldest first -- not just the current snapshot getBiomarkers returns. */
+  listBiomarkerHistory(participantId: string): Promise<BiomarkerReading[]>;
 
   getAiDraft(participantId: string): Promise<AiDraft | null>;
   updateAiDraft(participantId: string, patch: Partial<AiDraft>): Promise<AiDraft>;

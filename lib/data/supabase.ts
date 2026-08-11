@@ -10,6 +10,7 @@ import { computePhenoAge } from "../ai/phenoAge";
 import type {
   AiDraft,
   Biomarker,
+  BiomarkerReading,
   CaptureChannel,
   CaptureChannelName,
   CaptureChannelStatus,
@@ -250,6 +251,16 @@ export class SupabaseRepository implements Repository {
     }
 
     return updated;
+  }
+
+  async listBiomarkerHistory(participantId: string): Promise<BiomarkerReading[]> {
+    const { data, error } = await this.client
+      .from("biomarker_readings")
+      .select("*")
+      .eq("participant_id", participantId)
+      .order("measured_at");
+    if (error) throw new Error(error.message);
+    return data ?? [];
   }
 
   async getAiDraft(participantId: string): Promise<AiDraft | null> {

@@ -9,7 +9,7 @@ import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { BIOMARKER_KEYS_BY_PILLAR, pillarStatus } from "@/lib/ai/scoring";
 import { computeVascularAge, computeMetabolicAge, type AgeClockResult } from "@/lib/ai/ageClocks";
-import type { AiDraft, Biomarker, Participant, Pillar } from "@/lib/types/db";
+import type { AiDraft, Biomarker, BiomarkerReading, Participant, Pillar } from "@/lib/types/db";
 import {
   colors,
   fontFamilies,
@@ -39,6 +39,20 @@ function humanizeKey(key: string) {
   return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
 }
 
+// measured_at is a plain "YYYY-MM-DD" date, not a timestamp -- new Date(str)
+// on a date-only string parses as UTC midnight, which can display as the
+// previous day in timezones behind UTC. Splitting and building a local Date
+// avoids that off-by-one.
+function formatShortDate(dateOnly: string) {
+  const [y, m, d] = dateOnly.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function formatDelta(n: number) {
+  const rounded = Math.round(Math.abs(n) * 100) / 100;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
+}
+
 export default function PillarDetailPage() {
   const { pillar: pillarParam } = useLocalSearchParams<{ pillar: string }>();
   const router = useRouter();
@@ -46,6 +60,7 @@ export default function PillarDetailPage() {
   const [aiDraft, setAiDraft] = useState<AiDraft | null>(null);
   const [biomarkers, setBiomarkers] = useState<Biomarker[]>([]);
   const [participant, setParticipant] = useState<Participant | null>(null);
+  const [history, setHistory] = useState<BiomarkerReading[]>([]);
 
   const pillar = VALID_PILLARS.includes(pillarParam as Pillar)
     ? (pillarParam as Pillar)
@@ -58,14 +73,16 @@ export default function PillarDetailPage() {
     }
     if (!participantId) return;
     const loadData = async () => {
-      const [draft, bm, p] = await Promise.all([
+      const [draft, bm, p, hist] = await Promise.all([
         repository.getAiDraft(participantId),
         repository.getBiomarkers(participantId),
         repository.getParticipant(participantId),
+        repository.listBiomarkerHistory(participantId),
       ]);
       setAiDraft(draft);
       setBiomarkers(bm);
       setParticipant(p);
+      setHistory(hist);
     };
     loadData();
     return repository.subscribe(loadData);
@@ -156,20 +173,37 @@ export default function PillarDetailPage() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Your markers</Text>
             <View style={styles.grid}>
-              {pillarBiomarkers.map((b) => (
-                <View key={b.id} style={styles.statCard}>
-                  <Text style={styles.statLabel}>{b.label}</Text>
-                  <Text style={styles.statValue}>
-                    {b.value}
-                    <Text style={styles.statUnit}> {b.unit}</Text>
-                  </Text>
-                  {b.ref_low !== null && b.ref_high !== null && (
-                    <Text style={styles.statRef}>
-                      Ref: {b.ref_low}-{b.ref_high}
+              {pillarBiomarkers.map((b) => {
+                // history includes the reading that produced today's current
+                // value too, so the second-to-last entry (not the last) is
+                // the actual "previous" reading to compare against.
+                const readings = history
+                  .filter((r) => r.key === b.key)
+                  .sort((x, y) => x.measured_at.localeCompare(y.measured_at));
+                const previous = readings.length >= 2 ? readings[readings.length - 2] : null;
+                const delta = previous && b.value !== null ? b.value - previous.value : null;
+
+                return (
+                  <View key={b.id} style={styles.statCard}>
+                    <Text style={styles.statLabel}>{b.label}</Text>
+                    <Text style={styles.statValue}>
+                      {b.value}
+                      <Text style={styles.statUnit}> {b.unit}</Text>
                     </Text>
-                  )}
-                </View>
-              ))}
+                    {b.ref_low !== null && b.ref_high !== null && (
+                      <Text style={styles.statRef}>
+                        Ref: {b.ref_low}-{b.ref_high}
+                      </Text>
+                    )}
+                    {previous && delta !== null && (
+                      <Text style={styles.statTrend}>
+                        {delta > 0 ? "↑" : delta < 0 ? "↓" : "→"} {formatDelta(delta)} since{" "}
+                        {formatShortDate(previous.measured_at)}
+                      </Text>
+                    )}
+                  </View>
+                );
+              })}
             </View>
           </View>
         )}
@@ -361,6 +395,12 @@ const styles = StyleSheet.create({
   },
   statRef: {
     fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    marginTop: spacing.xs,
+  },
+  statTrend: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
     marginTop: spacing.xs,
