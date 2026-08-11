@@ -9,10 +9,13 @@ import type { ParticipantSummary } from "@/lib/types/db";
 import { colors, fontSizes, spacing, radii } from "@/lib/theme/tokens";
 import { useRouter } from "expo-router";
 
+// GP and TCM sign off independently, in either order -- these segments filter
+// by which specific stage is still outstanding rather than by pipeline.state,
+// since both stages share the same "gp_review" (awaiting one or both) state.
 const SEGMENTS = [
   { value: "all", label: "All Reviews" },
-  { value: "gp_review", label: "GP Review" },
-  { value: "tcm_review", label: "TCM Review" },
+  { value: "needs_gp", label: "Needs GP" },
+  { value: "needs_tcm", label: "Needs TCM" },
 ];
 
 export default function ReviewQueuePage() {
@@ -28,12 +31,9 @@ export default function ReviewQueuePage() {
   }, []);
 
   const queued = useMemo(() => {
-    const reviewable = summaries.filter(
-      (s) =>
-        s.pipeline.state === "gp_review" || s.pipeline.state === "tcm_review"
-    );
-    if (segment === "gp_review") return reviewable.filter((s) => s.pipeline.state === "gp_review");
-    if (segment === "tcm_review") return reviewable.filter((s) => s.pipeline.state === "tcm_review");
+    const reviewable = summaries.filter((s) => s.pipeline.state === "gp_review");
+    if (segment === "needs_gp") return reviewable.filter((s) => !s.gpSigned);
+    if (segment === "needs_tcm") return reviewable.filter((s) => !s.tcmSigned);
     return reviewable;
   }, [summaries, segment]);
 

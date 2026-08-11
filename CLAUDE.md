@@ -43,10 +43,17 @@ All domain types live in `lib/types/db.ts`. If you need a new field:
 
 ### 3. Pipeline state machine is sacred
 ```
-capturing → ai_drafted → gp_review → tcm_review → signed → delivered
+capturing → ai_drafted → gp_review → signed → delivered
 ```
-Valid transitions are enforced in `mock.ts`. Don't bypass them. `needs_attention` is a
-boolean overlay, not a pipeline state.
+`gp_review` means "awaiting one or both sign-offs" — GP and TCM sign off **independently,
+in either order**; neither blocks the other (see "Current state" changelog: async review).
+Which specific stage(s) are done comes from the `reviews` table (`gpSigned`/`tcmSigned` on
+`ParticipantSummary`, or the `reviews` array on the participant detail page), never from
+pipeline.state alone. The `tcm_review` enum value still exists in the type/DB check
+constraint but is never entered — left in place rather than ripped out. Valid transitions
+are enforced in `mock.ts` (mock) and the `sign_off()` Postgres RPC (real backend,
+`supabase/migrations/0006_async_review.sql`) — keep both in sync. Don't bypass them.
+`needs_attention` is a boolean overlay, not a pipeline state.
 
 ### 4. Design tokens are locked
 All in `lib/theme/tokens.ts`. Use only:
@@ -343,6 +350,22 @@ lib/
       (James Chen's hand-authored draft and the generic demo-participant generator) was
       rewritten to the same depth standard, since that's what every preview/demo deploy
       actually shows by default.
+- [x] Async GP/TCM review: sign-off previously required GP to finish before TCM was even
+      allowed to act (`sign_off()` required state to be exactly `tcm_review`, only reachable
+      after GP signed). Real GP/TCM pairs don't work a queue that way, so both stages can
+      now sign off any time the pipeline is in `gp_review` (repurposed to mean "awaiting one
+      or both signatures"), in either order, and the pipeline only advances to `signed` once
+      both stage rows exist — enforced in both `mock.ts`'s `signOff()` and a new Postgres RPC
+      (`supabase/migrations/0006_async_review.sql`). `ParticipantSummary` gained
+      `gpSigned`/`tcmSigned` so list views (review queue, participant rows) can show which
+      specific stage is still outstanding — `PipelineStatusBadge` now renders "Awaiting GP" /
+      "Awaiting TCM" / "In Review" instead of a label that always said "GP Review" regardless
+      of which one was actually pending. The participant detail page's pipeline timeline
+      collapsed GP+TCM into one "Review" step (was two sequential ones) since the state no
+      longer implies an order between them; the two `SignOffStage` cards below it still show
+      each stage's real completion independently. Review queue segments changed from
+      GP Review/TCM Review (state-based, `tcm_review` is now unreachable) to Needs GP/Needs
+      TCM (based on the new `gpSigned`/`tcmSigned` flags).
 - [x] Dr. Tong revamp — AI-drafted content shown pre-review, updated post-review:
       the Insights tab (`app/(tabs)/card.tsx`), Care Plan tab (`app/(tabs)/tracking.tsx`)
       and its category drill-down (`app/care-plan/[category].tsx`) previously showed

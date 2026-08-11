@@ -32,22 +32,20 @@ import type {
 } from "@/lib/types/db";
 import { colors, fontSizes, spacing, radii } from "@/lib/theme/tokens";
 
-const PIPELINE_STAGES = [
-  "Capturing",
-  "AI Draft",
-  "GP Review",
-  "TCM Review",
-  "Signed",
-  "Delivered",
-];
+// GP and TCM sign off independently, in either order -- collapsed into one
+// "Review" step rather than two sequential ones, since the pipeline no
+// longer implies GP must finish before TCM can start (or vice versa). Which
+// specific stage(s) are done is shown by the two SignOffStage cards below,
+// not by this high-level progress strip.
+const PIPELINE_STAGES = ["Capturing", "AI Draft", "Review", "Signed", "Delivered"];
 
 const STATE_INDEX: Record<PipelineState, number> = {
   capturing: 0,
   ai_drafted: 1,
   gp_review: 2,
-  tcm_review: 3,
-  signed: 4,
-  delivered: 5,
+  tcm_review: 2,
+  signed: 3,
+  delivered: 4,
 };
 
 const PILLAR_ORDER: Pillar[] = ["vascular", "metabolic", "mental"];
@@ -166,11 +164,7 @@ export default function ParticipantDetailPage() {
   // re-finding their place after every sign-off.
   const nextInQueue = useMemo(() => {
     return (
-      queueSummaries.find(
-        (s) =>
-          s.participant.id !== id &&
-          (s.pipeline.state === "gp_review" || s.pipeline.state === "tcm_review")
-      ) ?? null
+      queueSummaries.find((s) => s.participant.id !== id && s.pipeline.state === "gp_review") ?? null
     );
   }, [queueSummaries, id]);
 
@@ -185,8 +179,7 @@ export default function ParticipantDetailPage() {
   if (!participant || !pipeline) return null;
 
   const stateIdx = STATE_INDEX[pipeline.state];
-  const isEditable =
-    pipeline.state === "gp_review" || pipeline.state === "tcm_review";
+  const isEditable = pipeline.state === "gp_review";
   const isDraftSparse =
     !!aiDraft &&
     aiDraft.strengths.length === 0 &&
@@ -245,7 +238,12 @@ export default function ParticipantDetailPage() {
               )}
             </View>
           </View>
-          <PipelineStatusBadge state={pipeline.state} needsAttention={pipeline.needs_attention} />
+          <PipelineStatusBadge
+            state={pipeline.state}
+            needsAttention={pipeline.needs_attention}
+            gpSigned={!!gpReview}
+            tcmSigned={!!tcmReview}
+          />
         </View>
 
         {pipeline.needs_attention && (
@@ -473,7 +471,7 @@ export default function ParticipantDetailPage() {
                 stage="tcm"
                 participantId={id!}
                 review={tcmReview}
-                locked={pipeline.state === "gp_review"}
+                locked={false}
               />
             </View>
           </View>

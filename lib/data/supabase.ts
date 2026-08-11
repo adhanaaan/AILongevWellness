@@ -96,10 +96,11 @@ export class SupabaseRepository implements Repository {
   }
 
   async listParticipants(): Promise<ParticipantSummary[]> {
-    const [{ data: participants, error: pErr }, { data: pipelines }, { data: channels }] = await Promise.all([
+    const [{ data: participants, error: pErr }, { data: pipelines }, { data: channels }, { data: reviews }] = await Promise.all([
       this.client.from("participants").select("*").order("name"),
       this.client.from("pipeline").select("*"),
       this.client.from("capture_channels").select("*"),
+      this.client.from("reviews").select("*"),
     ]);
     if (pErr) throw new Error(pErr.message);
 
@@ -111,7 +112,16 @@ export class SupabaseRepository implements Repository {
           const row = own.find((c: CaptureChannel) => c.channel === ch);
           return sum + (row?.status === "complete" ? 1 : row?.status === "partial" ? 0.5 : 0);
         }, 0) / CHANNELS.length;
-      return { participant: p, pipeline, captureCompletionPct: Math.round(completion * 100) };
+      const ownReviews = (reviews ?? []).filter((r: Review) => r.participant_id === p.id);
+      const gpSigned = ownReviews.some((r: Review) => r.stage === "gp" && r.signed_at);
+      const tcmSigned = ownReviews.some((r: Review) => r.stage === "tcm" && r.signed_at);
+      return {
+        participant: p,
+        pipeline,
+        captureCompletionPct: Math.round(completion * 100),
+        gpSigned,
+        tcmSigned,
+      };
     });
   }
 

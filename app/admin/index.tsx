@@ -23,10 +23,7 @@ export default function AdminParticipantsPage() {
   }, []);
 
   const total = summaries.length;
-  const awaiting = summaries.filter(
-    (s) =>
-      s.pipeline.state === "gp_review" || s.pipeline.state === "tcm_review"
-  ).length;
+  const awaiting = summaries.filter((s) => s.pipeline.state === "gp_review").length;
   const delivered = summaries.filter(
     (s) => s.pipeline.state === "delivered"
   ).length;
