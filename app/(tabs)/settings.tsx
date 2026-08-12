@@ -25,7 +25,7 @@ export default function SettingsPage() {
   if (!participant) return null;
 
   return (
-    <MobileShell>
+    <MobileShell name={participant.name}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}

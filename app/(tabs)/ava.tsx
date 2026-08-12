@@ -61,7 +61,7 @@ export default function AvaPage() {
 
   if (!card) {
     return (
-      <MobileShell>
+      <MobileShell name={participant?.name}>
         <AvaPromo pipelineState={pipeline?.state ?? "capturing"} />
       </MobileShell>
     );
@@ -133,7 +133,7 @@ function AvaChatContent({
   }, [seedQuestion]);
 
   return (
-    <MobileShell>
+    <MobileShell name={participant?.name}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}

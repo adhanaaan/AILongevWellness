@@ -10,18 +10,26 @@ interface MobileShellProps {
   name?: string;
 }
 
+function timeBasedGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
+
 export function MobileShell({
   children,
-  greeting = "Welcome back",
+  greeting,
   name = "James",
 }: MobileShellProps) {
+  const resolvedGreeting = greeting ?? timeBasedGreeting();
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Avatar initials={name.slice(0, 1)} size="sm" />
           <View>
-            <Text style={styles.greeting}>{greeting}</Text>
+            <Text style={styles.greeting}>{resolvedGreeting}</Text>
             <Text style={styles.name}>{name}</Text>
           </View>
         </View>

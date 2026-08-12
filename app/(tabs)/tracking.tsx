@@ -127,7 +127,7 @@ export default function TrackingPage() {
   }
 
   return (
-    <MobileShell>
+    <MobileShell name={participant?.name}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}

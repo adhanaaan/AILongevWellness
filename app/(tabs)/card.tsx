@@ -3,6 +3,7 @@ import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { MessageCircle, ListChecks, Target, ClipboardList, ChevronRight } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
+import { FadeInView } from "@/components/ui/FadeInView";
 import { BiologicalAgeHero } from "@/components/participant/BiologicalAgeHero";
 import { PillarStrip } from "@/components/participant/PillarStrip";
 import { KeyContributorItem } from "@/components/participant/KeyContributorItem";
@@ -18,7 +19,7 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { pillarStatus, buildPillarNarrative } from "@/lib/ai/scoring";
 import { isCaptureComplete } from "@/lib/onboarding/flow";
 import type { SignedCard } from "@/lib/data/repository";
-import type { AiDraft, OnboardingProgress, Pipeline } from "@/lib/types/db";
+import type { AiDraft, OnboardingProgress, Participant, Pipeline } from "@/lib/types/db";
 import { colors, fontSizes, radii, shadows, spacing } from "@/lib/theme/tokens";
 
 function formatDate(iso: string) {
@@ -36,6 +37,7 @@ export default function CardPage() {
   const [pipeline, setPipeline] = useState<Pipeline | null | undefined>(undefined);
   const [pendingDraft, setPendingDraft] = useState<AiDraft | null | undefined>(undefined);
   const [onboardingProgress, setOnboardingProgress] = useState<OnboardingProgress | null>(null);
+  const [participant, setParticipant] = useState<Participant | null>(null);
   const [showAllRecommendations, setShowAllRecommendations] = useState(false);
 
   useEffect(() => {
@@ -43,6 +45,7 @@ export default function CardPage() {
     function load() {
       repository.getSignedCard(participantId!).then(setCard);
       repository.getPipeline(participantId!).then(setPipeline);
+      repository.getParticipant(participantId!).then(setParticipant);
       // Only actually used pre-delivery (see the !card branch below) -- fetched
       // unconditionally here so it's ready the moment the pipeline advances,
       // rather than adding a second effect keyed on pipeline state.
@@ -64,7 +67,7 @@ export default function CardPage() {
   // "this hasn't been reviewed yet" line visible the whole time it's up.
   if (!card && !pendingDraft) {
     return (
-      <MobileShell>
+      <MobileShell name={participant?.name}>
         <SnapshotPending pipelineState={pipeline?.state ?? "capturing"} />
       </MobileShell>
     );
@@ -117,11 +120,12 @@ export default function CardPage() {
   ] as const;
 
   return (
-    <MobileShell>
+    <MobileShell name={card?.participant.name ?? participant?.name}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+        <FadeInView>
         <Text style={styles.title}>Your wellness snapshot</Text>
         <Text style={styles.subtitle}>
           {isDelivered ? "Report generated" : "Drafted"} {formatDate(aiDraft.generated_at)}
@@ -199,6 +203,7 @@ export default function CardPage() {
             )}
           </View>
         )}
+        </FadeInView>
       </ScrollView>
 
       <Pressable
