@@ -180,7 +180,9 @@ export default function CarePlanCategoryPage() {
               <View style={styles.planList}>
                 {planItems.map((item, i) => (
                   <View key={i} style={styles.planRow}>
-                    <View style={[styles.planDot, { backgroundColor: config.color }]} />
+                    <View style={[styles.planMarker, { backgroundColor: `${config.color}1A` }]}>
+                      <View style={[styles.planDot, { backgroundColor: config.color }]} />
+                    </View>
                     <Text style={styles.planText}>{item}</Text>
                   </View>
                 ))}
@@ -358,18 +360,25 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 0.4,
   },
-  planList: { gap: spacing.md },
+  planList: { gap: spacing.lg },
   planRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: spacing.md,
   },
-  planDot: {
-    width: 7,
-    height: 7,
+  planMarker: {
+    width: 24,
+    height: 24,
     borderRadius: radii.full,
-    marginTop: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 1,
     flexShrink: 0,
+  },
+  planDot: {
+    width: 8,
+    height: 8,
+    borderRadius: radii.full,
   },
   planText: {
     flex: 1,
@@ -475,13 +484,15 @@ const styles = StyleSheet.create({
   },
   barTrack: {
     height: HISTORY_BAR_TRACK_HEIGHT,
-    width: "100%",
+    width: "70%",
     justifyContent: "flex-end",
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radii.full,
+    overflow: "hidden",
   },
   barFill: {
     width: "100%",
     borderRadius: radii.full,
-    opacity: 0.85,
   },
   dayLabel: {
     fontSize: fontSizes.caption,

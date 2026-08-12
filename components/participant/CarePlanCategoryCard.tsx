@@ -43,7 +43,11 @@ export function CarePlanCategoryCard({
           <View style={styles.text}>
             <View style={styles.headerRow}>
               <Text style={styles.label}>{label}</Text>
-              {moreCount > 0 && <Text style={styles.moreCount}>+{moreCount} more</Text>}
+              {moreCount > 0 && (
+                <View style={styles.moreCountPill}>
+                  <Text style={styles.moreCount}>+{moreCount} more</Text>
+                </View>
+              )}
             </View>
             <Text style={styles.plan} numberOfLines={2}>
               {planSnippet}
@@ -56,7 +60,13 @@ export function CarePlanCategoryCard({
           <View style={styles.footer}>
             <Text style={styles.todayLabel}>Today</Text>
             <View style={[styles.chip, status.done ? styles.chipDone : styles.chipPending]}>
-              {status.done && <Check size={13} color={colors.sageDark} strokeWidth={3} />}
+              {status.done ? (
+                <View style={styles.chipCheck}>
+                  <Check size={11} color={colors.sage} strokeWidth={3.5} />
+                </View>
+              ) : (
+                <View style={styles.chipPendingDot} />
+              )}
               <Text style={[styles.chipText, status.done ? styles.chipTextDone : styles.chipTextPending]}>
                 {status.text}
               </Text>
@@ -78,7 +88,7 @@ const styles = StyleSheet.create({
   icon: {
     width: 44,
     height: 44,
-    borderRadius: radii.full,
+    borderRadius: radii.lg,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -96,9 +106,15 @@ const styles = StyleSheet.create({
     color: colors.charcoal,
     flexShrink: 1,
   },
+  moreCountPill: {
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radii.full,
+    paddingVertical: 2,
+    paddingHorizontal: spacing.sm,
+  },
   moreCount: {
-    fontFamily: fontFamilies.body,
-    fontSize: fontSizes.caption,
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.overline,
     color: colors.inkMuted,
   },
   plan: {
@@ -127,18 +143,39 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 6,
     borderRadius: radii.full,
-    paddingVertical: 4,
-    paddingHorizontal: spacing.md,
+    paddingVertical: 5,
+    paddingLeft: 5,
+    paddingRight: spacing.md,
   },
-  chipDone: { backgroundColor: colors.sageTint },
-  chipPending: { backgroundColor: colors.surfaceMuted },
+  chipDone: { backgroundColor: colors.sage },
+  chipPending: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingLeft: spacing.md,
+  },
+  chipCheck: {
+    width: 16,
+    height: 16,
+    borderRadius: radii.full,
+    backgroundColor: colors.white,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  chipPendingDot: {
+    width: 7,
+    height: 7,
+    borderRadius: radii.full,
+    borderWidth: 1.5,
+    borderColor: colors.borderStrong,
+  },
   chipText: {
     fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.caption,
     fontWeight: fontWeights.semibold,
   },
-  chipTextDone: { color: colors.sageDark },
+  chipTextDone: { color: colors.white },
   chipTextPending: { color: colors.inkMuted },
 });

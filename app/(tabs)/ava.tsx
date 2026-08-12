@@ -160,7 +160,8 @@ function AvaChatContent({
         <View style={styles.header}>
           <View style={styles.headerTop}>
             <View style={styles.avaBadge}>
-              <Sparkles size={18} color={colors.white} />
+              <Sparkles size={20} color={colors.white} />
+              <View style={styles.statusDot} />
             </View>
             <View style={styles.headerText}>
               <Text style={styles.eyebrow}>AVA · Wellness concierge</Text>
@@ -192,12 +193,15 @@ function AvaChatContent({
         </ScrollView>
 
         <View style={styles.inputArea}>
-          <SuggestionChips items={SUGGESTIONS} onPick={send} />
-          <View style={styles.inputRow}>
+          <View>
+            <Text style={styles.suggestLabel}>Try asking</Text>
+            <SuggestionChips items={SUGGESTIONS} onPick={send} />
+          </View>
+          <View style={styles.composer}>
             <TextInput
               value={input}
               onChangeText={setInput}
-              placeholder="Ask about your card..."
+              placeholder="Message AVA..."
               placeholderTextColor={colors.inkMuted}
               style={styles.textInput}
               onSubmitEditing={() => send(input)}
@@ -230,13 +234,24 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   avaBadge: {
-    width: 44,
-    height: 44,
+    width: 46,
+    height: 46,
     borderRadius: radii.full,
     backgroundColor: colors.sage,
     alignItems: "center",
     justifyContent: "center",
     ...shadows.soft,
+  },
+  statusDot: {
+    position: "absolute",
+    right: -1,
+    bottom: -1,
+    width: 13,
+    height: 13,
+    borderRadius: radii.full,
+    backgroundColor: colors.success,
+    borderWidth: 2,
+    borderColor: colors.bone,
   },
   headerText: { flex: 1 },
   eyebrow: {
@@ -244,8 +259,8 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.overline,
     color: colors.sageDark,
     textTransform: "uppercase",
-    letterSpacing: 0.6,
-    marginBottom: 2,
+    letterSpacing: 0.8,
+    marginBottom: 3,
   },
   title: {
     fontFamily: fontFamilies.displaySemiBold,
@@ -253,6 +268,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: colors.charcoal,
     lineHeight: 30,
+    letterSpacing: -0.3,
   },
   subtitle: {
     fontFamily: fontFamilies.body,
@@ -263,39 +279,51 @@ const styles = StyleSheet.create({
   },
   messagesContent: { gap: spacing.md, paddingBottom: spacing.lg, paddingTop: spacing.xs },
   inputArea: {
-    gap: spacing.md,
-    paddingTop: spacing.md,
+    gap: spacing.lg,
+    marginHorizontal: -spacing.xl,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.lg,
     paddingBottom: spacing.sm,
     backgroundColor: colors.bone,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
-  inputRow: {
+  suggestLabel: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    color: colors.inkMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: spacing.sm,
+  },
+  composer: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii["2xl"],
+    paddingLeft: spacing.xl,
+    paddingRight: spacing.xs + 2,
+    paddingVertical: spacing.xs + 2,
+    ...shadows.soft,
   },
   textInput: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    borderRadius: radii.full,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.sm,
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.charcoal,
-    ...shadows.card,
   },
   sendButton: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     borderRadius: radii.full,
     backgroundColor: colors.sage,
     alignItems: "center",
     justifyContent: "center",
-    ...shadows.soft,
+    ...shadows.card,
   },
   sendButtonDisabled: {
     opacity: 0.4,

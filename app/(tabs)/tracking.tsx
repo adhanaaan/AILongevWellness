@@ -125,6 +125,15 @@ export default function TrackingPage() {
   const isDelivered = Boolean(card);
   const carePlan = card?.aiDraft.care_plan ?? pendingDraft?.care_plan;
 
+  // Daily-progress summary across the self-report categories only (tracked).
+  const trackedCategories = CARE_PLAN_CATEGORIES.filter((c) => c.tracked);
+  const trackedDoneToday = trackedCategories.filter(
+    (c) => todayStatus(c.key, todayLog, participant)?.done
+  ).length;
+  const trackedTotal = trackedCategories.length;
+  const trackedPct = trackedTotal > 0 ? Math.round((trackedDoneToday / trackedTotal) * 100) : 0;
+  const allDoneToday = trackedTotal > 0 && trackedDoneToday === trackedTotal;
+
   if (loading) {
     return (
       <MobileShell>
@@ -172,6 +181,34 @@ export default function TrackingPage() {
                 );
               })}
             </View>
+          </Card>
+        )}
+
+        {trackedTotal > 0 && (
+          <Card style={styles.progressCard}>
+            <View style={styles.progressHeader}>
+              <Text style={styles.progressTitle}>Today's check-ins</Text>
+              <Text style={styles.progressCount}>
+                <Text style={[styles.progressCountStrong, allDoneToday && styles.progressCountDone]}>
+                  {trackedDoneToday}
+                </Text>
+                {` of ${trackedTotal} done`}
+              </Text>
+            </View>
+            <View style={styles.progressTrack}>
+              <View
+                style={[
+                  styles.progressFill,
+                  { width: `${trackedPct}%` },
+                  allDoneToday && styles.progressFillDone,
+                ]}
+              />
+            </View>
+            <Text style={styles.progressHint}>
+              {allDoneToday
+                ? "All caught up — nice work today."
+                : "A quick medication and mood check-in keeps your plan on track."}
+            </Text>
           </Card>
         )}
 
@@ -253,18 +290,62 @@ const styles = StyleSheet.create({
   },
   barTrack: {
     height: TREND_BAR_TRACK_HEIGHT,
-    width: "100%",
+    width: "70%",
     justifyContent: "flex-end",
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radii.full,
+    overflow: "hidden",
   },
   barFill: {
     width: "100%",
     borderRadius: radii.full,
     backgroundColor: colors.sage,
-    opacity: 0.85,
   },
   dayLabel: {
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
+  },
+  progressCard: { marginTop: 24, gap: spacing.md },
+  progressHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  progressTitle: {
+    fontSize: fontSizes.labelMd,
+    fontWeight: "600",
+    color: colors.charcoal,
+  },
+  progressCount: {
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+  },
+  progressCountStrong: {
+    fontSize: fontSizes.bodyMd,
+    fontWeight: "700",
+    color: colors.charcoal,
+  },
+  progressCountDone: {
+    color: colors.sage,
+  },
+  progressTrack: {
+    height: 8,
+    borderRadius: radii.full,
+    backgroundColor: colors.surfaceMuted,
+    overflow: "hidden",
+  },
+  progressFill: {
+    height: "100%",
+    borderRadius: radii.full,
+    backgroundColor: colors.sage,
+  },
+  progressFillDone: {
+    backgroundColor: colors.success,
+  },
+  progressHint: {
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    lineHeight: 18,
   },
   categoriesList: { marginTop: 24, gap: spacing.md },
   sectionTitle: {

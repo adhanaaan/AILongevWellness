@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { Animated, Easing, Text, View, StyleSheet } from "react-native";
-import { colors, fontFamilies, fontSizes, fontWeights, radii, shadows, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, fontWeights, lineHeights, radii, shadows, spacing } from "@/lib/theme/tokens";
 
 export interface ChatBubbleProps {
   role: "user" | "ava";
@@ -71,15 +71,18 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   bubble: {
-    maxWidth: "82%",
-    borderRadius: radii.xl,
-    paddingVertical: spacing.md,
+    maxWidth: "84%",
+    borderRadius: radii["2xl"],
+    paddingVertical: spacing.md + 1,
     paddingHorizontal: spacing.lg,
   },
   userBubble: {
     backgroundColor: colors.sageTint,
+    borderWidth: 1,
+    borderColor: colors.tealTint,
     alignSelf: "flex-end",
     borderBottomRightRadius: radii.sm,
+    ...shadows.card,
   },
   avaBubble: {
     backgroundColor: colors.surface,
@@ -87,19 +90,20 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     alignSelf: "flex-start",
     borderBottomLeftRadius: radii.sm,
-    ...shadows.card,
+    ...shadows.soft,
   },
   text: {
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     fontWeight: fontWeights.regular,
-    lineHeight: 23,
+    lineHeight: lineHeights.bodyMd,
+    letterSpacing: -0.1,
   },
   userText: {
     color: colors.charcoal,
   },
   avaText: {
-    color: colors.charcoal,
+    color: colors.ink,
   },
   disclaimer: {
     fontFamily: fontFamilies.body,
@@ -107,7 +111,7 @@ const styles = StyleSheet.create({
     fontWeight: fontWeights.regular,
     color: colors.inkMuted,
     marginTop: spacing.sm,
-    marginHorizontal: spacing.xs,
-    lineHeight: 16,
+    marginHorizontal: spacing.md,
+    lineHeight: 17,
   },
 });
