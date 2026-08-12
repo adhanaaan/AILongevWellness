@@ -80,11 +80,9 @@ export function AvaPromo({ pipelineState }: AvaPromoProps) {
             </View>
 
             <View style={styles.fakeInputRow}>
-              <View style={styles.fakeInputPill}>
-                <Text style={styles.fakeInputText}>Ask about your card...</Text>
-              </View>
+              <Text style={styles.fakeInputText}>Message AVA...</Text>
               <View style={styles.fakeSendButton}>
-                <Lock size={16} color={colors.inkMuted} />
+                <Lock size={15} color={colors.inkMuted} />
               </View>
             </View>
           </Card>
@@ -98,10 +96,15 @@ export function AvaPromo({ pipelineState }: AvaPromoProps) {
           </Text>
 
           <View style={styles.statusBlock}>
-            <Text style={styles.statusLine}>{STATUS_LINE[pipelineState]}</Text>
-            <Text style={styles.statusLine}>
-              AVA will be ready once that review is signed off.
-            </Text>
+            <View style={styles.statusIcon}>
+              <Lock size={14} color={colors.sage} />
+            </View>
+            <View style={styles.statusTextWrap}>
+              <Text style={styles.statusLine}>{STATUS_LINE[pipelineState]}</Text>
+              <Text style={styles.statusLineMuted}>
+                AVA will be ready once that review is signed off.
+              </Text>
+            </View>
           </View>
         </Animated.View>
       </View>
@@ -163,26 +166,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    paddingTop: spacing.lg,
-    opacity: 0.65,
-  },
-  fakeInputPill: {
-    flex: 1,
-    borderRadius: radii.full,
-    backgroundColor: colors.surfaceMuted,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm + 2,
+    marginTop: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii["2xl"],
+    backgroundColor: colors.cloud,
+    paddingLeft: spacing.lg,
+    paddingRight: spacing.xs + 2,
+    paddingVertical: spacing.xs + 2,
   },
   fakeInputText: {
+    flex: 1,
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.inkMuted,
   },
   fakeSendButton: {
-    width: 40,
-    height: 40,
+    width: 38,
+    height: 38,
     borderRadius: radii.full,
     backgroundColor: colors.surfaceMuted,
     alignItems: "center",
