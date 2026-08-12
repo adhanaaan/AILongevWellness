@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { MessageCircle, ListChecks, Target, ClipboardList, ChevronRight } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { FadeInView } from "@/components/ui/FadeInView";
-import { LoadingState } from "@/components/ui/LoadingState";
+import { InsightsSkeleton } from "@/components/participant/InsightsSkeleton";
 import { BiologicalAgeHero } from "@/components/participant/BiologicalAgeHero";
 import { PillarStrip } from "@/components/participant/PillarStrip";
 import { KeyContributorItem } from "@/components/participant/KeyContributorItem";
@@ -64,7 +64,7 @@ export default function CardPage() {
   if (card === undefined || pipeline === undefined || pendingDraft === undefined) {
     return (
       <MobileShell>
-        <LoadingState />
+        <InsightsSkeleton />
       </MobileShell>
     );
   }
