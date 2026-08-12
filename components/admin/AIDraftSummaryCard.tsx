@@ -24,21 +24,32 @@ export function AIDraftSummaryCard({
   const [suggestedFocus, setSuggestedFocus] = useState(
     aiDraft.suggested_focus.join("\n")
   );
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSave = async () => {
-    await updateAiDraftAction(participantId, {
-      strengths: strengths.split("\n").filter((s) => s.trim()),
-      areas_to_monitor: areasToMonitor.split("\n").filter((s) => s.trim()),
-      suggested_focus: suggestedFocus.split("\n").filter((s) => s.trim()),
-      edited_by_admin: true,
-    });
-    setIsEditing(false);
+    setError(null);
+    setSaving(true);
+    try {
+      await updateAiDraftAction(participantId, {
+        strengths: strengths.split("\n").filter((s) => s.trim()),
+        areas_to_monitor: areasToMonitor.split("\n").filter((s) => s.trim()),
+        suggested_focus: suggestedFocus.split("\n").filter((s) => s.trim()),
+        edited_by_admin: true,
+      });
+      setIsEditing(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Save failed. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
     setStrengths(aiDraft.strengths.join("\n"));
     setAreasToMonitor(aiDraft.areas_to_monitor.join("\n"));
     setSuggestedFocus(aiDraft.suggested_focus.join("\n"));
+    setError(null);
     setIsEditing(false);
   };
 
@@ -105,14 +116,17 @@ export function AIDraftSummaryCard({
       </Section>
 
       {isEditing && (
-        <View style={styles.editActions}>
-          <Button variant="primary" size="sm" onPress={handleSave}>
-            Save
-          </Button>
-          <Button variant="ghost" size="sm" onPress={handleCancel}>
-            Cancel
-          </Button>
-        </View>
+        <>
+          {error && <Text style={styles.error}>{error}</Text>}
+          <View style={styles.editActions}>
+            <Button variant="primary" size="sm" onPress={handleSave} disabled={saving}>
+              {saving ? "Saving..." : "Save"}
+            </Button>
+            <Button variant="ghost" size="sm" onPress={handleCancel} disabled={saving}>
+              Cancel
+            </Button>
+          </View>
+        </>
       )}
     </Card>
   );
@@ -213,5 +227,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: spacing.sm,
     justifyContent: "flex-end",
+  },
+  error: {
+    fontSize: fontSizes.labelMd,
+    color: colors.danger,
+    marginBottom: spacing.sm,
   },
 });

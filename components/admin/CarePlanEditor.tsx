@@ -31,13 +31,23 @@ export function CarePlanEditor({ aiDraft, participantId, editable }: CarePlanEdi
       CARE_PLAN_CATEGORIES.map(({ key }) => [key, linesFor(aiDraft.care_plan, key)])
     ) as Record<PlanCategory, string>
   );
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSave = async () => {
     const care_plan = Object.fromEntries(
       CARE_PLAN_CATEGORIES.map(({ key }) => [key, drafts[key].split("\n").filter((s) => s.trim())])
     ) as CarePlan;
-    await updateAiDraftAction(participantId, { care_plan, edited_by_admin: true });
-    setIsEditing(false);
+    setError(null);
+    setSaving(true);
+    try {
+      await updateAiDraftAction(participantId, { care_plan, edited_by_admin: true });
+      setIsEditing(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Save failed. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
@@ -46,6 +56,7 @@ export function CarePlanEditor({ aiDraft, participantId, editable }: CarePlanEdi
         CARE_PLAN_CATEGORIES.map(({ key }) => [key, linesFor(aiDraft.care_plan, key)])
       ) as Record<PlanCategory, string>
     );
+    setError(null);
     setIsEditing(false);
   };
 
@@ -95,14 +106,17 @@ export function CarePlanEditor({ aiDraft, participantId, editable }: CarePlanEdi
       })}
 
       {isEditing && (
-        <View style={styles.editActions}>
-          <Button variant="primary" size="sm" onPress={handleSave}>
-            Save
-          </Button>
-          <Button variant="ghost" size="sm" onPress={handleCancel}>
-            Cancel
-          </Button>
-        </View>
+        <>
+          {error && <Text style={styles.error}>{error}</Text>}
+          <View style={styles.editActions}>
+            <Button variant="primary" size="sm" onPress={handleSave} disabled={saving}>
+              {saving ? "Saving..." : "Save"}
+            </Button>
+            <Button variant="ghost" size="sm" onPress={handleCancel} disabled={saving}>
+              Cancel
+            </Button>
+          </View>
+        </>
       )}
     </Card>
   );
@@ -185,5 +199,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: spacing.sm,
     justifyContent: "flex-end",
+  },
+  error: {
+    fontSize: fontSizes.labelMd,
+    color: colors.danger,
+    marginBottom: spacing.sm,
   },
 });
