@@ -37,6 +37,13 @@ same way:
 - `supabase/migrations/0005_care_team_roster.sql` — lets care team accounts
   read the full `user_roles` table (previously own-row-only), needed for the
   admin Settings page's real registered-teammate count.
+- `supabase/migrations/0006_async_review.sql` — replaces the `sign_off()` RPC so
+  GP and TCM can sign off independently, in either order. **Required**, or
+  sign-off breaks. Safe to re-run (it's `create or replace function`).
+- `supabase/migrations/0007_biomarker_history.sql` — adds the `biomarker_readings`
+  history table (and `measured_at` on `biomarkers`) that every lab/wearable/
+  body-comp extraction writes to. **Required**, or uploads fail. Run once (its
+  `create policy` lines error harmlessly if it's already applied).
 
 Any future numbered migration file works the same way: run it once, in
 order, after pulling new code that references it.
@@ -116,8 +123,11 @@ required after changing them — a running deployment won't pick them up live).
 
 ## What's still mock-only / not yet built
 
-- Wearable device integration (capture channel still self-reports "complete").
-- The manual questionnaire and ReCOGnAIze cognitive assessment channels are
-  still tap-to-complete placeholders, not real data-collection flows.
-- Body composition capture uploads a file but doesn't yet parse values from it
-  the way lab reports do (no vision extraction wired for that channel).
+- **Live wearable device sync** (an aggregator "connect your device" integration)
+  is still on the roadmap. Today wearable data is captured by uploading an Apple
+  Health export file, which *is* parsed (`api/extract-wearables.ts`).
+- Everything else in capture is now real: the questionnaire saves real profile
+  data, ReCOGnAIze runs a real reaction-time test (`api/submit-recognize.ts`),
+  lab reports and body-composition scans are both parsed by Claude vision
+  (`api/extract-lab.ts`, `api/extract-body-comp.ts`), and each write re-derives
+  the AI draft's scores + narrative.
