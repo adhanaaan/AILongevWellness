@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { FadeInView } from "@/components/ui/FadeInView";
+import { BiomarkerRangeRow } from "@/components/participant/BiomarkerRangeRow";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { BIOMARKER_KEYS_BY_PILLAR, pillarStatus } from "@/lib/ai/scoring";
@@ -192,7 +193,7 @@ export default function PillarDetailPage() {
         {pillarBiomarkers.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Your markers</Text>
-            <View style={styles.grid}>
+            <View style={styles.markerList}>
               {pillarBiomarkers.map((b) => {
                 // history includes the reading that produced today's current
                 // value too, so the second-to-last entry (not the last) is
@@ -202,26 +203,22 @@ export default function PillarDetailPage() {
                   .sort((x, y) => x.measured_at.localeCompare(y.measured_at));
                 const previous = readings.length >= 2 ? readings[readings.length - 2] : null;
                 const delta = previous && b.value !== null ? b.value - previous.value : null;
+                const trend =
+                  previous && delta !== null
+                    ? `${delta > 0 ? "↑" : delta < 0 ? "↓" : "→"} ${formatDelta(delta)} since ${formatShortDate(previous.measured_at)}`
+                    : null;
 
                 return (
-                  <View key={b.id} style={styles.statCard}>
-                    <Text style={styles.statLabel}>{b.label}</Text>
-                    <Text style={styles.statValue}>
-                      {b.value}
-                      <Text style={styles.statUnit}> {b.unit}</Text>
-                    </Text>
-                    {b.ref_low !== null && b.ref_high !== null && (
-                      <Text style={styles.statRef}>
-                        Ref: {b.ref_low}-{b.ref_high}
-                      </Text>
-                    )}
-                    {previous && delta !== null && (
-                      <Text style={styles.statTrend}>
-                        {delta > 0 ? "↑" : delta < 0 ? "↓" : "→"} {formatDelta(delta)} since{" "}
-                        {formatShortDate(previous.measured_at)}
-                      </Text>
-                    )}
-                  </View>
+                  <BiomarkerRangeRow
+                    key={b.id}
+                    label={b.label}
+                    value={b.value as number}
+                    unit={b.unit}
+                    refLow={b.ref_low}
+                    refHigh={b.ref_high}
+                    flagged={b.flagged}
+                    trend={trend}
+                  />
                 );
               })}
             </View>
@@ -381,50 +378,8 @@ const styles = StyleSheet.create({
     color: colors.charcoal,
     marginBottom: spacing.md,
   },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    marginHorizontal: -(spacing.sm / 2),
-  },
-  statCard: {
-    width: "48%",
-    backgroundColor: colors.surface,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.lg,
-    margin: "1%",
-    ...shadows.card,
-  },
-  statLabel: {
-    fontFamily: fontFamilies.body,
-    fontSize: fontSizes.caption,
-    color: colors.inkMuted,
-  },
-  statValue: {
-    fontFamily: fontFamilies.displaySemiBold,
-    fontSize: fontSizes.headlineSm,
-    fontWeight: fontWeights.semibold,
-    color: colors.charcoal,
-    marginTop: spacing.xs,
-  },
-  statUnit: {
-    fontFamily: fontFamilies.body,
-    fontSize: fontSizes.caption,
-    fontWeight: fontWeights.regular,
-    color: colors.inkMuted,
-  },
-  statRef: {
-    fontFamily: fontFamilies.body,
-    fontSize: fontSizes.caption,
-    color: colors.inkMuted,
-    marginTop: spacing.xs,
-  },
-  statTrend: {
-    fontFamily: fontFamilies.bodyMedium,
-    fontSize: fontSizes.caption,
-    color: colors.inkMuted,
-    marginTop: spacing.xs,
+  markerList: {
+    gap: spacing.md,
   },
   flagRow: {
     backgroundColor: colors.surface,
