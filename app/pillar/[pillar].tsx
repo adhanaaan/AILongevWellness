@@ -94,6 +94,16 @@ export default function PillarDetailPage() {
   if (!aiDraft) {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
+        <View style={styles.header}>
+          <Button
+            variant="ghost"
+            size="sm"
+            iconLeft={<ArrowLeft size={16} color={colors.inkMuted} />}
+            onPress={() => router.back()}
+          >
+            Back
+          </Button>
+        </View>
         <LoadingState />
       </SafeAreaView>
     );
