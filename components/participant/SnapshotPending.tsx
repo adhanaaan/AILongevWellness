@@ -6,7 +6,7 @@ import { GradientOrb } from "@/components/ui/GradientOrb";
 import { Button } from "@/components/ui/Button";
 import { CheckInCallout } from "@/components/participant/CheckInCallout";
 import { BiologicalAgeHero } from "@/components/participant/BiologicalAgeHero";
-import { PillarStrip } from "@/components/participant/PillarStrip";
+import { PillarRangeList } from "@/components/participant/PillarRangeList";
 import { pillarStatus } from "@/lib/ai/scoring";
 import type { PillarScores, PipelineState } from "@/lib/types/db";
 import {
@@ -51,7 +51,7 @@ function PreliminaryPreview({ preview }: { preview: SnapshotPreview }) {
       </View>
       <BiologicalAgeHero bioAge={preview.biologicalAge} chronoAge={preview.chronologicalAge} />
       <View style={styles.previewPillars}>
-        <PillarStrip items={pillarItems} />
+        <PillarRangeList items={pillarItems} />
       </View>
       <Text style={styles.previewNote}>
         These are the AI&apos;s first-pass numbers. Your care team may adjust them before your
