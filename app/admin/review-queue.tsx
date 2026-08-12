@@ -3,6 +3,7 @@ import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { ClipboardCheck } from "lucide-react-native";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { ParticipantTableRow } from "@/components/admin/ParticipantTableRow";
+import { TableRowSkeleton } from "@/components/admin/TableRowSkeleton";
 import { SegmentedControl } from "@/components/ui";
 import { repository } from "@/lib/data/mock";
 import type { ParticipantSummary } from "@/lib/types/db";
@@ -20,7 +21,7 @@ const SEGMENTS = [
 
 export default function ReviewQueuePage() {
   const router = useRouter();
-  const [summaries, setSummaries] = useState<ParticipantSummary[]>([]);
+  const [summaries, setSummaries] = useState<ParticipantSummary[] | null>(null);
   const [segment, setSegment] = useState("all");
 
   useEffect(() => {
@@ -30,8 +31,9 @@ export default function ReviewQueuePage() {
     });
   }, []);
 
+  const loaded = summaries !== null;
   const queued = useMemo(() => {
-    const reviewable = summaries.filter((s) => s.pipeline.state === "gp_review");
+    const reviewable = (summaries ?? []).filter((s) => s.pipeline.state === "gp_review");
     if (segment === "needs_gp") return reviewable.filter((s) => !s.gpSigned);
     if (segment === "needs_tcm") return reviewable.filter((s) => !s.tcmSigned);
     return reviewable;
@@ -42,8 +44,9 @@ export default function ReviewQueuePage() {
       <View style={styles.headerRow}>
         <ClipboardCheck size={24} color={colors.sageDark} />
         <Text style={styles.heading}>
-          {queued.length} participant{queued.length !== 1 ? "s" : ""} awaiting
-          review
+          {loaded
+            ? `${queued.length} participant${queued.length !== 1 ? "s" : ""} awaiting review`
+            : "Loading review queue..."}
         </Text>
       </View>
 
@@ -60,16 +63,19 @@ export default function ReviewQueuePage() {
           <Text style={[styles.headerCell, { flex: 2 }]}>Participant</Text>
           <Text style={[styles.headerCell, { flex: 1 }]}>Status</Text>
         </View>
-        {queued.map((summary) => (
-          <ParticipantTableRow
-            key={summary.participant.id}
-            summary={summary}
-            onPress={() =>
-              router.push(`/admin/participants/${summary.participant.id}`)
-            }
-          />
-        ))}
-        {queued.length === 0 && (
+        {!loaded &&
+          Array.from({ length: 3 }, (_, i) => <TableRowSkeleton key={i} />)}
+        {loaded &&
+          queued.map((summary) => (
+            <ParticipantTableRow
+              key={summary.participant.id}
+              summary={summary}
+              onPress={() =>
+                router.push(`/admin/participants/${summary.participant.id}`)
+              }
+            />
+          ))}
+        {loaded && queued.length === 0 && (
           <Text style={styles.emptyText}>No participants in the review queue.</Text>
         )}
       </View>

@@ -4,6 +4,7 @@ import { Search, Users, ClipboardCheck, CheckCircle2, AlertTriangle } from "luci
 import { AdminShell } from "@/components/layout/AdminShell";
 import { SummaryStatCard } from "@/components/admin/SummaryStatCard";
 import { ParticipantTableRow } from "@/components/admin/ParticipantTableRow";
+import { TableRowSkeleton } from "@/components/admin/TableRowSkeleton";
 import { repository } from "@/lib/data/mock";
 import type { ParticipantSummary, PipelineState } from "@/lib/types/db";
 import { colors, fontSizes, radii } from "@/lib/theme/tokens";
@@ -11,7 +12,7 @@ import { useRouter } from "expo-router";
 
 export default function AdminParticipantsPage() {
   const router = useRouter();
-  const [summaries, setSummaries] = useState<ParticipantSummary[]>([]);
+  const [summaries, setSummaries] = useState<ParticipantSummary[] | null>(null);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
 
@@ -22,17 +23,18 @@ export default function AdminParticipantsPage() {
     });
   }, []);
 
-  const total = summaries.length;
-  const awaiting = summaries.filter((s) => s.pipeline.state === "gp_review").length;
-  const delivered = summaries.filter(
+  const loaded = summaries !== null;
+  const total = summaries?.length ?? 0;
+  const awaiting = summaries?.filter((s) => s.pipeline.state === "gp_review").length ?? 0;
+  const delivered = summaries?.filter(
     (s) => s.pipeline.state === "delivered"
-  ).length;
-  const needsAttention = summaries.filter(
+  ).length ?? 0;
+  const needsAttention = summaries?.filter(
     (s) => s.pipeline.needs_attention
-  ).length;
+  ).length ?? 0;
 
   const filtered = useMemo(() => {
-    return summaries.filter((s) => {
+    return (summaries ?? []).filter((s) => {
       const matchesQuery = s.participant.name
         .toLowerCase()
         .includes(query.toLowerCase());
@@ -96,16 +98,19 @@ export default function AdminParticipantsPage() {
           <Text style={[styles.headerCell, { flex: 2 }]}>Participant</Text>
           <Text style={[styles.headerCell, { flex: 1 }]}>Status</Text>
         </View>
-        {filtered.map((summary) => (
-          <ParticipantTableRow
-            key={summary.participant.id}
-            summary={summary}
-            onPress={() =>
-              router.push(`/admin/participants/${summary.participant.id}`)
-            }
-          />
-        ))}
-        {filtered.length === 0 && (
+        {!loaded &&
+          Array.from({ length: 5 }, (_, i) => <TableRowSkeleton key={i} />)}
+        {loaded &&
+          filtered.map((summary) => (
+            <ParticipantTableRow
+              key={summary.participant.id}
+              summary={summary}
+              onPress={() =>
+                router.push(`/admin/participants/${summary.participant.id}`)
+              }
+            />
+          ))}
+        {loaded && filtered.length === 0 && (
           <Text style={styles.emptyText}>
             No participants match your search.
           </Text>
