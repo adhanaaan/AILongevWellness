@@ -14,6 +14,8 @@ import { CareTeamNotesCard } from "@/components/participant/CareTeamNotesCard";
 import { DraftStatusBadge } from "@/components/participant/DraftStatusBadge";
 import { TopRecommendation } from "@/components/participant/TopRecommendation";
 import { NextStepsCard } from "@/components/participant/NextStepsCard";
+import { SnapshotSummaryCard } from "@/components/participant/SnapshotSummaryCard";
+import { WellnessDisclaimer } from "@/components/participant/WellnessDisclaimer";
 import { repository } from "@/lib/data/mock";
 import { getOnboardingProgressAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -159,7 +161,9 @@ export default function CardPage() {
           />
         </View>
 
-        <Text style={styles.narrative}>{buildPillarNarrative(aiDraft.scores)}</Text>
+        <View style={styles.narrativeSection}>
+          <SnapshotSummaryCard narrative={buildPillarNarrative(aiDraft.scores)} />
+        </View>
 
         {(gp || tcm) && (
           <View style={styles.section}>
@@ -210,6 +214,8 @@ export default function CardPage() {
             )}
           </View>
         )}
+
+        <WellnessDisclaimer />
         </FadeInView>
       </ScrollView>
 
@@ -273,13 +279,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: colors.charcoal,
   },
-  narrative: {
-    fontSize: fontSizes.bodyMd,
-    color: colors.charcoal,
-    lineHeight: 22,
-    marginTop: 16,
-    textAlign: "center",
-  },
+  narrativeSection: { marginTop: 16 },
   contributorList: { gap: 8 },
   expanded: { marginTop: 16 },
   nextStepsCard: { marginTop: 12 },
