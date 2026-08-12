@@ -1,0 +1,64 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Biomarker } from "../types/db";
+import {
+  computePillarScores,
+  computeBiologicalAge,
+  computeMissingBiomarkers,
+  computeOutOfRange,
+} from "../ai/scoring";
+import { computePhenoAge } from "../ai/phenoAge";
+
+/**
+ * Re-derive the *deterministic* parts of the AI draft — pillar scores,
+ * biological age, the missing-biomarker list, and the out-of-range list — from
+ * the participant's current biomarker snapshot, and write them back to ai_draft.
+ *
+ * Every server-side biomarker-writing path MUST call this after it writes, or
+ * the numbers on the Insights card go stale. The capture screens fire
+ * generateDraft the instant a file is uploaded — *before* extraction has written
+ * anything (extraction is fire-and-forget and takes seconds) — so without this
+ * the freshly-uploaded values never move the score until some unrelated later
+ * regen. SupabaseRepository.updateBiomarker (the admin single-value edit) already
+ * does this same recompute inline; this is that logic, shared for the extraction
+ * endpoints (lab / body-comp / wearables / ReCOGnAIze).
+ *
+ * Deterministic only: it never touches the AI-written narrative
+ * (key_contributors / suggested_focus / discussion_points / care_plan), which a
+ * full generateDraft still owns. Safe to run whenever biomarkers change — it's a
+ * pure function of the current snapshot, no AI call. No-ops if no draft exists
+ * yet (nothing to update until the first draft is generated).
+ */
+export async function resyncDraftScores(
+  serviceClient: SupabaseClient,
+  participantId: string
+): Promise<void> {
+  const { data: draft, error: draftErr } = await serviceClient
+    .from("ai_draft")
+    .select("chronological_age")
+    .eq("participant_id", participantId)
+    .maybeSingle();
+  if (draftErr) throw new Error(draftErr.message);
+  if (!draft) return;
+
+  const { data: biomarkers, error: bmErr } = await serviceClient
+    .from("biomarkers")
+    .select("*")
+    .eq("participant_id", participantId);
+  if (bmErr) throw new Error(bmErr.message);
+  const rows = (biomarkers ?? []) as Biomarker[];
+
+  const scores = computePillarScores(rows);
+  const biological_age =
+    computePhenoAge(rows, draft.chronological_age) ?? computeBiologicalAge(scores, draft.chronological_age);
+
+  const { error: updateErr } = await serviceClient
+    .from("ai_draft")
+    .update({
+      scores,
+      biological_age,
+      missing_biomarkers: computeMissingBiomarkers(rows),
+      out_of_range: computeOutOfRange(rows),
+    })
+    .eq("participant_id", participantId);
+  if (updateErr) throw new Error(updateErr.message);
+}

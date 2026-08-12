@@ -6,6 +6,7 @@ import { BUCKET_BY_KIND } from "../lib/data/storageBuckets";
 import { convertToTargetUnit } from "../lib/ai/unitConversion";
 import { flagIfPastSignoff } from "../lib/data/pipelineAttention";
 import { writeBiomarkerReadings } from "../lib/data/biomarkerReadings";
+import { resyncDraftScores } from "../lib/data/resyncDraftScores";
 
 // This is a Vercel serverless function (not an Expo Router API route) — see
 // vercel.json's rewrite, which excludes /api/* from the SPA catch-all so
@@ -262,6 +263,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return;
     }
     await flagIfPastSignoff(serviceClient, participantId, "New lab report uploaded — biomarkers pending review");
+    // Re-derive scores/bio age from the just-written values -- the capture
+    // screen's generateDraft already fired (before this extraction finished), so
+    // without this the upload wouldn't move the numbers until a later regen.
+    await resyncDraftScores(serviceClient, participantId);
   }
 
   await serviceClient.from("files").update({ extracted: true }).eq("id", fileId);
