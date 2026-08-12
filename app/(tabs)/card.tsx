@@ -5,7 +5,7 @@ import { MessageCircle, ListChecks, Target, ClipboardList, ChevronRight } from "
 import { MobileShell } from "@/components/layout/MobileShell";
 import { FadeInView } from "@/components/ui/FadeInView";
 import { InsightsSkeleton } from "@/components/participant/InsightsSkeleton";
-import { BiologicalAgeHero } from "@/components/participant/BiologicalAgeHero";
+import { BodyMap } from "@/components/participant/BodyMap";
 import { PillarRangeList } from "@/components/participant/PillarRangeList";
 import { KeyContributorItem } from "@/components/participant/KeyContributorItem";
 import { SuggestedFocusGrid } from "@/components/participant/SuggestedFocusGrid";
@@ -19,7 +19,7 @@ import { WellnessDisclaimer } from "@/components/participant/WellnessDisclaimer"
 import { repository } from "@/lib/data/mock";
 import { getOnboardingProgressAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { pillarStatus, buildPillarNarrative } from "@/lib/ai/scoring";
+import { pillarStatus, buildPillarNarrative, BIOMARKER_KEYS_BY_PILLAR } from "@/lib/ai/scoring";
 import { isCaptureComplete } from "@/lib/onboarding/flow";
 import type { SignedCard } from "@/lib/data/repository";
 import type { AiDraft, OnboardingProgress, Participant, Pipeline } from "@/lib/types/db";
@@ -128,6 +128,16 @@ export default function CardPage() {
     },
   ] as const;
 
+  // A body region stays "locked" (no score) until its pillar has at least one
+  // captured biomarker -- so the hero fills in as the participant captures data.
+  const missingSet = new Set(aiDraft.missing_biomarkers ?? []);
+  const bodyPillars = pillarItems.map((p) => ({
+    key: p.key,
+    value: BIOMARKER_KEYS_BY_PILLAR[p.key].every((k) => missingSet.has(k)) ? null : p.value,
+    onPress: p.onPress,
+    accessibilityLabel: p.accessibilityLabel,
+  }));
+
   return (
     <MobileShell name={card?.participant.name ?? participant?.name}>
       <ScrollView
@@ -154,10 +164,11 @@ export default function CardPage() {
         )}
 
         <View style={styles.section}>
-          <BiologicalAgeHero
+          <BodyMap
             bioAge={aiDraft.biological_age}
             chronoAge={aiDraft.chronological_age}
-            onPress={() => router.push("/bio-age")}
+            pillars={bodyPillars}
+            onPressBio={() => router.push("/bio-age")}
           />
         </View>
 
