@@ -11,7 +11,7 @@ import { updateSectionStatusAction, updateCaptureChannelAction, uploadFileAction
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { validateUploadSize } from "@/lib/data/uploadLimits";
-import { extractBodyComp, generateDraft } from "@/lib/ai/client";
+import { extractBodyComp } from "@/lib/ai/client";
 import { colors, fontFamilies, fontSizes, radii, spacing, teal } from "@/lib/theme/tokens";
 
 const POINTS = [
@@ -46,11 +46,10 @@ export default function CaptureBodyCompositionIntroPage() {
       status: "complete",
       entered_by: "participant",
     });
-    // Refresh insights with whatever's captured so far -- fire-and-forget, gets
-    // richer again after each subsequent channel.
-    if (isSupabaseConfigured && session?.access_token) {
-      generateDraft(session.access_token, participantId).catch(() => {});
-    }
+    // The AI draft now re-derives server-side after extraction writes the new
+    // biomarkers (resyncDraftScores + regenerateDraft in api/extract-body-comp.ts).
+    // Firing generateDraft from here too would race that regeneration using
+    // pre-extraction data, which could land last and re-stale the card.
     if (isEditing) {
       // Reached from outside onboarding (e.g. Tracking tab, post-onboarding) —
       // onboarding progress is a per-session in-memory record on the real backend

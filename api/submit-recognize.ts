@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { RECOGNIZE_CATALOG_BY_KEY } from "../lib/ai/recognizeCatalog";
 import { flagIfPastSignoff } from "../lib/data/pipelineAttention";
 import { resyncDraftScores } from "../lib/data/resyncDraftScores";
+import { regenerateDraft } from "../lib/ai/draftGeneration";
 
 // This is a Vercel serverless function — see vercel.json's rewrite, which
 // excludes /api/* from the SPA catch-all so requests here reach this file
@@ -101,8 +102,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
   await flagIfPastSignoff(serviceClient, participantId, "New ReCOGnAIze results submitted — biomarkers pending review");
-  // Re-derive scores/bio age from the just-written values (see resyncDraftScores).
+  // Re-derive scores/bio age from the just-written values (see resyncDraftScores),
+  // then re-run the full draft (AI narrative too) best-effort.
   await resyncDraftScores(serviceClient, participantId);
+  try {
+    await regenerateDraft(serviceClient, participantId);
+  } catch {
+    /* numbers already resynced above */
+  }
 
   res.status(200).json({ reaction_time: avgReactionTimeMs, cog_composite: composite });
 }

@@ -2,6 +2,9 @@
   "buildCommand": "npx expo export --platform web",
   "outputDirectory": "dist",
   "installCommand": "npm ci",
+  "functions": {
+    "api/*.ts": { "maxDuration": 60 }
+  },
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]

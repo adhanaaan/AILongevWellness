@@ -7,6 +7,7 @@ import { sexAwareRange } from "../lib/ai/sexAwareRanges";
 import { BUCKET_BY_KIND } from "../lib/data/storageBuckets";
 import { flagIfPastSignoff } from "../lib/data/pipelineAttention";
 import { resyncDraftScores } from "../lib/data/resyncDraftScores";
+import { regenerateDraft } from "../lib/ai/draftGeneration";
 
 // This is a Vercel serverless function — see vercel.json's rewrite excluding /api/*
 // from the SPA catch-all.
@@ -126,8 +127,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return;
     }
     await flagIfPastSignoff(serviceClient, participantId, "New wearable export uploaded — biomarkers pending review");
-    // Re-derive scores/bio age from the just-written values (see resyncDraftScores).
+    // Re-derive scores/bio age from the just-written values (see resyncDraftScores),
+    // then re-run the full draft (AI narrative too) best-effort.
     await resyncDraftScores(serviceClient, participantId);
+    try {
+      await regenerateDraft(serviceClient, participantId);
+    } catch {
+      /* numbers already resynced above */
+    }
   }
 
   await serviceClient.from("files").update({ extracted: true }).eq("id", fileId);
