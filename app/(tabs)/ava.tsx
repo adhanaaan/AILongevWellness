@@ -89,12 +89,19 @@ function AvaChatContent({
 }) {
   const { session, participantId } = useAuth();
   const scrollRef = useRef<ScrollView>(null);
+  // Open with a genuine AVA greeting rather than a fabricated user turn answered
+  // by the mock engine. The old seed called respondAsAva() unconditionally, so on
+  // a real (Supabase) deployment the very first thing a participant saw was mock
+  // content presented as if they'd asked it. A static greeting behaves identically
+  // in mock and real mode and matches how every assistant UI opens (greet, then
+  // let the user drive) -- the real grounded answer comes from their first message.
   const [messages, setMessages] = useState<Message[]>(() => {
     if (seedQuestion) return [];
-    const seedReply = respondAsAva("What does my metabolic score mean?", card);
     return [
-      { role: "user", text: "What does my metabolic score mean?" },
-      { role: "ava", text: seedReply.text, disclaimer: seedReply.disclaimer },
+      {
+        role: "ava",
+        text: "I can walk you through what's driving your scores, your biological age, or your suggested focus areas. What would you like to start with?",
+      },
     ];
   });
   const [input, setInput] = useState("");
@@ -139,6 +146,8 @@ function AvaChatContent({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seedQuestion]);
+
+  const canSend = input.trim().length > 0 && !sending;
 
   return (
     <MobileShell name={participant?.name}>
@@ -187,9 +196,11 @@ function AvaChatContent({
               returnKeyType="send"
             />
             <TouchableOpacity
-              style={[styles.sendButton, sending && styles.sendButtonDisabled]}
+              style={[styles.sendButton, !canSend && styles.sendButtonDisabled]}
               onPress={() => send(input)}
-              disabled={sending}
+              disabled={!canSend}
+              accessibilityRole="button"
+              accessibilityLabel="Send message"
             >
               <Send size={18} color={colors.white} />
             </TouchableOpacity>
