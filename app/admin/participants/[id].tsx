@@ -32,7 +32,7 @@ import type {
   DailyLog,
   ParticipantSummary,
 } from "@/lib/types/db";
-import { colors, fontFamilies, fontSizes, spacing, radii, shadows } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, spacing, radii } from "@/lib/theme/tokens";
 
 // GP and TCM sign off independently, in either order -- collapsed into one
 // "Review" step rather than two sequential ones, since the pipeline no

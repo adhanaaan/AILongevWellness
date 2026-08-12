@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { FlaskConical } from "lucide-react-native";
 import { Card } from "@/components/ui";
-import { colors, fontSizes, fontWeights, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 import { missingPhenoAgeInputs } from "@/lib/ai/phenoAge";
 import { LAB_CATALOG_BY_KEY } from "@/lib/ai/labCatalog";
 import type { Biomarker } from "@/lib/types/db";
@@ -58,13 +58,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.bodyMd,
-    fontWeight: fontWeights.semibold,
     color: colors.charcoal,
   },
   body: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.labelMd,
     color: colors.inkMuted,
     marginTop: 2,
+    lineHeight: 20,
   },
 });

@@ -74,7 +74,7 @@ export function SignOffStage({
           <CheckCircle2 size={20} color={colors.sageDark} />
           <View style={styles.signedContent}>
             <View style={styles.signedHeader}>
-              <Text style={styles.stageTitle}>{stageLabels[stage]}</Text>
+              <Text style={[styles.stageTitle, styles.stageTitleFlush]}>{stageLabels[stage]}</Text>
               <View style={styles.signedPill}>
                 <Text style={styles.signedPillText}>Signed</Text>
               </View>
@@ -137,6 +137,10 @@ export function SignOffStage({
 }
 
 const styles = StyleSheet.create({
+  cardSigned: {
+    backgroundColor: colors.sageTint,
+    borderColor: colors.sage,
+  },
   lockedContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -146,6 +150,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   lockedMessage: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.inkMuted,
     marginTop: spacing.xs,
@@ -158,29 +163,55 @@ const styles = StyleSheet.create({
   signedContent: {
     flex: 1,
   },
+  signedHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
+  },
+  signedPill: {
+    backgroundColor: colors.sage,
+    borderRadius: radii.full,
+    paddingVertical: 2,
+    paddingHorizontal: spacing.sm,
+  },
+  signedPillText: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    color: colors.white,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
   stageTitle: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.bodyMd,
     fontWeight: fontWeights.semibold,
     color: colors.charcoal,
     marginBottom: spacing.sm,
   },
+  stageTitleFlush: {
+    marginBottom: 0,
+  },
   reviewerName: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.bodyMd,
-    fontWeight: fontWeights.medium,
     color: colors.charcoal,
   },
   reviewerCredential: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.labelMd,
     color: colors.inkMuted,
     marginTop: 2,
   },
   notes: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.charcoal,
     marginTop: spacing.sm,
     fontStyle: "italic",
   },
   signedAt: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
     marginTop: spacing.sm,
@@ -189,6 +220,7 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
   },
   error: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.labelMd,
     color: colors.danger,
   },
