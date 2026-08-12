@@ -24,7 +24,7 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { askAva } from "@/lib/ai/client";
 import type { SignedCard } from "@/lib/data/repository";
-import type { Participant, Pipeline } from "@/lib/types/db";
+import type { AiDraft, Biomarker, Participant, Pipeline } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, radii, shadows, spacing } from "@/lib/theme/tokens";
 
 interface Message {
@@ -33,33 +33,42 @@ interface Message {
   disclaimer?: string;
 }
 
-const SUGGESTIONS = [
+const REVIEWED_SUGGESTIONS = [
   "What does my vascular score mean?",
   "Tell me about my biological age",
   "What are my focus areas?",
   "Who reviewed my card?",
+];
+const PRELIMINARY_SUGGESTIONS = [
+  "What does my vascular score mean?",
+  "Tell me about my biological age",
+  "How can I improve my metabolic health?",
+  "What should I focus on first?",
 ];
 
 export default function AvaPage() {
   const { participantId } = useAuth();
   const { q } = useLocalSearchParams<{ q?: string }>();
   const [card, setCard] = useState<SignedCard | null | undefined>(undefined);
+  const [aiDraft, setAiDraft] = useState<AiDraft | null | undefined>(undefined);
+  const [biomarkers, setBiomarkers] = useState<Biomarker[]>([]);
   const [pipeline, setPipeline] = useState<Pipeline | null | undefined>(undefined);
   const [participant, setParticipant] = useState<Participant | null>(null);
 
   useEffect(() => {
     if (!participantId) return;
-    repository.getSignedCard(participantId).then(setCard);
-    repository.getPipeline(participantId).then(setPipeline);
-    repository.getParticipant(participantId).then(setParticipant);
-    return repository.subscribe(() => {
+    const load = () => {
       repository.getSignedCard(participantId).then(setCard);
+      repository.getAiDraft(participantId).then(setAiDraft);
+      repository.getBiomarkers(participantId).then(setBiomarkers);
       repository.getPipeline(participantId).then(setPipeline);
       repository.getParticipant(participantId).then(setParticipant);
-    });
+    };
+    load();
+    return repository.subscribe(load);
   }, [participantId]);
 
-  if (card === undefined || pipeline === undefined) {
+  if (card === undefined || pipeline === undefined || aiDraft === undefined) {
     return (
       <MobileShell>
         <LoadingState />
@@ -67,7 +76,20 @@ export default function AvaPage() {
     );
   }
 
-  if (!card) {
+  // AVA is available the moment there's something to ground on -- a delivered card,
+  // or (in real/Supabase mode, where grounding happens server-side against the live
+  // draft) as soon as an AI draft exists, which is right after the questionnaire. That
+  // is what makes AVA an "ask anytime" copilot instead of a post-sign-off tab. Mock
+  // mode stays gated to a delivered card, since its rule-based responder speaks in
+  // "your reviewed card" terms and has no live model behind it.
+  const reviewed = !!card;
+  const groundingCard: SignedCard | null = card
+    ? card
+    : aiDraft && participant && isSupabaseConfigured
+      ? { participant, aiDraft, biomarkers, reviews: [] }
+      : null;
+
+  if (!groundingCard) {
     return (
       <MobileShell name={participant?.name}>
         <AvaPromo pipelineState={pipeline?.state ?? "capturing"} />
@@ -75,15 +97,19 @@ export default function AvaPage() {
     );
   }
 
-  return <AvaChatContent card={card} seedQuestion={q} participant={participant} />;
+  return (
+    <AvaChatContent card={groundingCard} reviewed={reviewed} seedQuestion={q} participant={participant} />
+  );
 }
 
 function AvaChatContent({
   card,
+  reviewed,
   seedQuestion,
   participant,
 }: {
   card: SignedCard;
+  reviewed: boolean;
   seedQuestion?: string;
   participant: Participant | null;
 }) {
@@ -100,7 +126,9 @@ function AvaChatContent({
     return [
       {
         role: "ava",
-        text: "I can walk you through what's driving your scores, your biological age, or your suggested focus areas. What would you like to start with?",
+        text: reviewed
+          ? "I can walk you through your scores, your biological age, or your focus areas — or answer any wellness question you have. Where would you like to start?"
+          : "I can walk you through your early results so far, or answer any wellness question. Just note these scores are still being reviewed by your care team. Where would you like to start?",
       },
     ];
   });
@@ -173,8 +201,9 @@ function AvaChatContent({
             </View>
           </View>
           <Text style={styles.subtitle}>
-            Ask about your reviewed wellness card — this is general information, not medical
-            advice.
+            {reviewed
+              ? "Ask about your reviewed card or any wellness question — general information, not medical advice."
+              : "Ask about your early results or any wellness question — your scores are still under care-team review. General information, not medical advice."}
           </Text>
         </View>
 
@@ -195,7 +224,7 @@ function AvaChatContent({
         <View style={styles.inputArea}>
           <View>
             <Text style={styles.suggestLabel}>Try asking</Text>
-            <SuggestionChips items={SUGGESTIONS} onPick={send} />
+            <SuggestionChips items={reviewed ? REVIEWED_SUGGESTIONS : PRELIMINARY_SUGGESTIONS} onPick={send} />
           </View>
           <View style={styles.composer}>
             <TextInput
