@@ -8,6 +8,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { FadeInView } from "@/components/ui/FadeInView";
 import { BiomarkerRangeRow } from "@/components/participant/BiomarkerRangeRow";
+import { BiomarkerSummaryBar } from "@/components/participant/BiomarkerSummaryBar";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { BIOMARKER_KEYS_BY_PILLAR, pillarStatus } from "@/lib/ai/scoring";
@@ -123,6 +124,8 @@ export default function PillarDetailPage() {
   const missing = (aiDraft.missing_biomarkers ?? []).filter((key) =>
     pillarKeys.includes(key)
   );
+  const inRangeCount = pillarBiomarkers.filter((b) => !b.flagged).length;
+  const outOfRangeCount = pillarBiomarkers.filter((b) => b.flagged).length;
 
   let ageClock: AgeClockResult | null = null;
   let ageClockLabel = "";
@@ -192,7 +195,12 @@ export default function PillarDetailPage() {
 
         {pillarBiomarkers.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Your markers</Text>
+            <BiomarkerSummaryBar
+              inRange={inRangeCount}
+              outOfRange={outOfRangeCount}
+              notCaptured={missing.length}
+            />
+            <Text style={[styles.sectionTitle, styles.markersTitle]}>Your markers</Text>
             <View style={styles.markerList}>
               {pillarBiomarkers.map((b) => {
                 // history includes the reading that produced today's current
@@ -377,6 +385,9 @@ const styles = StyleSheet.create({
     fontWeight: fontWeights.semibold,
     color: colors.charcoal,
     marginBottom: spacing.md,
+  },
+  markersTitle: {
+    marginTop: spacing["2xl"],
   },
   markerList: {
     gap: spacing.md,
