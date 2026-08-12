@@ -12,6 +12,8 @@ import {
 import { useLocalSearchParams } from "expo-router";
 import { Send } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
+import { FadeInView } from "@/components/ui/FadeInView";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { ChatBubble } from "@/components/participant/ChatBubble";
 import { TypingIndicator } from "@/components/participant/TypingIndicator";
 import { SuggestionChips } from "@/components/participant/SuggestionChips";
@@ -57,7 +59,13 @@ export default function AvaPage() {
     });
   }, [participantId]);
 
-  if (card === undefined || pipeline === undefined) return null;
+  if (card === undefined || pipeline === undefined) {
+    return (
+      <MobileShell>
+        <LoadingState />
+      </MobileShell>
+    );
+  }
 
   if (!card) {
     return (
@@ -134,6 +142,7 @@ function AvaChatContent({
 
   return (
     <MobileShell name={participant?.name}>
+      <FadeInView style={styles.flex}>
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -187,6 +196,7 @@ function AvaChatContent({
           </View>
         </View>
       </KeyboardAvoidingView>
+      </FadeInView>
     </MobileShell>
   );
 }

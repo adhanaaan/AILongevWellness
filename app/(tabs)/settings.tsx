@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-nati
 import { useRouter } from "expo-router";
 import { User, ShieldCheck, FileText, BookOpen, ChevronRight, LogOut } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
@@ -22,7 +23,13 @@ export default function SettingsPage() {
     repository.getParticipant(participantId).then(setParticipant);
   }, [participantId]);
 
-  if (!participant) return null;
+  if (!participant) {
+    return (
+      <MobileShell>
+        <LoadingState />
+      </MobileShell>
+    );
+  }
 
   return (
     <MobileShell name={participant.name}>

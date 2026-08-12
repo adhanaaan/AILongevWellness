@@ -4,6 +4,8 @@ import { useRouter } from "expo-router";
 import { Watch, PersonStanding, FileText, ChevronRight, type LucideIcon } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { Card } from "@/components/ui/Card";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { FadeInView } from "@/components/ui/FadeInView";
 import { colors, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 import { listDailyLogsAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
@@ -119,9 +121,7 @@ export default function TrackingPage() {
   if (loading) {
     return (
       <MobileShell>
-        <View style={styles.center}>
-          <Text style={styles.subtitle}>Loading…</Text>
-        </View>
+        <LoadingState />
       </MobileShell>
     );
   }
@@ -132,6 +132,7 @@ export default function TrackingPage() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+        <FadeInView>
         <Text style={styles.title}>Care Plan</Text>
         <Text style={styles.subtitle}>
           {isDelivered
@@ -220,13 +221,13 @@ export default function TrackingPage() {
             </TouchableOpacity>
           ))}
         </Card>
+        </FadeInView>
       </ScrollView>
     </MobileShell>
   );
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: "center", justifyContent: "center" },
   scrollContent: { paddingBottom: 32 },
   title: {
     fontSize: fontSizes.headlineLg,

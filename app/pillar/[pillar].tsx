@@ -5,6 +5,8 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft, MessageCircle, ChevronRight } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { FadeInView } from "@/components/ui/FadeInView";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { BIOMARKER_KEYS_BY_PILLAR, pillarStatus } from "@/lib/ai/scoring";
@@ -88,7 +90,14 @@ export default function PillarDetailPage() {
     return repository.subscribe(loadData);
   }, [pillar, participantId]);
 
-  if (!pillar || !aiDraft) return null;
+  if (!pillar) return null;
+  if (!aiDraft) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <LoadingState />
+      </SafeAreaView>
+    );
+  }
 
   const score = aiDraft.scores[pillar];
   const status = pillarStatus(score);
@@ -131,6 +140,7 @@ export default function PillarDetailPage() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+        <FadeInView>
         <View style={styles.titleRow}>
           <Text style={styles.pillarName}>{PILLAR_LABELS[pillar]}</Text>
           <StatusBadge
@@ -274,6 +284,7 @@ export default function PillarDetailPage() {
             <ChevronRight size={16} color={colors.inkMuted} />
           </Pressable>
         </View>
+        </FadeInView>
       </ScrollView>
     </SafeAreaView>
   );

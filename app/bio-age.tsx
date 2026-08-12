@@ -4,6 +4,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ArrowLeft, ChevronRight } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { FadeInView } from "@/components/ui/FadeInView";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { pillarStatus } from "@/lib/ai/scoring";
@@ -41,7 +43,13 @@ export default function BioAgePage() {
     return repository.subscribe(load);
   }, [participantId]);
 
-  if (card === undefined) return null;
+  if (card === undefined) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <LoadingState />
+      </SafeAreaView>
+    );
+  }
   if (!card) {
     router.back();
     return null;
@@ -73,6 +81,7 @@ export default function BioAgePage() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <FadeInView style={styles.fadeIn}>
         <Text style={styles.pageTitle}>Biological age</Text>
         <Text style={styles.bioAgeValue}>{bioAge}</Text>
         <View style={styles.pill}>
@@ -137,6 +146,7 @@ export default function BioAgePage() {
           <Text style={styles.methodologyLinkText}>See full methodology & sources</Text>
           <ChevronRight size={16} color={colors.sageDark} />
         </TouchableOpacity>
+        </FadeInView>
       </ScrollView>
     </SafeAreaView>
   );
@@ -156,6 +166,10 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing["3xl"],
+    alignItems: "center",
+  },
+  fadeIn: {
+    width: "100%",
     alignItems: "center",
   },
   pageTitle: {

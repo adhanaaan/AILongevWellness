@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { MessageCircle, ListChecks, Target, ClipboardList, ChevronRight } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { FadeInView } from "@/components/ui/FadeInView";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { BiologicalAgeHero } from "@/components/participant/BiologicalAgeHero";
 import { PillarStrip } from "@/components/participant/PillarStrip";
 import { KeyContributorItem } from "@/components/participant/KeyContributorItem";
@@ -60,7 +61,13 @@ export default function CardPage() {
     return repository.subscribe(load);
   }, [participantId]);
 
-  if (card === undefined || pipeline === undefined || pendingDraft === undefined) return null;
+  if (card === undefined || pipeline === undefined || pendingDraft === undefined) {
+    return (
+      <MobileShell>
+        <LoadingState />
+      </MobileShell>
+    );
+  }
 
   // Show the AI's first-pass draft the moment one exists, rather than hiding
   // everything until full delivery -- DraftStatusBadge below is what keeps the

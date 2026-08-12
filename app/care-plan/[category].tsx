@@ -6,6 +6,8 @@ import { ArrowLeft, X, Smile, Meh, Frown } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Toggle } from "@/components/ui/Toggle";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { FadeInView } from "@/components/ui/FadeInView";
 import { repository } from "@/lib/data/mock";
 import { listDailyLogsAction, upsertDailyLogAction, updateParticipantAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -88,7 +90,14 @@ export default function CarePlanCategoryPage() {
     return repository.subscribe(loadData);
   }, [category, participantId, loadData, router]);
 
-  if (!category || !loaded) return null;
+  if (!category) return null;
+  if (!loaded) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <LoadingState />
+      </SafeAreaView>
+    );
+  }
 
   const config = CARE_PLAN_CATEGORIES_BY_KEY[category];
   const today = todayIso();
@@ -149,6 +158,7 @@ export default function CarePlanCategoryPage() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <FadeInView>
         <View style={styles.titleRow}>
           <View style={[styles.titleIcon, { backgroundColor: `${config.color}1A` }]}>
             <Icon size={20} color={config.color} />
@@ -274,6 +284,7 @@ export default function CarePlanCategoryPage() {
             category yet.
           </Text>
         )}
+        </FadeInView>
       </ScrollView>
     </SafeAreaView>
   );
