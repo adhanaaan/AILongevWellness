@@ -31,7 +31,12 @@ const PILLAR_META: Record<string, { Icon: LucideIcon; tint: string; icon: string
 // a monitor pillar reads as a terracotta dot sitting left of the green zone.
 function PillarRow({ item }: { item: PillarRangeItem }) {
   const meta = PILLAR_META[item.key];
-  const statusColor = item.status === "good" ? colors.sage : colors.terracotta;
+  const isGood = item.status === "good";
+  // Marker dot is the vivid status hue; status *text* uses a darker ink so it
+  // stays legible on its tint (light peach terracotta on terracottaTint fails).
+  const markerColor = isGood ? colors.sage : colors.terracotta;
+  const statusInk = isGood ? colors.sage : colors.terracottaInk;
+  const statusTint = isGood ? colors.sageTint : colors.terracottaTint;
   const Icon = meta?.Icon;
 
   const body = (
@@ -48,9 +53,9 @@ function PillarRow({ item }: { item: PillarRangeItem }) {
         </View>
         <View style={styles.valueBlock}>
           <Text style={styles.value}>{item.value}</Text>
-          <View style={[styles.statusPill, { backgroundColor: withStatusTint(item.status) }]}>
-            <Text style={[styles.statusText, { color: statusColor }]}>
-              {item.status === "good" ? "Optimal" : "Monitor"}
+          <View style={[styles.statusPill, { backgroundColor: statusTint }]}>
+            <Text style={[styles.statusText, { color: statusInk }]}>
+              {isGood ? "Optimal" : "Monitor"}
             </Text>
           </View>
         </View>
@@ -63,7 +68,7 @@ function PillarRow({ item }: { item: PillarRangeItem }) {
           zoneStart={PILLAR_STATUS_THRESHOLD}
           zoneEnd={100}
           color={colors.sage}
-          markerColor={statusColor}
+          markerColor={markerColor}
         />
       </View>
       <View style={styles.scaleRow}>
@@ -84,10 +89,6 @@ function PillarRow({ item }: { item: PillarRangeItem }) {
       {body}
     </Pressable>
   );
-}
-
-function withStatusTint(status: "good" | "monitor"): string {
-  return status === "good" ? colors.sageTint : colors.terracottaTint;
 }
 
 export function PillarRangeList({ items }: PillarRangeListProps) {
