@@ -11,6 +11,7 @@ import { listDailyLogsAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { CARE_PLAN_CATEGORIES } from "@/lib/carePlan/categories";
+import { CarePlanCategoryCard, type CarePlanTodayStatus } from "@/components/participant/CarePlanCategoryCard";
 import type { AiDraft, DailyLog, Participant, PlanCategory } from "@/lib/types/db";
 import type { SignedCard } from "@/lib/data/repository";
 
@@ -56,16 +57,22 @@ function dayLabel(dateStr: string): string {
 }
 
 /** Only medications and mindfulness have a daily self-report — see CarePlanCategoryConfig.tracked. */
-function todayStatus(category: PlanCategory, todayLog: DailyLog | undefined, participant: Participant | null): string | null {
+function todayStatus(
+  category: PlanCategory,
+  todayLog: DailyLog | undefined,
+  participant: Participant | null
+): CarePlanTodayStatus | null {
   switch (category) {
     case "medications": {
       const catalog = participant?.medications ?? [];
-      if (catalog.length === 0) return "Add what you take";
+      if (catalog.length === 0) return { text: "Add what you take", done: false };
       const taken = (todayLog?.supplements ?? []).length;
-      return `${taken}/${catalog.length} taken today`;
+      return { text: `${taken}/${catalog.length} taken`, done: catalog.length > 0 && taken >= catalog.length };
     }
     case "mindfulness":
-      return todayLog?.mood ? moodLabel(todayLog.mood.score) : "Not checked in yet";
+      return todayLog?.mood
+        ? { text: moodLabel(todayLog.mood.score), done: true }
+        : { text: "Not checked in yet", done: false };
     default:
       return null;
   }
@@ -168,38 +175,25 @@ export default function TrackingPage() {
           </Card>
         )}
 
-        <Card style={styles.categoriesCard}>
-          {CARE_PLAN_CATEGORIES.map(({ key, label, Icon, color, fallback, tracked }, i) => {
+        <View style={styles.categoriesList}>
+          {CARE_PLAN_CATEGORIES.map(({ key, label, Icon, color, fallback, tracked }) => {
             const items = carePlan?.[key] ?? [];
             const planSnippet = items.length > 0 ? items[0] : fallback;
             const status = tracked ? todayStatus(key, todayLog, participant) : null;
             return (
-              <TouchableOpacity
+              <CarePlanCategoryCard
                 key={key}
-                style={[styles.categoryRow, i > 0 && styles.categoryRowDivider]}
+                label={label}
+                Icon={Icon}
+                color={color}
+                planSnippet={planSnippet}
+                moreCount={Math.max(0, items.length - 1)}
+                status={status}
                 onPress={() => router.push(`/care-plan/${key}`)}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.categoryIcon, { backgroundColor: `${color}1A` }]}>
-                  <Icon size={18} color={color} />
-                </View>
-                <View style={styles.categoryText}>
-                  <View style={styles.categoryHeaderRow}>
-                    <Text style={styles.categoryLabel}>{label}</Text>
-                    {items.length > 1 && (
-                      <Text style={styles.categoryMoreCount}>+{items.length - 1} more</Text>
-                    )}
-                  </View>
-                  <Text style={styles.categoryPlan} numberOfLines={2}>
-                    {planSnippet}
-                  </Text>
-                  {status && <Text style={styles.categoryStatus}>{status}</Text>}
-                </View>
-                <ChevronRight size={18} color={colors.inkMuted} />
-              </TouchableOpacity>
+              />
             );
           })}
-        </Card>
+        </View>
 
         <Text style={styles.sectionTitle}>Add more data</Text>
         <Card style={styles.addDataCard}>
@@ -272,50 +266,7 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
   },
-  categoriesCard: { marginTop: 24, padding: 0 },
-  categoryRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-    padding: 16,
-  },
-  categoryRowDivider: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  categoryIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: radii.full,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  categoryText: { flex: 1, gap: 2 },
-  categoryHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  categoryLabel: {
-    fontSize: fontSizes.bodyMd,
-    fontWeight: "600",
-    color: colors.charcoal,
-  },
-  categoryMoreCount: {
-    fontSize: fontSizes.caption,
-    color: colors.inkMuted,
-  },
-  categoryPlan: {
-    fontSize: fontSizes.caption,
-    color: colors.inkMuted,
-    lineHeight: 16,
-  },
-  categoryStatus: {
-    fontSize: fontSizes.caption,
-    color: colors.sageDark,
-    fontWeight: "600",
-    marginTop: 2,
-  },
+  categoriesList: { marginTop: 24, gap: spacing.md },
   sectionTitle: {
     fontSize: fontSizes.labelMd,
     fontWeight: "600",
