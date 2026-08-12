@@ -10,6 +10,8 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { updateParticipantAction, updateSectionStatusAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { isSupabaseConfigured } from "@/lib/config/env";
+import { generateDraft } from "@/lib/ai/client";
 import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 
 const SEX_OPTIONS: SelectFieldOption[] = [
@@ -34,7 +36,7 @@ const WEIGHT_OPTIONS: SelectFieldOption[] = range(40, 150).map((n) => ({
 
 export default function ProfilePersonalPage() {
   const router = useRouter();
-  const { participantId } = useAuth();
+  const { participantId, session } = useAuth();
   const { mode } = useLocalSearchParams<{ mode?: string }>();
   const isEditing = mode === "edit";
 
@@ -89,6 +91,15 @@ export default function ProfilePersonalPage() {
         height_cm: heightNum,
         weight_kg: weightNum,
       });
+      // Age is the participant's chronological age, and sex/height/weight feed the
+      // sex-aware reference ranges and age clocks -- so a change here has to
+      // re-derive the draft, or the Insights card keeps showing the pre-edit age
+      // until the next capture upload. Fire-and-forget, matching the capture
+      // screens; generateDraft's REGENERATABLE_STATES guard means a signed card is
+      // never silently altered.
+      if (isSupabaseConfigured && session?.access_token) {
+        generateDraft(session.access_token, participantId).catch(() => {});
+      }
       if (isEditing) {
         router.back();
       } else {

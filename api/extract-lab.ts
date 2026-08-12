@@ -6,6 +6,8 @@ import { BUCKET_BY_KIND } from "../lib/data/storageBuckets";
 import { convertToTargetUnit } from "../lib/ai/unitConversion";
 import { flagIfPastSignoff } from "../lib/data/pipelineAttention";
 import { writeBiomarkerReadings } from "../lib/data/biomarkerReadings";
+import { resyncDraftScores } from "../lib/data/resyncDraftScores";
+import { regenerateDraft } from "../lib/ai/draftGeneration";
 
 // This is a Vercel serverless function (not an Expo Router API route) — see
 // vercel.json's rewrite, which excludes /api/* from the SPA catch-all so
@@ -262,6 +264,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return;
     }
     await flagIfPastSignoff(serviceClient, participantId, "New lab report uploaded — biomarkers pending review");
+    // Re-derive scores/bio age from the just-written values -- the capture
+    // screen's generateDraft already fired (before this extraction finished), so
+    // without this the upload wouldn't move the numbers until a later regen.
+    await resyncDraftScores(serviceClient, participantId);
+    // Then re-run the *full* draft (AI narrative + care plan too), so the whole
+    // card reflects the new labs, not just the numbers. Best-effort: the resync
+    // above already guaranteed the numbers, so a transient AI failure here won't
+    // leave them stale -- the narrative catches up on the next regen.
+    try {
+      await regenerateDraft(serviceClient, participantId);
+    } catch {
+      /* numbers already resynced above */
+    }
   }
 
   await serviceClient.from("files").update({ extracted: true }).eq("id", fileId);
