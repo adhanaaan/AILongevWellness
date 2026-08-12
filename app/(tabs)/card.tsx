@@ -6,7 +6,7 @@ import { MobileShell } from "@/components/layout/MobileShell";
 import { FadeInView } from "@/components/ui/FadeInView";
 import { InsightsSkeleton } from "@/components/participant/InsightsSkeleton";
 import { BiologicalAgeHero } from "@/components/participant/BiologicalAgeHero";
-import { PillarStrip } from "@/components/participant/PillarStrip";
+import { PillarRangeList } from "@/components/participant/PillarRangeList";
 import { KeyContributorItem } from "@/components/participant/KeyContributorItem";
 import { SuggestedFocusGrid } from "@/components/participant/SuggestedFocusGrid";
 import { SnapshotPending } from "@/components/participant/SnapshotPending";
@@ -172,7 +172,7 @@ export default function CardPage() {
         )}
 
         <View style={styles.section}>
-          <PillarStrip items={[...pillarItems]} />
+          <PillarRangeList items={[...pillarItems]} />
         </View>
 
         <View style={styles.section}>
