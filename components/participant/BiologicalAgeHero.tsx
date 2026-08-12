@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
-import { ArrowRight, ChevronRight } from "lucide-react-native";
+import { ChevronRight } from "lucide-react-native";
 import { GradientOrb } from "@/components/ui/GradientOrb";
 import {
   colors,
@@ -18,20 +18,32 @@ export interface BiologicalAgeHeroProps {
   onPress?: () => void;
 }
 
-// A tick-based ruler with two markers close together (a small delta) reads
-// as cluttered on a phone-width card -- a plain side-by-side comparison
-// scales cleanly at any delta and reads at a glance, so this replaces it.
-function AgeCompareRow({ bioAge, chronoAge }: { bioAge: number; chronoAge: number }) {
+// How far above/below chronological age the bar spans. computeBiologicalAge
+// clamps the delta into roughly this window, so a ±15y scale keeps the marker
+// on-track at any realistic value while centering "your age".
+const AGE_WINDOW = 15;
+
+// An Oura-style position bar: the biological-age delta shown as a marker on a
+// younger <-> older track centered on chronological age, rather than two bare
+// numbers. Reads the "am I ahead or behind?" answer at a glance and gives the
+// hero a premium, data-forward moment.
+function AgePositionBar({ bioAge, chronoAge }: { bioAge: number; chronoAge: number }) {
+  const min = chronoAge - AGE_WINDOW;
+  const max = chronoAge + AGE_WINDOW;
+  const pct = Math.max(4, Math.min(96, ((bioAge - min) / (max - min)) * 100));
+  const younger = bioAge < chronoAge;
+  const markerColor = bioAge === chronoAge ? colors.amberLight : younger ? colors.amber : colors.terracotta;
+
   return (
-    <View style={styles.compareRow}>
-      <View style={styles.compareItem}>
-        <Text style={styles.compareValue}>{chronoAge}</Text>
-        <Text style={styles.compareLabel}>Your age</Text>
+    <View style={styles.ageBar}>
+      <View style={styles.ageTrack}>
+        <View style={styles.ageCenterTick} />
+        <View style={[styles.ageMarker, { left: `${pct}%`, backgroundColor: markerColor }]} />
       </View>
-      <ArrowRight size={18} color={colors.inkOnDarkMuted} />
-      <View style={styles.compareItem}>
-        <Text style={[styles.compareValue, styles.compareValueBio]}>{bioAge}</Text>
-        <Text style={styles.compareLabel}>Biological</Text>
+      <View style={styles.ageEnds}>
+        <Text style={styles.ageEndLabel}>Younger</Text>
+        <Text style={styles.ageAnchor}>Your age {chronoAge}</Text>
+        <Text style={styles.ageEndLabel}>Older</Text>
       </View>
     </View>
   );
@@ -48,6 +60,8 @@ export function BiologicalAgeHero({ bioAge, chronoAge, onPress }: BiologicalAgeH
 
   const content = (
     <>
+      {/* Layered, dual-tone ambient glow (brand amber + green) for depth. */}
+      <GradientOrb tone="teal" size={300} style={styles.orbBack} />
       <GradientOrb tone="amber" size={220} style={styles.orb} />
       {onPress && (
         <View style={styles.exploreHint}>
@@ -60,7 +74,7 @@ export function BiologicalAgeHero({ bioAge, chronoAge, onPress }: BiologicalAgeH
       <View style={styles.pill}>
         <Text style={styles.pillText}>{deltaLabel}</Text>
       </View>
-      <AgeCompareRow bioAge={bioAge} chronoAge={chronoAge} />
+      <AgePositionBar bioAge={bioAge} chronoAge={chronoAge} />
       <Text style={styles.explanation}>
         Calculated from your vascular, metabolic, and mental markers, compared with people your age.
       </Text>
@@ -110,6 +124,10 @@ const styles = StyleSheet.create({
     left: "50%",
     marginLeft: -110,
   },
+  orbBack: {
+    bottom: -80,
+    right: -80,
+  },
   label: {
     fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.labelMd,
@@ -135,32 +153,53 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.labelMd,
     color: colors.navy,
   },
-  compareRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing.xl,
+  ageBar: {
     width: "100%",
     paddingTop: spacing.lg,
     borderTopWidth: 1,
     borderTopColor: "rgba(255,255,255,0.15)",
   },
-  compareItem: {
+  ageTrack: {
+    height: 6,
+    borderRadius: radii.full,
+    backgroundColor: "rgba(255,255,255,0.16)",
+    justifyContent: "center",
+  },
+  ageCenterTick: {
+    position: "absolute",
+    left: "50%",
+    marginLeft: -1,
+    top: -4,
+    width: 2,
+    height: 14,
+    borderRadius: 1,
+    backgroundColor: "rgba(255,255,255,0.4)",
+  },
+  ageMarker: {
+    position: "absolute",
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    marginLeft: -8,
+    top: -5,
+    borderWidth: 2,
+    borderColor: colors.navy,
+  },
+  ageEnds: {
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: spacing.md,
   },
-  compareValue: {
-    fontFamily: fontFamilies.displayBold,
-    fontSize: fontSizes.headlineMd,
-    color: colors.inkOnDarkMuted,
-  },
-  compareValueBio: {
-    color: colors.amberLight,
-  },
-  compareLabel: {
+  ageEndLabel: {
     fontFamily: fontFamilies.bodyMedium,
-    fontSize: fontSizes.caption,
+    fontSize: fontSizes.overline,
     color: colors.inkOnDarkMuted,
-    marginTop: 2,
+  },
+  ageAnchor: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.caption,
+    color: colors.inkOnDark,
   },
   explanation: {
     fontFamily: fontFamilies.body,

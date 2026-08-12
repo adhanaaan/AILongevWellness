@@ -248,12 +248,13 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   loginLink: {
-    paddingVertical: spacing.xs,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
   },
   loginLinkText: {
     fontFamily: fontFamilies.bodySemiBold,
-    fontSize: fontSizes.bodyLg,
-    color: colors.ink,
+    fontSize: fontSizes.bodyMd,
+    color: colors.teal,
   },
   hint: {
     fontFamily: fontFamilies.body,

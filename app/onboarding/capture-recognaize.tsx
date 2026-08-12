@@ -306,6 +306,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
+    paddingVertical: spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
   resultLabel: {
     fontFamily: fontFamilies.bodyMedium,
@@ -313,8 +316,8 @@ const styles = StyleSheet.create({
     color: colors.inkMuted,
   },
   resultValue: {
-    fontFamily: fontFamilies.bodySemiBold,
-    fontSize: fontSizes.bodyMd,
+    fontFamily: fontFamilies.displaySemiBold,
+    fontSize: fontSizes.headlineSm,
     color: colors.ink,
   },
   error: {

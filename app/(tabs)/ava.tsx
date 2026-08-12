@@ -10,7 +10,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { useLocalSearchParams } from "expo-router";
-import { Send } from "lucide-react-native";
+import { Send, Sparkles } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { FadeInView } from "@/components/ui/FadeInView";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -25,7 +25,7 @@ import { isSupabaseConfigured } from "@/lib/config/env";
 import { askAva } from "@/lib/ai/client";
 import type { SignedCard } from "@/lib/data/repository";
 import type { Participant, Pipeline } from "@/lib/types/db";
-import { colors, fontSizes, radii } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, radii, shadows, spacing } from "@/lib/theme/tokens";
 
 interface Message {
   role: "user" | "ava";
@@ -158,11 +158,19 @@ function AvaChatContent({
         keyboardVerticalOffset={100}
       >
         <View style={styles.header}>
-          <Text style={styles.title}>
-            {participant
-              ? `Hi ${participant.name.split(" ")[0]}, let's go through your results`
-              : "Ask AVA about your results"}
-          </Text>
+          <View style={styles.headerTop}>
+            <View style={styles.avaBadge}>
+              <Sparkles size={18} color={colors.white} />
+            </View>
+            <View style={styles.headerText}>
+              <Text style={styles.eyebrow}>AVA · Wellness concierge</Text>
+              <Text style={styles.title}>
+                {participant
+                  ? `Hi ${participant.name.split(" ")[0]}, let's go through your results`
+                  : "Ask AVA about your results"}
+              </Text>
+            </View>
+          </View>
           <Text style={styles.subtitle}>
             Ask about your reviewed wellness card — this is general information, not medical
             advice.
@@ -201,6 +209,7 @@ function AvaChatContent({
               disabled={!canSend}
               accessibilityRole="button"
               accessibilityLabel="Send message"
+              activeOpacity={0.85}
             >
               <Send size={18} color={colors.white} />
             </TouchableOpacity>
@@ -214,49 +223,81 @@ function AvaChatContent({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  header: { marginBottom: 20 },
+  header: { marginBottom: spacing.xl },
+  headerTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+  },
+  avaBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: radii.full,
+    backgroundColor: colors.sage,
+    alignItems: "center",
+    justifyContent: "center",
+    ...shadows.soft,
+  },
+  headerText: { flex: 1 },
+  eyebrow: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    color: colors.sageDark,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginBottom: 2,
+  },
   title: {
-    fontSize: fontSizes.headlineLg,
+    fontFamily: fontFamilies.displaySemiBold,
+    fontSize: fontSizes.headlineMd,
     fontWeight: "600",
     color: colors.charcoal,
+    lineHeight: 30,
   },
   subtitle: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
-    marginTop: 4,
+    marginTop: spacing.md,
+    lineHeight: 18,
   },
-  messagesContent: { gap: 12, paddingBottom: 16 },
+  messagesContent: { gap: spacing.md, paddingBottom: spacing.lg, paddingTop: spacing.xs },
   inputArea: {
-    gap: 12,
-    paddingTop: 8,
-    paddingBottom: 8,
+    gap: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
     backgroundColor: colors.bone,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
   },
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: spacing.sm,
   },
   textInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: colors.borderStrong,
+    borderColor: colors.border,
     backgroundColor: colors.surface,
     borderRadius: radii.full,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.charcoal,
+    ...shadows.card,
   },
   sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 48,
+    height: 48,
+    borderRadius: radii.full,
     backgroundColor: colors.sage,
     alignItems: "center",
     justifyContent: "center",
+    ...shadows.soft,
   },
   sendButtonDisabled: {
-    opacity: 0.5,
+    opacity: 0.4,
   },
 });

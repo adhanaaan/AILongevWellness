@@ -6,7 +6,7 @@ import { Card, Button } from "@/components/ui";
 import { repository } from "@/lib/data/mock";
 import { toCsv } from "@/lib/export/csv";
 import { downloadTextFile } from "@/lib/export/download";
-import { colors, fontSizes, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, spacing, radii } from "@/lib/theme/tokens";
 
 type ExportKey = "participants" | "cards" | "audit";
 
@@ -133,7 +133,9 @@ export default function ExportsPage() {
         {EXPORT_OPTIONS.map((option) => (
           <Card key={option.key} style={styles.card}>
             <View style={styles.cardRow}>
-              <option.icon size={24} color={colors.sageDark} />
+              <View style={styles.cardIcon}>
+                <option.icon size={22} color={colors.sageDark} />
+              </View>
               <View style={styles.cardContent}>
                 <Text style={styles.cardTitle}>{option.title}</Text>
                 <Text style={styles.cardDesc}>{option.description}</Text>
@@ -156,17 +158,19 @@ export default function ExportsPage() {
 
 const styles = StyleSheet.create({
   heading: {
+    fontFamily: fontFamilies.displaySemiBold,
     fontSize: fontSizes.headlineMd,
-    fontWeight: "600",
     color: colors.charcoal,
     marginBottom: spacing.xs,
   },
   subtitle: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.inkMuted,
-    marginBottom: spacing["2xl"],
+    marginBottom: spacing.xl,
   },
   error: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.bodyMd,
     color: colors.danger,
     marginBottom: spacing.lg,
@@ -182,17 +186,27 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: spacing.md,
   },
+  cardIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: radii.full,
+    backgroundColor: colors.sageTint,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   cardContent: {
     flex: 1,
   },
   cardTitle: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.bodyMd,
-    fontWeight: "600",
     color: colors.charcoal,
   },
   cardDesc: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
     marginTop: 2,
+    lineHeight: 18,
   },
 });

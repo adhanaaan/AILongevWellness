@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { colors, fontSizes, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -150,15 +150,17 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   title: {
+    fontFamily: fontFamilies.displaySemiBold,
     fontSize: fontSizes.headlineMd,
-    fontWeight: "600",
     color: colors.charcoal,
   },
   subtitle: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.inkMuted,
     marginTop: spacing.xs,
     marginBottom: spacing["2xl"],
+    lineHeight: 24,
   },
   card: {
     gap: spacing.lg,

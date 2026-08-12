@@ -170,21 +170,25 @@ export default function CarePlanCategoryPage() {
           <View style={styles.planHeaderRow}>
             <Text style={styles.sectionTitle}>Your plan</Text>
             {planItems.length > 0 && !card && (
-              <Text style={styles.pendingNote}>AI-drafted · pending review</Text>
+              <View style={styles.pendingPill}>
+                <Text style={styles.pendingNote}>AI-drafted · pending review</Text>
+              </View>
             )}
           </View>
-          {planItems.length > 0 ? (
-            <View style={styles.planList}>
-              {planItems.map((item, i) => (
-                <View key={i} style={styles.planRow}>
-                  <Text style={styles.planBullet}>{"•"}</Text>
-                  <Text style={styles.planText}>{item}</Text>
-                </View>
-              ))}
-            </View>
-          ) : (
-            <Text style={styles.fallbackText}>{config.fallback}</Text>
-          )}
+          <Card padding="lg">
+            {planItems.length > 0 ? (
+              <View style={styles.planList}>
+                {planItems.map((item, i) => (
+                  <View key={i} style={styles.planRow}>
+                    <View style={[styles.planDot, { backgroundColor: config.color }]} />
+                    <Text style={styles.planText}>{item}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <Text style={styles.fallbackText}>{config.fallback}</Text>
+            )}
+          </Card>
         </View>
 
         {config.tracked ? (
@@ -338,29 +342,41 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-  },
-  pendingNote: {
-    fontFamily: fontFamilies.bodyMedium,
-    fontSize: fontSizes.caption,
-    color: colors.terracottaInk,
     marginBottom: spacing.md,
   },
-  planList: { gap: spacing.sm },
+  pendingPill: {
+    backgroundColor: colors.terracottaTint,
+    borderRadius: radii.full,
+    paddingVertical: 3,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.md,
+  },
+  pendingNote: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    color: colors.terracottaInk,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
+  planList: { gap: spacing.md },
   planRow: {
     flexDirection: "row",
-    gap: spacing.sm,
+    alignItems: "flex-start",
+    gap: spacing.md,
   },
-  planBullet: {
-    fontSize: fontSizes.bodyMd,
-    color: colors.sage,
-    lineHeight: 22,
+  planDot: {
+    width: 7,
+    height: 7,
+    borderRadius: radii.full,
+    marginTop: 8,
+    flexShrink: 0,
   },
   planText: {
     flex: 1,
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.charcoal,
-    lineHeight: 22,
+    lineHeight: 23,
   },
   fallbackText: {
     fontFamily: fontFamilies.body,

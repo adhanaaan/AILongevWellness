@@ -14,7 +14,7 @@ import { useRouter, usePathname } from "expo-router";
 import { Users, ClipboardCheck, Download, Settings, Menu, X } from "lucide-react-native";
 import { Avatar } from "@/components/ui/Avatar";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { colors, fontSizes, radii } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Participants", Icon: Users },
@@ -167,13 +167,17 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
   },
   sidebarTitle: {
-    fontSize: fontSizes.labelMd,
-    fontWeight: "600",
+    fontFamily: fontFamilies.displayBold,
+    fontSize: fontSizes.bodyMd,
     color: colors.sageDark,
   },
   sidebarSubtitle: {
-    fontSize: fontSizes.caption,
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.overline,
     color: colors.inkMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginTop: 2,
   },
   nav: {
     flex: 1,
@@ -192,8 +196,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.sageTint,
   },
   navLabel: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.labelMd,
-    fontWeight: "600",
   },
   sidebarFooter: {
     flexDirection: "row",
@@ -208,10 +212,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   footerName: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.labelMd,
     color: colors.charcoal,
   },
   footerRole: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
   },
@@ -244,8 +250,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
+    fontFamily: fontFamilies.displaySemiBold,
     fontSize: fontSizes.headlineMd,
-    fontWeight: "600",
     color: colors.charcoal,
     flex: 1,
   },

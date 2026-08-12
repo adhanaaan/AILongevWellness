@@ -32,7 +32,7 @@ import type {
   DailyLog,
   ParticipantSummary,
 } from "@/lib/types/db";
-import { colors, fontSizes, spacing, radii } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, spacing, radii } from "@/lib/theme/tokens";
 
 // GP and TCM sign off independently, in either order -- collapsed into one
 // "Review" step rather than two sequential ones, since the pipeline no
@@ -504,26 +504,27 @@ export default function ParticipantDetailPage() {
 
 const styles = StyleSheet.create({
   scroll: {
-    paddingBottom: 40,
+    paddingBottom: spacing["5xl"],
     gap: spacing.xs,
   },
   titleRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginTop: spacing.lg,
-    marginBottom: spacing.lg,
+    marginTop: spacing.md,
+    marginBottom: spacing.xl,
   },
   titleLeft: {
     flex: 1,
     marginRight: spacing.md,
   },
   name: {
+    fontFamily: fontFamilies.displayBold,
     fontSize: fontSizes.headlineLg,
-    fontWeight: "700",
     color: colors.charcoal,
   },
   meta: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.labelMd,
     color: colors.inkMuted,
     marginTop: spacing.xs,
@@ -532,16 +533,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.xs,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
   },
   consentTextOk: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.caption,
     color: colors.sageDark,
   },
   consentTextMissing: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.caption,
     color: colors.danger,
-    fontWeight: "600",
   },
   attentionCard: {
     backgroundColor: colors.dangerTint,
@@ -558,21 +560,22 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   attentionTitle: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.bodyMd,
-    fontWeight: "600",
     color: colors.danger,
   },
   attentionReason: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.charcoal,
     marginTop: 2,
   },
   section: {
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xl,
   },
   sectionTitle: {
-    fontSize: fontSizes.bodyLg,
-    fontWeight: "600",
+    fontFamily: fontFamilies.displaySemiBold,
+    fontSize: fontSizes.headlineSm,
     color: colors.charcoal,
     marginBottom: spacing.md,
   },
@@ -591,17 +594,17 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   fileLabel: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.bodyMd,
-    fontWeight: "600",
     color: colors.charcoal,
   },
   pillarLabel: {
-    fontSize: fontSizes.labelMd,
-    fontWeight: "600",
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
     color: colors.sageDark,
     marginBottom: spacing.sm,
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
   },
   biomarkerCard: {
     padding: 0,

@@ -13,8 +13,11 @@ export function TableRowSkeleton() {
   return (
     <View style={styles.row}>
       <View style={styles.nameCol}>
-        <SkeletonBlock width="70%" height={14} />
-        <SkeletonBlock width="40%" height={11} style={styles.metaGap} />
+        <SkeletonBlock width={36} height={36} radius={radii.full} />
+        <View style={styles.nameText}>
+          <SkeletonBlock width="70%" height={14} />
+          <SkeletonBlock width="40%" height={11} style={styles.metaGap} />
+        </View>
       </View>
       <View style={styles.progressCol}>
         <SkeletonBlock height={8} radius={radii.full} />
@@ -39,7 +42,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  nameCol: { flex: 2, marginRight: spacing.md },
+  nameCol: {
+    flex: 2,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    marginRight: spacing.md,
+  },
+  nameText: { flex: 1 },
   metaGap: { marginTop: spacing.xs },
   progressCol: { flex: 2, marginRight: spacing.md },
   statusCol: { flex: 2, marginRight: spacing.md },
