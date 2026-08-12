@@ -35,17 +35,19 @@ export default function IntroHookPage() {
     <View style={styles.page}>
       <Pressable style={styles.fill} onPress={advance}>
         <GradientOverlay stops={BACKGROUND_STOPS} />
-        <GradientOrb tone="amber" size={280} style={styles.orb} />
+        <GradientOrb tone="amber" size={300} style={styles.orbTop} />
+        <GradientOrb tone="teal" size={320} style={styles.orbBottom} />
         <SafeAreaView style={styles.safe}>
           <View style={styles.content}>
             <GlassCard tint="dark" padding="none" radius="full" style={styles.iconBadge}>
               <Sparkles size={28} color={colors.inkOnDark} />
             </GlassCard>
-            <Text style={styles.title}>We live in a busy world.</Text>
+            <Text style={styles.title}>We live in{"\n"}a busy world.</Text>
             <Text style={styles.subtitle}>
-              Why not pause for a moment and reflect on your own longevity?
+              Pause for a moment, and reflect on your own longevity.
             </Text>
           </View>
+          <Text style={styles.tapHint}>Tap to continue</Text>
         </SafeAreaView>
       </Pressable>
     </View>
@@ -67,10 +69,15 @@ const styles = StyleSheet.create({
   safe: {
     flex: 1,
   },
-  orb: {
-    top: -60,
-    right: -80,
+  orbTop: {
+    top: -70,
+    right: -90,
     opacity: 0.5,
+  },
+  orbBottom: {
+    bottom: -110,
+    left: -120,
+    opacity: 0.35,
   },
   content: {
     flex: 1,
@@ -83,21 +90,31 @@ const styles = StyleSheet.create({
     height: 64,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: spacing["2xl"],
+    marginBottom: spacing["3xl"],
   },
   title: {
     fontFamily: fontFamilies.displayBold,
-    fontSize: fontSizes.headlineLg,
+    fontSize: 40,
+    lineHeight: 46,
     color: colors.inkOnDark,
     textAlign: "center",
-    letterSpacing: -0.3,
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyLg,
     color: colors.inkOnDarkMuted,
     textAlign: "center",
-    marginTop: spacing.lg,
+    marginTop: spacing.xl,
     lineHeight: lineHeights.bodyLg,
+    maxWidth: 300,
+  },
+  tapHint: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.caption,
+    letterSpacing: 0.5,
+    color: colors.inkOnDarkMuted,
+    textAlign: "center",
+    paddingBottom: spacing["2xl"],
   },
 });

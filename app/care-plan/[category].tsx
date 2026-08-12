@@ -475,13 +475,15 @@ const styles = StyleSheet.create({
   },
   barTrack: {
     height: HISTORY_BAR_TRACK_HEIGHT,
-    width: "100%",
+    width: "70%",
     justifyContent: "flex-end",
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radii.full,
+    overflow: "hidden",
   },
   barFill: {
     width: "100%",
     borderRadius: radii.full,
-    opacity: 0.85,
   },
   dayLabel: {
     fontSize: fontSizes.caption,

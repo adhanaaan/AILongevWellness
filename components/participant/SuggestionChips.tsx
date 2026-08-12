@@ -1,6 +1,7 @@
 import React from "react";
-import { ScrollView, TouchableOpacity, Text, StyleSheet } from "react-native";
-import { colors, fontFamilies, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
+import { ScrollView, TouchableOpacity, Text, View, StyleSheet } from "react-native";
+import { Sparkles } from "lucide-react-native";
+import { colors, fontFamilies, fontSizes, fontWeights, radii, shadows, spacing } from "@/lib/theme/tokens";
 
 export interface SuggestionChipsProps {
   items: string[];
@@ -19,9 +20,16 @@ export function SuggestionChips({ items, onPick }: SuggestionChipsProps) {
           key={index}
           style={styles.chip}
           onPress={() => onPick(item)}
-          activeOpacity={0.7}
+          activeOpacity={0.75}
+          accessibilityRole="button"
+          accessibilityLabel={item}
         >
-          <Text style={styles.chipText}>{item}</Text>
+          <View style={styles.iconDot}>
+            <Sparkles size={11} color={colors.sage} />
+          </View>
+          <Text style={styles.chipText} numberOfLines={1}>
+            {item}
+          </Text>
         </TouchableOpacity>
       ))}
     </ScrollView>
@@ -30,21 +38,37 @@ export function SuggestionChips({ items, onPick }: SuggestionChipsProps) {
 
 const styles = StyleSheet.create({
   scrollContent: {
-    paddingHorizontal: spacing.lg,
+    paddingLeft: 0,
+    paddingRight: spacing.lg,
     gap: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   chip: {
-    backgroundColor: colors.sageTint,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs + 2,
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.tealTint,
+    borderColor: colors.border,
     borderRadius: radii.full,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm + 1,
+    paddingLeft: spacing.sm + 2,
+    paddingRight: spacing.lg,
+    ...shadows.card,
+  },
+  iconDot: {
+    width: 22,
+    height: 22,
+    borderRadius: radii.full,
+    backgroundColor: colors.sageTint,
+    alignItems: "center",
+    justifyContent: "center",
   },
   chipText: {
-    fontFamily: fontFamilies.bodyMedium,
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.labelMd,
-    fontWeight: fontWeights.medium,
+    fontWeight: fontWeights.semibold,
     color: colors.sageDark,
+    letterSpacing: -0.1,
   },
 });

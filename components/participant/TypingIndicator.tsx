@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from "react";
 import { Animated, Easing, StyleSheet, Text, View } from "react-native";
-import { Loader2 } from "lucide-react-native";
 import { AVA_DISCLAIMER } from "@/lib/ava/constants";
 import {
   colors,
@@ -12,42 +11,87 @@ import {
   spacing,
 } from "@/lib/theme/tokens";
 
+const DOTS = [0, 1, 2];
+
 export function TypingIndicator() {
   const enterOpacity = useRef(new Animated.Value(0)).current;
-  const spin = useRef(new Animated.Value(0)).current;
+  const enterTranslate = useRef(new Animated.Value(6)).current;
+  const dots = useRef(DOTS.map(() => new Animated.Value(0))).current;
 
   useEffect(() => {
-    Animated.timing(enterOpacity, {
-      toValue: 1,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-
-    const loop = Animated.loop(
-      Animated.timing(spin, {
+    Animated.parallel([
+      Animated.timing(enterOpacity, {
         toValue: 1,
-        duration: 900,
-        easing: Easing.linear,
+        duration: 220,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
-      })
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [enterOpacity, spin]);
+      }),
+      Animated.spring(enterTranslate, {
+        toValue: 0,
+        friction: 8,
+        tension: 60,
+        useNativeDriver: true,
+      }),
+    ]).start();
 
-  const rotate = spin.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "360deg"],
-  });
+    const loops = dots.map((dot, i) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(i * 160),
+          Animated.timing(dot, {
+            toValue: 1,
+            duration: 420,
+            easing: Easing.inOut(Easing.quad),
+            useNativeDriver: true,
+          }),
+          Animated.timing(dot, {
+            toValue: 0,
+            duration: 420,
+            easing: Easing.inOut(Easing.quad),
+            useNativeDriver: true,
+          }),
+          Animated.delay((DOTS.length - 1 - i) * 160),
+        ])
+      )
+    );
+    loops.forEach((l) => l.start());
+    return () => loops.forEach((l) => l.stop());
+  }, [enterOpacity, enterTranslate, dots]);
 
   return (
-    <Animated.View style={[styles.wrapper, { opacity: enterOpacity }]}>
+    <Animated.View
+      style={[
+        styles.wrapper,
+        { opacity: enterOpacity, transform: [{ translateY: enterTranslate }] },
+      ]}
+    >
       <View style={styles.bubble}>
         <View style={styles.row}>
-          <Animated.View style={{ transform: [{ rotate }] }}>
-            <Loader2 size={16} color={colors.inkMuted} />
-          </Animated.View>
-          <Text style={styles.label}>Thinking...</Text>
+          <View style={styles.dotsRow}>
+            {dots.map((dot, i) => (
+              <Animated.View
+                key={i}
+                style={[
+                  styles.dot,
+                  {
+                    opacity: dot.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0.35, 1],
+                    }),
+                    transform: [
+                      {
+                        translateY: dot.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [1.5, -2.5],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              />
+            ))}
+          </View>
+          <Text style={styles.label}>AVA is thinking</Text>
         </View>
         <Text style={styles.disclaimer}>{AVA_DISCLAIMER}</Text>
       </View>
@@ -64,23 +108,36 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radii.xl,
+    borderRadius: radii["2xl"],
     borderBottomLeftRadius: radii.sm,
-    paddingVertical: spacing.md,
+    paddingVertical: spacing.md + 1,
     paddingHorizontal: spacing.lg,
-    maxWidth: "82%",
-    ...shadows.card,
+    maxWidth: "84%",
+    ...shadows.soft,
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.sm,
+    gap: spacing.sm + 2,
+  },
+  dotsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingVertical: 2,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: radii.full,
+    backgroundColor: colors.sage,
   },
   label: {
     fontFamily: fontFamilies.bodyMedium,
-    fontSize: fontSizes.bodyMd,
+    fontSize: fontSizes.labelMd,
     fontWeight: fontWeights.medium,
-    color: colors.charcoal,
+    color: colors.inkMuted,
+    letterSpacing: -0.1,
   },
   disclaimer: {
     fontFamily: fontFamilies.body,
@@ -88,6 +145,6 @@ const styles = StyleSheet.create({
     fontWeight: fontWeights.regular,
     color: colors.inkMuted,
     marginTop: spacing.sm,
-    lineHeight: 16,
+    lineHeight: 17,
   },
 });

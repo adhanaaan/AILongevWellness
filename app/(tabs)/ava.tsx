@@ -160,7 +160,8 @@ function AvaChatContent({
         <View style={styles.header}>
           <View style={styles.headerTop}>
             <View style={styles.avaBadge}>
-              <Sparkles size={18} color={colors.white} />
+              <Sparkles size={20} color={colors.white} />
+              <View style={styles.statusDot} />
             </View>
             <View style={styles.headerText}>
               <Text style={styles.eyebrow}>AVA · Wellness concierge</Text>
@@ -192,12 +193,15 @@ function AvaChatContent({
         </ScrollView>
 
         <View style={styles.inputArea}>
-          <SuggestionChips items={SUGGESTIONS} onPick={send} />
-          <View style={styles.inputRow}>
+          <View>
+            <Text style={styles.suggestLabel}>Try asking</Text>
+            <SuggestionChips items={SUGGESTIONS} onPick={send} />
+          </View>
+          <View style={styles.composer}>
             <TextInput
               value={input}
               onChangeText={setInput}
-              placeholder="Ask about your card..."
+              placeholder="Message AVA..."
               placeholderTextColor={colors.inkMuted}
               style={styles.textInput}
               onSubmitEditing={() => send(input)}

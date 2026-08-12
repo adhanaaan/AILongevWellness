@@ -11,7 +11,7 @@ import { isSupabaseConfigured } from "@/lib/config/env";
 import { repository } from "@/lib/data/mock";
 import { isCaptureComplete } from "@/lib/onboarding/flow";
 import { pillarStatus } from "@/lib/ai/scoring";
-import { colors, fontFamilies, fontSizes, lineHeights, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, lineHeights, radii, spacing } from "@/lib/theme/tokens";
 
 // The consistent James Chen demo scores (see CLAUDE.md) shown as a static
 // "mock up of longevity data" over the hero photo -- a preview of what the
@@ -101,7 +101,12 @@ export default function WelcomePage() {
 
       <View style={styles.snapshotRow}>
         <Card padding="lg" style={styles.snapshotCard}>
-          <Text style={styles.snapshotTitle}>Your longevity snapshot</Text>
+          <View style={styles.snapshotHeader}>
+            <Text style={styles.snapshotTitle}>Your longevity snapshot</Text>
+            <View style={styles.previewPill}>
+              <Text style={styles.previewPillText}>PREVIEW</Text>
+            </View>
+          </View>
           <View style={styles.snapshotRings}>
             {SNAPSHOT_SCORES.map((score) => (
               <ScoreRing
@@ -113,6 +118,10 @@ export default function WelcomePage() {
               />
             ))}
           </View>
+          <View style={styles.snapshotDivider} />
+          <Text style={styles.snapshotCaption}>
+            Biological age 54 — four years younger than 58
+          </Text>
         </Card>
       </View>
 
@@ -131,11 +140,12 @@ export default function WelcomePage() {
 
         <View style={styles.container}>
           <View style={styles.textBlock}>
+            <Text style={styles.eyebrow}>EMBRACING LONGEVITY</Text>
             <Text style={styles.title}>
               Your Executive{"\n"}Health Intelligence
             </Text>
             <Text style={styles.subtitle}>
-              All your health data, in one place.
+              All your wellness data in one place, reviewed by your care team.
             </Text>
           </View>
 
@@ -152,7 +162,8 @@ export default function WelcomePage() {
               activeOpacity={0.7}
               style={styles.loginLink}
             >
-              <Text style={styles.loginLinkText}>Login</Text>
+              <Text style={styles.loginLinkLead}>Already a member? </Text>
+              <Text style={styles.loginLinkText}>Log in</Text>
             </TouchableOpacity>
             <Text style={styles.hint}>
               Your data is encrypted and handled in accordance with our privacy
@@ -198,19 +209,48 @@ const styles = StyleSheet.create({
   snapshotCard: {
     width: "100%",
   },
+  snapshotHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: spacing.lg,
+  },
   snapshotTitle: {
     fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.labelMd,
     color: colors.ink,
-    marginBottom: spacing.md,
+  },
+  previewPill: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radii.full,
+    backgroundColor: colors.tealTint,
+  },
+  previewPillText: {
+    fontFamily: fontFamilies.bodyBold,
+    fontSize: fontSizes.overline,
+    letterSpacing: 0.8,
+    color: colors.teal,
   },
   snapshotRings: {
     flexDirection: "row",
     justifyContent: "space-around",
   },
+  snapshotDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginTop: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  snapshotCaption: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    textAlign: "center",
+  },
   logoRow: {
     alignItems: "center",
-    marginTop: spacing.lg,
+    marginTop: spacing.xl,
   },
   logo: {
     width: 170,
@@ -218,11 +258,19 @@ const styles = StyleSheet.create({
   },
   container: {
     paddingHorizontal: spacing["2xl"],
-    paddingTop: spacing.md,
+    paddingTop: spacing.lg,
     paddingBottom: spacing.lg,
   },
   textBlock: {
     marginTop: spacing.sm,
+    alignItems: "center",
+  },
+  eyebrow: {
+    fontFamily: fontFamilies.bodyBold,
+    fontSize: fontSizes.overline,
+    letterSpacing: 2,
+    color: colors.teal,
+    marginBottom: spacing.md,
   },
   title: {
     fontFamily: fontFamilies.displayBold,
@@ -230,26 +278,37 @@ const styles = StyleSheet.create({
     color: colors.ink,
     lineHeight: 44,
     letterSpacing: -0.5,
+    textAlign: "center",
   },
   subtitle: {
     fontFamily: fontFamilies.body,
-    fontSize: fontSizes.headlineSm,
+    fontSize: fontSizes.bodyLg,
     color: colors.inkMuted,
     marginTop: spacing.md,
-    lineHeight: lineHeights.headlineSm,
+    lineHeight: lineHeights.bodyLg,
+    textAlign: "center",
+    maxWidth: 320,
   },
   actions: {
     width: "100%",
-    gap: spacing.md,
+    gap: spacing.lg,
     alignItems: "center",
-    marginTop: spacing["2xl"],
+    marginTop: spacing["3xl"],
   },
   getStartedButton: {
     width: "100%",
   },
   loginLink: {
-    paddingVertical: spacing.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing.xs,
     paddingHorizontal: spacing.lg,
+  },
+  loginLinkLead: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.bodyMd,
+    color: colors.inkMuted,
   },
   loginLinkText: {
     fontFamily: fontFamilies.bodySemiBold,

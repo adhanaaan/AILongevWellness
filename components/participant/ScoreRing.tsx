@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import Svg, { Circle } from "react-native-svg";
-import { colors, fontSizes, fontWeights, spacing } from "@/lib/theme/tokens";
+import Svg, { Circle, Defs, LinearGradient, Stop } from "react-native-svg";
+import { colors, fontFamilies, fontSizes, spacing, teal } from "@/lib/theme/tokens";
 
 export interface ScoreRingProps {
   value: number;
@@ -10,28 +10,49 @@ export interface ScoreRingProps {
   size?: number;
 }
 
+// A premium score ring: a faint status-tinted track under a rounded, gradient
+// progress stroke (light → brand at the leading edge, à la Replika's onboarding
+// ring), with a bold display-font value centered in the well like Alma's food
+// scores. Stroke and type scale with `size` so the same component reads well at
+// the 56px preview trio and the larger card. Public API is unchanged.
 export function ScoreRing({
   value,
   label,
   status,
   size = 88,
 }: ScoreRingProps) {
-  const strokeWidth = 6;
+  const gradientId = React.useId();
+  const strokeWidth = Math.max(5, Math.round(size * 0.1));
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const clamped = Math.max(0, Math.min(100, value));
   const strokeDashoffset = circumference * (1 - clamped / 100);
-  const progressColor = status === "good" ? colors.sage : colors.terracotta;
+
+  const isGood = status === "good";
+  // Gradient sweeps a lighter tint into the brand hue so the stroke has depth
+  // rather than reading as a flat arc; text takes the darker, most-legible end.
+  const gradFrom = isGood ? teal[300] : colors.terracotta;
+  const gradTo = isGood ? colors.sage : colors.terracottaInk;
+  const trackColor = isGood ? colors.sageTint : colors.terracottaTint;
+  const valueColor = gradTo;
+
+  const valueFontSize = Math.round(size * 0.34);
 
   return (
     <View style={styles.container}>
       <View style={{ width: size, height: size }}>
         <Svg width={size} height={size}>
+          <Defs>
+            <LinearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
+              <Stop offset="0" stopColor={gradFrom} />
+              <Stop offset="1" stopColor={gradTo} />
+            </LinearGradient>
+          </Defs>
           <Circle
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke={colors.surfaceMuted}
+            stroke={trackColor}
             strokeWidth={strokeWidth}
             fill="none"
           />
@@ -39,7 +60,7 @@ export function ScoreRing({
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke={progressColor}
+            stroke={`url(#${gradientId})`}
             strokeWidth={strokeWidth}
             fill="none"
             strokeLinecap="round"
@@ -50,7 +71,9 @@ export function ScoreRing({
           />
         </Svg>
         <View style={[styles.valueContainer, { width: size, height: size }]}>
-          <Text style={[styles.value, { color: progressColor }]}>{clamped}</Text>
+          <Text style={[styles.value, { color: valueColor, fontSize: valueFontSize }]}>
+            {clamped}
+          </Text>
         </View>
       </View>
       <Text style={styles.label}>{label}</Text>
@@ -70,12 +93,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   value: {
-    fontSize: fontSizes.headlineMd,
-    fontWeight: fontWeights.bold,
+    fontFamily: fontFamilies.displayBold,
+    letterSpacing: -0.5,
+    includeFontPadding: false,
   },
   label: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.caption,
-    fontWeight: fontWeights.medium,
     color: colors.inkMuted,
     marginTop: spacing.sm,
   },

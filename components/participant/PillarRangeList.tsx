@@ -52,8 +52,12 @@ function PillarRow({ item }: { item: PillarRangeItem }) {
           {meta && <Text style={styles.caption}>{meta.caption}</Text>}
         </View>
         <View style={styles.valueBlock}>
-          <Text style={styles.value}>{item.value}</Text>
+          <View style={styles.valueRow}>
+            <Text style={styles.value}>{item.value}</Text>
+            <Text style={styles.valueMax}>/100</Text>
+          </View>
           <View style={[styles.statusPill, { backgroundColor: statusTint }]}>
+            <View style={[styles.statusDot, { backgroundColor: markerColor }]} />
             <Text style={[styles.statusText, { color: statusInk }]}>
               {isGood ? "Optimal" : "Monitor"}
             </Text>
@@ -138,17 +142,32 @@ const styles = StyleSheet.create({
     color: colors.inkMuted,
     marginTop: 1,
   },
-  valueBlock: { alignItems: "flex-end", gap: 4 },
+  valueBlock: { alignItems: "flex-end", gap: 5 },
+  valueRow: { flexDirection: "row", alignItems: "baseline", gap: 1 },
   value: {
     fontFamily: fontFamilies.displayBold,
     fontSize: fontSizes.headlineMd,
     color: colors.charcoal,
     lineHeight: fontSizes.headlineMd,
+    letterSpacing: -0.5,
+  },
+  valueMax: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
   },
   statusPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
     borderRadius: radii.full,
-    paddingVertical: 2,
+    paddingVertical: 3,
     paddingHorizontal: spacing.sm,
+  },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: radii.full,
   },
   statusText: {
     fontSize: fontSizes.overline,
