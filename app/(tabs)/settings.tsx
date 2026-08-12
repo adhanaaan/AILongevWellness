@@ -11,7 +11,7 @@ import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import type { Participant } from "@/lib/types/db";
-import { colors, fontSizes } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -39,9 +39,9 @@ export default function SettingsPage() {
       >
         <Text style={styles.title}>Settings</Text>
 
-        <Card style={styles.profileCard}>
+        <Card padding="lg" style={styles.profileCard}>
           <Avatar initials={participant.name.slice(0, 1)} size="lg" />
-          <View>
+          <View style={styles.profileText}>
             <Text style={styles.profileName}>{participant.name}</Text>
             <Text style={styles.profileMeta}>
               {participant.age} · {participant.sex} · {participant.height_cm}cm ·{" "}
@@ -50,39 +50,53 @@ export default function SettingsPage() {
           </View>
         </Card>
 
-        <Card style={styles.infoCard}>
-          <User size={18} color={colors.sageDark} />
-          <View>
-            <Text style={styles.infoLabel}>Goals</Text>
-            <Text style={styles.infoValue}>
-              {participant.goals.join(", ")}
-            </Text>
+        <Text style={styles.sectionLabel}>Your profile</Text>
+        <Card padding="none" style={styles.group}>
+          <View style={styles.infoRow}>
+            <View style={styles.iconCircle}>
+              <User size={18} color={colors.sageDark} />
+            </View>
+            <View style={styles.infoTextGrow}>
+              <Text style={styles.infoLabel}>Goals</Text>
+              <Text style={styles.infoValue}>{participant.goals.join(", ")}</Text>
+            </View>
+          </View>
+          <View style={styles.divider} />
+          <View style={styles.infoRow}>
+            <View style={styles.iconCircle}>
+              <ShieldCheck size={18} color={colors.sageDark} />
+            </View>
+            <View style={styles.infoTextGrow}>
+              <Text style={styles.infoLabel}>Privacy & consent</Text>
+              <Text style={styles.infoValue}>
+                You agreed to the wellness consent terms during onboarding.
+              </Text>
+            </View>
           </View>
         </Card>
 
-        <Card style={styles.infoCard}>
-          <ShieldCheck size={18} color={colors.sageDark} />
-          <View>
-            <Text style={styles.infoLabel}>Privacy & consent</Text>
-            <Text style={styles.infoValue}>
-              You agreed to the wellness consent terms during onboarding.
-            </Text>
+        <Text style={styles.sectionLabel}>About</Text>
+        <Card padding="none" style={styles.group}>
+          <View style={styles.infoRow}>
+            <View style={styles.iconCircle}>
+              <FileText size={18} color={colors.sageDark} />
+            </View>
+            <View style={styles.infoTextGrow}>
+              <Text style={styles.infoLabel}>About AI Wellness</Text>
+              <Text style={styles.infoValue}>
+                Executive retreat pilot · wellness insights, not diagnosis.
+              </Text>
+            </View>
           </View>
-        </Card>
-
-        <Card style={styles.infoCard}>
-          <FileText size={18} color={colors.sageDark} />
-          <View>
-            <Text style={styles.infoLabel}>About AI Wellness</Text>
-            <Text style={styles.infoValue}>
-              Executive retreat pilot · wellness insights, not diagnosis.
-            </Text>
-          </View>
-        </Card>
-
-        <TouchableOpacity onPress={() => router.push("/methodology")} activeOpacity={0.7}>
-          <Card style={styles.infoCard}>
-            <BookOpen size={18} color={colors.sageDark} />
+          <View style={styles.divider} />
+          <TouchableOpacity
+            style={styles.infoRow}
+            onPress={() => router.push("/methodology")}
+            activeOpacity={0.7}
+          >
+            <View style={styles.iconCircle}>
+              <BookOpen size={18} color={colors.sageDark} />
+            </View>
             <View style={styles.infoTextGrow}>
               <Text style={styles.infoLabel}>Methodology & Sources</Text>
               <Text style={styles.infoValue}>
@@ -90,13 +104,15 @@ export default function SettingsPage() {
               </Text>
             </View>
             <ChevronRight size={18} color={colors.inkMuted} />
-          </Card>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </Card>
 
         {isSupabaseConfigured && (
-          <Button variant="secondary" iconLeft={<LogOut size={16} color={colors.sageDark} />} onPress={signOut}>
-            Sign out
-          </Button>
+          <View style={styles.signOut}>
+            <Button variant="secondary" iconLeft={<LogOut size={16} color={colors.sageDark} />} onPress={signOut}>
+              Sign out
+            </Button>
+          </View>
         )}
       </ScrollView>
     </MobileShell>
@@ -104,40 +120,76 @@ export default function SettingsPage() {
 }
 
 const styles = StyleSheet.create({
-  scrollContent: { gap: 16, paddingBottom: 32 },
+  scrollContent: { gap: spacing.md, paddingBottom: spacing["3xl"] },
   title: {
+    fontFamily: fontFamilies.displaySemiBold,
     fontSize: fontSizes.headlineLg,
     fontWeight: "600",
     color: colors.charcoal,
+    marginBottom: spacing.xs,
   },
   profileCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
+    gap: spacing.lg,
   },
+  profileText: { flex: 1 },
   profileName: {
+    fontFamily: fontFamilies.displaySemiBold,
     fontSize: fontSizes.headlineMd,
     fontWeight: "600",
     color: colors.charcoal,
   },
   profileMeta: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
+    marginTop: 2,
   },
-  infoCard: {
+  sectionLabel: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    color: colors.inkMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+    marginTop: spacing.md,
+    marginBottom: spacing.xs,
+    marginLeft: spacing.xs,
+  },
+  group: { overflow: "hidden" },
+  infoRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: spacing.md,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: radii.full,
+    backgroundColor: colors.sageTint,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginLeft: spacing.lg + 40 + spacing.md,
   },
   infoTextGrow: { flex: 1 },
   infoLabel: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.labelMd,
     fontWeight: "600",
     color: colors.charcoal,
   },
   infoValue: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
     marginTop: 2,
+    lineHeight: 17,
   },
+  signOut: { marginTop: spacing.md },
 });

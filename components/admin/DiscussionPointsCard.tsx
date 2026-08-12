@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { MessageCircle } from "lucide-react-native";
 import { Card } from "@/components/ui";
-import { colors, fontSizes, fontWeights, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 
 interface DiscussionPointsCardProps {
   points: string[];
@@ -36,8 +36,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   heading: {
-    fontSize: fontSizes.headlineMd,
-    fontWeight: fontWeights.bold,
+    fontFamily: fontFamilies.displaySemiBold,
+    fontSize: fontSizes.headlineSm,
     color: colors.charcoal,
   },
   list: {

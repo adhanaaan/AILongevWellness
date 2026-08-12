@@ -7,17 +7,9 @@ import { TableRowSkeleton } from "@/components/admin/TableRowSkeleton";
 import { SegmentedControl } from "@/components/ui";
 import { repository } from "@/lib/data/mock";
 import type { ParticipantSummary } from "@/lib/types/db";
-import { colors, fontSizes, spacing, radii } from "@/lib/theme/tokens";
+import { CheckCircle2 } from "lucide-react-native";
+import { colors, fontFamilies, fontSizes, spacing, radii, shadows } from "@/lib/theme/tokens";
 import { useRouter } from "expo-router";
-
-// GP and TCM sign off independently, in either order -- these segments filter
-// by which specific stage is still outstanding rather than by pipeline.state,
-// since both stages share the same "gp_review" (awaiting one or both) state.
-const SEGMENTS = [
-  { value: "all", label: "All Reviews" },
-  { value: "needs_gp", label: "Needs GP" },
-  { value: "needs_tcm", label: "Needs TCM" },
-];
 
 export default function ReviewQueuePage() {
   const router = useRouter();
@@ -32,27 +24,49 @@ export default function ReviewQueuePage() {
   }, []);
 
   const loaded = summaries !== null;
+  const reviewable = useMemo(
+    () => (summaries ?? []).filter((s) => s.pipeline.state === "gp_review"),
+    [summaries]
+  );
+  const needsGpCount = reviewable.filter((s) => !s.gpSigned).length;
+  const needsTcmCount = reviewable.filter((s) => !s.tcmSigned).length;
+
+  // GP and TCM sign off independently, in either order -- these segments filter
+  // by which specific stage is still outstanding rather than by pipeline.state,
+  // since both stages share the same "gp_review" (awaiting one or both) state.
+  const segments = [
+    { value: "all", label: `All (${reviewable.length})` },
+    { value: "needs_gp", label: `Needs GP (${needsGpCount})` },
+    { value: "needs_tcm", label: `Needs TCM (${needsTcmCount})` },
+  ];
+
   const queued = useMemo(() => {
-    const reviewable = (summaries ?? []).filter((s) => s.pipeline.state === "gp_review");
     if (segment === "needs_gp") return reviewable.filter((s) => !s.gpSigned);
     if (segment === "needs_tcm") return reviewable.filter((s) => !s.tcmSigned);
     return reviewable;
-  }, [summaries, segment]);
+  }, [reviewable, segment]);
 
   return (
     <AdminShell title="Review Queue">
       <View style={styles.headerRow}>
-        <ClipboardCheck size={24} color={colors.sageDark} />
-        <Text style={styles.heading}>
-          {loaded
-            ? `${queued.length} participant${queued.length !== 1 ? "s" : ""} awaiting review`
-            : "Loading review queue..."}
-        </Text>
+        <View style={styles.headerIcon}>
+          <ClipboardCheck size={22} color={colors.sageDark} />
+        </View>
+        <View style={styles.headerText}>
+          <Text style={styles.heading}>
+            {loaded
+              ? `${queued.length} participant${queued.length !== 1 ? "s" : ""} awaiting review`
+              : "Loading review queue…"}
+          </Text>
+          <Text style={styles.subheading}>
+            GP and TCM reviewers sign off independently, in either order.
+          </Text>
+        </View>
       </View>
 
       <View style={styles.segmentRow}>
         <SegmentedControl
-          options={SEGMENTS}
+          options={segments}
           value={segment}
           onChange={setSegment}
         />
@@ -61,7 +75,9 @@ export default function ReviewQueuePage() {
       <View style={styles.listContainer}>
         <View style={styles.listHeader}>
           <Text style={[styles.headerCell, { flex: 2 }]}>Participant</Text>
-          <Text style={[styles.headerCell, { flex: 1 }]}>Status</Text>
+          <Text style={[styles.headerCell, { flex: 2 }]}>Capture</Text>
+          <Text style={[styles.headerCell, { flex: 2 }]}>Status</Text>
+          <View style={styles.headerSpacer} />
         </View>
         {!loaded &&
           Array.from({ length: 3 }, (_, i) => <TableRowSkeleton key={i} />)}
@@ -76,7 +92,16 @@ export default function ReviewQueuePage() {
             />
           ))}
         {loaded && queued.length === 0 && (
-          <Text style={styles.emptyText}>No participants in the review queue.</Text>
+          <View style={styles.emptyState}>
+            <View style={styles.emptyIcon}>
+              <CheckCircle2 size={22} color={colors.sageDark} />
+            </View>
+            <Text style={styles.emptyText}>
+              {segment === "all"
+                ? "The review queue is clear — nothing awaiting sign-off."
+                : "Nothing in this segment right now."}
+            </Text>
+          </View>
         )}
       </View>
     </AdminShell>
@@ -88,38 +113,78 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
-    marginBottom: spacing["2xl"],
+    marginBottom: spacing.xl,
+  },
+  headerIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: radii.full,
+    backgroundColor: colors.sageTint,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerText: {
+    flex: 1,
   },
   heading: {
-    fontSize: fontSizes.headlineMd,
-    fontWeight: "600",
+    fontFamily: fontFamilies.displaySemiBold,
+    fontSize: fontSizes.headlineSm,
     color: colors.charcoal,
   },
+  subheading: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    marginTop: 2,
+  },
   segmentRow: {
-    marginBottom: spacing["2xl"],
+    marginBottom: spacing.xl,
   },
   listContainer: {
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radii.lg,
+    borderRadius: radii.xl,
     backgroundColor: colors.surface,
     overflow: "hidden",
+    ...shadows.card,
   },
   listHeader: {
     flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.surfaceMuted,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   headerCell: {
-    fontSize: fontSizes.caption,
-    fontWeight: "600",
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
     color: colors.inkMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+  headerSpacer: {
+    width: 24,
+  },
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: spacing["4xl"],
+    paddingHorizontal: spacing.xl,
+    gap: spacing.md,
+  },
+  emptyIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: radii.full,
+    backgroundColor: colors.sageTint,
+    alignItems: "center",
+    justifyContent: "center",
   },
   emptyText: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.inkMuted,
     textAlign: "center",
-    padding: 24,
   },
 });

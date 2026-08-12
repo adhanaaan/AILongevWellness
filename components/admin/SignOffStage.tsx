@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Lock, CheckCircle2 } from "lucide-react-native";
 import { Card, Button, Input, Textarea } from "@/components/ui";
-import { colors, fontSizes, fontWeights, spacing, radii } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, fontWeights, spacing, radii } from "@/lib/theme/tokens";
 import { signOffAction } from "@/lib/data/actions";
 import { getSavedReviewer, saveReviewer } from "@/lib/data/reviewerIdentity";
 import type { ReviewStage, Review } from "@/lib/types/db";
@@ -69,11 +69,16 @@ export function SignOffStage({
 
   if (isSigned && review) {
     return (
-      <Card>
+      <Card style={styles.cardSigned}>
         <View style={styles.signedContainer}>
           <CheckCircle2 size={20} color={colors.sageDark} />
           <View style={styles.signedContent}>
-            <Text style={styles.stageTitle}>{stageLabels[stage]}</Text>
+            <View style={styles.signedHeader}>
+              <Text style={styles.stageTitle}>{stageLabels[stage]}</Text>
+              <View style={styles.signedPill}>
+                <Text style={styles.signedPillText}>Signed</Text>
+              </View>
+            </View>
             <Text style={styles.reviewerName}>{review.reviewer_name}</Text>
             <Text style={styles.reviewerCredential}>
               {review.reviewer_credential}

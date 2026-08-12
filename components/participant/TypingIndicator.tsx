@@ -4,9 +4,11 @@ import { Loader2 } from "lucide-react-native";
 import { AVA_DISCLAIMER } from "@/lib/ava/constants";
 import {
   colors,
+  fontFamilies,
   fontSizes,
   fontWeights,
   radii,
+  shadows,
   spacing,
 } from "@/lib/theme/tokens";
 
@@ -62,11 +64,12 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radii.lg,
+    borderRadius: radii.xl,
     borderBottomLeftRadius: radii.sm,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
-    maxWidth: "80%",
+    maxWidth: "82%",
+    ...shadows.card,
   },
   row: {
     flexDirection: "row",
@@ -74,14 +77,17 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   label: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.bodyMd,
     fontWeight: fontWeights.medium,
     color: colors.charcoal,
   },
   disclaimer: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     fontWeight: fontWeights.regular,
     color: colors.inkMuted,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
+    lineHeight: 16,
   },
 });

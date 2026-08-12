@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ArrowLeft, ChevronRight } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { FadeInView } from "@/components/ui/FadeInView";
 import { repository } from "@/lib/data/mock";
@@ -83,13 +84,18 @@ export default function BioAgePage() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <FadeInView style={styles.fadeIn}>
         <Text style={styles.pageTitle}>Biological age</Text>
-        <Text style={styles.bioAgeValue}>{bioAge}</Text>
-        <View style={styles.pill}>
-          <Text style={styles.pillText}>{deltaLabel}</Text>
-        </View>
+
+        <Card padding="lg" style={styles.heroCard}>
+          <Text style={styles.heroCaption}>Your estimated biological age</Text>
+          <Text style={styles.bioAgeValue}>{bioAge}</Text>
+          <View style={styles.pill}>
+            <Text style={styles.pillText}>{deltaLabel}</Text>
+          </View>
+        </Card>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>How this is calculated</Text>
+          <Card padding="lg" style={styles.explainerCard}>
           {usedPhenoAge ? (
             <>
               <Text style={styles.paragraph}>
@@ -119,6 +125,7 @@ export default function BioAgePage() {
               </Text>
             </>
           )}
+          </Card>
         </View>
 
         <View style={styles.section}>
@@ -179,14 +186,30 @@ const styles = StyleSheet.create({
     color: colors.charcoal,
     alignSelf: "flex-start",
   },
+  heroCard: {
+    width: "100%",
+    alignItems: "center",
+    marginTop: spacing.lg,
+    paddingVertical: spacing["2xl"],
+  },
+  heroCaption: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    color: colors.inkMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
   bioAgeValue: {
     fontFamily: fontFamilies.displayBold,
     fontSize: fontSizes.display,
     color: colors.charcoal,
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
+  },
+  explainerCard: {
+    width: "100%",
   },
   pill: {
-    marginTop: spacing.sm,
+    marginTop: spacing.md,
     backgroundColor: colors.amberLighter,
     borderRadius: radii.full,
     paddingVertical: spacing.xs,

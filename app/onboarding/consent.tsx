@@ -6,7 +6,7 @@ import { Check, ShieldCheck } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { TermsModal } from "@/components/ui/TermsModal";
-import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 
 const PRIVACY_POLICY_BODY = `We take the security of your wellness data seriously. This summary explains what we collect, how it's used, and who can see it during your time in the programme.
 
@@ -91,7 +91,7 @@ export default function ConsentPage() {
                   tint="light"
                   padding="md"
                   radius="2xl"
-                  tintColor={isChecked ? "rgba(42,175,170,0.16)" : undefined}
+                  tintColor={isChecked ? colors.tealTint : undefined}
                   tintBorderColor={isChecked ? colors.teal : undefined}
                 >
                   <View style={styles.itemRow}>
@@ -101,7 +101,7 @@ export default function ConsentPage() {
                         isChecked && styles.checkboxChecked,
                       ]}
                     >
-                      {isChecked && <Check size={14} color={colors.white} />}
+                      {isChecked && <Check size={15} color={colors.white} strokeWidth={3} />}
                     </View>
                     <View style={styles.itemContent}>
                       <Text style={styles.itemTitle}>{item.title}</Text>
@@ -119,6 +119,9 @@ export default function ConsentPage() {
 
       {allChecked && (
         <View style={styles.footer}>
+          <Text style={styles.footerNote}>
+            You can withdraw your consent at any time.
+          </Text>
           <Button size="lg" onPress={() => router.push("/onboarding/auth")}>
             Agree and continue
           </Button>
@@ -185,14 +188,14 @@ const styles = StyleSheet.create({
     gap: spacing.md,
   },
   checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
+    width: 24,
+    height: 24,
+    borderRadius: radii.sm,
     borderWidth: 2,
     borderColor: colors.borderStrong,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 2,
+    marginTop: 1,
   },
   checkboxChecked: {
     backgroundColor: colors.teal,
@@ -216,5 +219,13 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: spacing["2xl"],
     paddingVertical: spacing.lg,
+    gap: spacing.md,
+  },
+  footerNote: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    textAlign: "center",
+    lineHeight: 18,
   },
 });

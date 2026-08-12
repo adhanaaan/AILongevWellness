@@ -6,7 +6,7 @@ import { Card, Avatar, Button } from "@/components/ui";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured, SUPABASE_URL } from "@/lib/config/env";
 import { getSupabaseClient } from "@/lib/data/supabase";
-import { colors, fontSizes, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, spacing, radii } from "@/lib/theme/tokens";
 
 function projectHost(url: string | undefined): string {
   if (!url) return "";
@@ -42,8 +42,10 @@ export default function AdminSettingsPage() {
       <Card style={styles.profileCard}>
         <Avatar initials={initials} size="lg" />
         <View style={styles.profileInfo}>
-          <Text style={styles.profileName}>{email}</Text>
-          <Text style={styles.profileRole}>Care team member</Text>
+          <Text style={styles.profileName} numberOfLines={1}>{email}</Text>
+          <View style={styles.roleBadge}>
+            <Text style={styles.roleBadgeText}>Care team</Text>
+          </View>
         </View>
       </Card>
 
@@ -106,7 +108,7 @@ function SettingSection({
   return (
     <Card style={styles.sectionCard}>
       <View style={styles.sectionRow}>
-        {icon}
+        <View style={styles.sectionIcon}>{icon}</View>
         <View style={styles.sectionContent}>
           <Text style={styles.sectionTitle}>{title}</Text>
           <Text style={styles.sectionDesc}>{description}</Text>
@@ -118,29 +120,37 @@ function SettingSection({
 
 const styles = StyleSheet.create({
   heading: {
+    fontFamily: fontFamilies.displaySemiBold,
     fontSize: fontSizes.headlineMd,
-    fontWeight: "600",
     color: colors.charcoal,
-    marginBottom: spacing["2xl"],
+    marginBottom: spacing.xl,
   },
   profileCard: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.lg,
-    marginBottom: spacing["2xl"],
+    marginBottom: spacing.xl,
   },
   profileInfo: {
     flex: 1,
   },
   profileName: {
+    fontFamily: fontFamilies.displaySemiBold,
     fontSize: fontSizes.bodyLg,
-    fontWeight: "600",
     color: colors.charcoal,
   },
-  profileRole: {
-    fontSize: fontSizes.labelMd,
-    color: colors.inkMuted,
-    marginTop: 2,
+  roleBadge: {
+    alignSelf: "flex-start",
+    backgroundColor: colors.sageTint,
+    borderRadius: radii.full,
+    paddingVertical: 2,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.xs,
+  },
+  roleBadgeText: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.caption,
+    color: colors.sageDark,
   },
   sections: {
     gap: spacing.md,
@@ -150,24 +160,35 @@ const styles = StyleSheet.create({
   },
   sectionRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: spacing.md,
+  },
+  sectionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radii.full,
+    backgroundColor: colors.sageTint,
+    alignItems: "center",
+    justifyContent: "center",
   },
   sectionContent: {
     flex: 1,
+    paddingTop: 2,
   },
   sectionTitle: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.bodyMd,
-    fontWeight: "600",
     color: colors.charcoal,
   },
   sectionDesc: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
     marginTop: 2,
+    lineHeight: 18,
   },
   signOut: {
-    marginTop: spacing["2xl"],
+    marginTop: spacing.xl,
     alignSelf: "flex-start",
   },
 });

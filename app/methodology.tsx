@@ -4,8 +4,9 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 import { METHODOLOGY_SECTIONS } from "@/lib/methodology/content";
-import { colors, fontFamilies, fontSizes, fontWeights, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
 
 export default function MethodologyPage() {
   const router = useRouter();
@@ -29,15 +30,20 @@ export default function MethodologyPage() {
           How your scores are calculated, and where the reference ranges behind them come from.
         </Text>
 
-        {METHODOLOGY_SECTIONS.map((section) => (
-          <View key={section.title} style={styles.section}>
-            <Text style={styles.sectionTitle}>{section.title}</Text>
+        {METHODOLOGY_SECTIONS.map((section, index) => (
+          <Card key={section.title} padding="lg" style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.numberBadge}>
+                <Text style={styles.numberText}>{index + 1}</Text>
+              </View>
+              <Text style={styles.sectionTitle}>{section.title}</Text>
+            </View>
             {section.paragraphs.map((p, i) => (
               <Text key={i} style={styles.paragraph}>
                 {p}
               </Text>
             ))}
-          </View>
+          </Card>
         ))}
       </ScrollView>
     </SafeAreaView>
@@ -74,20 +80,40 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   section: {
-    marginTop: spacing["2xl"],
+    marginTop: spacing.lg,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    marginBottom: spacing.md,
+  },
+  numberBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: radii.full,
+    backgroundColor: colors.sageTint,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  numberText: {
+    fontFamily: fontFamilies.displaySemiBold,
+    fontSize: fontSizes.caption,
+    fontWeight: fontWeights.semibold,
+    color: colors.sageDark,
   },
   sectionTitle: {
+    flex: 1,
     fontFamily: fontFamilies.bodySemiBold,
-    fontSize: fontSizes.labelMd,
+    fontSize: fontSizes.bodyLg,
     fontWeight: fontWeights.semibold,
     color: colors.charcoal,
-    marginBottom: spacing.sm,
   },
   paragraph: {
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.inkMuted,
-    lineHeight: 22,
-    marginBottom: spacing.sm,
+    lineHeight: 23,
+    marginBottom: spacing.md,
   },
 });

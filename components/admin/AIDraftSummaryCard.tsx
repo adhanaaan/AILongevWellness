@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, StyleSheet } from "react-native";
 import { Card, Button, StatusBadge } from "@/components/ui";
-import { colors, fontSizes, fontWeights, spacing, radii } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, spacing, radii } from "@/lib/theme/tokens";
 import { updateAiDraftAction } from "@/lib/data/actions";
 import type { AiDraft } from "@/lib/types/db";
 
@@ -171,8 +171,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   heading: {
-    fontSize: fontSizes.headlineMd,
-    fontWeight: fontWeights.bold,
+    fontFamily: fontFamilies.displaySemiBold,
+    fontSize: fontSizes.headlineSm,
     color: colors.charcoal,
   },
   headerRight: {
@@ -184,11 +184,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   sectionTitle: {
-    fontSize: fontSizes.labelMd,
-    fontWeight: fontWeights.semibold,
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
     color: colors.inkMuted,
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
     marginBottom: spacing.sm,
   },
   bulletRow: {

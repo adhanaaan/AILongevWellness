@@ -69,16 +69,18 @@ export default function ParticipantAuthPage() {
             We sent a confirmation link to {email.trim()}. Click it, then come
             back and sign in below.
           </Text>
-          <Button
-            variant="ghost"
-            size="sm"
-            onPress={() => {
-              setAwaitingConfirmation(false);
-              setMode("signin");
-            }}
-          >
-            Back to sign in
-          </Button>
+          <View style={styles.confirmAction}>
+            <Button
+              variant="secondary"
+              size="lg"
+              onPress={() => {
+                setAwaitingConfirmation(false);
+                setMode("signin");
+              }}
+            >
+              Back to sign in
+            </Button>
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -203,6 +205,9 @@ const styles = StyleSheet.create({
     color: colors.inkMuted,
     marginTop: spacing.sm,
     lineHeight: 24,
+  },
+  confirmAction: {
+    marginTop: spacing["2xl"],
   },
   form: {
     gap: spacing.lg,

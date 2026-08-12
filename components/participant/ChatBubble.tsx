@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { Animated, Easing, Text, View, StyleSheet } from "react-native";
-import { colors, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, fontWeights, radii, shadows, spacing } from "@/lib/theme/tokens";
 
 export interface ChatBubbleProps {
   role: "user" | "ava";
@@ -71,8 +71,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   bubble: {
-    maxWidth: "80%",
-    borderRadius: radii.lg,
+    maxWidth: "82%",
+    borderRadius: radii.xl,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
   },
@@ -87,10 +87,13 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     alignSelf: "flex-start",
     borderBottomLeftRadius: radii.sm,
+    ...shadows.card,
   },
   text: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     fontWeight: fontWeights.regular,
+    lineHeight: 23,
   },
   userText: {
     color: colors.charcoal,
@@ -99,9 +102,12 @@ const styles = StyleSheet.create({
     color: colors.charcoal,
   },
   disclaimer: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     fontWeight: fontWeights.regular,
     color: colors.inkMuted,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
+    marginHorizontal: spacing.xs,
+    lineHeight: 16,
   },
 });

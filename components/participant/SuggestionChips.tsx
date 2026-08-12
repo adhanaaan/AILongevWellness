@@ -1,6 +1,6 @@
 import React from "react";
 import { ScrollView, TouchableOpacity, Text, StyleSheet } from "react-native";
-import { colors, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
 
 export interface SuggestionChipsProps {
   items: string[];
@@ -34,16 +34,17 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   chip: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.sageTint,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.tealTint,
     borderRadius: radii.full,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.lg,
   },
   chipText: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.labelMd,
     fontWeight: fontWeights.medium,
-    color: colors.sage,
+    color: colors.sageDark,
   },
 });

@@ -7,7 +7,7 @@ import { ParticipantTableRow } from "@/components/admin/ParticipantTableRow";
 import { TableRowSkeleton } from "@/components/admin/TableRowSkeleton";
 import { repository } from "@/lib/data/mock";
 import type { ParticipantSummary, PipelineState } from "@/lib/types/db";
-import { colors, fontSizes, radii } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, spacing, radii, shadows } from "@/lib/theme/tokens";
 import { useRouter } from "expo-router";
 
 export default function AdminParticipantsPage() {
@@ -50,43 +50,51 @@ export default function AdminParticipantsPage() {
   return (
     <AdminShell title="Participants">
       <View style={styles.stats}>
-        <SummaryStatCard
-          icon={<Users size={20} color={colors.inkMuted} />}
-          label="Total"
-          value={total}
-          tone="neutral"
-        />
-        <SummaryStatCard
-          icon={<ClipboardCheck size={20} color={colors.sageDark} />}
-          label="Awaiting GP/TCM"
-          value={awaiting}
-          tone="sage"
-        />
-        <SummaryStatCard
-          icon={<CheckCircle2 size={20} color={colors.sageDark} />}
-          label="Delivered"
-          value={delivered}
-          tone="sage"
-        />
-        <SummaryStatCard
-          icon={<AlertTriangle size={20} color={colors.danger} />}
-          label="Needs attention"
-          value={needsAttention}
-          tone="danger"
-        />
+        <View style={styles.statItem}>
+          <SummaryStatCard
+            icon={<Users size={20} color={colors.inkMuted} />}
+            label="Total"
+            value={total}
+            tone="neutral"
+          />
+        </View>
+        <View style={styles.statItem}>
+          <SummaryStatCard
+            icon={<ClipboardCheck size={20} color={colors.sageDark} />}
+            label="Awaiting GP/TCM"
+            value={awaiting}
+            tone="sage"
+          />
+        </View>
+        <View style={styles.statItem}>
+          <SummaryStatCard
+            icon={<CheckCircle2 size={20} color={colors.sageDark} />}
+            label="Delivered"
+            value={delivered}
+            tone="sage"
+          />
+        </View>
+        <View style={styles.statItem}>
+          <SummaryStatCard
+            icon={<AlertTriangle size={20} color={colors.danger} />}
+            label="Needs attention"
+            value={needsAttention}
+            tone="danger"
+          />
+        </View>
       </View>
 
       <View style={styles.searchRow}>
         <View style={styles.searchContainer}>
           <Search
-            size={16}
+            size={18}
             color={colors.inkMuted}
             style={styles.searchIcon}
           />
           <TextInput
             value={query}
             onChangeText={setQuery}
-            placeholder="Search participants..."
+            placeholder="Search participants by name…"
             placeholderTextColor={colors.inkMuted}
             style={styles.searchInput}
           />
@@ -96,7 +104,9 @@ export default function AdminParticipantsPage() {
       <View style={styles.listContainer}>
         <View style={styles.listHeader}>
           <Text style={[styles.headerCell, { flex: 2 }]}>Participant</Text>
-          <Text style={[styles.headerCell, { flex: 1 }]}>Status</Text>
+          <Text style={[styles.headerCell, { flex: 2 }]}>Capture</Text>
+          <Text style={[styles.headerCell, { flex: 2 }]}>Status</Text>
+          <View style={styles.headerSpacer} />
         </View>
         {!loaded &&
           Array.from({ length: 5 }, (_, i) => <TableRowSkeleton key={i} />)}
@@ -111,9 +121,16 @@ export default function AdminParticipantsPage() {
             />
           ))}
         {loaded && filtered.length === 0 && (
-          <Text style={styles.emptyText}>
-            No participants match your search.
-          </Text>
+          <View style={styles.emptyState}>
+            <View style={styles.emptyIcon}>
+              <Users size={22} color={colors.inkMuted} />
+            </View>
+            <Text style={styles.emptyText}>
+              {query
+                ? "No participants match your search."
+                : "No participants yet."}
+            </Text>
+          </View>
         )}
       </View>
     </AdminShell>
@@ -124,52 +141,81 @@ const styles = StyleSheet.create({
   stats: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 12,
-    marginBottom: 24,
+    gap: spacing.md,
+    marginBottom: spacing["2xl"],
+  },
+  statItem: {
+    flexGrow: 1,
+    flexBasis: 140,
   },
   searchRow: {
-    marginBottom: 24,
+    marginBottom: spacing.xl,
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: colors.borderStrong,
+    borderColor: colors.border,
     backgroundColor: colors.surface,
-    borderRadius: radii.md,
-    paddingHorizontal: 12,
+    borderRadius: radii.lg,
+    paddingHorizontal: spacing.lg,
+    ...shadows.card,
   },
   searchIcon: {
-    marginRight: 8,
+    marginRight: spacing.sm,
   },
   searchInput: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: spacing.md,
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.charcoal,
   },
   listContainer: {
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radii.lg,
+    borderRadius: radii.xl,
     backgroundColor: colors.surface,
     overflow: "hidden",
+    ...shadows.card,
   },
   listHeader: {
     flexDirection: "row",
+    alignItems: "center",
     backgroundColor: colors.surfaceMuted,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   headerCell: {
-    fontSize: fontSizes.caption,
-    fontWeight: "600",
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
     color: colors.inkMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+  headerSpacer: {
+    width: 24,
+  },
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: spacing["4xl"],
+    paddingHorizontal: spacing.xl,
+    gap: spacing.md,
+  },
+  emptyIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: radii.full,
+    backgroundColor: colors.surfaceMuted,
+    alignItems: "center",
+    justifyContent: "center",
   },
   emptyText: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.inkMuted,
     textAlign: "center",
-    padding: 24,
   },
 });
