@@ -46,6 +46,7 @@ export default function ProfileLifestylePage() {
   const [smoking, setSmoking] = useState(false);
   const [alcohol, setAlcohol] = useState<AlcoholDrinksPerWeek>("1_to_7");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!participantId) return;
@@ -61,6 +62,7 @@ export default function ProfileLifestylePage() {
 
   async function onContinue() {
     if (!participantId) return;
+    setError(null);
     setSaving(true);
     try {
       await updateParticipantAction(participantId, {
@@ -87,6 +89,8 @@ export default function ProfileLifestylePage() {
         }
         router.push("/onboarding/intro-wellness-snapshot");
       }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't save — please try again.");
     } finally {
       setSaving(false);
     }
@@ -194,6 +198,8 @@ export default function ProfileLifestylePage() {
             })}
           </View>
         </View>
+
+        {error && <Text style={styles.error}>{error}</Text>}
       </ScrollView>
 
       <View style={styles.footer}>
@@ -348,5 +354,11 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: spacing["2xl"],
     paddingVertical: spacing.lg,
+  },
+  error: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.labelMd,
+    color: colors.danger,
+    marginTop: spacing.xl,
   },
 });

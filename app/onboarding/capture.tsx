@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { ClipboardList, Watch, PersonStanding, FileText, Brain, type LucideIcon } from "lucide-react-native";
+import { ClipboardList, Watch, PersonStanding, FileText, Brain, Sparkles, ChevronRight, type LucideIcon } from "lucide-react-native";
 import { CaptureFlowStepper } from "@/components/layout/CaptureFlowStepper";
 import { HubSectionCard } from "@/components/participant/HubSectionCard";
 import { Button } from "@/components/ui/Button";
@@ -15,6 +15,7 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { CAPTURE_SECTIONS, deriveSectionState, type CaptureSectionId } from "@/lib/onboarding/flow";
 import { GOALS } from "@/app/onboarding/profile-goals";
 import type {
+  AiDraft,
   AlcoholDrinksPerWeek,
   ExerciseFrequency,
   OnboardingProgress,
@@ -88,12 +89,14 @@ export default function CaptureHubPage() {
   const { participantId } = useAuth();
   const [progress, setProgress] = useState<OnboardingProgress | null>(null);
   const [participant, setParticipant] = useState<Participant | null>(null);
+  const [aiDraft, setAiDraft] = useState<AiDraft | null>(null);
 
   useEffect(() => {
     if (!participantId) return;
     function load() {
       getOnboardingProgressAction(participantId!).then(setProgress);
       repository.getParticipant(participantId!).then(setParticipant);
+      repository.getAiDraft(participantId!).then(setAiDraft);
     }
     load();
     return repository.subscribe(load);
@@ -187,6 +190,25 @@ export default function CaptureHubPage() {
             <Text style={styles.completionLabel}>{completionPercent}% complete</Text>
             <ProgressBar value={completionPercent} tone="teal" />
           </View>
+
+          {questionnaireDone && aiDraft && (
+            <TouchableOpacity
+              style={styles.insightsBanner}
+              activeOpacity={0.8}
+              onPress={() => router.push("/(tabs)/card")}
+            >
+              <View style={styles.insightsBannerIcon}>
+                <Sparkles size={18} color={colors.tealDark} />
+              </View>
+              <View style={styles.insightsBannerText}>
+                <Text style={styles.insightsBannerTitle}>Your first insights are ready</Text>
+                <Text style={styles.insightsBannerSubtitle}>
+                  See your early wellness snapshot while you finish the rest.
+                </Text>
+              </View>
+              <ChevronRight size={20} color={colors.tealDark} />
+            </TouchableOpacity>
+          )}
 
           <View style={styles.zone}>
             <GradientOverlay stops={ZONE_GRADIENT_STOPS} style={styles.zoneGradient} />
@@ -314,6 +336,37 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.labelMd,
     color: colors.ink,
+  },
+  insightsBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    marginTop: spacing.xl,
+    padding: spacing.lg,
+    borderRadius: radii.xl,
+    backgroundColor: teal[50],
+    borderWidth: 1,
+    borderColor: teal[100],
+  },
+  insightsBannerIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.surface,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  insightsBannerText: { flex: 1 },
+  insightsBannerTitle: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.bodyMd,
+    color: colors.ink,
+    marginBottom: 2,
+  },
+  insightsBannerSubtitle: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.labelMd,
+    color: colors.inkMuted,
   },
   zone: {
     marginTop: spacing["2xl"],

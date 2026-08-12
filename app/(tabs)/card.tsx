@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useRouter } from "expo-router";
-import { MessageCircle, ListChecks, Target } from "lucide-react-native";
+import { MessageCircle, ListChecks, Target, ClipboardList, ChevronRight } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
+import { FadeInView } from "@/components/ui/FadeInView";
+import { InsightsSkeleton } from "@/components/participant/InsightsSkeleton";
 import { BiologicalAgeHero } from "@/components/participant/BiologicalAgeHero";
 import { PillarStrip } from "@/components/participant/PillarStrip";
 import { KeyContributorItem } from "@/components/participant/KeyContributorItem";
@@ -13,10 +15,12 @@ import { DraftStatusBadge } from "@/components/participant/DraftStatusBadge";
 import { TopRecommendation } from "@/components/participant/TopRecommendation";
 import { NextStepsCard } from "@/components/participant/NextStepsCard";
 import { repository } from "@/lib/data/mock";
+import { getOnboardingProgressAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { pillarStatus, buildPillarNarrative } from "@/lib/ai/scoring";
+import { isCaptureComplete } from "@/lib/onboarding/flow";
 import type { SignedCard } from "@/lib/data/repository";
-import type { AiDraft, Pipeline } from "@/lib/types/db";
+import type { AiDraft, OnboardingProgress, Participant, Pipeline } from "@/lib/types/db";
 import { colors, fontSizes, radii, shadows, spacing } from "@/lib/theme/tokens";
 
 function formatDate(iso: string) {
@@ -33,6 +37,8 @@ export default function CardPage() {
   const [card, setCard] = useState<SignedCard | null | undefined>(undefined);
   const [pipeline, setPipeline] = useState<Pipeline | null | undefined>(undefined);
   const [pendingDraft, setPendingDraft] = useState<AiDraft | null | undefined>(undefined);
+  const [onboardingProgress, setOnboardingProgress] = useState<OnboardingProgress | null>(null);
+  const [participant, setParticipant] = useState<Participant | null>(null);
   const [showAllRecommendations, setShowAllRecommendations] = useState(false);
 
   useEffect(() => {
@@ -40,23 +46,35 @@ export default function CardPage() {
     function load() {
       repository.getSignedCard(participantId!).then(setCard);
       repository.getPipeline(participantId!).then(setPipeline);
+      repository.getParticipant(participantId!).then(setParticipant);
       // Only actually used pre-delivery (see the !card branch below) -- fetched
       // unconditionally here so it's ready the moment the pipeline advances,
       // rather than adding a second effect keyed on pipeline state.
       repository.getAiDraft(participantId!).then(setPendingDraft);
+      // Drives the "Continue your data capture" banner below -- a participant
+      // who lands here (via the Data Capture hub's insights preview banner)
+      // before finishing every section otherwise has no way back except the
+      // browser back button, since (tabs) has no link into onboarding.
+      getOnboardingProgressAction(participantId!).then(setOnboardingProgress);
     }
     load();
     return repository.subscribe(load);
   }, [participantId]);
 
-  if (card === undefined || pipeline === undefined || pendingDraft === undefined) return null;
+  if (card === undefined || pipeline === undefined || pendingDraft === undefined) {
+    return (
+      <MobileShell>
+        <InsightsSkeleton />
+      </MobileShell>
+    );
+  }
 
   // Show the AI's first-pass draft the moment one exists, rather than hiding
   // everything until full delivery -- DraftStatusBadge below is what keeps the
   // "this hasn't been reviewed yet" line visible the whole time it's up.
   if (!card && !pendingDraft) {
     return (
-      <MobileShell>
+      <MobileShell name={participant?.name}>
         <SnapshotPending pipelineState={pipeline?.state ?? "capturing"} />
       </MobileShell>
     );
@@ -109,16 +127,29 @@ export default function CardPage() {
   ] as const;
 
   return (
-    <MobileShell>
+    <MobileShell name={card?.participant.name ?? participant?.name}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+        <FadeInView>
         <Text style={styles.title}>Your wellness snapshot</Text>
         <Text style={styles.subtitle}>
           {isDelivered ? "Report generated" : "Drafted"} {formatDate(aiDraft.generated_at)}
         </Text>
         <DraftStatusBadge isDelivered={isDelivered} gp={gp} tcm={tcm} missingCount={missingCount} />
+
+        {!isDelivered && onboardingProgress && !isCaptureComplete(onboardingProgress) && (
+          <Pressable
+            onPress={() => router.push("/onboarding/capture")}
+            accessibilityRole="button"
+            style={styles.captureBanner}
+          >
+            <ClipboardList size={18} color={colors.sageDark} />
+            <Text style={styles.captureBannerText}>Continue your data capture</Text>
+            <ChevronRight size={18} color={colors.sageDark} />
+          </Pressable>
+        )}
 
         <View style={styles.section}>
           <BiologicalAgeHero
@@ -179,6 +210,7 @@ export default function CardPage() {
             )}
           </View>
         )}
+        </FadeInView>
       </ScrollView>
 
       <Pressable
@@ -205,6 +237,21 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.bodyMd,
     color: colors.inkMuted,
     marginTop: 4,
+  },
+  captureBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginTop: 16,
+    padding: spacing.md,
+    borderRadius: radii.lg,
+    backgroundColor: colors.sageTint,
+  },
+  captureBannerText: {
+    flex: 1,
+    fontSize: fontSizes.labelMd,
+    fontWeight: "600",
+    color: colors.sageDark,
   },
   section: { marginTop: 24 },
   sectionHeader: {

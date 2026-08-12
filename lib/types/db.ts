@@ -1,4 +1,5 @@
 // CHANGE LOG (newest first)
+// - 2026-08-11 Added measured_at to Biomarker + BiomarkerReading history type (supabase/migrations/0007_biomarker_history.sql).
 // - 2026-08-02 Added care_plan to AiDraft + medications to Participant (supabase/migrations/0004_care_plan.sql).
 // - 2026-07-28 Added consent_given/consented_at to Participant (supabase/migrations/0002_consent_tracking.sql).
 // - 2026-07-24 Person 1: Added OnboardingProgress (hub-and-spoke capture sub-flow tracking).
@@ -75,7 +76,29 @@ export interface Biomarker {
   source: BiomarkerSource;
   status: BiomarkerStatus;
   flagged: boolean;
+  /** The date this value was actually measured (e.g. the lab's specimen/report date), not when it was uploaded. Null for older rows written before this field existed. */
+  measured_at?: string | null;
   updated_at: string;
+}
+
+/**
+ * One historical reading for a biomarker, kept forever once written -- unlike
+ * Biomarker itself (the "current" snapshot scoring reads, one row per key),
+ * a participant can have many of these for the same key from different lab
+ * report uploads over time. Powers the trend line on the pillar detail page.
+ */
+export interface BiomarkerReading {
+  id: string;
+  participant_id: string;
+  key: string;
+  value: number;
+  unit: string;
+  ref_low: number | null;
+  ref_high: number | null;
+  source: BiomarkerSource;
+  measured_at: string;
+  file_id?: string | null;
+  created_at: string;
 }
 
 export interface PillarScores {

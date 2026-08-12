@@ -40,6 +40,8 @@ export function BiomarkerRow({
   const [editValue, setEditValue] = useState(
     biomarker.value !== null ? String(biomarker.value) : ""
   );
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const isFlagged = biomarker.flagged;
   const refRange =
@@ -51,20 +53,32 @@ export function BiomarkerRow({
 
   const handleSave = async () => {
     const numericValue = parseFloat(editValue);
-    if (!isNaN(numericValue)) {
+    if (isNaN(numericValue)) {
+      setError("Enter a valid number.");
+      return;
+    }
+    setError(null);
+    setSaving(true);
+    try {
       await updateBiomarkerAction(participantId, biomarker.id, {
         value: numericValue,
       });
+      setIsEditing(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Save failed. Please try again.");
+    } finally {
+      setSaving(false);
     }
-    setIsEditing(false);
   };
 
   const handleCancel = () => {
     setEditValue(biomarker.value !== null ? String(biomarker.value) : "");
+    setError(null);
     setIsEditing(false);
   };
 
   return (
+    <View>
     <View style={[styles.row, isFlagged && styles.rowFlagged]}>
       <View style={styles.labelCol}>
         <Text style={[styles.label, isFlagged && styles.textFlagged]}>
@@ -109,10 +123,10 @@ export function BiomarkerRow({
         <View style={styles.actions}>
           {isEditing ? (
             <>
-              <Button variant="primary" size="sm" onPress={handleSave}>
-                Save
+              <Button variant="primary" size="sm" onPress={handleSave} disabled={saving}>
+                {saving ? "Saving..." : "Save"}
               </Button>
-              <Button variant="ghost" size="sm" onPress={handleCancel}>
+              <Button variant="ghost" size="sm" onPress={handleCancel} disabled={saving}>
                 Cancel
               </Button>
             </>
@@ -127,6 +141,8 @@ export function BiomarkerRow({
           )}
         </View>
       )}
+    </View>
+    {isEditing && error && <Text style={styles.error}>{error}</Text>}
     </View>
   );
 }
@@ -208,5 +224,11 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: "row",
     gap: spacing.xs,
+  },
+  error: {
+    fontSize: fontSizes.caption,
+    color: colors.danger,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.sm,
   },
 });

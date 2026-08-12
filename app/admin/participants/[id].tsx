@@ -14,6 +14,7 @@ import { DiscussionPointsCard } from "@/components/admin/DiscussionPointsCard";
 import { PipelineStatusBadge } from "@/components/admin/PipelineStatusBadge";
 import { PhenoAgeStatusCard } from "@/components/admin/PhenoAgeStatusCard";
 import { Button, Card } from "@/components/ui";
+import { LoadingState } from "@/components/ui/LoadingState";
 import { repository } from "@/lib/data/mock";
 import { resolveAttentionAction, getFileUrlAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -177,7 +178,13 @@ export default function ParticipantDetailPage() {
     return grouped;
   }, [biomarkers]);
 
-  if (!participant || !pipeline) return null;
+  if (!participant || !pipeline) {
+    return (
+      <AdminShell title="Participant">
+        <LoadingState />
+      </AdminShell>
+    );
+  }
 
   const stateIdx = STATE_INDEX[pipeline.state];
   const isEditable = pipeline.state === "gp_review";

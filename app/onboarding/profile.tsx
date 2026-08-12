@@ -45,6 +45,7 @@ export default function ProfilePersonalPage() {
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!participantId) return;
@@ -78,6 +79,7 @@ export default function ProfilePersonalPage() {
 
   async function onContinue() {
     if (!participantId || !isValid) return;
+    setError(null);
     setSaving(true);
     try {
       await updateParticipantAction(participantId, {
@@ -93,6 +95,8 @@ export default function ProfilePersonalPage() {
         await updateSectionStatusAction("personal_info", "in_progress", participantId);
         router.push("/onboarding/profile-wellness-intro");
       }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't save — please try again.");
     } finally {
       setSaving(false);
     }
@@ -165,6 +169,8 @@ export default function ProfilePersonalPage() {
             />
           </View>
         </Card>
+
+        {error && <Text style={styles.error}>{error}</Text>}
       </ScrollView>
 
       <View style={styles.footer}>
@@ -238,5 +244,11 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: spacing["2xl"],
     paddingVertical: spacing.lg,
+  },
+  error: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.labelMd,
+    color: colors.danger,
+    marginTop: spacing.lg,
   },
 });

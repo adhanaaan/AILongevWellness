@@ -54,6 +54,7 @@ export default function ProfileGoalsPage() {
   const [loading, setLoading] = useState(true);
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!participantId) return;
@@ -75,6 +76,7 @@ export default function ProfileGoalsPage() {
 
   async function onContinue() {
     if (!participantId || !isValid) return;
+    setError(null);
     setSaving(true);
     try {
       await updateParticipantAction(participantId, { goals: selectedGoals });
@@ -84,6 +86,8 @@ export default function ProfileGoalsPage() {
         await updateSectionStatusAction("personal_info", "in_progress", participantId);
         router.push("/onboarding/profile-lifestyle");
       }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't save — please try again.");
     } finally {
       setSaving(false);
     }
@@ -143,6 +147,8 @@ export default function ProfileGoalsPage() {
         <Text style={styles.reassurance}>
           This won't limit what your care team reviews for you.
         </Text>
+
+        {error && <Text style={styles.error}>{error}</Text>}
       </ScrollView>
 
       <View style={styles.footer}>
@@ -265,5 +271,12 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: spacing["2xl"],
     paddingVertical: spacing.lg,
+  },
+  error: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.labelMd,
+    color: colors.danger,
+    textAlign: "center",
+    marginTop: spacing.xl,
   },
 });

@@ -48,21 +48,25 @@ export default function CaptureRecognaizePage() {
   }
 
   async function finish() {
-    if (participantId) {
-      await updateCaptureChannelAction(participantId, "recognize", {
-        status: "complete",
-        entered_by: "participant",
-      });
-      if (!isEditing) {
-        await updateSectionStatusAction("recognize", "done", participantId);
+    try {
+      if (participantId) {
+        await updateCaptureChannelAction(participantId, "recognize", {
+          status: "complete",
+          entered_by: "participant",
+        });
+        if (!isEditing) {
+          await updateSectionStatusAction("recognize", "done", participantId);
+        }
       }
-    }
-    if (isEditing) {
-      router.back();
-    } else {
-      // ReCOGnAIze is the one section that doesn't return to the hub — it flows
-      // straight into Calculating, so replace rather than push.
-      router.replace("/onboarding/capture-calculating");
+      if (isEditing) {
+        router.back();
+      } else {
+        // ReCOGnAIze is the one section that doesn't return to the hub — it flows
+        // straight into Calculating, so replace rather than push.
+        router.replace("/onboarding/capture-calculating");
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't save — please try again.");
     }
   }
 

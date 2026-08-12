@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft } from "lucide-react-native";
+import { ArrowLeft, MessageCircle, ChevronRight } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { LoadingState } from "@/components/ui/LoadingState";
+import { FadeInView } from "@/components/ui/FadeInView";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { BIOMARKER_KEYS_BY_PILLAR, pillarStatus } from "@/lib/ai/scoring";
 import { computeVascularAge, computeMetabolicAge, type AgeClockResult } from "@/lib/ai/ageClocks";
-import type { AiDraft, Biomarker, Participant, Pillar } from "@/lib/types/db";
+import type { AiDraft, Biomarker, BiomarkerReading, Participant, Pillar } from "@/lib/types/db";
 import {
   colors,
   fontFamilies,
@@ -39,6 +41,20 @@ function humanizeKey(key: string) {
   return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
 }
 
+// measured_at is a plain "YYYY-MM-DD" date, not a timestamp -- new Date(str)
+// on a date-only string parses as UTC midnight, which can display as the
+// previous day in timezones behind UTC. Splitting and building a local Date
+// avoids that off-by-one.
+function formatShortDate(dateOnly: string) {
+  const [y, m, d] = dateOnly.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function formatDelta(n: number) {
+  const rounded = Math.round(Math.abs(n) * 100) / 100;
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
+}
+
 export default function PillarDetailPage() {
   const { pillar: pillarParam } = useLocalSearchParams<{ pillar: string }>();
   const router = useRouter();
@@ -46,6 +62,7 @@ export default function PillarDetailPage() {
   const [aiDraft, setAiDraft] = useState<AiDraft | null>(null);
   const [biomarkers, setBiomarkers] = useState<Biomarker[]>([]);
   const [participant, setParticipant] = useState<Participant | null>(null);
+  const [history, setHistory] = useState<BiomarkerReading[]>([]);
 
   const pillar = VALID_PILLARS.includes(pillarParam as Pillar)
     ? (pillarParam as Pillar)
@@ -58,20 +75,39 @@ export default function PillarDetailPage() {
     }
     if (!participantId) return;
     const loadData = async () => {
-      const [draft, bm, p] = await Promise.all([
+      const [draft, bm, p, hist] = await Promise.all([
         repository.getAiDraft(participantId),
         repository.getBiomarkers(participantId),
         repository.getParticipant(participantId),
+        repository.listBiomarkerHistory(participantId),
       ]);
       setAiDraft(draft);
       setBiomarkers(bm);
       setParticipant(p);
+      setHistory(hist);
     };
     loadData();
     return repository.subscribe(loadData);
   }, [pillar, participantId]);
 
-  if (!pillar || !aiDraft) return null;
+  if (!pillar) return null;
+  if (!aiDraft) {
+    return (
+      <SafeAreaView style={styles.container} edges={["top"]}>
+        <View style={styles.header}>
+          <Button
+            variant="ghost"
+            size="sm"
+            iconLeft={<ArrowLeft size={16} color={colors.inkMuted} />}
+            onPress={() => router.back()}
+          >
+            Back
+          </Button>
+        </View>
+        <LoadingState />
+      </SafeAreaView>
+    );
+  }
 
   const score = aiDraft.scores[pillar];
   const status = pillarStatus(score);
@@ -114,6 +150,7 @@ export default function PillarDetailPage() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+        <FadeInView>
         <View style={styles.titleRow}>
           <Text style={styles.pillarName}>{PILLAR_LABELS[pillar]}</Text>
           <StatusBadge
@@ -156,20 +193,37 @@ export default function PillarDetailPage() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Your markers</Text>
             <View style={styles.grid}>
-              {pillarBiomarkers.map((b) => (
-                <View key={b.id} style={styles.statCard}>
-                  <Text style={styles.statLabel}>{b.label}</Text>
-                  <Text style={styles.statValue}>
-                    {b.value}
-                    <Text style={styles.statUnit}> {b.unit}</Text>
-                  </Text>
-                  {b.ref_low !== null && b.ref_high !== null && (
-                    <Text style={styles.statRef}>
-                      Ref: {b.ref_low}-{b.ref_high}
+              {pillarBiomarkers.map((b) => {
+                // history includes the reading that produced today's current
+                // value too, so the second-to-last entry (not the last) is
+                // the actual "previous" reading to compare against.
+                const readings = history
+                  .filter((r) => r.key === b.key)
+                  .sort((x, y) => x.measured_at.localeCompare(y.measured_at));
+                const previous = readings.length >= 2 ? readings[readings.length - 2] : null;
+                const delta = previous && b.value !== null ? b.value - previous.value : null;
+
+                return (
+                  <View key={b.id} style={styles.statCard}>
+                    <Text style={styles.statLabel}>{b.label}</Text>
+                    <Text style={styles.statValue}>
+                      {b.value}
+                      <Text style={styles.statUnit}> {b.unit}</Text>
                     </Text>
-                  )}
-                </View>
-              ))}
+                    {b.ref_low !== null && b.ref_high !== null && (
+                      <Text style={styles.statRef}>
+                        Ref: {b.ref_low}-{b.ref_high}
+                      </Text>
+                    )}
+                    {previous && delta !== null && (
+                      <Text style={styles.statTrend}>
+                        {delta > 0 ? "↑" : delta < 0 ? "↓" : "→"} {formatDelta(delta)} since{" "}
+                        {formatShortDate(previous.measured_at)}
+                      </Text>
+                    )}
+                  </View>
+                );
+              })}
             </View>
           </View>
         )}
@@ -199,8 +253,31 @@ export default function PillarDetailPage() {
         )}
 
         <View style={styles.section}>
-          <Button
-            variant="ghost"
+          <Text style={styles.sectionTitle}>Ask Ava</Text>
+          {/* One targeted question per flagged marker (capped at 3 to avoid a
+              wall of chips), mirroring how contextual quick-questions read
+              elsewhere -- a generic "ask about this score" button makes the
+              participant do the work of framing a question themselves. */}
+          {outOfRange.slice(0, 3).map((o) => (
+            <Pressable
+              key={o.key}
+              style={styles.askAvaRow}
+              onPress={() =>
+                router.push({
+                  pathname: "/(tabs)/ava",
+                  params: { q: `What might help with my ${humanizeKey(o.key).toLowerCase()}?` },
+                })
+              }
+            >
+              <MessageCircle size={16} color={colors.sageDark} />
+              <Text style={styles.askAvaRowText}>
+                What might help with my {humanizeKey(o.key).toLowerCase()}?
+              </Text>
+              <ChevronRight size={16} color={colors.inkMuted} />
+            </Pressable>
+          ))}
+          <Pressable
+            style={styles.askAvaRow}
             onPress={() =>
               router.push({
                 pathname: "/(tabs)/ava",
@@ -210,9 +287,14 @@ export default function PillarDetailPage() {
               })
             }
           >
-            Ask Ava about this score
-          </Button>
+            <MessageCircle size={16} color={colors.sageDark} />
+            <Text style={styles.askAvaRowText}>
+              Ask about my {PILLAR_LABELS[pillar].toLowerCase()} score
+            </Text>
+            <ChevronRight size={16} color={colors.inkMuted} />
+          </Pressable>
         </View>
+        </FadeInView>
       </ScrollView>
     </SafeAreaView>
   );
@@ -338,6 +420,12 @@ const styles = StyleSheet.create({
     color: colors.inkMuted,
     marginTop: spacing.xs,
   },
+  statTrend: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    marginTop: spacing.xs,
+  },
   flagRow: {
     backgroundColor: colors.surface,
     borderLeftWidth: 3,
@@ -353,6 +441,24 @@ const styles = StyleSheet.create({
     borderLeftColor: colors.borderStrong,
   },
   flagText: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.bodyMd,
+    color: colors.charcoal,
+  },
+  askAvaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.sm,
+  },
+  askAvaRowText: {
+    flex: 1,
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.charcoal,
