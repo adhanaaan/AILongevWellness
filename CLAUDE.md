@@ -327,6 +327,14 @@ lib/
       drill-down ("Ask Ava about my {category} plan", shown when a plan exists). The
       pillar page's existing Ask-Ava rows and the Insights tab's "Ask Ava" FAB were
       switched onto the same hook so they fire reliably on every tap, not just the first.
+- [x] AVA answers deep-link back into the app (closes the weave loop the other way):
+      AVA replies were dead-end text. A new `lib/ava/suggestedActions.ts` scans the
+      participant's question + AVA's reply for topics the app has a screen for (each
+      pillar, biological age, a care-plan category, the Methodology page) and returns up
+      to 3 deep-link chips (deduped by route), rendered under each AVA bubble in
+      `ava.tsx` — tapping one routes straight there (`router.push`). Pure string matching,
+      no API/schema change; works in both the real (`api/ava.ts`) and mock
+      (`respondAsAva`) response paths.
 - [x] Sign-off trust badge (`components/participant/SignOffBadge.tsx`): the Insights tab
       only surfaced clinician review as a "Notes from your care team" card mid-scroll —
       easy to skim past, and undersells the platform's real differentiator versus
