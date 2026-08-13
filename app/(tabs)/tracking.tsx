@@ -6,16 +6,19 @@ import { MobileShell } from "@/components/layout/MobileShell";
 import { Card } from "@/components/ui/Card";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { FadeInView } from "@/components/ui/FadeInView";
-import { colors, fontSizes, radii, spacing } from "@/lib/theme/tokens";
-import { listDailyLogsAction } from "@/lib/data/actions";
+import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
+import { listDailyLogsAction, upsertDailyLogAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { CARE_PLAN_CATEGORIES } from "@/lib/carePlan/categories";
 import { CarePlanCategoryCard, type CarePlanTodayStatus } from "@/components/participant/CarePlanCategoryCard";
+import { CarePlanTodayHero } from "@/components/participant/CarePlanTodayHero";
+import { TodayActionsList } from "@/components/participant/TodayActionsList";
 import type { AiDraft, DailyLog, Participant, PlanCategory } from "@/lib/types/db";
 import type { SignedCard } from "@/lib/data/repository";
 
 const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 const ADD_DATA_ROWS: Array<{ Icon: LucideIcon; label: string; description: string; route: string }> = [
   {
@@ -44,6 +47,11 @@ const TREND_BAR_TRACK_HEIGHT = 44;
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
+}
+
+function todayLabel(): string {
+  const now = new Date();
+  return `${MONTHS[now.getMonth()]} ${now.getDate()}`;
 }
 
 function trendValue(log: DailyLog | undefined): number | null {
@@ -125,14 +133,33 @@ export default function TrackingPage() {
   const isDelivered = Boolean(card);
   const carePlan = card?.aiDraft.care_plan ?? pendingDraft?.care_plan;
 
-  // Daily-progress summary across the self-report categories only (tracked).
-  const trackedCategories = CARE_PLAN_CATEGORIES.filter((c) => c.tracked);
-  const trackedDoneToday = trackedCategories.filter(
-    (c) => todayStatus(c.key, todayLog, participant)?.done
-  ).length;
-  const trackedTotal = trackedCategories.length;
-  const trackedPct = trackedTotal > 0 ? Math.round((trackedDoneToday / trackedTotal) * 100) : 0;
-  const allDoneToday = trackedTotal > 0 && trackedDoneToday === trackedTotal;
+  // Today's actions: each supplement (taken toggle) + the daily mood check-in.
+  const medCatalog = participant?.medications ?? [];
+  const takenToday = (todayLog?.supplements ?? []).filter((s) => medCatalog.includes(s));
+  const moodDone = Boolean(todayLog?.mood);
+  const actionsTotal = medCatalog.length + 1; // +1 for the mood check-in
+  const actionsDone = takenToday.length + (moodDone ? 1 : 0);
+
+  async function patchToday(patch: Partial<Omit<DailyLog, "id" | "participant_id" | "log_date">>) {
+    if (!participantId) return;
+    await upsertDailyLogAction(today, patch, participantId);
+  }
+
+  function toggleMed(name: string, taken: boolean) {
+    const current = todayLog?.supplements ?? [];
+    const next = taken ? [...current, name] : current.filter((s) => s !== name);
+    patchToday({ supplements: next });
+  }
+
+  function setMoodScore(score: number) {
+    patchToday({ mood: { score } });
+  }
+
+  const reviewPill = isDelivered
+    ? { text: "Care-team reviewed", style: styles.pillReviewed, textStyle: styles.pillReviewedText }
+    : carePlan
+      ? { text: "AI draft · in review", style: styles.pillPending, textStyle: styles.pillPendingText }
+      : null;
 
   if (loading) {
     return (
@@ -144,114 +171,99 @@ export default function TrackingPage() {
 
   return (
     <MobileShell name={participant?.name}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
-      >
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <FadeInView>
-        <Text style={styles.title}>Care Plan</Text>
-        <Text style={styles.subtitle}>
-          {isDelivered
-            ? "Verified by your care team — tap a category for the full plan."
-            : carePlan
-              ? "AI-drafted — pending your care team's review. Tap a category for the full plan."
-              : "Your personalized plan appears here once you've captured some data."}
-        </Text>
+          <Text style={styles.title}>Care Plan</Text>
+          <Text style={styles.subtitle}>Your care team&apos;s protocol, tracked one day at a time.</Text>
 
-        {last7.some((log) => log.mood) && (
-          <Card style={styles.section}>
-            <Text style={styles.cardLabel}>Mood this week</Text>
-            <View style={styles.barsContainer}>
-              {last7.map((log) => {
-                const value = trendValue(log);
-                return (
-                  <View key={log.log_date} style={styles.barColumn}>
-                    <View style={styles.barTrack}>
-                      {value !== null && (
-                        <View
-                          style={[
-                            styles.barFill,
-                            { height: Math.max(4, Math.round((value / 100) * TREND_BAR_TRACK_HEIGHT)) },
-                          ]}
-                        />
-                      )}
-                    </View>
-                    <Text style={styles.dayLabel}>{dayLabel(log.log_date)}</Text>
-                  </View>
-                );
-              })}
-            </View>
-          </Card>
-        )}
+          <CarePlanTodayHero done={actionsDone} total={actionsTotal} dateLabel={todayLabel()} />
 
-        {trackedTotal > 0 && (
-          <Card style={styles.progressCard}>
-            <View style={styles.progressHeader}>
-              <Text style={styles.progressTitle}>Today's check-ins</Text>
-              <Text style={styles.progressCount}>
-                <Text style={[styles.progressCountStrong, allDoneToday && styles.progressCountDone]}>
-                  {trackedDoneToday}
-                </Text>
-                {` of ${trackedTotal} done`}
-              </Text>
-            </View>
-            <View style={styles.progressTrack}>
-              <View
-                style={[
-                  styles.progressFill,
-                  { width: `${trackedPct}%` },
-                  allDoneToday && styles.progressFillDone,
-                ]}
-              />
-            </View>
-            <Text style={styles.progressHint}>
-              {allDoneToday
-                ? "All caught up — nice work today."
-                : "A quick medication and mood check-in keeps your plan on track."}
-            </Text>
-          </Card>
-        )}
+          <Text style={styles.sectionTitle}>Today&apos;s actions</Text>
+          <TodayActionsList
+            medications={medCatalog}
+            takenToday={takenToday}
+            moodScore={todayLog?.mood?.score ?? null}
+            onToggleMed={toggleMed}
+            onSetMood={setMoodScore}
+            onManageMeds={() => router.push("/care-plan/medications")}
+          />
 
-        <View style={styles.categoriesList}>
-          {CARE_PLAN_CATEGORIES.map(({ key, label, Icon, color, fallback, tracked }) => {
-            const items = carePlan?.[key] ?? [];
-            const planSnippet = items.length > 0 ? items[0] : fallback;
-            const status = tracked ? todayStatus(key, todayLog, participant) : null;
-            return (
-              <CarePlanCategoryCard
-                key={key}
-                label={label}
-                Icon={Icon}
-                color={color}
-                planSnippet={planSnippet}
-                moreCount={Math.max(0, items.length - 1)}
-                status={status}
-                onPress={() => router.push(`/care-plan/${key}`)}
-              />
-            );
-          })}
-        </View>
-
-        <Text style={styles.sectionTitle}>Add more data</Text>
-        <Card style={styles.addDataCard}>
-          {ADD_DATA_ROWS.map(({ Icon, label, description, route }, i) => (
-            <TouchableOpacity
-              key={route}
-              style={[styles.addDataRow, i > 0 && styles.addDataRowDivider]}
-              onPress={() => uploadMoreData(route)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.addDataIcon}>
-                <Icon size={18} color={colors.sageDark} />
+          <View style={styles.planHeader}>
+            <Text style={styles.sectionTitleFlush}>Your plan</Text>
+            {reviewPill && (
+              <View style={[styles.pill, reviewPill.style]}>
+                <Text style={[styles.pillText, reviewPill.textStyle]}>{reviewPill.text}</Text>
               </View>
-              <View style={styles.addDataText}>
-                <Text style={styles.addDataLabel}>{label}</Text>
-                <Text style={styles.addDataDescription}>{description}</Text>
-              </View>
-              <ChevronRight size={18} color={colors.inkMuted} />
-            </TouchableOpacity>
-          ))}
-        </Card>
+            )}
+          </View>
+          <View style={styles.categoriesList}>
+            {CARE_PLAN_CATEGORIES.map(({ key, label, Icon, color, fallback, tracked }) => {
+              const items = carePlan?.[key] ?? [];
+              const planSnippet = items.length > 0 ? items[0] : fallback;
+              const status = tracked ? todayStatus(key, todayLog, participant) : null;
+              return (
+                <CarePlanCategoryCard
+                  key={key}
+                  label={label}
+                  Icon={Icon}
+                  color={color}
+                  planSnippet={planSnippet}
+                  moreCount={Math.max(0, items.length - 1)}
+                  status={status}
+                  onPress={() => router.push(`/care-plan/${key}`)}
+                />
+              );
+            })}
+          </View>
+
+          {last7.some((log) => log.mood) && (
+            <>
+              <Text style={styles.sectionTitle}>Mood this week</Text>
+              <Card>
+                <View style={styles.barsContainer}>
+                  {last7.map((log) => {
+                    const value = trendValue(log);
+                    return (
+                      <View key={log.log_date} style={styles.barColumn}>
+                        <View style={styles.barTrack}>
+                          {value !== null && (
+                            <View
+                              style={[
+                                styles.barFill,
+                                { height: Math.max(4, Math.round((value / 100) * TREND_BAR_TRACK_HEIGHT)) },
+                              ]}
+                            />
+                          )}
+                        </View>
+                        <Text style={styles.dayLabel}>{dayLabel(log.log_date)}</Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </Card>
+            </>
+          )}
+
+          <Text style={styles.sectionTitle}>Sharpen your plan</Text>
+          <Card style={styles.addDataCard}>
+            {ADD_DATA_ROWS.map(({ Icon, label, description, route }, i) => (
+              <TouchableOpacity
+                key={route}
+                style={[styles.addDataRow, i > 0 && styles.addDataRowDivider]}
+                onPress={() => uploadMoreData(route)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.addDataIcon}>
+                  <Icon size={18} color={colors.sageDark} />
+                </View>
+                <View style={styles.addDataText}>
+                  <Text style={styles.addDataLabel}>{label}</Text>
+                  <Text style={styles.addDataDescription}>{description}</Text>
+                </View>
+                <ChevronRight size={18} color={colors.inkMuted} />
+              </TouchableOpacity>
+            ))}
+          </Card>
         </FadeInView>
       </ScrollView>
     </MobileShell>
@@ -261,27 +273,60 @@ export default function TrackingPage() {
 const styles = StyleSheet.create({
   scrollContent: { paddingBottom: 32 },
   title: {
+    fontFamily: fontFamilies.displayBold,
     fontSize: fontSizes.headlineLg,
     fontWeight: "600",
     color: colors.charcoal,
   },
   subtitle: {
-    fontSize: fontSizes.bodyMd,
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.labelMd,
     color: colors.inkMuted,
     marginTop: 4,
   },
-  section: { marginTop: 24 },
-  cardLabel: {
-    fontSize: fontSizes.labelMd,
-    fontWeight: "600",
+  sectionTitle: {
+    fontFamily: fontFamilies.displaySemiBold,
+    fontSize: fontSizes.bodyLg,
+    fontWeight: "700",
+    color: colors.charcoal,
+    marginTop: spacing["2xl"],
+    marginBottom: spacing.md,
+  },
+  sectionTitleFlush: {
+    fontFamily: fontFamilies.displaySemiBold,
+    fontSize: fontSizes.bodyLg,
+    fontWeight: "700",
     color: colors.charcoal,
   },
+  planHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.sm,
+    marginTop: spacing["2xl"],
+    marginBottom: spacing.md,
+  },
+  pill: {
+    borderRadius: radii.full,
+    paddingVertical: 4,
+    paddingHorizontal: spacing.md,
+  },
+  pillText: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
+  },
+  pillReviewed: { backgroundColor: colors.sageTint },
+  pillReviewedText: { color: colors.sage },
+  pillPending: { backgroundColor: colors.terracottaTint },
+  pillPendingText: { color: colors.terracottaInk },
+  categoriesList: { gap: spacing.md },
   barsContainer: {
     flexDirection: "row",
     alignItems: "flex-end",
     height: 64,
     gap: 8,
-    marginTop: 8,
   },
   barColumn: {
     flex: 1,
@@ -299,61 +344,11 @@ const styles = StyleSheet.create({
   barFill: {
     width: "100%",
     borderRadius: radii.full,
-    backgroundColor: colors.sage,
+    backgroundColor: colors.mental,
   },
   dayLabel: {
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
-  },
-  progressCard: { marginTop: 24, gap: spacing.md },
-  progressHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  progressTitle: {
-    fontSize: fontSizes.labelMd,
-    fontWeight: "600",
-    color: colors.charcoal,
-  },
-  progressCount: {
-    fontSize: fontSizes.caption,
-    color: colors.inkMuted,
-  },
-  progressCountStrong: {
-    fontSize: fontSizes.bodyMd,
-    fontWeight: "700",
-    color: colors.charcoal,
-  },
-  progressCountDone: {
-    color: colors.sage,
-  },
-  progressTrack: {
-    height: 8,
-    borderRadius: radii.full,
-    backgroundColor: colors.surfaceMuted,
-    overflow: "hidden",
-  },
-  progressFill: {
-    height: "100%",
-    borderRadius: radii.full,
-    backgroundColor: colors.sage,
-  },
-  progressFillDone: {
-    backgroundColor: colors.success,
-  },
-  progressHint: {
-    fontSize: fontSizes.caption,
-    color: colors.inkMuted,
-    lineHeight: 18,
-  },
-  categoriesList: { marginTop: 24, gap: spacing.md },
-  sectionTitle: {
-    fontSize: fontSizes.labelMd,
-    fontWeight: "600",
-    color: colors.charcoal,
-    marginTop: 24,
-    marginBottom: 8,
   },
   addDataCard: { padding: 0 },
   addDataRow: {
@@ -376,11 +371,13 @@ const styles = StyleSheet.create({
   },
   addDataText: { flex: 1, gap: 2 },
   addDataLabel: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.bodyMd,
     fontWeight: "600",
     color: colors.charcoal,
   },
   addDataDescription: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
   },

@@ -299,6 +299,22 @@ lib/
       a fabricated sleep+mood composite. Live wearable sync (still on the roadmap, see
       "Wearable aggregator connect" below) is what would eventually make Sleep/Exercise
       trackable again — with real passive data, not manual re-entry.
+- [x] Care Plan tab premium redesign (Mobbin-referenced, Superpower "Protocol" pattern):
+      the tab was a passive list with no daily driver. Now it opens on a navy "Today" hero
+      (`components/participant/CarePlanTodayHero.tsx`, sibling to the Insights BodyMap hero)
+      with a gradient progress ring showing today's completion, backed by a new generic
+      `components/participant/ProgressRing.tsx` primitive (kept separate from `ScoreRing`,
+      which is 0–100/status-specific). Below it a `components/participant/TodayActionsList.tsx`
+      surfaces every actionable item in one checkable timeline — each supplement (tap to mark
+      taken, strikes through) plus the daily mood check-in with an inline mood picker — honest
+      to the only two `tracked` categories (meds + mood); nothing fake to check for
+      nutrition/exercise/sleep. "Your plan" carries a care-team-reviewed / AI-draft-in-review
+      pill and the existing `CarePlanCategoryCard` grid; the "Mood this week" trend recolored to
+      the mental pillar; "Add more data" renamed "Sharpen your plan". The category drill-down
+      (`app/care-plan/[category].tsx`) gained a matching category-colored hero header with a
+      per-category `ProgressRing` on the tracked ones (medications = today's adherence,
+      mindfulness = days checked in this week) and consistent section styling. All daily
+      writes go through the existing `upsertDailyLogAction`; no schema/repository change.
 - [x] Sign-off trust badge (`components/participant/SignOffBadge.tsx`): the Insights tab
       only surfaced clinician review as a "Notes from your care team" card mid-scroll —
       easy to skim past, and undersells the platform's real differentiator versus
