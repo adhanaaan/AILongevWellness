@@ -192,10 +192,15 @@ export default function TrackingPage() {
           />
 
           <Text style={styles.sectionTitle}>Your plan</Text>
+          {!carePlan && (
+            <Text style={styles.starterNote}>
+              Starter guidance to begin with — your plan personalizes as your care team reviews your data.
+            </Text>
+          )}
           <View style={styles.categoriesList}>
-            {CARE_PLAN_CATEGORIES.map(({ key, label, Icon, color, fallback, tracked }) => {
-              const items = carePlan?.[key] ?? [];
-              const planSnippet = items.length > 0 ? items[0] : fallback;
+            {CARE_PLAN_CATEGORIES.map(({ key, label, Icon, color, starter, tracked }) => {
+              const draftItems = carePlan?.[key];
+              const items = draftItems && draftItems.length > 0 ? draftItems : starter;
               const status = tracked ? todayStatus(key, todayLog, participant) : null;
               return (
                 <CarePlanCategoryCard
@@ -203,8 +208,8 @@ export default function TrackingPage() {
                   label={label}
                   Icon={Icon}
                   color={color}
-                  planSnippet={planSnippet}
-                  moreCount={Math.max(0, items.length - 1)}
+                  previewItems={items.slice(0, 2)}
+                  moreCount={Math.max(0, items.length - 2)}
                   status={status}
                   onPress={() => router.push(`/care-plan/${key}`)}
                 />
@@ -287,6 +292,14 @@ const styles = StyleSheet.create({
     color: colors.charcoal,
     marginTop: spacing["2xl"],
     marginBottom: spacing.md,
+  },
+  starterNote: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    marginTop: -spacing.xs,
+    marginBottom: spacing.md,
+    lineHeight: 17,
   },
   categoriesList: { gap: spacing.md },
   barsContainer: {

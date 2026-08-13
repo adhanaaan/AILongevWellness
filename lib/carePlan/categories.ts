@@ -7,8 +7,17 @@ export interface CarePlanCategoryConfig {
   label: string;
   Icon: LucideIcon;
   color: string;
-  /** Shown when no doctor-verified plan exists yet for this category (before delivery, or a category the reviewer left blank). Generic, non-personalized wellness guidance only. */
+  /** One-line summary of the generic guidance (used where only a snippet fits). */
   fallback: string;
+  /**
+   * A full, substantive starter plan shown before a personalized AI draft exists,
+   * so the Care Plan is never an empty placeholder — every account opens onto a
+   * real, multi-point protocol. Deliberately GENERIC best-practice wellness
+   * guidance (not personalized to any biomarker), surfaced without the
+   * "AI-drafted" badge so it's never presented as a reviewed or tailored plan;
+   * a real `AiDraft.care_plan` replaces it the moment one is generated.
+   */
+  starter: string[];
   /**
    * Whether this category has a daily self-report interaction. Deliberately
    * only true for things a wearable/lab capture can never tell us on its own
@@ -30,7 +39,13 @@ export const CARE_PLAN_CATEGORIES: CarePlanCategoryConfig[] = [
     label: "Nutrition",
     Icon: Utensils,
     color: colors.metabolic,
-    fallback: "General guidance: favor balanced, whole-food meals with consistent timing.",
+    fallback: "Anchor each meal around protein and fiber to steady energy and appetite.",
+    starter: [
+      "Anchor each meal around protein and fiber — it steadies energy, appetite, and blood sugar through the day.",
+      "Favor whole foods and consistent meal timing over restrictive dieting.",
+      "Keep hydration steady across the day rather than front- or back-loading it.",
+      "Treat the last two hours before bed as a lighter window to protect sleep and overnight recovery.",
+    ],
     tracked: false,
   },
   {
@@ -38,7 +53,13 @@ export const CARE_PLAN_CATEGORIES: CarePlanCategoryConfig[] = [
     label: "Exercise",
     Icon: Activity,
     color: colors.vascular,
-    fallback: "General guidance: aim for regular movement most days of the week.",
+    fallback: "Aim for movement most days — even a brisk 20–30 minute walk counts.",
+    starter: [
+      "Aim for movement most days — even a brisk 20–30 minute walk counts.",
+      "Include at least one strength session a week to preserve muscle and metabolic health.",
+      "Add easy Zone 2 cardio (a conversational pace you could hold for an hour) to build your aerobic base.",
+      "Break up long sitting with a couple of minutes of movement every hour.",
+    ],
     tracked: false,
   },
   {
@@ -46,7 +67,12 @@ export const CARE_PLAN_CATEGORIES: CarePlanCategoryConfig[] = [
     label: "Medications & Supplements",
     Icon: Pill,
     color: colors.sageDark,
-    fallback: "Track what you currently take below — your care team will weigh in once your card is reviewed.",
+    fallback: "Add what you currently take so it's all in one place.",
+    starter: [
+      "Add what you currently take — prescriptions and supplements — so it's all in one place.",
+      "Check in daily to keep a simple adherence record your care team can see.",
+      "Always review any supplement change with your care team before starting or stopping.",
+    ],
     tracked: true,
   },
   {
@@ -54,7 +80,13 @@ export const CARE_PLAN_CATEGORIES: CarePlanCategoryConfig[] = [
     label: "Sleep & Recovery",
     Icon: Moon,
     color: colors.mental,
-    fallback: "General guidance: protect a consistent 7-9 hour sleep window.",
+    fallback: "Protect a consistent 7–9 hour sleep window with a steady wake time.",
+    starter: [
+      "Protect a consistent 7–9 hour sleep window, with the same wake time each day.",
+      "Wind down screen-free for the last 30 minutes before bed.",
+      "Keep the bedroom cool, dark, and quiet to protect deep sleep.",
+      "Keep your wind-down routine consistent on travel and high-stress days, when sleep slips first.",
+    ],
     tracked: false,
   },
   {
@@ -62,7 +94,12 @@ export const CARE_PLAN_CATEGORIES: CarePlanCategoryConfig[] = [
     label: "Mindfulness & Stress",
     Icon: Wind,
     color: colors.mentalDark,
-    fallback: "General guidance: build in a few minutes of rest or recovery each day.",
+    fallback: "Build in a few minutes of daily rest — even one slow-breathing break helps.",
+    starter: [
+      "Build in a few minutes of daily rest — even one slow-breathing break helps reset stress.",
+      "Do a short midday reset on your highest-demand days.",
+      "Notice which parts of your week drain you most, and build a little recovery around them.",
+    ],
     tracked: true,
   },
 ];
