@@ -6,7 +6,7 @@ import { MobileShell } from "@/components/layout/MobileShell";
 import { FadeInView } from "@/components/ui/FadeInView";
 import { InsightsSkeleton } from "@/components/participant/InsightsSkeleton";
 import { BodyMap } from "@/components/participant/BodyMap";
-import { PillarRangeList } from "@/components/participant/PillarRangeList";
+import { BiomarkerSummaryBar } from "@/components/participant/BiomarkerSummaryBar";
 import { KeyContributorItem } from "@/components/participant/KeyContributorItem";
 import { SuggestedFocusGrid } from "@/components/participant/SuggestedFocusGrid";
 import { SnapshotPending } from "@/components/participant/SnapshotPending";
@@ -42,6 +42,7 @@ export default function CardPage() {
   const [onboardingProgress, setOnboardingProgress] = useState<OnboardingProgress | null>(null);
   const [participant, setParticipant] = useState<Participant | null>(null);
   const [showAllRecommendations, setShowAllRecommendations] = useState(false);
+  const [showAllContributors, setShowAllContributors] = useState(false);
 
   useEffect(() => {
     if (!participantId) return;
@@ -138,6 +139,17 @@ export default function CardPage() {
     accessibilityLabel: p.accessibilityLabel,
   }));
 
+  // Scannable marker summary (replaces the wordier repeat of the pillar scores,
+  // which the body hero above already shows). Counts derive from the draft alone.
+  const markerTotal = Object.values(BIOMARKER_KEYS_BY_PILLAR).flat().length;
+  const markerNotCaptured = aiDraft.missing_biomarkers?.length ?? 0;
+  const markerOutOfRange = aiDraft.out_of_range?.length ?? 0;
+  const markerInRange = Math.max(0, markerTotal - markerNotCaptured - markerOutOfRange);
+
+  const visibleContributors = showAllContributors
+    ? aiDraft.key_contributors
+    : aiDraft.key_contributors.slice(0, 3);
+
   return (
     <MobileShell name={card?.participant.name ?? participant?.name}>
       <ScrollView
@@ -183,7 +195,11 @@ export default function CardPage() {
         )}
 
         <View style={styles.section}>
-          <PillarRangeList items={[...pillarItems]} />
+          <BiomarkerSummaryBar
+            inRange={markerInRange}
+            outOfRange={markerOutOfRange}
+            notCaptured={markerNotCaptured}
+          />
         </View>
 
         <View style={styles.section}>
@@ -191,13 +207,25 @@ export default function CardPage() {
             <View style={styles.sectionIconCircle}>
               <ListChecks size={16} color={colors.sageDark} />
             </View>
-            <Text style={styles.sectionTitle}>Key contributors</Text>
+            <Text style={styles.sectionTitle}>Driving your scores</Text>
           </View>
           <View style={styles.contributorList}>
-            {aiDraft.key_contributors.map((c) => (
+            {visibleContributors.map((c) => (
               <KeyContributorItem key={c.text} text={c.text} tone={c.tone} />
             ))}
           </View>
+          {aiDraft.key_contributors.length > 3 && (
+            <Pressable
+              onPress={() => setShowAllContributors((v) => !v)}
+              accessibilityRole="button"
+              style={styles.seeAll}
+            >
+              <Text style={styles.seeAllText}>
+                {showAllContributors ? "Show less" : `See all ${aiDraft.key_contributors.length}`}
+              </Text>
+              <ChevronRight size={14} color={colors.sageDark} />
+            </Pressable>
+          )}
         </View>
 
         {(topFocus || topDiscussionPoint) && (
@@ -292,6 +320,18 @@ const styles = StyleSheet.create({
   },
   narrativeSection: { marginTop: 16 },
   contributorList: { gap: 8 },
+  seeAll: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    marginTop: 10,
+    alignSelf: "flex-start",
+  },
+  seeAllText: {
+    fontSize: fontSizes.labelMd,
+    fontWeight: "600",
+    color: colors.sageDark,
+  },
   expanded: { marginTop: 16 },
   nextStepsCard: { marginTop: 12 },
   askAvaFab: {
