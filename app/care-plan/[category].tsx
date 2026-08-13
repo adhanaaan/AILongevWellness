@@ -17,7 +17,8 @@ import { isSupabaseConfigured } from "@/lib/config/env";
 import { CARE_PLAN_CATEGORIES_BY_KEY, normalizePlanItem } from "@/lib/carePlan/categories";
 import type { SignedCard } from "@/lib/data/repository";
 import type { AiDraft, DailyLog, Participant, PlanCategory } from "@/lib/types/db";
-import { colors, fontFamilies, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, fontWeights, radii, shadows, spacing } from "@/lib/theme/tokens";
+import { GradientOverlay } from "@/components/ui/GradientOverlay";
 
 const VALID_CATEGORIES: PlanCategory[] = ["nutrition", "exercise", "medications", "sleep", "mindfulness"];
 const DAYS = ["M", "T", "W", "T", "F", "S", "S"];
@@ -231,19 +232,21 @@ export default function CarePlanCategoryPage() {
               <View style={styles.planList}>
                 {planItems.map((raw, i) => {
                   const item = normalizePlanItem(raw);
+                  // Legacy drafts (pre title/detail split) coerce the whole sentence
+                  // into `title` with no detail — render those as prose, not a bold
+                  // "title", so an old plan reads as a paragraph rather than a wall.
+                  const isLegacy = !item.detail && item.title.length > 64;
                   return (
-                    <View
-                      key={i}
-                      style={[
-                        styles.planCard,
-                        { backgroundColor: `${config.color}0D`, borderColor: `${config.color}24` },
-                      ]}
-                    >
-                      <View style={[styles.planNumChip, { backgroundColor: `${config.color}24` }]}>
-                        <Text style={[styles.planNum, { color: config.color }]}>{i + 1}</Text>
-                      </View>
+                    <View key={i} style={[styles.planCard, { borderColor: `${config.color}24` }]}>
+                      <GradientOverlay
+                        stops={[
+                          { offset: "0", color: `${config.color}1F` },
+                          { offset: "1", color: `${config.color}00` },
+                        ]}
+                      />
+                      <Text style={[styles.planGhostNum, { color: `${config.color}66` }]}>{i + 1}</Text>
                       <View style={styles.planItemText}>
-                        <Text style={styles.planTitle}>{item.title}</Text>
+                        <Text style={isLegacy ? styles.planProse : styles.planTitle}>{item.title}</Text>
                         {item.detail ? <Text style={styles.planDetail}>{item.detail}</Text> : null}
                       </View>
                     </View>
@@ -469,41 +472,45 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: spacing.md,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
-    borderRadius: radii.lg,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    borderRadius: radii.xl,
     borderWidth: 1,
+    backgroundColor: colors.surface,
+    overflow: "hidden",
+    ...shadows.card,
   },
-  planNumChip: {
-    width: 26,
-    height: 26,
-    borderRadius: radii.full,
-    alignItems: "center",
-    justifyContent: "center",
+  planGhostNum: {
+    fontFamily: fontFamilies.displayBold,
+    fontSize: 30,
+    lineHeight: 34,
+    width: 30,
     flexShrink: 0,
-    marginTop: 1,
-  },
-  planNum: {
-    fontFamily: fontFamilies.displaySemiBold,
-    fontSize: fontSizes.labelMd,
-    fontWeight: fontWeights.semibold,
+    textAlign: "center",
   },
   planItemText: {
     flex: 1,
-    gap: 3,
+    gap: 4,
+    paddingTop: 2,
   },
   planTitle: {
     fontFamily: fontFamilies.displaySemiBold,
     fontSize: fontSizes.bodyMd,
     fontWeight: fontWeights.semibold,
     color: colors.charcoal,
-    lineHeight: 21,
+    lineHeight: 22,
+  },
+  planProse: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.bodyMd,
+    color: colors.charcoal,
+    lineHeight: 23,
   },
   planDetail: {
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.labelMd,
     color: colors.inkMuted,
-    lineHeight: 19,
+    lineHeight: 20,
   },
   fallbackText: {
     fontFamily: fontFamilies.body,
