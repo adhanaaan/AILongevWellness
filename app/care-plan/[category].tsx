@@ -105,7 +105,9 @@ export default function CarePlanCategoryPage() {
   const today = todayIso();
   const todayLog = logs.find((l) => l.log_date === today);
   const last7 = logs.slice(-7);
-  const planItems = card?.aiDraft.care_plan?.[category] ?? pendingDraft?.care_plan?.[category] ?? [];
+  const realPlan = card?.aiDraft.care_plan?.[category] ?? pendingDraft?.care_plan?.[category];
+  const hasRealPlan = Boolean(realPlan && realPlan.length > 0);
+  const planItems = hasRealPlan ? realPlan! : config.starter;
   const medicationCatalog = participant?.medications ?? [];
 
   async function patchToday(patch: Partial<Omit<DailyLog, "id" | "participant_id" | "log_date">>) {
@@ -162,7 +164,7 @@ export default function CarePlanCategoryPage() {
         : null;
 
   const reviewed = Boolean(card);
-  const showPill = planItems.length > 0;
+  const showPill = hasRealPlan;
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -194,9 +196,7 @@ export default function CarePlanCategoryPage() {
                     </Text>
                   </View>
                 ) : (
-                  <Text style={styles.heroSub}>
-                    {config.tracked ? "Self-report · tracked daily" : "Plan-only · from your data"}
-                  </Text>
+                  <Text style={styles.heroSub}>Starter guidance · personalizes after review</Text>
                 )}
               </View>
             </View>
@@ -218,22 +218,18 @@ export default function CarePlanCategoryPage() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Your plan</Text>
             <Card padding="lg">
-              {planItems.length > 0 ? (
-                <View style={styles.planList}>
-                  {planItems.map((item, i) => (
-                    <View key={i} style={styles.planRow}>
-                      <View style={[styles.planMarker, { backgroundColor: `${config.color}1A` }]}>
-                        <View style={[styles.planDot, { backgroundColor: config.color }]} />
-                      </View>
-                      <Text style={styles.planText}>{item}</Text>
+              <View style={styles.planList}>
+                {planItems.map((item, i) => (
+                  <View key={i} style={styles.planRow}>
+                    <View style={[styles.planMarker, { backgroundColor: `${config.color}1A` }]}>
+                      <View style={[styles.planDot, { backgroundColor: config.color }]} />
                     </View>
-                  ))}
-                </View>
-              ) : (
-                <Text style={styles.fallbackText}>{config.fallback}</Text>
-              )}
+                    <Text style={styles.planText}>{item}</Text>
+                  </View>
+                ))}
+              </View>
             </Card>
-            {planItems.length > 0 && (
+            {hasRealPlan && (
               <View style={styles.askAva}>
                 <AskAvaButton
                   question={`Can you explain my ${config.label.toLowerCase()} plan in more detail?`}

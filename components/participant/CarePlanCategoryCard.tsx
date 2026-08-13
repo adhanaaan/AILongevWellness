@@ -13,7 +13,8 @@ export interface CarePlanCategoryCardProps {
   label: string;
   Icon: LucideIcon;
   color: string;
-  planSnippet: string;
+  /** First one or two plan lines, shown as a compact bulleted preview. */
+  previewItems: string[];
   moreCount: number;
   /** Present only for tracked categories (a daily self-report), rendered as a "Today" footer chip. */
   status?: CarePlanTodayStatus | null;
@@ -28,7 +29,7 @@ export function CarePlanCategoryCard({
   label,
   Icon,
   color,
-  planSnippet,
+  previewItems,
   moreCount,
   status,
   onPress,
@@ -49,9 +50,16 @@ export function CarePlanCategoryCard({
                 </View>
               )}
             </View>
-            <Text style={styles.plan} numberOfLines={2}>
-              {planSnippet}
-            </Text>
+            <View style={styles.planList}>
+              {previewItems.map((item, i) => (
+                <View key={i} style={styles.planItemRow}>
+                  <View style={[styles.planItemDot, { backgroundColor: color }]} />
+                  <Text style={styles.plan} numberOfLines={1}>
+                    {item}
+                  </Text>
+                </View>
+              ))}
+            </View>
           </View>
           <ChevronRight size={18} color={colors.inkMuted} style={styles.chev} />
         </View>
@@ -117,7 +125,23 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.overline,
     color: colors.inkMuted,
   },
+  planList: {
+    gap: 5,
+    marginTop: 2,
+  },
+  planItemRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  planItemDot: {
+    width: 5,
+    height: 5,
+    borderRadius: radii.full,
+    flexShrink: 0,
+  },
   plan: {
+    flex: 1,
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.inkMuted,

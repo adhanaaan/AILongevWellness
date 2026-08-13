@@ -343,6 +343,17 @@ lib/
       a green "Reviewed & signed off by [name]" after — exact parity with the Insights
       snapshot. Shown only once a draft exists (`card || pendingDraft`). The category
       drill-down keeps its own smaller per-category pill.
+- [x] Care Plan never shows an empty placeholder: a fresh account (no AI draft yet) used
+      to drop every category to a thin one-line `fallback`, so the plan read empty and
+      unfinished. Each category now carries a full multi-point `starter` plan
+      (`lib/carePlan/categories.ts`) — substantive, GENERIC best-practice wellness
+      guidance — surfaced whenever no real `AiDraft.care_plan` exists, so the tab always
+      opens onto a real protocol; a personalized draft replaces it the moment one is
+      generated. Shown WITHOUT the AI-drafted badge (that only renders when a real draft
+      exists) plus an honest "Starter guidance · personalizes after review" note, so
+      generic defaults are never presented as a reviewed or tailored plan.
+      `CarePlanCategoryCard` also grew from a single truncated snippet to a compact
+      two-line bulleted preview (+`N more`), so each card reads like a real mini-protocol.
 - [x] Sign-off trust badge (`components/participant/SignOffBadge.tsx`): the Insights tab
       only surfaced clinician review as a "Notes from your care team" card mid-scroll —
       easy to skim past, and undersells the platform's real differentiator versus
