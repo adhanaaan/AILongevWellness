@@ -232,8 +232,16 @@ export default function CarePlanCategoryPage() {
                 {planItems.map((raw, i) => {
                   const item = normalizePlanItem(raw);
                   return (
-                    <View key={i} style={styles.planRow}>
-                      <Text style={[styles.planNum, { color: config.color }]}>{i + 1}</Text>
+                    <View
+                      key={i}
+                      style={[
+                        styles.planCard,
+                        { backgroundColor: `${config.color}0D`, borderColor: `${config.color}24` },
+                      ]}
+                    >
+                      <View style={[styles.planNumChip, { backgroundColor: `${config.color}24` }]}>
+                        <Text style={[styles.planNum, { color: config.color }]}>{i + 1}</Text>
+                      </View>
                       <View style={styles.planItemText}>
                         <Text style={styles.planTitle}>{item.title}</Text>
                         {item.detail ? <Text style={styles.planDetail}>{item.detail}</Text> : null}
@@ -456,20 +464,29 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   askAva: { marginTop: spacing.md },
-  planList: { gap: spacing.xl },
-  planRow: {
+  planList: { gap: spacing.md },
+  planCard: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: spacing.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+  },
+  planNumChip: {
+    width: 26,
+    height: 26,
+    borderRadius: radii.full,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+    marginTop: 1,
   },
   planNum: {
-    fontFamily: fontFamilies.displayBold,
-    fontSize: fontSizes.bodyLg,
-    width: 22,
-    flexShrink: 0,
-    textAlign: "center",
-    opacity: 0.5,
-    marginTop: 1,
+    fontFamily: fontFamilies.displaySemiBold,
+    fontSize: fontSizes.labelMd,
+    fontWeight: fontWeights.semibold,
   },
   planItemText: {
     flex: 1,
