@@ -15,6 +15,9 @@ import { CarePlanCategoryCard, type CarePlanTodayStatus } from "@/components/par
 import { CarePlanTodayHero } from "@/components/participant/CarePlanTodayHero";
 import { TodayActionsList } from "@/components/participant/TodayActionsList";
 import { DraftStatusBadge } from "@/components/participant/DraftStatusBadge";
+import { GeneratePlanCard } from "@/components/participant/GeneratePlanCard";
+import { useGenerateDraft } from "@/lib/ai/useGenerateDraft";
+import { isSupabaseConfigured } from "@/lib/config/env";
 import type { AiDraft, DailyLog, Participant, PlanCategory } from "@/lib/types/db";
 import type { SignedCard } from "@/lib/data/repository";
 
@@ -101,6 +104,7 @@ export default function TrackingPage() {
   const [card, setCard] = useState<SignedCard | null>(null);
   const [pendingDraft, setPendingDraft] = useState<AiDraft | null>(null);
   const [loading, setLoading] = useState(true);
+  const { status: genStatus, error: genError, generate } = useGenerateDraft(participantId);
 
   function uploadMoreData(route: string) {
     router.push({ pathname: route as never, params: { mode: "edit" } });
@@ -121,6 +125,13 @@ export default function TrackingPage() {
       setLoading(false);
     });
   }, [participantId]);
+
+  // Server-side generation writes the draft directly to Supabase, which the
+  // local repository.subscribe won't observe — so reload on success to pick it up.
+  async function handleGenerate() {
+    const ok = await generate();
+    if (ok) loadData();
+  }
 
   useEffect(() => {
     if (!participantId) return;
@@ -178,6 +189,10 @@ export default function TrackingPage() {
           <Text style={styles.title}>Care Plan</Text>
           <Text style={styles.subtitle}>Your care team&apos;s protocol, tracked one day at a time.</Text>
           {hasDraft && <DraftStatusBadge isDelivered={isDelivered} gp={gp} tcm={tcm} />}
+
+          {!carePlan && isSupabaseConfigured && (
+            <GeneratePlanCard status={genStatus} error={genError} onGenerate={handleGenerate} />
+          )}
 
           <CarePlanTodayHero done={actionsDone} total={actionsTotal} dateLabel={todayLabel()} />
 

@@ -354,6 +354,18 @@ lib/
       generic defaults are never presented as a reviewed or tailored plan.
       `CarePlanCategoryCard` also grew from a single truncated snippet to a compact
       two-line bulleted preview (+`N more`), so each card reads like a real mini-protocol.
+- [x] Visible, retryable plan generation (was: silent failure): the personalized care plan
+      is AI-drafted from screening data by `regenerateDraft` (`lib/ai/draftGeneration.ts`,
+      via `/api/generate-draft`), fired after onboarding — but as fire-and-forget
+      `generateDraft(...).catch(() => {})`, so any failure (missing `SUPABASE_SERVICE_ROLE_KEY`,
+      unapplied migration, pipeline-state issue) silently left the account on the generic
+      starter fallback with no signal. New `lib/ai/useGenerateDraft.ts` hook + on the Care
+      Plan tab a `components/participant/GeneratePlanCard.tsx` now surface generation as a
+      real action when no personalized draft exists (`!carePlan && isSupabaseConfigured`):
+      a "Generate my plan" CTA → a "Building your personalized plan…" spinner → on failure
+      the endpoint's ACTUAL error message + a retry (so a broken backend is diagnosable,
+      not invisible). On success the screen reloads (server-side draft isn't observed by
+      the local `repository.subscribe`) and the real plan replaces the starter.
 - [x] Sign-off trust badge (`components/participant/SignOffBadge.tsx`): the Insights tab
       only surfaced clinician review as a "Notes from your care team" card mid-scroll —
       easy to skim past, and undersells the platform's real differentiator versus
