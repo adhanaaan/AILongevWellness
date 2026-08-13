@@ -48,7 +48,7 @@ const PRELIMINARY_SUGGESTIONS = [
 
 export default function AvaPage() {
   const { participantId } = useAuth();
-  const { q } = useLocalSearchParams<{ q?: string }>();
+  const { q, qid } = useLocalSearchParams<{ q?: string; qid?: string }>();
   const [card, setCard] = useState<SignedCard | null | undefined>(undefined);
   const [aiDraft, setAiDraft] = useState<AiDraft | null | undefined>(undefined);
   const [biomarkers, setBiomarkers] = useState<Biomarker[]>([]);
@@ -98,7 +98,13 @@ export default function AvaPage() {
   }
 
   return (
-    <AvaChatContent card={groundingCard} reviewed={reviewed} seedQuestion={q} participant={participant} />
+    <AvaChatContent
+      card={groundingCard}
+      reviewed={reviewed}
+      seedQuestion={q}
+      seedId={qid}
+      participant={participant}
+    />
   );
 }
 
@@ -106,11 +112,13 @@ function AvaChatContent({
   card,
   reviewed,
   seedQuestion,
+  seedId,
   participant,
 }: {
   card: SignedCard;
   reviewed: boolean;
   seedQuestion?: string;
+  seedId?: string;
   participant: Participant | null;
 }) {
   const { session, participantId } = useAuth();
@@ -134,7 +142,9 @@ function AvaChatContent({
   });
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const seededRef = useRef(false);
+  // Track the last seed we've fired so a new question (a fresh qid nonce from
+  // useAskAva) re-seeds even though this tab screen stays mounted between visits.
+  const lastSeedRef = useRef<string | undefined>(undefined);
 
   async function send(text: string) {
     const trimmed = text.trim();
@@ -168,12 +178,13 @@ function AvaChatContent({
   }
 
   useEffect(() => {
-    if (seedQuestion && !seededRef.current) {
-      seededRef.current = true;
-      send(seedQuestion);
-    }
+    if (!seedQuestion) return;
+    const token = seedId ?? seedQuestion;
+    if (token === lastSeedRef.current) return;
+    lastSeedRef.current = token;
+    send(seedQuestion);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seedQuestion]);
+  }, [seedQuestion, seedId]);
 
   const canSend = input.trim().length > 0 && !sending;
 

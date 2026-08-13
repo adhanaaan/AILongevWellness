@@ -9,6 +9,7 @@ import { Toggle } from "@/components/ui/Toggle";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { FadeInView } from "@/components/ui/FadeInView";
 import { ProgressRing } from "@/components/participant/ProgressRing";
+import { AskAvaButton } from "@/components/participant/AskAvaButton";
 import { repository } from "@/lib/data/mock";
 import { listDailyLogsAction, upsertDailyLogAction, updateParticipantAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -232,6 +233,14 @@ export default function CarePlanCategoryPage() {
                 <Text style={styles.fallbackText}>{config.fallback}</Text>
               )}
             </Card>
+            {planItems.length > 0 && (
+              <View style={styles.askAva}>
+                <AskAvaButton
+                  question={`Can you explain my ${config.label.toLowerCase()} plan in more detail?`}
+                  label={`Ask Ava about my ${config.label.toLowerCase()} plan`}
+                />
+              </View>
+            )}
           </View>
 
           {config.tracked ? (
@@ -436,6 +445,7 @@ const styles = StyleSheet.create({
     color: colors.charcoal,
     marginBottom: spacing.md,
   },
+  askAva: { marginTop: spacing.md },
   planList: { gap: spacing.lg },
   planRow: {
     flexDirection: "row",

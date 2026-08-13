@@ -11,6 +11,7 @@ import { BiomarkerRangeRow } from "@/components/participant/BiomarkerRangeRow";
 import { BiomarkerSummaryBar } from "@/components/participant/BiomarkerSummaryBar";
 import { ScoreRing } from "@/components/participant/ScoreRing";
 import { repository } from "@/lib/data/mock";
+import { useAskAva } from "@/lib/ava/useAskAva";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { BIOMARKER_KEYS_BY_PILLAR, pillarStatus } from "@/lib/ai/scoring";
 import { computeVascularAge, computeMetabolicAge, type AgeClockResult } from "@/lib/ai/ageClocks";
@@ -61,6 +62,7 @@ function formatDelta(n: number) {
 export default function PillarDetailPage() {
   const { pillar: pillarParam } = useLocalSearchParams<{ pillar: string }>();
   const router = useRouter();
+  const ask = useAskAva();
   const { participantId } = useAuth();
   const [aiDraft, setAiDraft] = useState<AiDraft | null>(null);
   const [biomarkers, setBiomarkers] = useState<Biomarker[]>([]);
@@ -270,12 +272,7 @@ export default function PillarDetailPage() {
             <Pressable
               key={o.key}
               style={styles.askAvaRow}
-              onPress={() =>
-                router.push({
-                  pathname: "/(tabs)/ava",
-                  params: { q: `What might help with my ${humanizeKey(o.key).toLowerCase()}?` },
-                })
-              }
+              onPress={() => ask(`What might help with my ${humanizeKey(o.key).toLowerCase()}?`)}
             >
               <MessageCircle size={16} color={colors.sageDark} />
               <Text style={styles.askAvaRowText}>
@@ -286,14 +283,7 @@ export default function PillarDetailPage() {
           ))}
           <Pressable
             style={styles.askAvaRow}
-            onPress={() =>
-              router.push({
-                pathname: "/(tabs)/ava",
-                params: {
-                  q: `Can you tell me more about my ${PILLAR_LABELS[pillar].toLowerCase()} score?`,
-                },
-              })
-            }
+            onPress={() => ask(`Can you tell me more about my ${PILLAR_LABELS[pillar].toLowerCase()} score?`)}
           >
             <MessageCircle size={16} color={colors.sageDark} />
             <Text style={styles.askAvaRowText}>

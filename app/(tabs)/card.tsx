@@ -18,6 +18,7 @@ import { SnapshotSummaryCard } from "@/components/participant/SnapshotSummaryCar
 import { WellnessDisclaimer } from "@/components/participant/WellnessDisclaimer";
 import { repository } from "@/lib/data/mock";
 import { getOnboardingProgressAction } from "@/lib/data/actions";
+import { useAskAva } from "@/lib/ava/useAskAva";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { pillarStatus, buildPillarNarrative, BIOMARKER_KEYS_BY_PILLAR } from "@/lib/ai/scoring";
 import { isCaptureComplete } from "@/lib/onboarding/flow";
@@ -35,6 +36,7 @@ function formatDate(iso: string) {
 
 export default function CardPage() {
   const router = useRouter();
+  const ask = useAskAva();
   const { participantId } = useAuth();
   const [card, setCard] = useState<SignedCard | null | undefined>(undefined);
   const [pipeline, setPipeline] = useState<Pipeline | null | undefined>(undefined);
@@ -90,11 +92,7 @@ export default function CardPage() {
   const tcm = reviews.find((r) => r.stage === "tcm");
   const missingCount = aiDraft.missing_biomarkers?.length ?? 0;
 
-  const askAva = () =>
-    router.push({
-      pathname: "/(tabs)/ava",
-      params: { q: "Can you walk me through what's driving my scores?" },
-    });
+  const askAva = () => ask("Can you walk me through what's driving my scores?");
 
   const topFocus = aiDraft.suggested_focus[0];
   const topDiscussionPoint = aiDraft.discussion_points[0];
