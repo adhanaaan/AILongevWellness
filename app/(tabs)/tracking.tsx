@@ -14,6 +14,7 @@ import { CARE_PLAN_CATEGORIES } from "@/lib/carePlan/categories";
 import { CarePlanCategoryCard, type CarePlanTodayStatus } from "@/components/participant/CarePlanCategoryCard";
 import { CarePlanTodayHero } from "@/components/participant/CarePlanTodayHero";
 import { TodayActionsList } from "@/components/participant/TodayActionsList";
+import { DraftStatusBadge } from "@/components/participant/DraftStatusBadge";
 import type { AiDraft, DailyLog, Participant, PlanCategory } from "@/lib/types/db";
 import type { SignedCard } from "@/lib/data/repository";
 
@@ -132,6 +133,13 @@ export default function TrackingPage() {
   const last7 = logs.slice(-7);
   const isDelivered = Boolean(card);
   const carePlan = card?.aiDraft.care_plan ?? pendingDraft?.care_plan;
+  // The care plan is AI-drafted then clinician-reviewed on the same pipeline as
+  // the scores, so it carries the same status badge as the Insights snapshot:
+  // "AI-drafted · pending review" until sign-off, then "Reviewed & signed off by".
+  const reviews = card?.reviews ?? [];
+  const gp = reviews.find((r) => r.stage === "gp");
+  const tcm = reviews.find((r) => r.stage === "tcm");
+  const hasDraft = Boolean(card || pendingDraft);
 
   // Today's actions: each supplement (taken toggle) + the daily mood check-in.
   const medCatalog = participant?.medications ?? [];
@@ -155,12 +163,6 @@ export default function TrackingPage() {
     patchToday({ mood: { score } });
   }
 
-  const reviewPill = isDelivered
-    ? { text: "Care-team reviewed", style: styles.pillReviewed, textStyle: styles.pillReviewedText }
-    : carePlan
-      ? { text: "AI draft · in review", style: styles.pillPending, textStyle: styles.pillPendingText }
-      : null;
-
   if (loading) {
     return (
       <MobileShell>
@@ -175,6 +177,7 @@ export default function TrackingPage() {
         <FadeInView>
           <Text style={styles.title}>Care Plan</Text>
           <Text style={styles.subtitle}>Your care team&apos;s protocol, tracked one day at a time.</Text>
+          {hasDraft && <DraftStatusBadge isDelivered={isDelivered} gp={gp} tcm={tcm} />}
 
           <CarePlanTodayHero done={actionsDone} total={actionsTotal} dateLabel={todayLabel()} />
 
@@ -188,14 +191,7 @@ export default function TrackingPage() {
             onManageMeds={() => router.push("/care-plan/medications")}
           />
 
-          <View style={styles.planHeader}>
-            <Text style={styles.sectionTitleFlush}>Your plan</Text>
-            {reviewPill && (
-              <View style={[styles.pill, reviewPill.style]}>
-                <Text style={[styles.pillText, reviewPill.textStyle]}>{reviewPill.text}</Text>
-              </View>
-            )}
-          </View>
+          <Text style={styles.sectionTitle}>Your plan</Text>
           <View style={styles.categoriesList}>
             {CARE_PLAN_CATEGORIES.map(({ key, label, Icon, color, fallback, tracked }) => {
               const items = carePlan?.[key] ?? [];
@@ -292,35 +288,6 @@ const styles = StyleSheet.create({
     marginTop: spacing["2xl"],
     marginBottom: spacing.md,
   },
-  sectionTitleFlush: {
-    fontFamily: fontFamilies.displaySemiBold,
-    fontSize: fontSizes.bodyLg,
-    fontWeight: "700",
-    color: colors.charcoal,
-  },
-  planHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: spacing.sm,
-    marginTop: spacing["2xl"],
-    marginBottom: spacing.md,
-  },
-  pill: {
-    borderRadius: radii.full,
-    paddingVertical: 4,
-    paddingHorizontal: spacing.md,
-  },
-  pillText: {
-    fontFamily: fontFamilies.bodySemiBold,
-    fontSize: fontSizes.overline,
-    letterSpacing: 0.4,
-    textTransform: "uppercase",
-  },
-  pillReviewed: { backgroundColor: colors.sageTint },
-  pillReviewedText: { color: colors.sage },
-  pillPending: { backgroundColor: colors.terracottaTint },
-  pillPendingText: { color: colors.terracottaInk },
   categoriesList: { gap: spacing.md },
   barsContainer: {
     flexDirection: "row",

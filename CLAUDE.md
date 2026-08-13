@@ -335,6 +335,14 @@ lib/
       `ava.tsx` — tapping one routes straight there (`router.push`). Pure string matching,
       no API/schema change; works in both the real (`api/ava.ts`) and mock
       (`respondAsAva`) response paths.
+- [x] Care Plan tab now carries the same AI-draft/reviewed status as the scores: the
+      care plan is AI-drafted then clinician-reviewed on the same pipeline as the
+      snapshot, so the Care Plan tab (`app/(tabs)/tracking.tsx`) surfaces the shared
+      `DraftStatusBadge` prominently under the title (was: a small "Your plan" review
+      pill) — an amber "AI-drafted · pending your care team's review" before sign-off,
+      a green "Reviewed & signed off by [name]" after — exact parity with the Insights
+      snapshot. Shown only once a draft exists (`card || pendingDraft`). The category
+      drill-down keeps its own smaller per-category pill.
 - [x] Sign-off trust badge (`components/participant/SignOffBadge.tsx`): the Insights tab
       only surfaced clinician review as a "Notes from your care team" card mid-scroll —
       easy to skim past, and undersells the platform's real differentiator versus
