@@ -35,6 +35,12 @@ export function generateDraft(token: string, participantId: string): Promise<{ d
   return postJson("/api/generate-draft", token, { participantId });
 }
 
+// Backfills only the care_plan on a delivered card that never got one, without
+// touching the signed assessment (see api/generate-care-plan.ts).
+export function generateCarePlan(token: string, participantId: string): Promise<{ draft: unknown }> {
+  return postJson("/api/generate-care-plan", token, { participantId });
+}
+
 export function extractWearableExport(
   token: string,
   participantId: string,

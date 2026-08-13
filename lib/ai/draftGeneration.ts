@@ -251,3 +251,93 @@ export async function regenerateDraft(
 
   return { status: "ok", draft };
 }
+
+export type BackfillResult =
+  | { status: "ok"; draft: AiDraft }
+  | { status: "skipped"; reason: "no_draft" | "already_has_plan" };
+
+/**
+ * Backfill ONLY the care_plan onto an existing draft, without touching the
+ * signed assessment (scores, biological age, narrative) or the pipeline state.
+ *
+ * This exists for one specific case: a card that was signed off and delivered
+ * *before* the care-plan feature existed, so it has a doctor-reviewed assessment
+ * but an empty care_plan. Regenerating the whole draft is forbidden on a
+ * delivered card (it would rewrite what the doctors signed) — but the care plan
+ * was never part of that sign-off, so generating just that section and leaving
+ * everything else intact is safe. It's surfaced to the participant as an
+ * AI-drafted plan "pending review" (never as reviewed) — the caller distinguishes
+ * it by generated_at moving past the sign-off time. Only ever fills an ABSENT
+ * plan; it will not overwrite a care_plan that already exists (e.g. a reviewed one).
+ */
+export async function backfillCarePlan(
+  serviceClient: SupabaseClient,
+  participantId: string
+): Promise<BackfillResult> {
+  const [{ data: participant }, { data: biomarkers }, { data: existingDraft }] = await Promise.all([
+    serviceClient.from("participants").select("*").eq("id", participantId).maybeSingle(),
+    serviceClient.from("biomarkers").select("*").eq("participant_id", participantId),
+    serviceClient.from("ai_draft").select("*").eq("participant_id", participantId).maybeSingle(),
+  ]);
+  if (!participant || !existingDraft) return { status: "skipped", reason: "no_draft" };
+  // Never clobber a plan that's already there — only fill a genuinely empty one.
+  const existingPlan = existingDraft.care_plan;
+  if (existingPlan && Object.keys(existingPlan).length > 0) {
+    return { status: "skipped", reason: "already_has_plan" };
+  }
+
+  const rows: Biomarker[] = biomarkers ?? [];
+
+  const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+  const message = await anthropic.messages.create({
+    model: "claude-opus-5",
+    max_tokens: 8000,
+    system: NARRATIVE_PROMPT,
+    tools: [NARRATIVE_TOOL],
+    tool_choice: { type: "tool", name: "write_narrative" },
+    messages: [
+      {
+        role: "user",
+        content: JSON.stringify({
+          // Ground the plan in the card's own signed values, not a fresh
+          // recompute — we're filling a gap in this delivered card, not redoing it.
+          participant: { age: participant.age, sex: participant.sex, goals: participant.goals },
+          scores: existingDraft.scores,
+          biological_age: existingDraft.biological_age,
+          biomarkers: rows.map((b) => ({
+            key: b.key,
+            label: b.label,
+            pillar: b.pillar,
+            value: b.value,
+            unit: b.unit,
+            ref_low: b.ref_low,
+            ref_high: b.ref_high,
+            flagged: b.flagged,
+          })),
+          missing_biomarkers: existingDraft.missing_biomarkers ?? [],
+        }),
+      },
+    ],
+  });
+  const toolUse = message.content.find(
+    (block): block is Anthropic.ToolUseBlock => block.type === "tool_use"
+  );
+  if (!toolUse) throw new Error("AI did not call the expected tool");
+  const narrative = toolUse.input as Narrative;
+
+  // Persist ONLY the care plan (and generated_at, so the caller can tell this
+  // plan post-dates the sign-off and mark it "pending review"). Everything the
+  // doctors signed — scores, biological age, contributors, focus — is untouched.
+  const { data: draft, error: draftErr } = await serviceClient
+    .from("ai_draft")
+    .update({
+      care_plan: narrative.care_plan,
+      generated_at: new Date().toISOString(),
+    })
+    .eq("participant_id", participantId)
+    .select()
+    .single();
+  if (draftErr) throw new Error(draftErr.message);
+
+  return { status: "ok", draft };
+}
