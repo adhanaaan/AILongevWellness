@@ -315,6 +315,26 @@ lib/
       per-category `ProgressRing` on the tracked ones (medications = today's adherence,
       mindfulness = days checked in this week) and consistent section styling. All daily
       writes go through the existing `upsertDailyLogAction`; no schema/repository change.
+- [x] AVA "weave" — ask about any data point from anywhere: the AVA tab already read a
+      `q` param and auto-sent it, but seeded only once per mount, and React Navigation
+      keeps tab screens mounted after first visit — so a second "Ask Ava" tap anywhere
+      silently did nothing. Fixed with a `qid` nonce: a new `lib/ava/useAskAva.ts` hook
+      navigates to `/(tabs)/ava` with `q` + a fresh monotonic `qid` each call, and
+      `ava.tsx` re-seeds whenever the `qid` token changes (was: a one-shot `seededRef`
+      boolean). A reusable `components/participant/AskAvaButton.tsx` ("Ask Ava about
+      this" row, matching the pillar page's original styling) is now woven onto the
+      bio-age page ("How can I improve my biological age?") and each care-plan category
+      drill-down ("Ask Ava about my {category} plan", shown when a plan exists). The
+      pillar page's existing Ask-Ava rows and the Insights tab's "Ask Ava" FAB were
+      switched onto the same hook so they fire reliably on every tap, not just the first.
+- [x] AVA answers deep-link back into the app (closes the weave loop the other way):
+      AVA replies were dead-end text. A new `lib/ava/suggestedActions.ts` scans the
+      participant's question + AVA's reply for topics the app has a screen for (each
+      pillar, biological age, a care-plan category, the Methodology page) and returns up
+      to 3 deep-link chips (deduped by route), rendered under each AVA bubble in
+      `ava.tsx` — tapping one routes straight there (`router.push`). Pure string matching,
+      no API/schema change; works in both the real (`api/ava.ts`) and mock
+      (`respondAsAva`) response paths.
 - [x] Sign-off trust badge (`components/participant/SignOffBadge.tsx`): the Insights tab
       only surfaced clinician review as a "Notes from your care team" card mid-scroll —
       easy to skim past, and undersells the platform's real differentiator versus

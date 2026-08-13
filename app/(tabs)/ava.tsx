@@ -9,8 +9,8 @@ import {
   Platform,
   StyleSheet,
 } from "react-native";
-import { useLocalSearchParams } from "expo-router";
-import { Send, Sparkles } from "lucide-react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { Send, Sparkles, ChevronRight } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { FadeInView } from "@/components/ui/FadeInView";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -23,6 +23,7 @@ import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { askAva } from "@/lib/ai/client";
+import { suggestedActions, type AvaAction } from "@/lib/ava/suggestedActions";
 import type { SignedCard } from "@/lib/data/repository";
 import type { AiDraft, Biomarker, Participant, Pipeline } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, radii, shadows, spacing } from "@/lib/theme/tokens";
@@ -31,6 +32,8 @@ interface Message {
   role: "user" | "ava";
   text: string;
   disclaimer?: string;
+  /** Deep-link chips shown under an AVA answer (see suggestedActions). */
+  actions?: AvaAction[];
 }
 
 const REVIEWED_SUGGESTIONS = [
@@ -48,7 +51,7 @@ const PRELIMINARY_SUGGESTIONS = [
 
 export default function AvaPage() {
   const { participantId } = useAuth();
-  const { q } = useLocalSearchParams<{ q?: string }>();
+  const { q, qid } = useLocalSearchParams<{ q?: string; qid?: string }>();
   const [card, setCard] = useState<SignedCard | null | undefined>(undefined);
   const [aiDraft, setAiDraft] = useState<AiDraft | null | undefined>(undefined);
   const [biomarkers, setBiomarkers] = useState<Biomarker[]>([]);
@@ -98,7 +101,13 @@ export default function AvaPage() {
   }
 
   return (
-    <AvaChatContent card={groundingCard} reviewed={reviewed} seedQuestion={q} participant={participant} />
+    <AvaChatContent
+      card={groundingCard}
+      reviewed={reviewed}
+      seedQuestion={q}
+      seedId={qid}
+      participant={participant}
+    />
   );
 }
 
@@ -106,14 +115,17 @@ function AvaChatContent({
   card,
   reviewed,
   seedQuestion,
+  seedId,
   participant,
 }: {
   card: SignedCard;
   reviewed: boolean;
   seedQuestion?: string;
+  seedId?: string;
   participant: Participant | null;
 }) {
   const { session, participantId } = useAuth();
+  const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
   // Open with a genuine AVA greeting rather than a fabricated user turn answered
   // by the mock engine. The old seed called respondAsAva() unconditionally, so on
@@ -134,7 +146,9 @@ function AvaChatContent({
   });
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const seededRef = useRef(false);
+  // Track the last seed we've fired so a new question (a fresh qid nonce from
+  // useAskAva) re-seeds even though this tab screen stays mounted between visits.
+  const lastSeedRef = useRef<string | undefined>(undefined);
 
   async function send(text: string) {
     const trimmed = text.trim();
@@ -149,7 +163,10 @@ function AvaChatContent({
       setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150);
       try {
         const { reply, disclaimer } = await askAva(session.access_token, participantId, trimmed, history);
-        setMessages((prev) => [...prev, { role: "ava", text: reply, disclaimer }]);
+        setMessages((prev) => [
+          ...prev,
+          { role: "ava", text: reply, disclaimer, actions: suggestedActions(trimmed, reply) },
+        ]);
       } catch (e) {
         setMessages((prev) => [
           ...prev,
@@ -163,17 +180,21 @@ function AvaChatContent({
     }
 
     const reply = respondAsAva(trimmed, card);
-    setMessages((prev) => [...prev, { role: "ava", text: reply.text, disclaimer: reply.disclaimer }]);
+    setMessages((prev) => [
+      ...prev,
+      { role: "ava", text: reply.text, disclaimer: reply.disclaimer, actions: suggestedActions(trimmed, reply.text) },
+    ]);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
   }
 
   useEffect(() => {
-    if (seedQuestion && !seededRef.current) {
-      seededRef.current = true;
-      send(seedQuestion);
-    }
+    if (!seedQuestion) return;
+    const token = seedId ?? seedQuestion;
+    if (token === lastSeedRef.current) return;
+    lastSeedRef.current = token;
+    send(seedQuestion);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seedQuestion]);
+  }, [seedQuestion, seedId]);
 
   const canSend = input.trim().length > 0 && !sending;
 
@@ -214,9 +235,28 @@ function AvaChatContent({
           showsVerticalScrollIndicator={false}
         >
           {messages.map((m, i) => (
-            <ChatBubble key={i} role={m.role} disclaimer={m.disclaimer}>
-              {m.text}
-            </ChatBubble>
+            <View key={i}>
+              <ChatBubble role={m.role} disclaimer={m.disclaimer}>
+                {m.text}
+              </ChatBubble>
+              {m.role === "ava" && m.actions && m.actions.length > 0 && (
+                <View style={styles.actionsRow}>
+                  {m.actions.map((a) => (
+                    <TouchableOpacity
+                      key={a.route}
+                      style={styles.actionChip}
+                      onPress={() => router.push(a.route as never)}
+                      accessibilityRole="button"
+                      accessibilityLabel={a.label}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.actionChipText}>{a.label}</Text>
+                      <ChevronRight size={14} color={colors.sageDark} />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
           ))}
           {sending && <TypingIndicator />}
         </ScrollView>
@@ -307,6 +347,28 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   messagesContent: { gap: spacing.md, paddingBottom: spacing.lg, paddingTop: spacing.xs },
+  actionsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+    marginLeft: spacing.xs,
+  },
+  actionChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    backgroundColor: colors.sageTint,
+    borderRadius: radii.full,
+    paddingVertical: spacing.sm,
+    paddingLeft: spacing.lg,
+    paddingRight: spacing.md,
+  },
+  actionChipText: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.caption,
+    color: colors.sageDark,
+  },
   inputArea: {
     gap: spacing.lg,
     marginHorizontal: -spacing.xl,

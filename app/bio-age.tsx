@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { FadeInView } from "@/components/ui/FadeInView";
+import { AskAvaButton } from "@/components/participant/AskAvaButton";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { pillarStatus } from "@/lib/ai/scoring";
@@ -147,6 +148,12 @@ export default function BioAgePage() {
               </TouchableOpacity>
             );
           })}
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Ask Ava</Text>
+          <AskAvaButton question="How can I improve my biological age?" />
+          <AskAvaButton question="What is biological age, and why does it differ from my real age?" />
         </View>
 
         <TouchableOpacity style={styles.methodologyLink} onPress={() => router.push("/methodology")}>
