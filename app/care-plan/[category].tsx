@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Toggle } from "@/components/ui/Toggle";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { FadeInView } from "@/components/ui/FadeInView";
+import { ProgressRing } from "@/components/participant/ProgressRing";
 import { repository } from "@/lib/data/mock";
 import { listDailyLogsAction, upsertDailyLogAction, updateParticipantAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -144,6 +145,24 @@ export default function CarePlanCategoryPage() {
   const mood = todayLog?.mood ? moodKeyForScore(todayLog.mood.score) : null;
   const Icon = config.Icon;
 
+  // Per-category header ring (tracked categories only): medications shows today's
+  // adherence, mindfulness shows how many of the last 7 days were checked in.
+  const medTakenToday = (todayLog?.supplements ?? []).filter((s) => medicationCatalog.includes(s)).length;
+  const moodDaysThisWeek = last7.filter((l) => l.mood).length;
+  const ringData =
+    config.tracked && category === "medications"
+      ? {
+          fraction: medicationCatalog.length > 0 ? medTakenToday / medicationCatalog.length : 0,
+          center: `${medTakenToday}/${medicationCatalog.length}`,
+          caption: "TODAY",
+        }
+      : config.tracked && category === "mindfulness"
+        ? { fraction: moodDaysThisWeek / 7, center: `${moodDaysThisWeek}/7`, caption: "THIS WK" }
+        : null;
+
+  const reviewed = Boolean(card);
+  const showPill = planItems.length > 0;
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
@@ -159,137 +178,169 @@ export default function CarePlanCategoryPage() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <FadeInView>
-        <View style={styles.titleRow}>
-          <View style={[styles.titleIcon, { backgroundColor: `${config.color}1A` }]}>
-            <Icon size={20} color={config.color} />
-          </View>
-          <Text style={styles.categoryName}>{config.label}</Text>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.planHeaderRow}>
-            <Text style={styles.sectionTitle}>Your plan</Text>
-            {planItems.length > 0 && !card && (
-              <View style={styles.pendingPill}>
-                <Text style={styles.pendingNote}>AI-drafted · pending review</Text>
+          {/* Category hero header */}
+          <View style={[styles.hero, { backgroundColor: `${config.color}12` }]}>
+            <View style={styles.heroLeft}>
+              <View style={[styles.heroIcon, { backgroundColor: `${config.color}22` }]}>
+                <Icon size={24} color={config.color} />
               </View>
-            )}
-          </View>
-          <Card padding="lg">
-            {planItems.length > 0 ? (
-              <View style={styles.planList}>
-                {planItems.map((item, i) => (
-                  <View key={i} style={styles.planRow}>
-                    <View style={[styles.planMarker, { backgroundColor: `${config.color}1A` }]}>
-                      <View style={[styles.planDot, { backgroundColor: config.color }]} />
-                    </View>
-                    <Text style={styles.planText}>{item}</Text>
-                  </View>
-                ))}
-              </View>
-            ) : (
-              <Text style={styles.fallbackText}>{config.fallback}</Text>
-            )}
-          </Card>
-        </View>
-
-        {config.tracked ? (
-          <>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Track</Text>
-              <Card padding="lg">
-                {category === "mindfulness" && (
-                  <>
-                    <Text style={styles.trackLabel}>Mood today</Text>
-                    <View style={styles.moodRow}>
-                      {MOODS.map(({ key, label, Icon: MoodIcon }) => (
-                        <TouchableOpacity
-                          key={key}
-                          style={[styles.moodOption, mood === key && styles.moodOptionActive]}
-                          onPress={() => setMood(key)}
-                        >
-                          <MoodIcon size={18} color={mood === key ? colors.sageDark : colors.inkMuted} />
-                          <Text style={[styles.moodOptionLabel, mood === key && styles.moodOptionLabelActive]}>{label}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </>
-                )}
-
-                {category === "medications" && (
-                  <View>
-                    {medicationCatalog.length === 0 && (
-                      <Text style={styles.fallbackText}>Add what you currently take below to start tracking it daily.</Text>
-                    )}
-                    {medicationCatalog.map((name) => (
-                      <View key={name} style={styles.medRow}>
-                        <Text style={styles.medName}>{name}</Text>
-                        <View style={styles.medRowRight}>
-                          <Toggle
-                            checked={(todayLog?.supplements ?? []).includes(name)}
-                            onChange={(v) => toggleMedication(name, v)}
-                          />
-                          <TouchableOpacity onPress={() => removeMedicationFromCatalog(name)} hitSlop={8}>
-                            <X size={16} color={colors.inkMuted} />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    ))}
-                    <View style={styles.addMedRow}>
-                      <TextInput
-                        style={styles.addMedInput}
-                        value={newMedication}
-                        onChangeText={setNewMedication}
-                        placeholder="e.g. Omega-3"
-                        placeholderTextColor={colors.inkMuted}
-                        onSubmitEditing={addMedicationToCatalog}
-                      />
-                      <Button size="sm" shape="md" variant="secondary" onPress={addMedicationToCatalog}>
-                        Add
-                      </Button>
-                    </View>
-                  </View>
-                )}
-              </Card>
-            </View>
-
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>This week</Text>
-              <Card padding="lg">
-                {last7.length > 0 ? (
-                  <View style={styles.barsContainer}>
-                    {last7.map((log) => (
-                      <View key={log.log_date} style={styles.barColumn}>
-                        <View style={styles.barTrack}>
-                          <View
-                            style={[
-                              styles.barFill,
-                              {
-                                backgroundColor: config.color,
-                                height: Math.max(
-                                  4,
-                                  Math.round(historyFraction(category, log, medicationCatalog.length) * HISTORY_BAR_TRACK_HEIGHT)
-                                ),
-                              },
-                            ]}
-                          />
-                        </View>
-                        <Text style={styles.dayLabel}>{dayLabel(log.log_date)}</Text>
-                      </View>
-                    ))}
+              <View style={styles.heroText}>
+                <Text style={styles.categoryName}>{config.label}</Text>
+                {showPill ? (
+                  <View style={[styles.pill, reviewed ? styles.pillReviewed : styles.pillPending]}>
+                    <Text style={[styles.pillText, reviewed ? styles.pillReviewedText : styles.pillPendingText]}>
+                      {reviewed ? "Care-team reviewed" : "AI draft · in review"}
+                    </Text>
                   </View>
                 ) : (
-                  <Text style={styles.fallbackText}>Nothing logged yet this week.</Text>
+                  <Text style={styles.heroSub}>
+                    {config.tracked ? "Self-report · tracked daily" : "Plan-only · from your data"}
+                  </Text>
                 )}
+              </View>
+            </View>
+            {ringData && (
+              <ProgressRing
+                fraction={ringData.fraction}
+                size={68}
+                stroke={7}
+                from={config.color}
+                to={config.color}
+                trackColor={colors.surfaceMuted}
+              >
+                <Text style={[styles.ringCenter, { color: config.color }]}>{ringData.center}</Text>
+                <Text style={styles.ringCaption}>{ringData.caption}</Text>
+              </ProgressRing>
+            )}
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Your plan</Text>
+            <Card padding="lg">
+              {planItems.length > 0 ? (
+                <View style={styles.planList}>
+                  {planItems.map((item, i) => (
+                    <View key={i} style={styles.planRow}>
+                      <View style={[styles.planMarker, { backgroundColor: `${config.color}1A` }]}>
+                        <View style={[styles.planDot, { backgroundColor: config.color }]} />
+                      </View>
+                      <Text style={styles.planText}>{item}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <Text style={styles.fallbackText}>{config.fallback}</Text>
+              )}
+            </Card>
+          </View>
+
+          {config.tracked ? (
+            <>
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Track</Text>
+                <Card padding="lg">
+                  {category === "mindfulness" && (
+                    <>
+                      <Text style={styles.trackLabel}>How are you feeling today?</Text>
+                      <View style={styles.moodRow}>
+                        {MOODS.map(({ key, label, Icon: MoodIcon }) => (
+                          <TouchableOpacity
+                            key={key}
+                            style={[styles.moodOption, mood === key && styles.moodOptionActive]}
+                            onPress={() => setMood(key)}
+                          >
+                            <MoodIcon size={18} color={mood === key ? colors.sageDark : colors.inkMuted} />
+                            <Text style={[styles.moodOptionLabel, mood === key && styles.moodOptionLabelActive]}>
+                              {label}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </>
+                  )}
+
+                  {category === "medications" && (
+                    <View>
+                      {medicationCatalog.length === 0 && (
+                        <Text style={styles.fallbackText}>
+                          Add what you currently take below to start tracking it daily.
+                        </Text>
+                      )}
+                      {medicationCatalog.map((name) => (
+                        <View key={name} style={styles.medRow}>
+                          <Text style={styles.medName}>{name}</Text>
+                          <View style={styles.medRowRight}>
+                            <Toggle
+                              checked={(todayLog?.supplements ?? []).includes(name)}
+                              onChange={(v) => toggleMedication(name, v)}
+                            />
+                            <TouchableOpacity onPress={() => removeMedicationFromCatalog(name)} hitSlop={8}>
+                              <X size={16} color={colors.inkMuted} />
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      ))}
+                      <View style={styles.addMedRow}>
+                        <TextInput
+                          style={styles.addMedInput}
+                          value={newMedication}
+                          onChangeText={setNewMedication}
+                          placeholder="e.g. Omega-3"
+                          placeholderTextColor={colors.inkMuted}
+                          onSubmitEditing={addMedicationToCatalog}
+                        />
+                        <Button size="sm" shape="md" variant="secondary" onPress={addMedicationToCatalog}>
+                          Add
+                        </Button>
+                      </View>
+                    </View>
+                  )}
+                </Card>
+              </View>
+
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>This week</Text>
+                <Card padding="lg">
+                  {last7.length > 0 ? (
+                    <View style={styles.barsContainer}>
+                      {last7.map((log) => (
+                        <View key={log.log_date} style={styles.barColumn}>
+                          <View style={styles.barTrack}>
+                            <View
+                              style={[
+                                styles.barFill,
+                                {
+                                  backgroundColor: config.color,
+                                  height: Math.max(
+                                    4,
+                                    Math.round(
+                                      historyFraction(category, log, medicationCatalog.length) * HISTORY_BAR_TRACK_HEIGHT
+                                    )
+                                  ),
+                                },
+                              ]}
+                            />
+                          </View>
+                          <Text style={styles.dayLabel}>{dayLabel(log.log_date)}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  ) : (
+                    <Text style={styles.fallbackText}>Nothing logged yet this week.</Text>
+                  )}
+                </Card>
+              </View>
+            </>
+          ) : (
+            <View style={styles.section}>
+              <Card padding="lg">
+                <Text style={styles.untrackedNote}>
+                  This plan reflects your onboarding wearable and lab data. Daily tracking isn&apos;t part of this
+                  category yet — connect a wearable to fill it in automatically.
+                </Text>
               </Card>
             </View>
-          </>
-        ) : (
-          <Text style={styles.untrackedNote}>
-            This reflects your onboarding wearable and lab data — daily tracking isn&apos;t part of this
-            category yet.
-          </Text>
-        )}
+          )}
         </FadeInView>
       </ScrollView>
     </SafeAreaView>
@@ -311,24 +362,69 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.xl,
     paddingBottom: spacing["3xl"],
   },
-  titleRow: {
+  hero: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing.md,
+    borderRadius: radii["2xl"],
+    padding: spacing.xl,
+    marginTop: spacing.sm,
+  },
+  heroLeft: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
-    marginTop: spacing.sm,
+    flex: 1,
+    minWidth: 0,
   },
-  titleIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: radii.full,
+  heroIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: radii.lg,
     alignItems: "center",
     justifyContent: "center",
   },
+  heroText: { flex: 1, minWidth: 0, gap: 5 },
   categoryName: {
     fontFamily: fontFamilies.displaySemiBold,
-    fontSize: fontSizes.headlineLg,
+    fontSize: fontSizes.headlineSm,
     fontWeight: fontWeights.semibold,
     color: colors.charcoal,
+  },
+  heroSub: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+  },
+  pill: {
+    alignSelf: "flex-start",
+    borderRadius: radii.full,
+    paddingVertical: 3,
+    paddingHorizontal: spacing.md,
+  },
+  pillReviewed: { backgroundColor: colors.sageTint },
+  pillPending: { backgroundColor: colors.terracottaTint },
+  pillText: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
+  pillReviewedText: { color: colors.sage },
+  pillPendingText: { color: colors.terracottaInk },
+  ringCenter: {
+    fontFamily: fontFamilies.displayBold,
+    fontSize: 16,
+    includeFontPadding: false,
+    lineHeight: 19,
+  },
+  ringCaption: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: 8,
+    letterSpacing: 0.6,
+    color: colors.inkMuted,
+    marginTop: 1,
   },
   section: {
     marginTop: spacing["2xl"],
@@ -339,26 +435,6 @@ const styles = StyleSheet.create({
     fontWeight: fontWeights.semibold,
     color: colors.charcoal,
     marginBottom: spacing.md,
-  },
-  planHeaderRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: spacing.md,
-  },
-  pendingPill: {
-    backgroundColor: colors.terracottaTint,
-    borderRadius: radii.full,
-    paddingVertical: 3,
-    paddingHorizontal: spacing.md,
-    marginBottom: spacing.md,
-  },
-  pendingNote: {
-    fontFamily: fontFamilies.bodySemiBold,
-    fontSize: fontSizes.overline,
-    color: colors.terracottaInk,
-    textTransform: "uppercase",
-    letterSpacing: 0.4,
   },
   planList: { gap: spacing.lg },
   planRow: {
@@ -394,22 +470,15 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     lineHeight: 22,
   },
-  trackValue: {
-    fontFamily: fontFamilies.displaySemiBold,
-    fontSize: fontSizes.headlineSm,
-    fontWeight: fontWeights.semibold,
-    color: colors.charcoal,
-  },
   trackLabel: {
-    fontFamily: fontFamilies.body,
-    fontSize: fontSizes.caption,
-    color: colors.inkMuted,
-    marginTop: spacing.xs,
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.labelMd,
+    color: colors.charcoal,
+    marginBottom: spacing.sm,
   },
   moodRow: {
     flexDirection: "row",
     gap: spacing.sm,
-    marginTop: spacing.sm,
   },
   moodOption: {
     flex: 1,
@@ -425,6 +494,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.sageTint,
   },
   moodOptionLabel: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
   },
@@ -433,11 +503,9 @@ const styles = StyleSheet.create({
   },
   untrackedNote: {
     fontFamily: fontFamilies.body,
-    fontSize: fontSizes.caption,
+    fontSize: fontSizes.labelMd,
     color: colors.inkMuted,
-    fontStyle: "italic",
-    marginTop: spacing["2xl"],
-    lineHeight: 18,
+    lineHeight: 21,
   },
   medRow: {
     flexDirection: "row",
