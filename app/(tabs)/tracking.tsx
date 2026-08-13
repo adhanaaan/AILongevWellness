@@ -150,7 +150,6 @@ export default function TrackingPage() {
   const reviews = card?.reviews ?? [];
   const gp = reviews.find((r) => r.stage === "gp");
   const tcm = reviews.find((r) => r.stage === "tcm");
-  const hasDraft = Boolean(card || pendingDraft);
 
   // Today's actions: each supplement (taken toggle) + the daily mood check-in.
   const medCatalog = participant?.medications ?? [];
@@ -188,9 +187,16 @@ export default function TrackingPage() {
         <FadeInView>
           <Text style={styles.title}>Care Plan</Text>
           <Text style={styles.subtitle}>Your care team&apos;s protocol, tracked one day at a time.</Text>
-          {hasDraft && <DraftStatusBadge isDelivered={isDelivered} gp={gp} tcm={tcm} />}
+          {/* Only badge the plan's review status when there's an actual plan to
+              attribute it to — a delivered card can lack a care_plan (its
+              assessment was signed off before the plan existed), and a
+              "reviewed" badge over generic starter guidance would be misleading. */}
+          {carePlan && <DraftStatusBadge isDelivered={isDelivered} gp={gp} tcm={tcm} />}
 
-          {!carePlan && isSupabaseConfigured && (
+          {/* Offer generation only when it can actually run — a delivered/signed
+              card is locked from regeneration, so a "Generate" button there just
+              errors. */}
+          {!carePlan && isSupabaseConfigured && !isDelivered && (
             <GeneratePlanCard status={genStatus} error={genError} onGenerate={handleGenerate} />
           )}
 
@@ -209,7 +215,9 @@ export default function TrackingPage() {
           <Text style={styles.sectionTitle}>Your plan</Text>
           {!carePlan && (
             <Text style={styles.starterNote}>
-              Starter guidance to begin with — your plan personalizes as your care team reviews your data.
+              {isDelivered
+                ? "General wellness guidance — a personalized plan wasn't part of your reviewed card."
+                : "Starter guidance to begin with — generate your personalized plan above."}
             </Text>
           )}
           <View style={styles.categoriesList}>
