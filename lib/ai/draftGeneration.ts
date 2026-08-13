@@ -69,11 +69,18 @@ discussion_points — each a full sentence with real substance, not a 2-3 word l
 should only include what the data actually supports (it's fine for this to be short, or empty, if
 nothing is genuinely concerning — never pad it with invented concerns).
 
-Also fill in care_plan: 2-4 substantive, imperative, non-prescriptive action items per category, each
-explaining briefly why it's being suggested (grounded in the data given, or general science-based
-guidance citing a source above where a category has no directly relevant captured data). This will be
-reviewed and edited by the participant's doctor before it's shown, so draft it as a strong starting
-point, not a final instruction:
+Also fill in care_plan: 2-4 SHORT, scannable action items per category — a checklist a busy executive
+reads in seconds, NOT paragraphs. This is the opposite of the sections above: key_contributors,
+strengths and discussion_points carry the depth and the specific values; the care plan is where it
+gets turned into crisp actions. Each care_plan item:
+- Leads with a concrete action in plain imperative language.
+- Is ONE sentence, roughly 10-18 words — keep it under ~150 characters.
+- Adds at most ONE brief reason clause. Never stack multiple "since/while/given" clauses, and do NOT
+  recite specific biomarker values or units here (no "triglycerides of 0.66 mmol/L" — that belongs in
+  the sections above). Prefer "Shift caffeine to before early afternoon to protect evening sleep." over
+  a long multi-clause sentence explaining the physiology.
+This will be reviewed and edited by the participant's doctor before it's shown, so draft it as a strong
+starting point, not a final instruction:
 - nutrition: diet/weight-related suggestions
 - exercise: movement/activity suggestions
 - medications: only ever "continue current supplement routine" style or "discuss X with your
@@ -111,12 +118,15 @@ const NARRATIVE_TOOL: Anthropic.Tool = {
       discussion_points: { type: "array", minItems: 3, items: { type: "string" } },
       care_plan: {
         type: "object",
+        // maxLength is a hard guardrail against the model writing paragraph-length
+        // plan items — the plan must stay a scannable checklist. The depth lives in
+        // key_contributors / discussion_points, which have no such cap.
         properties: {
-          nutrition: { type: "array", minItems: 2, items: { type: "string" } },
-          exercise: { type: "array", minItems: 2, items: { type: "string" } },
-          medications: { type: "array", minItems: 2, items: { type: "string" } },
-          sleep: { type: "array", minItems: 2, items: { type: "string" } },
-          mindfulness: { type: "array", minItems: 2, items: { type: "string" } },
+          nutrition: { type: "array", minItems: 2, items: { type: "string", maxLength: 160 } },
+          exercise: { type: "array", minItems: 2, items: { type: "string", maxLength: 160 } },
+          medications: { type: "array", minItems: 2, items: { type: "string", maxLength: 160 } },
+          sleep: { type: "array", minItems: 2, items: { type: "string", maxLength: 160 } },
+          mindfulness: { type: "array", minItems: 2, items: { type: "string", maxLength: 160 } },
         },
         required: ["nutrition", "exercise", "medications", "sleep", "mindfulness"],
       },
@@ -274,16 +284,29 @@ export async function backfillCarePlan(
   serviceClient: SupabaseClient,
   participantId: string
 ): Promise<BackfillResult> {
-  const [{ data: participant }, { data: biomarkers }, { data: existingDraft }] = await Promise.all([
-    serviceClient.from("participants").select("*").eq("id", participantId).maybeSingle(),
-    serviceClient.from("biomarkers").select("*").eq("participant_id", participantId),
-    serviceClient.from("ai_draft").select("*").eq("participant_id", participantId).maybeSingle(),
-  ]);
+  const [{ data: participant }, { data: biomarkers }, { data: existingDraft }, { data: reviews }] =
+    await Promise.all([
+      serviceClient.from("participants").select("*").eq("id", participantId).maybeSingle(),
+      serviceClient.from("biomarkers").select("*").eq("participant_id", participantId),
+      serviceClient.from("ai_draft").select("*").eq("participant_id", participantId).maybeSingle(),
+      serviceClient.from("reviews").select("signed_at").eq("participant_id", participantId),
+    ]);
   if (!participant || !existingDraft) return { status: "skipped", reason: "no_draft" };
-  // Never clobber a plan that's already there — only fill a genuinely empty one.
+  // Protect only a plan that was part of the sign-off (reviewed) — generated at or
+  // before the latest signature. A plan generated AFTER sign-off is a prior pending
+  // backfill and MAY be regenerated (e.g. to pick up a better prompt), since it was
+  // never reviewed anyway.
   const existingPlan = existingDraft.care_plan;
   if (existingPlan && Object.keys(existingPlan).length > 0) {
-    return { status: "skipped", reason: "already_has_plan" };
+    const latestSignedAt = (reviews ?? []).reduce(
+      (max: number, r: { signed_at: string | null }) =>
+        r.signed_at ? Math.max(max, Date.parse(r.signed_at)) : max,
+      0
+    );
+    const genAt = existingDraft.generated_at ? Date.parse(existingDraft.generated_at) : 0;
+    if (genAt <= latestSignedAt) {
+      return { status: "skipped", reason: "already_has_plan" };
+    }
   }
 
   const rows: Biomarker[] = biomarkers ?? [];
