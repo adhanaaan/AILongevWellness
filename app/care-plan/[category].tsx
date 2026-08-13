@@ -13,6 +13,7 @@ import { AskAvaButton } from "@/components/participant/AskAvaButton";
 import { repository } from "@/lib/data/mock";
 import { listDailyLogsAction, upsertDailyLogAction, updateParticipantAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { isSupabaseConfigured } from "@/lib/config/env";
 import { CARE_PLAN_CATEGORIES_BY_KEY } from "@/lib/carePlan/categories";
 import type { SignedCard } from "@/lib/data/repository";
 import type { AiDraft, DailyLog, Participant, PlanCategory } from "@/lib/types/db";
@@ -163,7 +164,16 @@ export default function CarePlanCategoryPage() {
         ? { fraction: moodDaysThisWeek / 7, center: `${moodDaysThisWeek}/7`, caption: "THIS WK" }
         : null;
 
-  const reviewed = Boolean(card);
+  // A plan backfilled onto a delivered card after sign-off reads "in review,"
+  // never "reviewed" — see the same logic on the Care Plan tab.
+  const latestSignedAt = (card?.reviews ?? []).reduce(
+    (max, r) => (r.signed_at ? Math.max(max, Date.parse(r.signed_at)) : max),
+    0
+  );
+  const draftGeneratedAt = card?.aiDraft.generated_at ? Date.parse(card.aiDraft.generated_at) : 0;
+  const carePlanPendingReview =
+    isSupabaseConfigured && Boolean(card) && hasRealPlan && draftGeneratedAt > latestSignedAt;
+  const reviewed = Boolean(card) && !carePlanPendingReview;
   const showPill = hasRealPlan;
 
   return (

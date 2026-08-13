@@ -128,8 +128,10 @@ export default function TrackingPage() {
 
   // Server-side generation writes the draft directly to Supabase, which the
   // local repository.subscribe won't observe — so reload on success to pick it up.
+  // A signed/delivered card is locked from full regeneration, so there we backfill
+  // only the missing care plan ("carePlan" mode) rather than redoing the draft.
   async function handleGenerate() {
-    const ok = await generate();
+    const ok = await generate(card ? "carePlan" : "draft");
     if (ok) loadData();
   }
 
@@ -150,6 +152,19 @@ export default function TrackingPage() {
   const reviews = card?.reviews ?? [];
   const gp = reviews.find((r) => r.stage === "gp");
   const tcm = reviews.find((r) => r.stage === "tcm");
+  // A delivered card can have a care plan that was AI-backfilled AFTER sign-off
+  // (a plan added to a card that was signed before it had one). Such a plan
+  // hasn't been reviewed, so it must read "pending review," never "signed off."
+  // Sign-off never writes ai_draft, so generated_at only moves past the review
+  // time when the plan was (re)generated afterwards — that's the signal. Only
+  // possible in Supabase mode, where the backfill runs.
+  const latestSignedAt = reviews.reduce(
+    (max, r) => (r.signed_at ? Math.max(max, Date.parse(r.signed_at)) : max),
+    0
+  );
+  const draftGeneratedAt = card?.aiDraft.generated_at ? Date.parse(card.aiDraft.generated_at) : 0;
+  const carePlanPendingReview =
+    isSupabaseConfigured && isDelivered && !!carePlan && draftGeneratedAt > latestSignedAt;
 
   // Today's actions: each supplement (taken toggle) + the daily mood check-in.
   const medCatalog = participant?.medications ?? [];
@@ -188,15 +203,16 @@ export default function TrackingPage() {
           <Text style={styles.title}>Care Plan</Text>
           <Text style={styles.subtitle}>Your care team&apos;s protocol, tracked one day at a time.</Text>
           {/* Only badge the plan's review status when there's an actual plan to
-              attribute it to — a delivered card can lack a care_plan (its
-              assessment was signed off before the plan existed), and a
-              "reviewed" badge over generic starter guidance would be misleading. */}
-          {carePlan && <DraftStatusBadge isDelivered={isDelivered} gp={gp} tcm={tcm} />}
+              attribute it to. A plan backfilled onto a delivered card after
+              sign-off hasn't been reviewed, so it reads "AI-drafted · pending
+              review" (isDelivered=false), not "signed off". */}
+          {carePlan && (
+            <DraftStatusBadge isDelivered={isDelivered && !carePlanPendingReview} gp={gp} tcm={tcm} />
+          )}
 
-          {/* Offer generation only when it can actually run — a delivered/signed
-              card is locked from regeneration, so a "Generate" button there just
-              errors. */}
-          {!carePlan && isSupabaseConfigured && !isDelivered && (
+          {/* Offer generation whenever there's no plan. On a delivered card this
+              backfills only the care plan (handleGenerate picks the mode). */}
+          {!carePlan && isSupabaseConfigured && (
             <GeneratePlanCard status={genStatus} error={genError} onGenerate={handleGenerate} />
           )}
 
@@ -216,7 +232,7 @@ export default function TrackingPage() {
           {!carePlan && (
             <Text style={styles.starterNote}>
               {isDelivered
-                ? "General wellness guidance — a personalized plan wasn't part of your reviewed card."
+                ? "Your reviewed card didn't include a plan — generate one from your results above."
                 : "Starter guidance to begin with — generate your personalized plan above."}
             </Text>
           )}

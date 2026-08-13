@@ -366,6 +366,19 @@ lib/
       the endpoint's ACTUAL error message + a retry (so a broken backend is diagnosable,
       not invisible). On success the screen reloads (server-side draft isn't observed by
       the local `repository.subscribe`) and the real plan replaces the starter.
+- [x] Care-plan backfill for already-delivered cards: a card signed off BEFORE the
+      care-plan feature existed has a doctor-reviewed assessment but an empty `care_plan`,
+      and a signed card is (correctly) locked from full regeneration — so it was stuck on
+      generic starters. New `backfillCarePlan` (`lib/ai/draftGeneration.ts`) + endpoint
+      (`api/generate-care-plan.ts`, allowed while `delivered`, unlike `/api/generate-draft`)
+      generates ONLY the `care_plan` from the card's own signed values and biomarkers and
+      updates only that column (never the signed scores/narrative), refusing to clobber a
+      plan that already exists. Surfaced honestly as AI-drafted **pending review**, never
+      "signed off": the Care Plan tab + category drill-down detect a post-sign-off plan via
+      `ai_draft.generated_at > max(review.signed_at)` (sign-off never writes `ai_draft`, so
+      that only moves when the plan was backfilled afterward; gated to Supabase mode so the
+      demo's delivered card stays green). The Care Plan tab's "Generate my plan" now picks
+      mode by state — full `draft` when not delivered, `carePlan` backfill when delivered.
 - [x] Sign-off trust badge (`components/participant/SignOffBadge.tsx`): the Insights tab
       only surfaced clinician review as a "Notes from your care team" card mid-scroll —
       easy to skim past, and undersells the platform's real differentiator versus
