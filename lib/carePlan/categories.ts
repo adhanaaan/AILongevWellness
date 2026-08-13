@@ -1,6 +1,15 @@
 import { Utensils, Activity, Pill, Moon, Wind, type LucideIcon } from "lucide-react-native";
 import { colors } from "@/lib/theme/tokens";
-import type { PlanCategory } from "@/lib/types/db";
+import type { PlanCategory, PlanItem } from "@/lib/types/db";
+
+/**
+ * Coerce a care-plan item to the structured {title, detail} shape. Drafts
+ * written before the PlanItem restructure stored plain strings — those become a
+ * title-only item so old cards still render (they get replaced on regeneration).
+ */
+export function normalizePlanItem(item: PlanItem | string): PlanItem {
+  return typeof item === "string" ? { title: item } : item;
+}
 
 export interface CarePlanCategoryConfig {
   key: PlanCategory;
@@ -17,7 +26,7 @@ export interface CarePlanCategoryConfig {
    * "AI-drafted" badge so it's never presented as a reviewed or tailored plan;
    * a real `AiDraft.care_plan` replaces it the moment one is generated.
    */
-  starter: string[];
+  starter: PlanItem[];
   /**
    * Whether this category has a daily self-report interaction. Deliberately
    * only true for things a wearable/lab capture can never tell us on its own
@@ -41,10 +50,10 @@ export const CARE_PLAN_CATEGORIES: CarePlanCategoryConfig[] = [
     color: colors.metabolic,
     fallback: "Anchor each meal around protein and fiber to steady energy and appetite.",
     starter: [
-      "Anchor each meal around protein and fiber — it steadies energy, appetite, and blood sugar through the day.",
-      "Favor whole foods and consistent meal timing over restrictive dieting.",
-      "Keep hydration steady across the day rather than front- or back-loading it.",
-      "Treat the last two hours before bed as a lighter window to protect sleep and overnight recovery.",
+      { title: "Anchor meals around protein and fibre", detail: "Steadies energy, appetite, and blood sugar through the day." },
+      { title: "Favor whole foods over restrictive dieting", detail: "Consistent meal timing beats cutting whole food groups." },
+      { title: "Keep hydration steady all day", detail: "Spread water out rather than front- or back-loading it." },
+      { title: "Lighten the last two hours before bed", detail: "Protects sleep and overnight recovery." },
     ],
     tracked: false,
   },
@@ -55,10 +64,10 @@ export const CARE_PLAN_CATEGORIES: CarePlanCategoryConfig[] = [
     color: colors.vascular,
     fallback: "Aim for movement most days — even a brisk 20–30 minute walk counts.",
     starter: [
-      "Aim for movement most days — even a brisk 20–30 minute walk counts.",
-      "Include at least one strength session a week to preserve muscle and metabolic health.",
-      "Add easy Zone 2 cardio (a conversational pace you could hold for an hour) to build your aerobic base.",
-      "Break up long sitting with a couple of minutes of movement every hour.",
+      { title: "Move most days", detail: "Even a brisk 20–30 minute walk counts." },
+      { title: "Add one strength session a week", detail: "Preserves muscle and metabolic health." },
+      { title: "Build an aerobic base with Zone 2", detail: "An easy, conversational pace you could hold for an hour." },
+      { title: "Break up long sitting", detail: "A couple of minutes of movement every hour." },
     ],
     tracked: false,
   },
@@ -69,9 +78,9 @@ export const CARE_PLAN_CATEGORIES: CarePlanCategoryConfig[] = [
     color: colors.sageDark,
     fallback: "Add what you currently take so it's all in one place.",
     starter: [
-      "Add what you currently take — prescriptions and supplements — so it's all in one place.",
-      "Check in daily to keep a simple adherence record your care team can see.",
-      "Always review any supplement change with your care team before starting or stopping.",
+      { title: "Add what you currently take", detail: "Prescriptions and supplements, all in one place." },
+      { title: "Check in daily", detail: "Keeps a simple adherence record your care team can see." },
+      { title: "Review changes with your care team", detail: "Before starting or stopping any supplement." },
     ],
     tracked: true,
   },
@@ -82,10 +91,10 @@ export const CARE_PLAN_CATEGORIES: CarePlanCategoryConfig[] = [
     color: colors.mental,
     fallback: "Protect a consistent 7–9 hour sleep window with a steady wake time.",
     starter: [
-      "Protect a consistent 7–9 hour sleep window, with the same wake time each day.",
-      "Wind down screen-free for the last 30 minutes before bed.",
-      "Keep the bedroom cool, dark, and quiet to protect deep sleep.",
-      "Keep your wind-down routine consistent on travel and high-stress days, when sleep slips first.",
+      { title: "Keep a consistent sleep window", detail: "7–9 hours, with the same wake time each day." },
+      { title: "Wind down screen-free", detail: "For the last 30 minutes before bed." },
+      { title: "Keep the bedroom cool, dark, and quiet", detail: "Protects deep sleep." },
+      { title: "Hold your routine on hard days", detail: "Travel and high-stress days are when sleep slips first." },
     ],
     tracked: false,
   },
@@ -96,9 +105,9 @@ export const CARE_PLAN_CATEGORIES: CarePlanCategoryConfig[] = [
     color: colors.mentalDark,
     fallback: "Build in a few minutes of daily rest — even one slow-breathing break helps.",
     starter: [
-      "Build in a few minutes of daily rest — even one slow-breathing break helps reset stress.",
-      "Do a short midday reset on your highest-demand days.",
-      "Notice which parts of your week drain you most, and build a little recovery around them.",
+      { title: "Take a few minutes of daily rest", detail: "Even one slow-breathing break resets stress." },
+      { title: "Do a midday reset", detail: "On your highest-demand days." },
+      { title: "Notice what drains you", detail: "Build a little recovery around it." },
     ],
     tracked: true,
   },

@@ -69,18 +69,17 @@ discussion_points — each a full sentence with real substance, not a 2-3 word l
 should only include what the data actually supports (it's fine for this to be short, or empty, if
 nothing is genuinely concerning — never pad it with invented concerns).
 
-Also fill in care_plan: 2-4 SHORT, scannable action items per category — a checklist a busy executive
-reads in seconds, NOT paragraphs. This is the opposite of the sections above: key_contributors,
-strengths and discussion_points carry the depth and the specific values; the care plan is where it
-gets turned into crisp actions. Each care_plan item:
-- Leads with a concrete action in plain imperative language.
-- Is ONE sentence, roughly 10-18 words — keep it under ~150 characters.
-- Adds at most ONE brief reason clause. Never stack multiple "since/while/given" clauses, and do NOT
-  recite specific biomarker values or units here (no "triglycerides of 0.66 mmol/L" — that belongs in
-  the sections above). Prefer "Shift caffeine to before early afternoon to protect evening sleep." over
-  a long multi-clause sentence explaining the physiology.
-This will be reviewed and edited by the participant's doctor before it's shown, so draft it as a strong
-starting point, not a final instruction:
+Also fill in care_plan: 2-4 SHORT, scannable actions per category — a checklist a busy executive reads
+in seconds. key_contributors, strengths and discussion_points carry the depth and the specific values;
+the care plan turns that into crisp actions. Each item has TWO parts:
+- title: the action as a short imperative headline, ~3-7 words, no trailing period (e.g. "Shift caffeine
+  earlier", "Protect your strong lipid profile"). Keep under ~50 characters.
+- detail: ONE short supporting line, ~8-16 words — the reason or the specifics. Do NOT recite raw
+  biomarker values or units here (no "triglycerides of 0.66 mmol/L" — that belongs in the sections
+  above). Keep under ~120 characters.
+Think premium protocol cards (Superpower/Withings): a bold action, one line of why. This will be
+reviewed and edited by the participant's doctor before it's shown, so draft it as a strong starting
+point, not a final instruction:
 - nutrition: diet/weight-related suggestions
 - exercise: movement/activity suggestions
 - medications: only ever "continue current supplement routine" style or "discuss X with your
@@ -92,6 +91,16 @@ starting point, not a final instruction:
 // API validates/constrains the output to this schema server-side, so there's no
 // JSON.parse involved and no way for a stray quote or markdown fence in the
 // model's output to break parsing — a whole class of bugs this hit repeatedly.
+// One care-plan action: a short imperative title + a one-line detail.
+const PLAN_ITEM_SCHEMA = {
+  type: "object",
+  properties: {
+    title: { type: "string", maxLength: 60 },
+    detail: { type: "string", maxLength: 140 },
+  },
+  required: ["title", "detail"],
+};
+
 const NARRATIVE_TOOL: Anthropic.Tool = {
   name: "write_narrative",
   description: "Write the narrative sections of the wellness card.",
@@ -118,15 +127,16 @@ const NARRATIVE_TOOL: Anthropic.Tool = {
       discussion_points: { type: "array", minItems: 3, items: { type: "string" } },
       care_plan: {
         type: "object",
-        // maxLength is a hard guardrail against the model writing paragraph-length
-        // plan items — the plan must stay a scannable checklist. The depth lives in
-        // key_contributors / discussion_points, which have no such cap.
+        // Each item is {title, detail}. maxLength on both is a hard guardrail
+        // against the model writing paragraph-length plan items — the plan must
+        // stay a scannable checklist. The depth lives in key_contributors /
+        // discussion_points, which have no such cap.
         properties: {
-          nutrition: { type: "array", minItems: 2, items: { type: "string", maxLength: 160 } },
-          exercise: { type: "array", minItems: 2, items: { type: "string", maxLength: 160 } },
-          medications: { type: "array", minItems: 2, items: { type: "string", maxLength: 160 } },
-          sleep: { type: "array", minItems: 2, items: { type: "string", maxLength: 160 } },
-          mindfulness: { type: "array", minItems: 2, items: { type: "string", maxLength: 160 } },
+          nutrition: { type: "array", minItems: 2, items: PLAN_ITEM_SCHEMA },
+          exercise: { type: "array", minItems: 2, items: PLAN_ITEM_SCHEMA },
+          medications: { type: "array", minItems: 2, items: PLAN_ITEM_SCHEMA },
+          sleep: { type: "array", minItems: 2, items: PLAN_ITEM_SCHEMA },
+          mindfulness: { type: "array", minItems: 2, items: PLAN_ITEM_SCHEMA },
         },
         required: ["nutrition", "exercise", "medications", "sleep", "mindfulness"],
       },

@@ -10,7 +10,7 @@ import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tok
 import { listDailyLogsAction, upsertDailyLogAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { CARE_PLAN_CATEGORIES } from "@/lib/carePlan/categories";
+import { CARE_PLAN_CATEGORIES, normalizePlanItem } from "@/lib/carePlan/categories";
 import { CarePlanCategoryCard, type CarePlanTodayStatus } from "@/components/participant/CarePlanCategoryCard";
 import { CarePlanTodayHero } from "@/components/participant/CarePlanTodayHero";
 import { TodayActionsList } from "@/components/participant/TodayActionsList";
@@ -259,7 +259,9 @@ export default function TrackingPage() {
           <View style={styles.categoriesList}>
             {CARE_PLAN_CATEGORIES.map(({ key, label, Icon, color, starter, tracked }) => {
               const draftItems = carePlan?.[key];
-              const items = draftItems && draftItems.length > 0 ? draftItems : starter;
+              const items = (draftItems && draftItems.length > 0 ? draftItems : starter).map(
+                normalizePlanItem
+              );
               const status = tracked ? todayStatus(key, todayLog, participant) : null;
               return (
                 <CarePlanCategoryCard

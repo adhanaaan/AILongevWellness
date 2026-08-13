@@ -14,7 +14,7 @@ import { repository } from "@/lib/data/mock";
 import { listDailyLogsAction, upsertDailyLogAction, updateParticipantAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
-import { CARE_PLAN_CATEGORIES_BY_KEY } from "@/lib/carePlan/categories";
+import { CARE_PLAN_CATEGORIES_BY_KEY, normalizePlanItem } from "@/lib/carePlan/categories";
 import type { SignedCard } from "@/lib/data/repository";
 import type { AiDraft, DailyLog, Participant, PlanCategory } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
@@ -229,14 +229,18 @@ export default function CarePlanCategoryPage() {
             <Text style={styles.sectionTitle}>Your plan</Text>
             <Card padding="lg">
               <View style={styles.planList}>
-                {planItems.map((item, i) => (
-                  <View key={i} style={styles.planRow}>
-                    <View style={[styles.planMarker, { backgroundColor: `${config.color}1A` }]}>
-                      <View style={[styles.planDot, { backgroundColor: config.color }]} />
+                {planItems.map((raw, i) => {
+                  const item = normalizePlanItem(raw);
+                  return (
+                    <View key={i} style={styles.planRow}>
+                      <Text style={[styles.planNum, { color: config.color }]}>{i + 1}</Text>
+                      <View style={styles.planItemText}>
+                        <Text style={styles.planTitle}>{item.title}</Text>
+                        {item.detail ? <Text style={styles.planDetail}>{item.detail}</Text> : null}
+                      </View>
                     </View>
-                    <Text style={styles.planText}>{item}</Text>
-                  </View>
-                ))}
+                  );
+                })}
               </View>
             </Card>
             {hasRealPlan && (
@@ -452,32 +456,37 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   askAva: { marginTop: spacing.md },
-  planList: { gap: spacing.lg },
+  planList: { gap: spacing.xl },
   planRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: spacing.md,
   },
-  planMarker: {
-    width: 24,
-    height: 24,
-    borderRadius: radii.full,
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: 1,
+  planNum: {
+    fontFamily: fontFamilies.displayBold,
+    fontSize: fontSizes.bodyLg,
+    width: 22,
     flexShrink: 0,
+    textAlign: "center",
+    opacity: 0.5,
+    marginTop: 1,
   },
-  planDot: {
-    width: 8,
-    height: 8,
-    borderRadius: radii.full,
-  },
-  planText: {
+  planItemText: {
     flex: 1,
-    fontFamily: fontFamilies.body,
+    gap: 3,
+  },
+  planTitle: {
+    fontFamily: fontFamilies.displaySemiBold,
     fontSize: fontSizes.bodyMd,
+    fontWeight: fontWeights.semibold,
     color: colors.charcoal,
-    lineHeight: 23,
+    lineHeight: 21,
+  },
+  planDetail: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.labelMd,
+    color: colors.inkMuted,
+    lineHeight: 19,
   },
   fallbackText: {
     fontFamily: fontFamilies.body,

@@ -379,6 +379,18 @@ lib/
       that only moves when the plan was backfilled afterward; gated to Supabase mode so the
       demo's delivered card stays green). The Care Plan tab's "Generate my plan" now picks
       mode by state — full `draft` when not delivered, `carePlan` backfill when delivered.
+- [x] Care-plan items restructured to premium {title, detail} cards (Mobbin-referenced —
+      Superpower "What we're working on" / Withings protocol cards): items were a flat
+      sentence each, which read as a wall of text. Now each item is a short imperative
+      `title` + a one-line `detail` (`PlanItem` in `db.ts`, `CarePlan` is now
+      `Record<PlanCategory, PlanItem[]>`; no migration — jsonb column, legacy string
+      items coerced by `normalizePlanItem` in `lib/carePlan/categories.ts` at read time).
+      Generation writes both (`draftGeneration.ts` prompt + `PLAN_ITEM_SCHEMA` with
+      maxLength guardrails); the category drill-down shows a ranked number + bold title +
+      muted detail; the Care Plan tab cards preview just the bold titles; the admin
+      `CarePlanEditor` edits "Title — detail" per line. Mock demo (James Chen + generic)
+      and the starter plans rewritten to the structured shape. Existing delivered cards
+      keep rendering (title-only) until regenerated.
 - [x] Sign-off trust badge (`components/participant/SignOffBadge.tsx`): the Insights tab
       only surfaced clinician review as a "Notes from your care team" card mid-scroll —
       easy to skim past, and undersells the platform's real differentiator versus
