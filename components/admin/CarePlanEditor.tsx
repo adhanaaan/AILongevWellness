@@ -3,8 +3,8 @@ import { View, Text, TextInput, StyleSheet } from "react-native";
 import { Card, Button, StatusBadge } from "@/components/ui";
 import { colors, fontFamilies, fontSizes, spacing, radii } from "@/lib/theme/tokens";
 import { updateAiDraftAction } from "@/lib/data/actions";
-import { CARE_PLAN_CATEGORIES } from "@/lib/carePlan/categories";
-import type { AiDraft, CarePlan, PlanCategory } from "@/lib/types/db";
+import { CARE_PLAN_CATEGORIES, normalizePlanItem } from "@/lib/carePlan/categories";
+import type { AiDraft, CarePlan, PlanCategory, PlanItem } from "@/lib/types/db";
 
 const EMPTY_CARE_PLAN: CarePlan = {
   nutrition: [],
@@ -14,8 +14,22 @@ const EMPTY_CARE_PLAN: CarePlan = {
   mindfulness: [],
 };
 
+// One item per line, "Title — detail" (em dash separates the action from its
+// supporting line; a line with no dash is treated as a title-only item).
+const ITEM_SEP = " — ";
+
+function itemToLine(item: PlanItem): string {
+  return item.detail ? `${item.title}${ITEM_SEP}${item.detail}` : item.title;
+}
+
+function lineToItem(line: string): PlanItem {
+  const idx = line.indexOf(ITEM_SEP);
+  if (idx < 0) return { title: line.trim() };
+  return { title: line.slice(0, idx).trim(), detail: line.slice(idx + ITEM_SEP.length).trim() };
+}
+
 function linesFor(carePlan: CarePlan | undefined, category: PlanCategory): string {
-  return (carePlan?.[category] ?? []).join("\n");
+  return (carePlan?.[category] ?? []).map((i) => itemToLine(normalizePlanItem(i))).join("\n");
 }
 
 interface CarePlanEditorProps {
@@ -36,7 +50,13 @@ export function CarePlanEditor({ aiDraft, participantId, editable }: CarePlanEdi
 
   const handleSave = async () => {
     const care_plan = Object.fromEntries(
-      CARE_PLAN_CATEGORIES.map(({ key }) => [key, drafts[key].split("\n").filter((s) => s.trim())])
+      CARE_PLAN_CATEGORIES.map(({ key }) => [
+        key,
+        drafts[key]
+          .split("\n")
+          .filter((s) => s.trim())
+          .map(lineToItem),
+      ])
     ) as CarePlan;
     setError(null);
     setSaving(true);
@@ -96,7 +116,7 @@ export function CarePlanEditor({ aiDraft, participantId, editable }: CarePlanEdi
                 onChangeText={(text) => setDrafts((prev) => ({ ...prev, [key]: text }))}
                 multiline
                 textAlignVertical="top"
-                placeholder="One item per line"
+                placeholder="One item per line — use ' — ' to add a detail"
               />
             ) : (
               <BulletList items={items} />
@@ -122,15 +142,21 @@ export function CarePlanEditor({ aiDraft, participantId, editable }: CarePlanEdi
   );
 }
 
-function BulletList({ items }: { items: string[] }) {
+function BulletList({ items }: { items: PlanItem[] }) {
   return (
     <View>
-      {items.map((item, index) => (
-        <View key={index} style={styles.bulletRow}>
-          <Text style={styles.bullet}>{"•"}</Text>
-          <Text style={styles.bulletText}>{item}</Text>
-        </View>
-      ))}
+      {items.map((raw, index) => {
+        const item = normalizePlanItem(raw);
+        return (
+          <View key={index} style={styles.bulletRow}>
+            <Text style={styles.bullet}>{"•"}</Text>
+            <View style={styles.bulletBody}>
+              <Text style={styles.bulletText}>{item.title}</Text>
+              {item.detail ? <Text style={styles.bulletDetail}>{item.detail}</Text> : null}
+            </View>
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -173,11 +199,19 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
     lineHeight: 22,
   },
+  bulletBody: {
+    flex: 1,
+  },
   bulletText: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.bodyMd,
     color: colors.charcoal,
-    flex: 1,
     lineHeight: 22,
+  },
+  bulletDetail: {
+    fontSize: fontSizes.labelMd,
+    color: colors.inkMuted,
+    lineHeight: 19,
   },
   emptyText: {
     fontSize: fontSizes.bodyMd,

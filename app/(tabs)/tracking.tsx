@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { Watch, PersonStanding, FileText, ChevronRight, type LucideIcon } from "lucide-react-native";
+import { Watch, PersonStanding, FileText, ChevronRight, RotateCw, type LucideIcon } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { Card } from "@/components/ui/Card";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -10,7 +10,7 @@ import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tok
 import { listDailyLogsAction, upsertDailyLogAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { CARE_PLAN_CATEGORIES } from "@/lib/carePlan/categories";
+import { CARE_PLAN_CATEGORIES, normalizePlanItem } from "@/lib/carePlan/categories";
 import { CarePlanCategoryCard, type CarePlanTodayStatus } from "@/components/participant/CarePlanCategoryCard";
 import { CarePlanTodayHero } from "@/components/participant/CarePlanTodayHero";
 import { TodayActionsList } from "@/components/participant/TodayActionsList";
@@ -210,6 +210,26 @@ export default function TrackingPage() {
             <DraftStatusBadge isDelivered={isDelivered && !carePlanPendingReview} gp={gp} tcm={tcm} />
           )}
 
+          {/* A pending (un-reviewed) backfilled plan can be regenerated — e.g. to
+              refresh it after a prompt/format improvement. */}
+          {carePlanPendingReview && (
+            <View style={styles.regenRow}>
+              <TouchableOpacity
+                onPress={handleGenerate}
+                disabled={genStatus === "generating"}
+                style={styles.regenBtn}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+              >
+                <RotateCw size={13} color={colors.sageDark} />
+                <Text style={styles.regenText}>
+                  {genStatus === "generating" ? "Regenerating…" : "Regenerate plan"}
+                </Text>
+              </TouchableOpacity>
+              {genStatus === "error" && <Text style={styles.regenError}>{genError}</Text>}
+            </View>
+          )}
+
           {/* Offer generation whenever there's no plan. On a delivered card this
               backfills only the care plan (handleGenerate picks the mode). */}
           {!carePlan && isSupabaseConfigured && (
@@ -239,7 +259,9 @@ export default function TrackingPage() {
           <View style={styles.categoriesList}>
             {CARE_PLAN_CATEGORIES.map(({ key, label, Icon, color, starter, tracked }) => {
               const draftItems = carePlan?.[key];
-              const items = draftItems && draftItems.length > 0 ? draftItems : starter;
+              const items = (draftItems && draftItems.length > 0 ? draftItems : starter).map(
+                normalizePlanItem
+              );
               const status = tracked ? todayStatus(key, todayLog, participant) : null;
               return (
                 <CarePlanCategoryCard
@@ -339,6 +361,27 @@ const styles = StyleSheet.create({
     marginTop: -spacing.xs,
     marginBottom: spacing.md,
     lineHeight: 17,
+  },
+  regenRow: {
+    marginTop: spacing.sm,
+    gap: spacing.xs,
+  },
+  regenBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    alignSelf: "flex-start",
+  },
+  regenText: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.caption,
+    color: colors.sageDark,
+  },
+  regenError: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.overline,
+    color: colors.terracottaInk,
+    lineHeight: 15,
   },
   categoriesList: { gap: spacing.md },
   barsContainer: {

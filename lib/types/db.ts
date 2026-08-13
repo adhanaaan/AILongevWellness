@@ -1,4 +1,5 @@
 // CHANGE LOG (newest first)
+// - 2026-08-13 care_plan items restructured from string[] to PlanItem[] ({title, detail}); legacy strings coerced by normalizePlanItem(). No migration (jsonb column).
 // - 2026-08-11 Added measured_at to Biomarker + BiomarkerReading history type (supabase/migrations/0007_biomarker_history.sql).
 // - 2026-08-02 Added care_plan to AiDraft + medications to Participant (supabase/migrations/0004_care_plan.sql).
 // - 2026-07-28 Added consent_given/consented_at to Participant (supabase/migrations/0002_consent_tracking.sql).
@@ -126,7 +127,20 @@ export interface OutOfRangeBiomarker {
  */
 export type PlanCategory = "nutrition" | "exercise" | "medications" | "sleep" | "mindfulness";
 
-export type CarePlan = Record<PlanCategory, string[]>;
+/**
+ * A single care-plan action, structured like a premium protocol card
+ * (Superpower/Withings): a short imperative `title`, plus a one-line supporting
+ * `detail`. Replaces the earlier flat sentence-per-item shape.
+ */
+export interface PlanItem {
+  title: string;
+  detail?: string;
+}
+
+// Stored as PlanItem[] per category. Drafts written before this change hold
+// plain strings; normalizePlanItem() (lib/carePlan/categories.ts) coerces a
+// legacy string to { title } at read time, so old cards still render.
+export type CarePlan = Record<PlanCategory, PlanItem[]>;
 
 export interface AiDraft {
   id: string;

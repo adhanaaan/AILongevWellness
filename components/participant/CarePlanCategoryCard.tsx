@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, Pressable, StyleSheet } from "react-native";
 import { ChevronRight, Check, type LucideIcon } from "lucide-react-native";
 import { Card } from "@/components/ui/Card";
+import type { PlanItem } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
 
 export interface CarePlanTodayStatus {
@@ -13,8 +14,8 @@ export interface CarePlanCategoryCardProps {
   label: string;
   Icon: LucideIcon;
   color: string;
-  /** First one or two plan lines, shown as a compact bulleted preview. */
-  previewItems: string[];
+  /** First one or two plan items, shown as a compact preview of their titles. */
+  previewItems: PlanItem[];
   moreCount: number;
   /** Present only for tracked categories (a daily self-report), rendered as a "Today" footer chip. */
   status?: CarePlanTodayStatus | null;
@@ -55,7 +56,7 @@ export function CarePlanCategoryCard({
                 <View key={i} style={styles.planItemRow}>
                   <View style={[styles.planItemDot, { backgroundColor: color }]} />
                   <Text style={styles.plan} numberOfLines={1}>
-                    {item}
+                    {item.title}
                   </Text>
                 </View>
               ))}
@@ -142,9 +143,9 @@ const styles = StyleSheet.create({
   },
   plan: {
     flex: 1,
-    fontFamily: fontFamilies.body,
-    fontSize: fontSizes.caption,
-    color: colors.inkMuted,
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.labelMd,
+    color: colors.charcoal,
     lineHeight: 18,
   },
   chev: { marginTop: 2 },

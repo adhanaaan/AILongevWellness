@@ -256,17 +256,32 @@ function genAiDraftForScores(
       "Ask whether a repeat capture in three to six months would help confirm any early trends",
     ],
     care_plan: {
-      nutrition: ["Aim for balanced, whole-food meals with consistent timing.", "Keep hydration consistent through the day rather than front- or back-loaded."],
-      exercise: ["Keep up regular movement most days of the week.", "Mix cardio with at least one resistance session weekly."],
-      medications: ["Log what you currently take, including any supplements.", "Discuss any supplement changes with your care team before your next check-in."],
-      sleep: ["Protect a consistent 7-9 hour sleep window.", "Keep a consistent wind-down routine, especially on travel or high-stress days."],
+      nutrition: [
+        { title: "Eat balanced, whole-food meals", detail: "Keep consistent meal timing through the day." },
+        { title: "Keep hydration steady", detail: "Spread water out rather than front- or back-loading it." },
+      ],
+      exercise: [
+        { title: "Move most days of the week", detail: "Regular activity is the foundation." },
+        { title: "Add a weekly resistance session", detail: "Mix it in alongside your cardio." },
+      ],
+      medications: [
+        { title: "Log what you currently take", detail: "Include any supplements, all in one place." },
+        { title: "Review changes with your care team", detail: "Before your next check-in." },
+      ],
+      sleep: [
+        { title: "Keep a consistent 7–9 hour window", detail: "Aim for the same wake time each day." },
+        { title: "Hold your wind-down routine", detail: "Especially on travel or high-stress days." },
+      ],
       mindfulness:
         monitorPillar === "mental"
           ? [
-              "Build in daily stress-recovery time — mental markers are trending toward the reference boundary.",
-              "Consider a brief midday reset on high-demand days.",
+              { title: "Build in daily stress-recovery time", detail: "Your mental markers are trending toward the reference boundary." },
+              { title: "Try a brief midday reset", detail: "On high-demand days." },
             ]
-          : ["Build in moments of rest and recovery each day.", "Notice which parts of your week feel most draining and build in recovery around them."],
+          : [
+              { title: "Make room for daily recovery", detail: "Build moments of rest into each day." },
+              { title: "Notice what drains you", detail: "Add recovery around the most draining parts of your week." },
+            ],
     },
     generated_at: nowIso(),
     edited_by_admin: false,
@@ -495,24 +510,24 @@ class MockRepository implements Repository {
       ],
       care_plan: {
         nutrition: [
-          "Favor lower-glycemic-load meals (more fiber, less refined carbohydrate) especially at breakfast — directly relevant given your fasting glucose trend.",
-          "Keep alcohol within your current range, and consider a couple of extra alcohol-free days weekly, since alcohol affects both glucose and visceral fat.",
+          { title: "Favor lower-glycemic-load meals", detail: "More fibre, less refined carbohydrate — especially at breakfast." },
+          { title: "Add a couple of alcohol-free days", detail: "Alcohol affects both glucose and visceral fat." },
         ],
         exercise: [
-          "Add one additional resistance-training session weekly alongside your current cardio — one of the more evidence-supported ways to shift waist-to-hip ratio and visceral fat over time.",
-          "Keep up your current cardio routine; it's clearly supporting your strong vascular numbers.",
+          { title: "Add a weekly resistance session", detail: "One of the most evidence-supported ways to shift visceral fat." },
+          { title: "Keep up your current cardio", detail: "It's clearly supporting your strong vascular numbers." },
         ],
         medications: [
-          "Continue your current Omega-3 and Vitamin D routine — your Vitamin D level (58 nmol/L) is healthy per NIH/IOM thresholds.",
-          "Discuss whether a follow-up metabolic panel in three to six months is worth adding, given the fasting glucose trend.",
+          { title: "Continue Omega-3 and Vitamin D", detail: "Your Vitamin D level is healthy per NIH/IOM thresholds." },
+          { title: "Consider a follow-up metabolic panel", detail: "In three to six months, given the fasting glucose trend." },
         ],
         sleep: [
-          "Protect your current 7-9 hour sleep window — it's clearly paying off in your mental pillar score.",
-          "Keep your wind-down routine consistent on travel days, since that's typically when sleep quality slips first.",
+          { title: "Protect your 7–9 hour sleep window", detail: "It's clearly paying off in your mental pillar score." },
+          { title: "Hold your routine on travel days", detail: "That's typically when sleep quality slips first." },
         ],
         mindfulness: [
-          "Build in a short daily wind-down practice — your stress index (34/100) is in range but trending toward the upper half.",
-          "Consider a brief midday reset on high-meeting days, since stress and glucose regulation are closely linked.",
+          { title: "Build a short daily wind-down", detail: "Your stress index is in range but in the upper half." },
+          { title: "Try a midday reset on busy days", detail: "Stress and glucose regulation are closely linked." },
         ],
       },
       generated_at: nowIso(),
