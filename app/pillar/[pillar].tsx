@@ -9,6 +9,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { FadeInView } from "@/components/ui/FadeInView";
 import { BiomarkerRangeRow } from "@/components/participant/BiomarkerRangeRow";
 import { BiomarkerSummaryBar } from "@/components/participant/BiomarkerSummaryBar";
+import { ScoreRing } from "@/components/participant/ScoreRing";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { BIOMARKER_KEYS_BY_PILLAR, pillarStatus } from "@/lib/ai/scoring";
@@ -162,7 +163,9 @@ export default function PillarDetailPage() {
             label={status === "good" ? "On track" : "Monitor"}
           />
         </View>
-        <Text style={[styles.score, { color: pillarColor }]}>{score}</Text>
+        <View style={styles.scoreRingWrap}>
+          <ScoreRing value={score} label="out of 100" status={status} size={140} />
+        </View>
 
         {ageClock && (
           <View style={styles.ageClockCard}>
@@ -332,10 +335,10 @@ const styles = StyleSheet.create({
     fontWeight: fontWeights.semibold,
     color: colors.charcoal,
   },
-  score: {
-    fontFamily: fontFamilies.displayBold,
-    fontSize: fontSizes.display,
-    marginTop: spacing.sm,
+  scoreRingWrap: {
+    alignItems: "center",
+    marginTop: spacing.lg,
+    marginBottom: spacing.xs,
   },
   section: {
     marginTop: spacing["2xl"],
