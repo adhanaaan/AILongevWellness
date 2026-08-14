@@ -531,3 +531,35 @@ lib/
       honestly describe whichever one actually produced the displayed number, instead
       of always claiming the composite (which was true before this, but would have
       become a false claim the moment PhenoAge could apply).
+- [x] Onboarding upload flow hardened (tester feedback): the three capture channels
+      (Lab Reports, Body Composition, Wearables) now share one `lib/onboarding/useChannelUpload.ts`
+      hook that AWAITS extraction and only marks a section "done" when the file actually
+      yielded health data — a wrong/unreadable upload surfaces a real error + retry instead
+      of the old fire-and-forget `.catch(()=>{})` that swallowed every failure and always
+      showed "Done". Uploaded files are now visible (`components/onboarding/UploadedFilesList.tsx`,
+      real filename parsed from `storage_path` via `fileDisplayName`) with read/processing
+      status, and multiple files per channel are supported ("Add another"). Wearables accept
+      the Apple Health `export.xml` directly, not just the `.zip` — `api/extract-wearables.ts`
+      detects zip-vs-xml by the "PK" magic bytes and parses either.
+- [x] Uploads made optional: `lib/onboarding/flow.ts` — ReCOGnAIze now unlocks right after
+      the Questionnaire (was gated behind all three uploads), the three upload channels are
+      marked `optional` and no longer gate `isCaptureComplete` (only Questionnaire + ReCOGnAIze
+      are required), each channel screen has an "I'll add this later" skip, and the hub shows an
+      "Optional" tag on them. Matches Dr. Tong's "insights from basic info, more on more data".
+- [x] Tester bug fixes: (a) "James" no longer leaks into real accounts — dropped the
+      hard-coded `name = "James"` default in `MobileShell` (rendered during the participant
+      load window); greeting shows alone until the real name arrives. (b) Mood is editable
+      again and profile edits reflect immediately — `SupabaseRepository.upsertDailyLog` and
+      `.updateParticipant` now call `this.notify()` like `MockRepository` does, so subscribed
+      screens re-read after a same-client write (they relied only on Postgres realtime, which
+      doesn't fire synchronously for the writing client). (c) Password fields got a show/hide
+      eye toggle built into `components/ui/Field.tsx`'s `Input`. (d) Age/Height/Weight on
+      `profile.tsx` are typed numeric inputs (number-pad, digits-only, plausibility bounds)
+      instead of long scroll `SelectField`s.
+- [x] Participant-initiated consent withdrawal (`app/privacy.tsx`, linked from the participant
+      Settings "Privacy & consent" row): shows consent status + what data is held, and a
+      "Withdraw consent" action (confirm dialog) that records `consent_withdrawn_at`
+      (`supabase/migrations/0008_consent_withdrawal.sql`) and signs the participant out.
+      Deliberately NON-destructive — data isn't auto-deleted; the withdrawal surfaces to the
+      care team on the admin participant detail page ("Consent withdrawn [date]") for handling
+      per the retreat's data policy.

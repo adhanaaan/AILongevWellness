@@ -62,17 +62,24 @@ export default function SettingsPage() {
             </View>
           </View>
           <View style={styles.divider} />
-          <View style={styles.infoRow}>
+          <TouchableOpacity
+            style={styles.infoRow}
+            onPress={() => router.push("/privacy")}
+            activeOpacity={0.7}
+          >
             <View style={styles.iconCircle}>
               <ShieldCheck size={18} color={colors.sageDark} />
             </View>
             <View style={styles.infoTextGrow}>
               <Text style={styles.infoLabel}>Privacy & consent</Text>
               <Text style={styles.infoValue}>
-                You agreed to the wellness consent terms during onboarding.
+                {participant.consent_withdrawn_at
+                  ? "Consent withdrawn. Tap to view."
+                  : "Manage your consent and see what data we hold."}
               </Text>
             </View>
-          </View>
+            <ChevronRight size={18} color={colors.inkMuted} />
+          </TouchableOpacity>
         </Card>
 
         <Text style={styles.sectionLabel}>About</Text>

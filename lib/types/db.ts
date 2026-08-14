@@ -1,4 +1,5 @@
 // CHANGE LOG (newest first)
+// - 2026-08-14 Added consent_withdrawn_at to Participant for participant-initiated consent withdrawal (supabase/migrations/0008_consent_withdrawal.sql).
 // - 2026-08-13 care_plan items restructured from string[] to PlanItem[] ({title, detail}); legacy strings coerced by normalizePlanItem(). No migration (jsonb column).
 // - 2026-08-11 Added measured_at to Biomarker + BiomarkerReading history type (supabase/migrations/0007_biomarker_history.sql).
 // - 2026-08-02 Added care_plan to AiDraft + medications to Participant (supabase/migrations/0004_care_plan.sql).
@@ -27,6 +28,8 @@ export interface Participant {
   alcohol_drinks_per_week?: AlcoholDrinksPerWeek;
   consent_given?: boolean;
   consented_at?: string | null;
+  /** Set when a participant withdraws consent from Settings. Non-destructive: the account is signed out and flagged for the care team, data is not auto-deleted. */
+  consent_withdrawn_at?: string | null;
   /** Self-reported catalog of medications/supplements the participant currently takes (not doctor-prescribed dosing — a wellness platform never prescribes). Daily adherence lives in DailyLog.supplements. */
   medications?: string[];
   created_at: string;
