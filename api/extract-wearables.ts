@@ -78,21 +78,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   let xml: string;
-  try {
-    const zip = await JSZip.loadAsync(await blob.arrayBuffer());
-    const entryName = Object.keys(zip.files).find(
-      (name) => /export\.xml$/i.test(name) && !/export_cda\.xml$/i.test(name)
-    );
-    if (!entryName) {
-      res.status(400).json({
-        error: "Couldn't find export.xml in the uploaded file — make sure you selected the zip from Health app's \"Export All Health Data\".",
-      });
+  const buffer = await blob.arrayBuffer();
+  // Zip files start with the "PK" local-file-header magic (0x50 0x4B). If the
+  // upload isn't a zip, treat it as a raw export.xml — some devices/share paths
+  // hand over the XML directly rather than the zip, and testers hit a hard
+  // rejection when they did (the picker only accepted .zip before).
+  const head = new Uint8Array(buffer.slice(0, 2));
+  const isZip = head[0] === 0x50 && head[1] === 0x4b;
+  if (isZip) {
+    try {
+      const zip = await JSZip.loadAsync(buffer);
+      const entryName = Object.keys(zip.files).find(
+        (name) => /export\.xml$/i.test(name) && !/export_cda\.xml$/i.test(name)
+      );
+      if (!entryName) {
+        res.status(400).json({
+          error: "Couldn't find export.xml in the uploaded file — make sure you selected the zip from Health app's \"Export All Health Data\".",
+        });
+        return;
+      }
+      xml = await zip.files[entryName].async("string");
+    } catch (e) {
+      res.status(400).json({ error: e instanceof Error ? e.message : "Couldn't read the uploaded zip file" });
       return;
     }
-    xml = await zip.files[entryName].async("string");
-  } catch (e) {
-    res.status(400).json({ error: e instanceof Error ? e.message : "Couldn't read the uploaded zip file" });
-    return;
+  } else {
+    // Raw XML upload — decode the bytes as text and parse directly.
+    try {
+      xml = new TextDecoder("utf-8").decode(buffer);
+      if (!/<HealthData/i.test(xml)) {
+        res.status(400).json({
+          error: "That file doesn't look like an Apple Health export. Upload the .zip from Health app's \"Export All Health Data\" (or its export.xml).",
+        });
+        return;
+      }
+    } catch (e) {
+      res.status(400).json({ error: e instanceof Error ? e.message : "Couldn't read the uploaded file" });
+      return;
+    }
   }
 
   const parsedValues = parseAppleHealthExport(xml);

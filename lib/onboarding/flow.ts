@@ -36,18 +36,26 @@ export interface CaptureSectionDef {
   keys: OnboardingSectionKey[];
   /** Route to open when the section is tapped (its first screen). */
   route: string;
+  /**
+   * Optional sections ("add when you have it") don't gate onboarding
+   * completion. Per Dr. Tong's direction — participants get insights from basic
+   * info and add more data over time — the three upload channels are optional;
+   * only the Questionnaire and ReCOGnAIze are required to finish.
+   */
+  optional?: boolean;
 }
 
 export const CAPTURE_SECTIONS: CaptureSectionDef[] = [
   { id: "questionnaire", label: "Questionnaire", keys: ["personal_info", "lifestyle"], route: "/onboarding/profile-intro" },
-  { id: "wearables", label: "Wearables", keys: ["wearables"], route: "/onboarding/capture-wearables-intro" },
+  { id: "wearables", label: "Wearables", keys: ["wearables"], route: "/onboarding/capture-wearables-intro", optional: true },
   {
     id: "body_composition",
     label: "Body Composition",
     keys: ["body_composition"],
     route: "/onboarding/capture-body-composition-intro",
+    optional: true,
   },
-  { id: "lab_reports", label: "Lab Reports", keys: ["lab_reports"], route: "/onboarding/capture-lab-reports-intro" },
+  { id: "lab_reports", label: "Lab Reports", keys: ["lab_reports"], route: "/onboarding/capture-lab-reports-intro", optional: true },
   { id: "recognize", label: "ReCOGnAIze", keys: ["recognize"], route: "/onboarding/capture-recognaize" },
 ];
 
@@ -63,30 +71,31 @@ export function deriveSectionState(
   return "available";
 }
 
-/** True once every hub section (including ReCOGnAIze) is done — the gate for Calculating. */
+/**
+ * True once the required sections are done — the gate for Calculating. Only the
+ * non-optional sections (Questionnaire + ReCOGnAIze) are required; the three
+ * upload channels are optional and can be added anytime, so they never block
+ * finishing onboarding.
+ */
 export function isCaptureComplete(progress: OnboardingProgress): boolean {
-  return CAPTURE_SECTIONS.every((s) => deriveSectionState(progress, s) === "done");
+  return CAPTURE_SECTIONS.filter((s) => !s.optional).every(
+    (s) => deriveSectionState(progress, s) === "done"
+  );
 }
 
 /**
- * The fixed unlock order: Questionnaire is always open; the free-order trio
- * unlocks once Questionnaire is done; ReCOGnAIze unlocks once the trio is done.
- * Single source of truth for both MockRepository and SupabaseRepository so
- * they can't drift out of sync with each other.
+ * The unlock order: Questionnaire is always open; once it's done, the three
+ * optional upload channels AND ReCOGnAIze all unlock together. ReCOGnAIze no
+ * longer waits on the uploads — a participant with no lab report / wearable /
+ * body-comp scan can still reach it and finish onboarding. Single source of
+ * truth for both MockRepository and SupabaseRepository so they can't drift.
  */
 export function computeUnlockedSections(
   sections: Record<OnboardingSectionKey, OnboardingSectionStatus>
 ): OnboardingSectionKey[] {
   const unlocked: OnboardingSectionKey[] = ["personal_info", "lifestyle"];
   if (sections.personal_info === "done" && sections.lifestyle === "done") {
-    unlocked.push("wearables", "body_composition", "lab_reports");
-  }
-  if (
-    sections.wearables === "done" &&
-    sections.body_composition === "done" &&
-    sections.lab_reports === "done"
-  ) {
-    unlocked.push("recognize");
+    unlocked.push("wearables", "body_composition", "lab_reports", "recognize");
   }
   return unlocked;
 }

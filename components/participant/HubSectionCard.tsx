@@ -10,6 +10,8 @@ export interface HubSectionCardProps {
   description: string;
   state: CaptureSectionState;
   onPress: () => void;
+  /** Optional sections show an "Optional" tag and don't gate completion. */
+  optional?: boolean;
 }
 
 const STATUS_LABEL: Record<CaptureSectionState, string> = {
@@ -25,9 +27,11 @@ export function HubSectionCard({
   description,
   state,
   onPress,
+  optional = false,
 }: HubSectionCardProps) {
   const locked = state === "locked";
   const done = state === "done";
+  const showOptional = optional && !done;
 
   return (
     <TouchableOpacity
@@ -45,7 +49,14 @@ export function HubSectionCard({
       </View>
 
       <View style={styles.info}>
-        <Text style={[styles.title, done && styles.titleDone]}>{title}</Text>
+        <View style={styles.titleRow}>
+          <Text style={[styles.title, done && styles.titleDone]}>{title}</Text>
+          {showOptional && (
+            <View style={styles.optionalTag}>
+              <Text style={styles.optionalTagText}>Optional</Text>
+            </View>
+          )}
+        </View>
         <Text style={[styles.description, done && styles.descriptionDone]}>{description}</Text>
         <View style={[styles.statusBadge, done && styles.statusBadgeDone]}>
           <Text style={[styles.statusText, done && styles.statusTextDone]}>
@@ -89,11 +100,27 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.18)",
   },
   info: { flex: 1 },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginBottom: 2,
+  },
   title: {
     fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.bodyMd,
     color: colors.ink,
-    marginBottom: 2,
+  },
+  optionalTag: {
+    borderRadius: radii.full,
+    paddingVertical: 1,
+    paddingHorizontal: spacing.sm,
+    backgroundColor: colors.surfaceMuted,
+  },
+  optionalTagText: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.overline,
+    color: colors.inkMuted,
   },
   titleDone: { color: colors.white },
   description: {

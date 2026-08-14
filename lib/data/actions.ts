@@ -95,3 +95,7 @@ export async function uploadFileAction(
 export async function getFileUrlAction(fileId: string) {
   return repository.getFileUrl(fileId);
 }
+
+export async function listFilesAction(participantId: string) {
+  return repository.listFiles(participantId);
+}
