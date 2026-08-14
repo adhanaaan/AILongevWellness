@@ -135,7 +135,12 @@ export class SupabaseRepository implements Repository {
 
   async updateParticipant(id: string, patch: Partial<Participant>): Promise<Participant> {
     const { data, error } = await this.client.from("participants").update(patch).eq("id", id).select().single();
-    return must(data, error, "participant");
+    const result = must(data, error, "participant");
+    // Notify subscribers synchronously so a same-client "edit → save → back"
+    // flow re-reads the updated row immediately, rather than waiting on (or
+    // never receiving) a Postgres realtime event. Matches MockRepository.
+    this.notify();
+    return result;
   }
 
   async getCaptureChannels(participantId: string): Promise<CaptureChannel[]> {
@@ -388,7 +393,12 @@ export class SupabaseRepository implements Repository {
       .upsert({ participant_id: participantId, log_date: logDate, ...patch }, { onConflict: "participant_id,log_date" })
       .select()
       .single();
-    return must(data, error, "daily log");
+    const result = must(data, error, "daily log");
+    // Notify subscribers so re-selecting a mood (or any same-day log edit) is
+    // reflected on read-back immediately — otherwise the picker keeps showing
+    // the first value and looks un-editable. Matches MockRepository.
+    this.notify();
+    return result;
   }
 }
 

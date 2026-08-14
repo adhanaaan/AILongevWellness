@@ -225,6 +225,7 @@ export default function CaptureHubPage() {
                         title={section.label}
                         description={SECTION_DESCRIPTION[section.id]}
                         state={state}
+                        optional={section.optional}
                         onPress={() => router.push(section.route as never)}
                       />
                     </React.Fragment>

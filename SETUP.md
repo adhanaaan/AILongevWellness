@@ -44,6 +44,9 @@ same way:
   history table (and `measured_at` on `biomarkers`) that every lab/wearable/
   body-comp extraction writes to. **Required**, or uploads fail. Run once (its
   `create policy` lines error harmlessly if it's already applied).
+- `supabase/migrations/0008_consent_withdrawal.sql` — adds `consent_withdrawn_at`
+  to `participants`, set when a participant withdraws consent from Settings →
+  Privacy & consent. Without it, the withdrawal action errors.
 
 Any future numbered migration file works the same way: run it once, in
 order, after pulling new code that references it.
@@ -74,6 +77,28 @@ at Dashboard → **Authentication** → **URL Configuration**:
 
 Any account stuck mid-confirmation from before this fix: Dashboard →
 **Authentication** → **Users** → delete that row and sign up again.
+
+### Brand the auth emails (verification / password reset)
+
+Testers flagged the sign-up emails as unbranded (generic Supabase sender +
+template). These emails are **not in this repo** — they're transactional emails
+Supabase Auth sends, configured in the dashboard, so branding them is a
+dashboard task, not a code change:
+
+- **Sender name / address & deliverability** → Dashboard → **Project Settings**
+  → **Authentication** → **SMTP Settings**. The built-in Supabase mailer is
+  rate-limited and sends from a Supabase address — for a real launch, plug in
+  custom SMTP (e.g. Resend, Postmark, SendGrid) with a **from-address on your
+  own domain** so the email reads as coming from the retreat/AI Wellness, not
+  Supabase. Set up SPF/DKIM on that domain or the mail lands in spam.
+- **Template copy & look** → Dashboard → **Authentication** → **Email
+  Templates**. Edit the **Confirm signup**, **Magic Link**, **Reset password**,
+  and **Change email** templates: replace the default subject/body with
+  AI-Wellness-branded copy (they support HTML, so you can add a logo, the sage
+  palette, and a footer). Keep the `{{ .ConfirmationURL }}` token intact.
+- If you followed step 3 and turned **Confirm email** off, the confirmation
+  email isn't sent at all — but password-reset still is, so branding the reset
+  template is still worthwhile.
 
 ## 4. Collect your keys
 

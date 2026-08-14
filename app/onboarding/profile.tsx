@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { User } from "lucide-react-native";
 import { SelectField, type SelectFieldOption } from "@/components/ui/SelectField";
+import { Input } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -20,19 +21,20 @@ const SEX_OPTIONS: SelectFieldOption[] = [
   { label: "Other", value: "other" },
 ];
 
-function range(start: number, end: number): string[] {
-  return Array.from({ length: end - start + 1 }, (_, i) => String(start + i));
-}
+// Age/height/weight are typed directly (testers found the long scroll pickers
+// tedious). These are gentle plausibility bounds — enough to catch a typo like
+// "999", not to gatekeep — with the field left editable while out of range.
+const AGE_MIN = 13;
+const AGE_MAX = 120;
+const HEIGHT_MIN = 120;
+const HEIGHT_MAX = 230;
+const WEIGHT_MIN = 30;
+const WEIGHT_MAX = 250;
 
-const AGE_OPTIONS: SelectFieldOption[] = range(18, 100).map((n) => ({ label: n, value: n }));
-const HEIGHT_OPTIONS: SelectFieldOption[] = range(140, 210).map((n) => ({
-  label: `${n} cm`,
-  value: n,
-}));
-const WEIGHT_OPTIONS: SelectFieldOption[] = range(40, 150).map((n) => ({
-  label: `${n} kg`,
-  value: n,
-}));
+/** Keep only digits (height/weight/age are whole numbers in our units). */
+function digitsOnly(text: string): string {
+  return text.replace(/[^0-9]/g, "");
+}
 
 export default function ProfilePersonalPage() {
   const router = useRouter();
@@ -70,14 +72,25 @@ export default function ProfilePersonalPage() {
   const ageNum = Number(age);
   const heightNum = Number(height);
   const weightNum = Number(weight);
+
+  const ageError = age.length > 0 && (ageNum < AGE_MIN || ageNum > AGE_MAX)
+    ? `Enter an age between ${AGE_MIN} and ${AGE_MAX}.`
+    : undefined;
+  const heightError = height.length > 0 && (heightNum < HEIGHT_MIN || heightNum > HEIGHT_MAX)
+    ? `Enter a height between ${HEIGHT_MIN} and ${HEIGHT_MAX} cm.`
+    : undefined;
+  const weightError = weight.length > 0 && (weightNum < WEIGHT_MIN || weightNum > WEIGHT_MAX)
+    ? `Enter a weight between ${WEIGHT_MIN} and ${WEIGHT_MAX} kg.`
+    : undefined;
+
   const isValid =
     name.trim().length > 0 &&
-    Number.isFinite(ageNum) &&
-    ageNum > 0 &&
-    Number.isFinite(heightNum) &&
-    heightNum > 0 &&
-    Number.isFinite(weightNum) &&
-    weightNum > 0;
+    age.length > 0 &&
+    !ageError &&
+    height.length > 0 &&
+    !heightError &&
+    weight.length > 0 &&
+    !weightError;
 
   async function onContinue() {
     if (!participantId || !isValid) return;
@@ -157,26 +170,35 @@ export default function ProfilePersonalPage() {
           />
 
           <View style={styles.row}>
-            <SelectField
+            <Input
               label="Age"
               value={age}
-              options={AGE_OPTIONS}
-              onChange={setAge}
-              style={styles.rowField}
+              onChangeText={(t) => setAge(digitsOnly(t))}
+              keyboardType="number-pad"
+              maxLength={3}
+              placeholder="58"
+              error={ageError}
+              containerStyle={styles.rowField}
             />
-            <SelectField
-              label="Height"
+            <Input
+              label="Height (cm)"
               value={height}
-              options={HEIGHT_OPTIONS}
-              onChange={setHeight}
-              style={styles.rowField}
+              onChangeText={(t) => setHeight(digitsOnly(t))}
+              keyboardType="number-pad"
+              maxLength={3}
+              placeholder="175"
+              error={heightError}
+              containerStyle={styles.rowField}
             />
-            <SelectField
-              label="Weight"
+            <Input
+              label="Weight (kg)"
               value={weight}
-              options={WEIGHT_OPTIONS}
-              onChange={setWeight}
-              style={styles.rowField}
+              onChangeText={(t) => setWeight(digitsOnly(t))}
+              keyboardType="number-pad"
+              maxLength={3}
+              placeholder="72"
+              error={weightError}
+              containerStyle={styles.rowField}
             />
           </View>
         </Card>

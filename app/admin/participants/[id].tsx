@@ -231,7 +231,14 @@ export default function ParticipantDetailPage() {
               {participant.weight_kg}kg
             </Text>
             <View style={styles.consentRow}>
-              {participant.consent_given ? (
+              {participant.consent_withdrawn_at ? (
+                <>
+                  <ShieldAlert size={14} color={colors.danger} />
+                  <Text style={styles.consentTextMissing}>
+                    Consent withdrawn {formatDate(participant.consent_withdrawn_at)}
+                  </Text>
+                </>
+              ) : participant.consent_given ? (
                 <>
                   <ShieldCheck size={14} color={colors.sage} />
                   <Text style={styles.consentTextOk}>

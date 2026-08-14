@@ -1,17 +1,14 @@
-import React, { useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Platform, ActivityIndicator } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import * as DocumentPicker from "expo-document-picker";
+import React from "react";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
+import { useLocalSearchParams } from "expo-router";
 import { FileText, Droplet, Activity, HeartPulse, UploadCloud, Camera } from "lucide-react-native";
 import { CaptureFlowStepper } from "@/components/layout/CaptureFlowStepper";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Card } from "@/components/ui/Card";
 import { GradientOverlay } from "@/components/ui/GradientOverlay";
-import { updateSectionStatusAction, updateCaptureChannelAction, uploadFileAction } from "@/lib/data/actions";
-import { useAuth } from "@/lib/auth/AuthProvider";
-import { isSupabaseConfigured } from "@/lib/config/env";
+import { UploadedFilesList } from "@/components/onboarding/UploadedFilesList";
 import { extractLabReport } from "@/lib/ai/client";
-import { validateUploadSize } from "@/lib/data/uploadLimits";
+import { useChannelUpload } from "@/lib/onboarding/useChannelUpload";
 import { colors, fontFamilies, fontSizes, radii, spacing, teal } from "@/lib/theme/tokens";
 
 const POINTS = [
@@ -32,93 +29,16 @@ const BUTTON_GRADIENT_STOPS = [
 ];
 
 export default function CaptureLabReportsIntroPage() {
-  const router = useRouter();
-  const { participantId, session } = useAuth();
   const { mode } = useLocalSearchParams<{ mode?: string }>();
-  const isEditing = mode === "edit";
-  const [uploading, setUploading] = useState(false);
-  const [processing, setProcessing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function finishUp() {
-    if (!participantId) return;
-    setProcessing(true);
-    // Mocked processing state — in mock mode there's no real extraction call to
-    // wait on, so this just gives the participant a brief, honest "working on it"
-    // beat before we mark the section done.
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    await updateCaptureChannelAction(participantId, "lab_report", {
-      status: "complete",
-      entered_by: "participant",
-    });
-    // The AI draft now re-derives server-side after extraction writes the new
-    // biomarkers (resyncDraftScores + regenerateDraft in api/extract-lab.ts).
-    // Firing generateDraft from here too would race that regeneration using
-    // pre-extraction data, which could land last and re-stale the card.
-    if (isEditing) {
-      // Reached from outside onboarding (e.g. Tracking tab, post-onboarding) —
-      // onboarding progress is a per-session in-memory record on the real backend
-      // (doesn't survive a reload), so marking a section "done" here could throw
-      // if it's no longer in the unlocked list. Just go back to wherever this
-      // was opened from.
-      router.back();
-    } else {
-      await updateSectionStatusAction("lab_reports", "done", participantId);
-      router.replace("/onboarding/capture");
-    }
-  }
-
-  async function onPickFile() {
-    if (!participantId) return;
-    setError(null);
-
-    if (!isSupabaseConfigured) {
-      // No backend configured — skip the real picker/upload and simulate the
-      // processing state so the flow can still be completed end to end in the
-      // sandbox/demo. finishUp() shows the "Processing…" beat itself.
-      await finishUp();
-      return;
-    }
-
-    const result = await DocumentPicker.getDocumentAsync({
-      type: ["application/pdf", "image/*"],
-      copyToCacheDirectory: true,
-    });
-    if (result.canceled) return;
-    const asset = result.assets[0];
-
-    setUploading(true);
-    try {
-      const response = await fetch(asset.uri);
-      const blob = await response.blob();
-      const sizeError = validateUploadSize("lab_report", blob.size);
-      if (sizeError) {
-        setError(sizeError);
-        setUploading(false);
-        return;
-      }
-      const fileRecord = await uploadFileAction(participantId, "lab_report", {
-        blob,
-        filename: asset.name,
-        contentType: asset.mimeType ?? (Platform.OS === "web" ? blob.type : undefined),
-      });
-
-      if (session?.access_token) {
-        extractLabReport(session.access_token, participantId, fileRecord.id).catch(() => {
-          // Extraction failure isn't fatal to capture — the care team can retry
-          // from the admin screen.
-        });
-      }
-
-      await finishUp();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Upload failed. Please try again.");
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  const busy = uploading || processing;
+  const { phase, busy, error, notice, files, pickAndUpload, skip } = useChannelUpload({
+    kind: "lab_report",
+    channel: "lab_report",
+    section: "lab_reports",
+    pickerTypes: ["application/pdf", "image/*"],
+    extract: extractLabReport,
+    noun: "lab report",
+    isEditing: mode === "edit",
+  });
 
   return (
     <CaptureFlowStepper>
@@ -156,8 +76,7 @@ export default function CaptureLabReportsIntroPage() {
         </GlassCard>
         <Text style={styles.title}>Upload Your Report</Text>
         <Text style={styles.subtitle}>
-          Choose a file from your device. Our AI reads the biomarker values and
-          reference ranges directly off the page.
+          Choose a PDF or photo from your device — that&apos;s all we need.
         </Text>
 
         <Card padding="lg" style={styles.formatsCard}>
@@ -172,27 +91,41 @@ export default function CaptureLabReportsIntroPage() {
           ))}
         </Card>
 
-        {processing ? (
+        <UploadedFilesList files={files} />
+
+        {busy ? (
           <View style={styles.processingRow}>
             <ActivityIndicator size="small" color={colors.teal} />
-            <Text style={styles.processingText}>Processing your report…</Text>
+            <Text style={styles.processingText}>
+              {phase === "uploading" ? "Uploading your report…" : "Reading the values off your report…"}
+            </Text>
           </View>
         ) : null}
 
+        {notice && <Text style={styles.notice}>{notice}</Text>}
         {error && <Text style={styles.error}>{error}</Text>}
       </ScrollView>
 
       <View style={styles.footer}>
         <TouchableOpacity
           style={[styles.gradientButton, busy && styles.gradientButtonDisabled]}
-          onPress={onPickFile}
+          onPress={pickAndUpload}
           disabled={busy}
           activeOpacity={0.8}
         >
           <GradientOverlay stops={BUTTON_GRADIENT_STOPS} style={styles.gradientButtonFill} />
           <Text style={styles.gradientButtonText}>
-            {uploading ? "Uploading…" : processing ? "Processing…" : "Choose file"}
+            {phase === "uploading"
+              ? "Uploading…"
+              : phase === "extracting"
+                ? "Reading…"
+                : files.length > 0
+                  ? "Add another report"
+                  : "Choose file"}
           </Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={skip} disabled={busy} style={styles.skipButton} activeOpacity={0.7}>
+          <Text style={styles.skipText}>I&apos;ll add this later</Text>
         </TouchableOpacity>
       </View>
     </CaptureFlowStepper>
@@ -312,9 +245,25 @@ const styles = StyleSheet.create({
     color: colors.danger,
     marginTop: spacing.lg,
   },
+  notice: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.labelMd,
+    color: colors.inkMuted,
+    marginTop: spacing.lg,
+  },
   footer: {
     paddingHorizontal: spacing["2xl"],
     paddingVertical: spacing.lg,
+  },
+  skipButton: {
+    alignItems: "center",
+    paddingVertical: spacing.md,
+    marginTop: spacing.xs,
+  },
+  skipText: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.labelMd,
+    color: colors.inkMuted,
   },
   gradientButton: {
     borderRadius: radii.lg,

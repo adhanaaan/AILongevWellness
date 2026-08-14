@@ -20,17 +20,21 @@ function timeBasedGreeting(): string {
 export function MobileShell({
   children,
   greeting,
-  name = "James",
+  name,
 }: MobileShellProps) {
   const resolvedGreeting = greeting ?? timeBasedGreeting();
+  // No hard-coded fallback name — while the real participant loads, `name` is
+  // undefined; showing a demo name ("James") here leaked the demo identity into
+  // real accounts. Render the greeting alone until the real name arrives.
+  const displayName = name?.trim() ?? "";
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Avatar initials={name.slice(0, 1)} size="sm" />
+          <Avatar initials={displayName ? displayName.slice(0, 1) : ""} size="sm" />
           <View>
             <Text style={styles.greeting}>{resolvedGreeting}</Text>
-            <Text style={styles.name}>{name}</Text>
+            {displayName ? <Text style={styles.name}>{displayName}</Text> : null}
           </View>
         </View>
         <Text style={styles.brand}>AI Wellness</Text>
