@@ -76,8 +76,7 @@ export default function CaptureLabReportsIntroPage() {
         </GlassCard>
         <Text style={styles.title}>Upload Your Report</Text>
         <Text style={styles.subtitle}>
-          Choose a file from your device. Our AI reads the biomarker values and
-          reference ranges directly off the page.
+          Choose a PDF or photo from your device — that&apos;s all we need.
         </Text>
 
         <Card padding="lg" style={styles.formatsCard}>
