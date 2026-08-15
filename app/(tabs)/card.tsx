@@ -137,6 +137,14 @@ export default function CardPage() {
     accessibilityLabel: p.accessibilityLabel,
   }));
 
+  // Biological age is a whole-body composite of the three pillars. If any pillar
+  // has no data (renders as "–"), a confident age + "N years younger" would be
+  // built partly on absent data (the composite silently treats an empty pillar
+  // as neutral) -- dishonest, and visibly contradicts the dashes below it. Only
+  // show the number once every pillar has data; otherwise the hero shows a
+  // "unlocks as you add data" state.
+  const bioAgeReady = bodyPillars.every((p) => p.value !== null);
+
   // Scannable marker summary (replaces the wordier repeat of the pillar scores,
   // which the body hero above already shows). Counts derive from the draft alone.
   const markerTotal = Object.values(BIOMARKER_KEYS_BY_PILLAR).flat().length;
@@ -175,10 +183,10 @@ export default function CardPage() {
 
         <View style={styles.section}>
           <BodyMap
-            bioAge={aiDraft.biological_age}
+            bioAge={bioAgeReady ? aiDraft.biological_age : null}
             chronoAge={aiDraft.chronological_age}
             pillars={bodyPillars}
-            onPressBio={() => router.push("/bio-age")}
+            onPressBio={bioAgeReady ? () => router.push("/bio-age") : undefined}
           />
         </View>
 

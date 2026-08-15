@@ -10,7 +10,7 @@ import { FadeInView } from "@/components/ui/FadeInView";
 import { AskAvaButton } from "@/components/participant/AskAvaButton";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { pillarStatus } from "@/lib/ai/scoring";
+import { pillarStatus, BIOMARKER_KEYS_BY_PILLAR } from "@/lib/ai/scoring";
 import { missingPhenoAgeInputs } from "@/lib/ai/phenoAge";
 import type { SignedCard } from "@/lib/data/repository";
 import type { Pillar } from "@/lib/types/db";
@@ -60,6 +60,13 @@ export default function BioAgePage() {
   const { aiDraft, biomarkers } = card;
   const { scores, biological_age: bioAge, chronological_age: chronoAge } = aiDraft;
   const usedPhenoAge = missingPhenoAgeInputs(biomarkers).length === 0;
+  // Same honesty gate as the Insights hero: a whole-body biological age isn't
+  // trustworthy while any pillar has no data (the composite would treat it as
+  // neutral). Below that bar, show what's needed instead of a fabricated number.
+  const missingSet = new Set(aiDraft.missing_biomarkers ?? []);
+  const bioAgeReady = (Object.keys(BIOMARKER_KEYS_BY_PILLAR) as Pillar[]).every(
+    (p) => !BIOMARKER_KEYS_BY_PILLAR[p].every((k) => missingSet.has(k))
+  );
   const avg = Math.round((scores.vascular + scores.metabolic + scores.mental) / 3);
   const rawDelta = avg - NEUTRAL_SCORE;
   const appliedDelta = Math.max(-15, Math.min(10, rawDelta));
@@ -88,12 +95,23 @@ export default function BioAgePage() {
 
         <Card padding="lg" style={styles.heroCard}>
           <Text style={styles.heroCaption}>Your estimated biological age</Text>
-          <Text style={styles.bioAgeValue}>{bioAge}</Text>
-          <View style={styles.pill}>
-            <Text style={styles.pillText}>{deltaLabel}</Text>
-          </View>
+          {bioAgeReady ? (
+            <>
+              <Text style={styles.bioAgeValue}>{bioAge}</Text>
+              <View style={styles.pill}>
+                <Text style={styles.pillText}>{deltaLabel}</Text>
+              </View>
+            </>
+          ) : (
+            <Text style={styles.bioAgeLocked}>
+              Your biological age unlocks once we have data across all three systems — Vascular,
+              Metabolic, and Mental. Add your labs and complete ReCOGnAIze to see it.
+            </Text>
+          )}
         </Card>
 
+        {bioAgeReady && (
+        <>
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>How this is calculated</Text>
           <Card padding="lg" style={styles.explainerCard}>
@@ -149,6 +167,8 @@ export default function BioAgePage() {
             );
           })}
         </View>
+        </>
+        )}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Ask Ava</Text>
@@ -211,6 +231,14 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.display,
     color: colors.charcoal,
     marginTop: spacing.sm,
+  },
+  bioAgeLocked: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.bodyMd,
+    color: colors.inkMuted,
+    marginTop: spacing.sm,
+    textAlign: "center",
+    lineHeight: 22,
   },
   explainerCard: {
     width: "100%",
