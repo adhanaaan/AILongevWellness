@@ -27,3 +27,13 @@ export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? "";
  */
 export const isTerraEnabled =
   isSupabaseConfigured && process.env.EXPO_PUBLIC_TERRA_ENABLED === "true";
+
+/**
+ * Gates the Apple Health "auto-sync from iPhone" (Health Auto Export) option.
+ * Deferred for now — we're shipping the Terra wearable integration first — so
+ * this stays off by default and the health-export card is hidden. The backend
+ * (api/health-ingest*.ts) and migration support remain in place, so enabling it
+ * later is a flag flip, not a rebuild.
+ */
+export const isHealthExportEnabled =
+  isSupabaseConfigured && process.env.EXPO_PUBLIC_HEALTH_EXPORT_ENABLED === "true";

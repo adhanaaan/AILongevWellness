@@ -35,3 +35,11 @@ create policy "participant reads own wearable connections" on public.wearable_co
 -- login session. Minted on demand from the app; rotatable by regenerating.
 alter table public.participants
   add column if not exists ingest_token text unique;
+
+-- The Health Auto Export path writes biomarkers with source = 'apple_health',
+-- which the original biomarkers.source CHECK (0001_init.sql) doesn't allow — so
+-- widen it, or every health-export sync fails the constraint. Terra uses the
+-- already-allowed 'wearable'.
+alter table public.biomarkers drop constraint if exists biomarkers_source_check;
+alter table public.biomarkers add constraint biomarkers_source_check
+  check (source in ('manual', 'wearable', 'lab_extract', 'body_comp', 'recognize', 'admin', 'apple_health'));

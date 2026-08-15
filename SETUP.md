@@ -176,7 +176,12 @@ Signature verification is enforced: `/api/terra-webhook` reads the raw body and
 checks the `terra-signature` HMAC, so it rejects anything not signed with your
 Signing Secret.
 
-### B. Health Auto Export — Apple Health auto-sync from iPhone
+### B. Health Auto Export — Apple Health auto-sync from iPhone (DEFERRED)
+
+> **Not enabled yet — we're shipping Terra first.** This path is fully built but
+> gated off by `EXPO_PUBLIC_HEALTH_EXPORT_ENABLED` (unset = hidden). To turn it on
+> later, set that flag to `true` and redeploy — no code change. The steps below
+> apply once it's enabled.
 
 For iPhone health data without a manual export, use the **Health Auto Export –
 JSON+CSV** app (App Store, Premium tier does REST API automations).

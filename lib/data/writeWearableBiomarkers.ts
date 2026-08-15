@@ -63,13 +63,30 @@ export async function writeWearableBiomarkers(
   if (upsertErr) throw new Error(upsertErr.message);
 
   await flagIfPastSignoff(serviceClient, participantId, opts.attentionReason);
-  // Re-derive scores/bio age from the just-written values, then re-run the full
-  // draft (AI narrative too) best-effort — same as the manual-export path.
-  await resyncDraftScores(serviceClient, participantId);
-  try {
-    await regenerateDraft(serviceClient, participantId);
-  } catch {
-    /* numbers already resynced above */
+
+  // Never rewrite a clinician-signed card. After sign-off the participant-facing
+  // scores are read straight from ai_draft, so resyncDraftScores would silently
+  // recompute and overwrite them from new wearable readings — under a "Reviewed
+  // & signed off by [name]" badge the clinician never approved. flagIfPastSignoff
+  // (above) already raised needs_attention so the care team re-reviews the new
+  // data instead. (regenerateDraft is already state-gated, but resyncDraftScores
+  // is not — so guard here.)
+  const { data: pipeline } = await serviceClient
+    .from("pipeline")
+    .select("state")
+    .eq("participant_id", participantId)
+    .maybeSingle();
+  const signedOff = pipeline?.state === "signed" || pipeline?.state === "delivered";
+
+  if (!signedOff) {
+    // Re-derive scores/bio age from the just-written values, then re-run the full
+    // draft (AI narrative too) best-effort — same as the manual-export path.
+    await resyncDraftScores(serviceClient, participantId);
+    try {
+      await regenerateDraft(serviceClient, participantId);
+    } catch {
+      /* numbers already resynced above */
+    }
   }
 
   return rows.map((r) => r.key);

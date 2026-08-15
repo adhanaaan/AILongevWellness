@@ -4,7 +4,7 @@ import { Watch, Smartphone, Copy, Check, ChevronRight } from "lucide-react-nativ
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { isTerraEnabled, isSupabaseConfigured } from "@/lib/config/env";
+import { isTerraEnabled, isHealthExportEnabled } from "@/lib/config/env";
 import { terraConnect, setupHealthIngest } from "@/lib/ai/client";
 import { listWearableConnectionsAction } from "@/lib/data/actions";
 import type { WearableConnection } from "@/lib/types/db";
@@ -55,7 +55,14 @@ export function WearableConnectOptions() {
   const [ingestUrl, setIngestUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [connections, setConnections] = useState<WearableConnection[]>([]);
-  const [syncing, setSyncing] = useState(() => terraJustReturned(participantId));
+  const [syncing, setSyncing] = useState(false);
+
+  // participantId is null on the first render and populates async, so the Terra
+  // return can only be detected once it's known — an effect, not a useState
+  // initializer (which would latch false forever).
+  useEffect(() => {
+    if (terraJustReturned(participantId)) setSyncing(true);
+  }, [participantId]);
 
   const loadConnections = useCallback(async () => {
     if (!participantId || !isTerraEnabled) return;
@@ -86,7 +93,7 @@ export function WearableConnectOptions() {
     return () => clearInterval(id);
   }, [syncing, loadConnections]);
 
-  if (!isTerraEnabled && !isSupabaseConfigured) return null;
+  if (!isTerraEnabled && !isHealthExportEnabled) return null;
 
   async function connectTerra() {
     if (!participantId || !session?.access_token) return;
@@ -97,6 +104,9 @@ export function WearableConnectOptions() {
         Platform.OS === "web" && typeof window !== "undefined" ? window.location.href : undefined;
       const { url } = await terraConnect(session.access_token, participantId, redirect, redirect);
       openExternal(url);
+      // On web the page navigates away and unmounts; on native the app stays
+      // mounted, so clear busy or the buttons stay disabled after returning.
+      if (Platform.OS !== "web") setBusy(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't start the connection. Please try again.");
       setBusy(null);
@@ -188,7 +198,7 @@ export function WearableConnectOptions() {
         </Card>
       )}
 
-      {isSupabaseConfigured && (
+      {isHealthExportEnabled && (
         <Card padding="lg" style={styles.card}>
           <View style={styles.cardHeader}>
             <View style={styles.iconCircle}>

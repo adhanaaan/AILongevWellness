@@ -66,7 +66,8 @@ export type BiomarkerSource =
   | "lab_extract"
   | "body_comp"
   | "recognize"
-  | "admin";
+  | "admin"
+  | "apple_health";
 
 export type BiomarkerStatus = "entered" | "imported" | "extracted" | "needs_review";
 
