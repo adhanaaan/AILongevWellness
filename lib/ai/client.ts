@@ -57,6 +57,23 @@ export function extractBodyComp(
   return postJson("/api/extract-body-comp", token, { participantId, fileId });
 }
 
+export function terraConnect(
+  token: string,
+  participantId: string,
+  successUrl?: string,
+  failureUrl?: string
+): Promise<{ url: string; expiresIn?: number }> {
+  return postJson("/api/terra-connect", token, { participantId, successUrl, failureUrl });
+}
+
+export function setupHealthIngest(
+  token: string,
+  participantId: string,
+  rotate?: boolean
+): Promise<{ token: string; url: string }> {
+  return postJson("/api/health-ingest-setup", token, { participantId, rotate });
+}
+
 export function submitRecognizeResult(
   token: string,
   participantId: string,

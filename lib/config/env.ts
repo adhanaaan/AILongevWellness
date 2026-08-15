@@ -17,3 +17,13 @@ export const isSupabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
  * the API if this is set to the deployed origin (e.g. https://ai-wellness.vercel.app).
  */
 export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? "";
+
+/**
+ * True when the Terra wearable-aggregator integration is live. Gates the
+ * "Connect a wearable" flow in the UI. The actual Terra secrets
+ * (TERRA_DEV_ID / TERRA_API_KEY / TERRA_SIGNING_SECRET) are server-only and read
+ * inside /api/terra-*.ts — this public flag just controls whether the client
+ * offers the connect button. Requires Supabase too (Terra data lands in it).
+ */
+export const isTerraEnabled =
+  isSupabaseConfigured && process.env.EXPO_PUBLIC_TERRA_ENABLED === "true";

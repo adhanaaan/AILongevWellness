@@ -7,6 +7,7 @@ import { GlassCard } from "@/components/ui/GlassCard";
 import { Card } from "@/components/ui/Card";
 import { GradientOverlay } from "@/components/ui/GradientOverlay";
 import { UploadedFilesList } from "@/components/onboarding/UploadedFilesList";
+import { WearableConnectOptions } from "@/components/onboarding/WearableConnectOptions";
 import { extractWearableExport } from "@/lib/ai/client";
 import { useChannelUpload } from "@/lib/onboarding/useChannelUpload";
 import { colors, fontFamilies, fontSizes, radii, spacing, teal } from "@/lib/theme/tokens";
@@ -78,6 +79,8 @@ export default function CaptureWearablesIntroPage() {
             ))}
           </View>
         </Card>
+
+        <WearableConnectOptions />
 
         <GlassCard tint="light" padding="none" radius="full" style={StyleSheet.flatten([styles.headerIcon, styles.secondHeaderIcon])}>
           <UploadCloud size={24} color={colors.teal} />
