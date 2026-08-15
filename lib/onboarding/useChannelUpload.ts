@@ -186,9 +186,12 @@ export function useChannelUpload(config: ChannelUploadConfig): ChannelUploadStat
     }
   }, [participantId, session, config, loadFiles, leave]);
 
+  // "I'll add this later" — return the same way a completed upload would, so an
+  // edit-mode visit (opened from the hub/Tracking post-onboarding) goes back
+  // where it came from instead of being dumped into the onboarding hub.
   const skip = useCallback(() => {
-    router.replace("/onboarding/capture");
-  }, [router]);
+    leave();
+  }, [leave]);
 
   return {
     phase,

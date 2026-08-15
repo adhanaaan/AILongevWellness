@@ -26,7 +26,8 @@ export interface BodyMapPillar {
 }
 
 export interface BodyMapProps {
-  bioAge: number;
+  /** null when there isn't enough data across the pillars to state a biological age honestly. */
+  bioAge: number | null;
   chronoAge: number;
   pillars: BodyMapPillar[];
   /** Tapping the biological-age caption (e.g. to open the bio-age explainer). */
@@ -57,7 +58,7 @@ export function BodyMap({ bioAge, chronoAge, pillars, onPressBio }: BodyMapProps
   const uid = React.useId().replace(/:/g, "");
   const id = (name: string) => `${uid}-${name}`;
 
-  const delta = chronoAge - bioAge;
+  const delta = bioAge === null ? 0 : chronoAge - bioAge;
   const deltaLabel =
     delta > 0 ? `${delta} years younger` : delta < 0 ? `${Math.abs(delta)} years older` : "on pace with your age";
 
@@ -76,11 +77,15 @@ export function BodyMap({ bioAge, chronoAge, pillars, onPressBio }: BodyMapProps
         style={styles.bioCaption}
       >
         <Text style={styles.eyebrow}>Biological age</Text>
-        <View style={styles.ageRow}>
-          <Text style={styles.age}>{bioAge}</Text>
-          <Text style={styles.ageDelta}> · {deltaLabel}</Text>
-        </View>
-        {onPressBio && (
+        {bioAge === null ? (
+          <Text style={styles.ageLocked}>Unlocks once we have data across all three systems</Text>
+        ) : (
+          <View style={styles.ageRow}>
+            <Text style={styles.age}>{bioAge}</Text>
+            <Text style={styles.ageDelta}> · {deltaLabel}</Text>
+          </View>
+        )}
+        {onPressBio && bioAge !== null && (
           <View style={styles.exploreHint}>
             <Text style={styles.exploreHintText}>See how this is calculated</Text>
             <ChevronRight size={13} color={colors.inkOnDarkMuted} />
@@ -204,6 +209,14 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.labelMd,
     color: colors.inkOnDarkMuted,
+  },
+  ageLocked: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.bodyMd,
+    color: colors.inkOnDarkMuted,
+    textAlign: "center",
+    marginTop: 2,
+    maxWidth: 260,
   },
   exploreHint: { flexDirection: "row", alignItems: "center", gap: 2, marginTop: 4 },
   exploreHintText: {

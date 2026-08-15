@@ -47,6 +47,9 @@ same way:
 - `supabase/migrations/0008_consent_withdrawal.sql` — adds `consent_withdrawn_at`
   to `participants`, set when a participant withdraws consent from Settings →
   Privacy & consent. Without it, the withdrawal action errors.
+- `supabase/migrations/0009_wearable_ingest.sql` — adds the `wearable_connections`
+  table and `participants.ingest_token`, for the Terra + health-export ingestion
+  (see "Wearables & health data" below). Only needed if you wire those up.
 
 Any future numbered migration file works the same way: run it once, in
 order, after pulling new code that references it.
@@ -146,11 +149,63 @@ required after changing them — a running deployment won't pick them up live).
 - Once a participant's card is signed off and released, ask AVA a question on
   their card — replies should come from Claude, grounded in that card's data.
 
+## Wearables & health data (Terra + Health Auto Export)
+
+Three ways to get device/health data in, all landing as biomarkers through the
+same normalize → score path (`lib/data/writeWearableBiomarkers.ts`). All three
+are optional; the manual export upload works with nothing extra configured.
+
+### A. Terra — live wearable sync (Oura, Garmin, Fitbit, Whoop, ...)
+
+1. Create a Terra account at **dashboard.tryterra.co** and grab your **Dev ID**
+   and **API Key**.
+2. Add a **webhook / data destination** pointing at
+   `https://<your-app>/api/terra-webhook`. Terra shows a per-destination
+   **Signing Secret** — copy it.
+3. Set the env vars on Vercel (see `.env.example`): `TERRA_DEV_ID`,
+   `TERRA_API_KEY`, `TERRA_SIGNING_SECRET`, optionally `TERRA_PROVIDERS`
+   (comma-separated allow-list), and `EXPO_PUBLIC_TERRA_ENABLED=true` to show the
+   "Connect a wearable" button in the app. **Redeploy** (the `EXPO_PUBLIC_` flag
+   is inlined at build time).
+4. Run migration `0009`. Then in the app: Wearables capture → **Connect a
+   device** → pick a provider → authorize. Terra sends an `auth` webhook (we
+   store the connection) and then data webhooks, which write biomarkers tagged
+   `source = wearable`.
+
+Signature verification is enforced: `/api/terra-webhook` reads the raw body and
+checks the `terra-signature` HMAC, so it rejects anything not signed with your
+Signing Secret.
+
+### B. Health Auto Export — Apple Health auto-sync from iPhone (DEFERRED)
+
+> **Not enabled yet — we're shipping Terra first.** This path is fully built but
+> gated off by `EXPO_PUBLIC_HEALTH_EXPORT_ENABLED` (unset = hidden). To turn it on
+> later, set that flag to `true` and redeploy — no code change. The steps below
+> apply once it's enabled.
+
+For iPhone health data without a manual export, use the **Health Auto Export –
+JSON+CSV** app (App Store, Premium tier does REST API automations).
+
+1. Run migration `0009` (adds `participants.ingest_token`).
+2. In the app: Wearables capture → **Get my sync link** → copy the private URL
+   (it embeds a per-participant token).
+3. In Health Auto Export: add a **REST API automation**, paste that URL, set
+   format **JSON**, and pick a schedule. It POSTs Apple Health JSON to
+   `/api/health-ingest`, which writes biomarkers tagged `source = apple_health`.
+
+⚠️ **Verify the metric names once, live.** A few Health Auto Export metric
+`name` strings (resting HR, HRV, body fat) follow the documented convention but
+weren't confirmable from an authoritative list. `/api/health-ingest` returns the
+`metricNames` it saw in each payload — send one real export and check the names
+against the map in `lib/wearables/healthAutoExport.ts`, adjusting if needed.
+
+### C. Manual Apple Health export upload
+
+The original path still works with no setup: Wearables capture → upload the
+`.zip` (or `export.xml`) from Health app's "Export All Health Data".
+
 ## What's still mock-only / not yet built
 
-- **Live wearable device sync** (an aggregator "connect your device" integration)
-  is still on the roadmap. Today wearable data is captured by uploading an Apple
-  Health export file, which *is* parsed (`api/extract-wearables.ts`).
 - Everything else in capture is now real: the questionnaire saves real profile
   data, ReCOGnAIze runs a real reaction-time test (`api/submit-recognize.ts`),
   lab reports and body-composition scans are both parsed by Claude vision

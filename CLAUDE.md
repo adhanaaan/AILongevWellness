@@ -250,7 +250,22 @@ lib/
       inflammation levels" instead of "lipids... hs-CRP, HbA1c... insulin"), and
       Wearables' export subtitle dropped its "isn't available over the cloud"
       negative framing for a positive one.
-- [ ] Wearable aggregator connect
+- [x] Wearable aggregator connect (Terra) + health-export auto-sync: live device
+      data now lands as biomarkers through two API-driven paths on top of the manual
+      Apple Health export upload, all sharing one normalize→score writer
+      (`lib/data/writeWearableBiomarkers.ts`). (1) **Terra** (`api/terra-connect.ts`
+      + `api/terra-webhook.ts`, `lib/wearables/terra.ts`): the participant taps
+      "Connect a device" (`components/onboarding/WearableConnectOptions.tsx`, gated on
+      `isTerraEnabled`), Terra's widget OAuths a provider (Oura/Garmin/Fitbit/Whoop/…)
+      with `reference_id = participantId`, and signed webhooks (HMAC `terra-signature`
+      verified against the raw body) write `source=wearable` biomarkers. Connections
+      are stored in a new `wearable_connections` table. (2) **Health Auto Export**
+      (`api/health-ingest.ts` + `api/health-ingest-setup.ts`, `lib/wearables/healthAutoExport.ts`):
+      a per-participant `ingest_token` (new column) gives the iOS export app a private
+      POST URL for automatic Apple Health JSON sync (`source=apple_health`); the
+      endpoint echoes seen `metricNames` since a few HAE metric-name strings weren't
+      authoritatively verifiable. `supabase/migrations/0009_wearable_ingest.sql`; setup
+      in SETUP.md "Wearables & health data".
 - [x] Consent tracking: `consent_given`/`consented_at` added to `participants`
       (`supabase/migrations/0002_consent_tracking.sql`), recorded automatically the
       first time a participant is ever seen authenticated (`AuthProvider.tsx`'s

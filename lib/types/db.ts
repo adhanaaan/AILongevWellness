@@ -1,4 +1,5 @@
 // CHANGE LOG (newest first)
+// - 2026-08-15 Added ingest_token to Participant + WearableConnection type for Terra/health-export ingestion (supabase/migrations/0009_wearable_ingest.sql).
 // - 2026-08-14 Added consent_withdrawn_at to Participant for participant-initiated consent withdrawal (supabase/migrations/0008_consent_withdrawal.sql).
 // - 2026-08-13 care_plan items restructured from string[] to PlanItem[] ({title, detail}); legacy strings coerced by normalizePlanItem(). No migration (jsonb column).
 // - 2026-08-11 Added measured_at to Biomarker + BiomarkerReading history type (supabase/migrations/0007_biomarker_history.sql).
@@ -30,6 +31,8 @@ export interface Participant {
   consented_at?: string | null;
   /** Set when a participant withdraws consent from Settings. Non-destructive: the account is signed out and flagged for the care team, data is not auto-deleted. */
   consent_withdrawn_at?: string | null;
+  /** Per-participant secret embedded in the health-export app's POST URL (api/health-ingest). Minted on demand; null until the participant sets up the export app. */
+  ingest_token?: string | null;
   /** Self-reported catalog of medications/supplements the participant currently takes (not doctor-prescribed dosing — a wellness platform never prescribes). Daily adherence lives in DailyLog.supplements. */
   medications?: string[];
   created_at: string;
@@ -63,7 +66,8 @@ export type BiomarkerSource =
   | "lab_extract"
   | "body_comp"
   | "recognize"
-  | "admin";
+  | "admin"
+  | "apple_health";
 
 export type BiomarkerStatus = "entered" | "imported" | "extracted" | "needs_review";
 
@@ -192,6 +196,15 @@ export interface Pipeline {
   needs_attention: boolean;
   attention_reason: string | null;
   delivered_at: string | null;
+}
+
+/** A wearable provider a participant connected through the Terra aggregator. */
+export interface WearableConnection {
+  id: string;
+  participant_id: string;
+  terra_user_id: string;
+  provider: string | null;
+  connected_at: string;
 }
 
 export type FileKind = "lab_report" | "body_comp" | "apple_health_export";

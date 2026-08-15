@@ -10,6 +10,7 @@ import type {
   EnteredBy,
   FileKind,
   FileRecord,
+  WearableConnection,
   OnboardingProgress,
   OnboardingSectionKey,
   OnboardingSectionStatus,
@@ -899,6 +900,11 @@ class MockRepository implements Repository {
 
   async listFiles(participantId: string): Promise<FileRecord[]> {
     return this.files.get(participantId) ?? [];
+  }
+
+  async listWearableConnections(): Promise<WearableConnection[]> {
+    // Mock mode has no Terra backend.
+    return [];
   }
 
   async uploadFile(

@@ -165,10 +165,6 @@ export default function WelcomePage() {
               <Text style={styles.loginLinkLead}>Already a member? </Text>
               <Text style={styles.loginLinkText}>Log in</Text>
             </TouchableOpacity>
-            <Text style={styles.hint}>
-              Your data is encrypted and handled in accordance with our privacy
-              policy.
-            </Text>
           </View>
         </View>
       </ScrollView>
@@ -314,13 +310,5 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.bodyMd,
     color: colors.teal,
-  },
-  hint: {
-    fontFamily: fontFamilies.body,
-    fontSize: fontSizes.caption,
-    color: colors.inkMuted,
-    textAlign: "center",
-    maxWidth: 300,
-    lineHeight: 18,
   },
 });

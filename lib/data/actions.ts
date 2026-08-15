@@ -99,3 +99,7 @@ export async function getFileUrlAction(fileId: string) {
 export async function listFilesAction(participantId: string) {
   return repository.listFiles(participantId);
 }
+
+export async function listWearableConnectionsAction(participantId: string) {
+  return repository.listWearableConnections(participantId);
+}

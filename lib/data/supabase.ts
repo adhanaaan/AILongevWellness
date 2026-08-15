@@ -18,6 +18,7 @@ import type {
   EnteredBy,
   FileKind,
   FileRecord,
+  WearableConnection,
   OnboardingProgress,
   OnboardingSectionKey,
   OnboardingSectionStatus,
@@ -339,6 +340,16 @@ export class SupabaseRepository implements Repository {
 
   async listFiles(participantId: string): Promise<FileRecord[]> {
     const { data, error } = await this.client.from("files").select("*").eq("participant_id", participantId);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  }
+
+  async listWearableConnections(participantId: string): Promise<WearableConnection[]> {
+    const { data, error } = await this.client
+      .from("wearable_connections")
+      .select("*")
+      .eq("participant_id", participantId)
+      .order("connected_at", { ascending: false });
     if (error) throw new Error(error.message);
     return data ?? [];
   }

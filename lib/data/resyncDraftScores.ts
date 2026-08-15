@@ -27,6 +27,15 @@ import { computePhenoAge } from "../ai/phenoAge";
  * full generateDraft still owns. Safe to run whenever biomarkers change — it's a
  * pure function of the current snapshot, no AI call. No-ops if no draft exists
  * yet (nothing to update until the first draft is generated).
+ *
+ * No-ops once the card is signed/delivered: post-sign-off the participant-facing
+ * scores are read straight from ai_draft, so recomputing them here from
+ * newly-arrived biomarkers (a late extraction, a wearable sync, a re-upload)
+ * would silently overwrite doctor-signed numbers under a "Reviewed & signed off"
+ * badge. Every caller runs flagIfPastSignoff first, which raises needs_attention
+ * so the care team re-reviews instead. (A deliberate admin biomarker edit uses a
+ * separate inline recompute in SupabaseRepository.updateBiomarker, not this — so
+ * intentional edits still flow through.)
  */
 export async function resyncDraftScores(
   serviceClient: SupabaseClient,
@@ -39,6 +48,13 @@ export async function resyncDraftScores(
     .maybeSingle();
   if (draftErr) throw new Error(draftErr.message);
   if (!draft) return;
+
+  const { data: pipeline } = await serviceClient
+    .from("pipeline")
+    .select("state")
+    .eq("participant_id", participantId)
+    .maybeSingle();
+  if (pipeline?.state === "signed" || pipeline?.state === "delivered") return;
 
   const { data: biomarkers, error: bmErr } = await serviceClient
     .from("biomarkers")

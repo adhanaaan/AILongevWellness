@@ -2,12 +2,8 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
 import JSZip from "jszip";
 import { parseAppleHealthExport } from "../lib/ai/appleHealthParser";
-import { WEARABLE_CATALOG_BY_KEY } from "../lib/ai/wearableCatalog";
-import { sexAwareRange } from "../lib/ai/sexAwareRanges";
 import { BUCKET_BY_KIND } from "../lib/data/storageBuckets";
-import { flagIfPastSignoff } from "../lib/data/pipelineAttention";
-import { resyncDraftScores } from "../lib/data/resyncDraftScores";
-import { regenerateDraft } from "../lib/ai/draftGeneration";
+import { writeWearableBiomarkers } from "../lib/data/writeWearableBiomarkers";
 
 // This is a Vercel serverless function — see vercel.json's rewrite excluding /api/*
 // from the SPA catch-all.
@@ -62,12 +58,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-  const { data: participant } = await serviceClient
-    .from("participants")
-    .select("sex")
-    .eq("id", participantId)
-    .maybeSingle();
-
   const bucket = BUCKET_BY_KIND[fileRow.kind as keyof typeof BUCKET_BY_KIND];
   const { data: blob, error: downloadErr } = await serviceClient.storage
     .from(bucket)
@@ -120,47 +110,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const parsedValues = parseAppleHealthExport(xml);
 
-  const rows = parsedValues
-    .filter((v) => WEARABLE_CATALOG_BY_KEY[v.key])
-    .map((v) => {
-      const entry = WEARABLE_CATALOG_BY_KEY[v.key];
-      const { ref_low, ref_high } = sexAwareRange(entry.key, participant?.sex, entry);
-      return {
-        participant_id: participantId,
-        pillar: entry.pillar,
-        key: entry.key,
-        label: entry.label,
-        value: v.value,
-        unit: entry.unit,
-        ref_low,
-        ref_high,
-        source: "wearable",
-        status: "imported",
-        flagged: v.value < ref_low || v.value > ref_high,
-        updated_at: new Date().toISOString(),
-      };
+  let written: string[];
+  try {
+    written = await writeWearableBiomarkers(serviceClient, participantId, parsedValues, {
+      source: "wearable",
+      attentionReason: "New wearable export uploaded — biomarkers pending review",
     });
-
-  if (rows.length > 0) {
-    const { error: upsertErr } = await serviceClient
-      .from("biomarkers")
-      .upsert(rows, { onConflict: "participant_id,key" });
-    if (upsertErr) {
-      res.status(500).json({ error: upsertErr.message });
-      return;
-    }
-    await flagIfPastSignoff(serviceClient, participantId, "New wearable export uploaded — biomarkers pending review");
-    // Re-derive scores/bio age from the just-written values (see resyncDraftScores),
-    // then re-run the full draft (AI narrative too) best-effort.
-    await resyncDraftScores(serviceClient, participantId);
-    try {
-      await regenerateDraft(serviceClient, participantId);
-    } catch {
-      /* numbers already resynced above */
-    }
+  } catch (e) {
+    res.status(500).json({ error: e instanceof Error ? e.message : "Failed to write biomarkers" });
+    return;
   }
 
   await serviceClient.from("files").update({ extracted: true }).eq("id", fileId);
 
-  res.status(200).json({ extracted: rows.map((r) => r.key) });
+  res.status(200).json({ extracted: written });
 }
