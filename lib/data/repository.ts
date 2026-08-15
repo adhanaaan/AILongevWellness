@@ -9,6 +9,7 @@ import type {
   EnteredBy,
   FileKind,
   FileRecord,
+  WearableConnection,
   OnboardingProgress,
   OnboardingSectionKey,
   OnboardingSectionStatus,
@@ -84,6 +85,9 @@ export interface Repository {
   ): Promise<FileRecord>;
   /** A short-lived signed URL to view/download the raw uploaded file. Null if unavailable (e.g. mock mode has no real file storage). */
   getFileUrl(fileId: string): Promise<string | null>;
+
+  /** Wearable providers the participant has connected via Terra (empty in mock mode). */
+  listWearableConnections(participantId: string): Promise<WearableConnection[]>;
 
   listDailyLogs(participantId: string): Promise<DailyLog[]>;
   upsertDailyLog(

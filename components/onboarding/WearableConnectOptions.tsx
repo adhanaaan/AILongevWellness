@@ -1,12 +1,32 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, Platform, Linking, ActivityIndicator } from "react-native";
+import React, { useCallback, useEffect, useState } from "react";
+import { View, Text, StyleSheet, Platform, Linking } from "react-native";
 import { Watch, Smartphone, Copy, Check, ChevronRight } from "lucide-react-native";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isTerraEnabled, isSupabaseConfigured } from "@/lib/config/env";
 import { terraConnect, setupHealthIngest } from "@/lib/ai/client";
+import { listWearableConnectionsAction } from "@/lib/data/actions";
+import type { WearableConnection } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
+
+/** "OURA" -> "Oura", "APPLE_HEALTH" -> "Apple health". */
+function providerLabel(provider: string | null): string {
+  if (!provider) return "Device";
+  const s = provider.replace(/_/g, " ").toLowerCase();
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/**
+ * On web, Terra redirects back with our reference_id (the participant id) in the
+ * query on success — used to show an immediate "connecting" state while the auth
+ * webhook lands the connection row.
+ */
+function terraJustReturned(participantId: string | null): boolean {
+  if (Platform.OS !== "web" || typeof window === "undefined" || !participantId) return false;
+  const params = new URLSearchParams(window.location.search);
+  return params.get("reference_id") === participantId || params.has("user_id");
+}
 
 function openExternal(url: string) {
   if (Platform.OS === "web" && typeof window !== "undefined") {
@@ -30,6 +50,37 @@ export function WearableConnectOptions() {
   const [error, setError] = useState<string | null>(null);
   const [ingestUrl, setIngestUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [connections, setConnections] = useState<WearableConnection[]>([]);
+  const [syncing, setSyncing] = useState(() => terraJustReturned(participantId));
+
+  const loadConnections = useCallback(async () => {
+    if (!participantId || !isTerraEnabled) return;
+    try {
+      setConnections(await listWearableConnectionsAction(participantId));
+    } catch {
+      /* non-fatal — the list is a nicety */
+    }
+  }, [participantId]);
+
+  useEffect(() => {
+    loadConnections();
+  }, [loadConnections]);
+
+  // After returning from Terra the auth webhook lands the connection row within a
+  // second or two — poll a few times so it appears without a manual refresh.
+  useEffect(() => {
+    if (!syncing) return;
+    let tries = 0;
+    const id = setInterval(async () => {
+      tries += 1;
+      await loadConnections();
+      if (tries >= 5) {
+        clearInterval(id);
+        setSyncing(false);
+      }
+    }, 2500);
+    return () => clearInterval(id);
+  }, [syncing, loadConnections]);
 
   if (!isTerraEnabled && !isSupabaseConfigured) return null;
 
@@ -90,13 +141,32 @@ export function WearableConnectOptions() {
               </Text>
             </View>
           </View>
+          {connections.length > 0 && (
+            <View style={styles.connectedList}>
+              {connections.map((c) => (
+                <View key={c.id} style={styles.connectedChip}>
+                  <Check size={14} color={colors.success} />
+                  <Text style={styles.connectedText}>{providerLabel(c.provider)}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {syncing && connections.length === 0 && (
+            <Text style={styles.syncingText}>Connecting your device — this can take a moment…</Text>
+          )}
+
           <Button
             variant="secondary"
             iconRight={<ChevronRight size={16} color={colors.tealDark} />}
             onPress={connectTerra}
             disabled={busy !== null}
           >
-            {busy === "terra" ? "Opening…" : "Connect a device"}
+            {busy === "terra"
+              ? "Opening…"
+              : connections.length > 0
+                ? "Connect another device"
+                : "Connect a device"}
           </Button>
         </Card>
       )}
@@ -192,6 +262,30 @@ const styles = StyleSheet.create({
     color: colors.inkMuted,
     marginTop: 2,
     lineHeight: 20,
+  },
+  connectedList: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+  },
+  connectedChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.full,
+    backgroundColor: colors.successTint,
+  },
+  connectedText: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.caption,
+    color: colors.ink,
+  },
+  syncingText: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
   },
   linkBox: {
     gap: spacing.md,

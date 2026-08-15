@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { verifyTerraSignature, normalizeTerraPayload } from "../lib/wearables/terra";
 import { writeWearableBiomarkers } from "../lib/data/writeWearableBiomarkers";
 
@@ -18,6 +18,23 @@ export const config = { api: { bodyParser: false } };
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 const TERRA_SIGNING_SECRET = process.env.TERRA_SIGNING_SECRET;
+
+async function markWearableChannel(
+  service: SupabaseClient,
+  participantId: string,
+  status: "partial" | "complete"
+): Promise<void> {
+  await service.from("capture_channels").upsert(
+    {
+      participant_id: participantId,
+      channel: "wearables",
+      status,
+      entered_by: "participant",
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "participant_id,channel" }
+  );
+}
 
 function readRawBody(req: VercelRequest): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -81,6 +98,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           },
           { onConflict: "terra_user_id" }
         );
+      // Reflect the connection in onboarding progress as "in progress" (data
+      // hasn't synced yet) so the capture hub shows the participant engaged the
+      // Wearables section without having uploaded a file.
+      await markWearableChannel(service, referenceId, "partial");
     }
     res.status(200).json({ ok: true });
     return;
@@ -109,6 +130,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       source: "wearable",
       attentionReason: `New ${provider ?? "wearable"} data synced — biomarkers pending review`,
     });
+    if (written.length > 0) {
+      await markWearableChannel(service, participantId, "complete");
+    }
     res.status(200).json({ ok: true, written });
   } catch (e) {
     res.status(500).json({ error: e instanceof Error ? e.message : "Failed to write biomarkers" });
