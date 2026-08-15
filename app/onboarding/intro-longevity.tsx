@@ -52,7 +52,7 @@ export default function IntroLongevityPage() {
             style={styles.getStartedButton}
             onPress={() => router.push("/onboarding/consent")}
           >
-            Get started
+            Let&rsquo;s begin
           </Button>
         </View>
       </SafeAreaView>

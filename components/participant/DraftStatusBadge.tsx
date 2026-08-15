@@ -40,7 +40,7 @@ export function DraftStatusBadge({ isDelivered, gp, tcm, missingCount }: DraftSt
       <Sparkles size={16} color={colors.terracottaInk} />
       <Text style={[styles.text, styles.textPending]}>
         <Text style={styles.textBold}>AI-drafted</Text> · pending your care team&apos;s review
-        {missingCount ? ` — sharpens as you upload more data (${missingCount} still missing)` : ""}
+        {missingCount ? " · sharpens as you add data" : ""}
       </Text>
     </View>
   );
