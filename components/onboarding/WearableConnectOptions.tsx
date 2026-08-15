@@ -28,6 +28,10 @@ function terraJustReturned(participantId: string | null): boolean {
   return params.get("reference_id") === participantId || params.has("user_id");
 }
 
+// Shown as a "works with" strip before anything is connected — the common
+// Terra-supported devices this cohort is likely to own.
+const SUPPORTED_PROVIDERS = ["Oura", "Garmin", "Fitbit", "Whoop", "Apple Watch", "Strava"];
+
 function openExternal(url: string) {
   if (Platform.OS === "web" && typeof window !== "undefined") {
     window.location.assign(url);
@@ -136,19 +140,32 @@ export function WearableConnectOptions() {
             </View>
             <View style={styles.cardHeaderText}>
               <Text style={styles.cardTitle}>Connect a wearable</Text>
-              <Text style={styles.cardSubtitle}>
-                Oura, Garmin, Fitbit, Whoop, Apple Watch and more — syncs automatically.
-              </Text>
+              <Text style={styles.cardSubtitle}>Syncs automatically — no exporting, no uploads.</Text>
             </View>
           </View>
-          {connections.length > 0 && (
-            <View style={styles.connectedList}>
-              {connections.map((c) => (
-                <View key={c.id} style={styles.connectedChip}>
-                  <Check size={14} color={colors.success} />
-                  <Text style={styles.connectedText}>{providerLabel(c.provider)}</Text>
-                </View>
-              ))}
+
+          {connections.length > 0 ? (
+            <View style={styles.group}>
+              <Text style={styles.groupLabel}>Connected</Text>
+              <View style={styles.connectedList}>
+                {connections.map((c) => (
+                  <View key={c.id} style={styles.connectedChip}>
+                    <Check size={14} color={colors.success} />
+                    <Text style={styles.connectedText}>{providerLabel(c.provider)}</Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : (
+            <View style={styles.group}>
+              <Text style={styles.groupLabel}>Works with</Text>
+              <View style={styles.connectedList}>
+                {SUPPORTED_PROVIDERS.map((name) => (
+                  <View key={name} style={styles.providerChip}>
+                    <Text style={styles.providerChipText}>{name}</Text>
+                  </View>
+                ))}
+              </View>
             </View>
           )}
 
@@ -263,10 +280,33 @@ const styles = StyleSheet.create({
     marginTop: 2,
     lineHeight: 20,
   },
+  group: {
+    gap: spacing.sm,
+  },
+  groupLabel: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    color: colors.inkMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
   connectedList: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: spacing.sm,
+  },
+  providerChip: {
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  providerChipText: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
   },
   connectedChip: {
     flexDirection: "row",
