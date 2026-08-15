@@ -34,6 +34,19 @@ export async function writeWearableBiomarkers(
     .eq("id", participantId)
     .maybeSingle();
 
+  // The reference_id must map to a real participant, or the biomarkers FK
+  // (biomarkers_participant_id_fkey) rejects the insert and the whole webhook
+  // 500s — which makes Terra retry forever. Skip cleanly instead. Hit by Terra's
+  // Data Generator (synthetic user ids) and by any connection whose participant
+  // was since deleted; a real app connect always passes a valid participants.id.
+  if (!participant) {
+    console.warn(
+      `[writeWearableBiomarkers] no participant '${participantId}' — skipping ${values.length} value(s) ` +
+        `(reference_id is not a real participant; e.g. Terra Data Generator synthetic user)`
+    );
+    return [];
+  }
+
   const rows = values
     .filter((v) => WEARABLE_CATALOG_BY_KEY[v.key] && Number.isFinite(v.value))
     .map((v) => {
