@@ -100,9 +100,14 @@ export function WearableConnectOptions() {
     setError(null);
     setBusy("terra");
     try {
-      const redirect =
-        Platform.OS === "web" && typeof window !== "undefined" ? window.location.href : undefined;
-      const { url } = await terraConnect(session.access_token, participantId, redirect, redirect);
+      // Redirect back to a clean, dedicated success screen — NOT window.location.href
+      // (which carries Expo Router's ?__EXPO_ROUTER_key junk and made the return
+      // fragile/blank). Terra appends its own params (user_id, reference_id, resource).
+      const origin =
+        Platform.OS === "web" && typeof window !== "undefined" ? window.location.origin : undefined;
+      const successUrl = origin ? `${origin}/onboarding/wearable-connected` : undefined;
+      const failureUrl = origin ? `${origin}/onboarding/wearable-connected?failed=1` : undefined;
+      const { url } = await terraConnect(session.access_token, participantId, successUrl, failureUrl);
       openExternal(url);
       // On web the page navigates away and unmounts; on native the app stays
       // mounted, so clear busy or the buttons stay disabled after returning.
