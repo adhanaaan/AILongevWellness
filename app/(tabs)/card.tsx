@@ -92,6 +92,19 @@ export default function CardPage() {
   const tcm = reviews.find((r) => r.stage === "tcm");
   const missingCount = aiDraft.missing_biomarkers?.length ?? 0;
 
+  // Fresh account: a draft exists (from the quick quiz) but no biomarkers have
+  // been captured yet, so the bio-age hero + pillars would render as empty
+  // dashes — which reads as broken, not premium. Show the polished "build your
+  // snapshot" pending state instead until at least one real value lands.
+  const totalMarkers = Object.values(BIOMARKER_KEYS_BY_PILLAR).flat().length;
+  if (!isDelivered && missingCount >= totalMarkers) {
+    return (
+      <MobileShell name={card?.participant.name ?? participant?.name}>
+        <SnapshotPending pipelineState={pipeline?.state ?? "capturing"} />
+      </MobileShell>
+    );
+  }
+
   const askAva = () => ask("Can you walk me through what's driving my scores?");
 
   const topFocus = aiDraft.suggested_focus[0];

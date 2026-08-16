@@ -91,9 +91,9 @@ const STEP_META: { label: string; Icon: typeof FilePen }[] = [
 
 const CONTENT: StageContent[] = [
   {
-    headline: "Finish your data capture",
-    body: "We still need some details before your care team can start reviewing.",
-    primaryLabel: "Continue your data capture",
+    headline: "Let's build your snapshot",
+    body: "Add your data and your biological age and pillar scores start filling in — the more you share, the sharper it gets.",
+    primaryLabel: "Add your data",
     primaryRoute: "/onboarding/capture",
   },
   {
