@@ -176,7 +176,7 @@ export default function CardPage() {
             style={styles.captureBanner}
           >
             <ClipboardList size={18} color={colors.sageDark} />
-            <Text style={styles.captureBannerText}>Continue your data capture</Text>
+            <Text style={styles.captureBannerText}>Add your data to sharpen your snapshot</Text>
             <ChevronRight size={18} color={colors.sageDark} />
           </Pressable>
         )}
