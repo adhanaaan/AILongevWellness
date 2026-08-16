@@ -9,7 +9,6 @@ import { ScoreRing } from "@/components/participant/ScoreRing";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { repository } from "@/lib/data/mock";
-import { isCaptureComplete } from "@/lib/onboarding/flow";
 import { pillarStatus } from "@/lib/ai/scoring";
 import { colors, fontFamilies, fontSizes, lineHeights, radii, spacing } from "@/lib/theme/tokens";
 
@@ -55,22 +54,18 @@ export default function WelcomePage() {
     if (!isSupabaseConfigured || !participantId) return;
     let cancelled = false;
     (async () => {
-      const [participant, pipeline, progress] = await Promise.all([
-        repository.getParticipant(participantId),
-        repository.getPipeline(participantId),
-        repository.getOnboardingProgress(participantId),
-      ]);
-      if (cancelled || !participant || !pipeline) return;
-      // The Data Capture hub (now living at /onboarding/capture) is the landing
-      // point for any still-capturing participant, brand new or not — it routes
-      // on to Personal Info itself if the Questionnaire hasn't been started yet.
-      // The isCaptureComplete check catches a participant whose pipeline state
-      // has already advanced while their capture data genuinely isn't done.
-      if (pipeline.state === "capturing" || !isCaptureComplete(progress)) {
-        router.replace("/onboarding/capture");
-      } else {
-        router.replace("/(tabs)/card");
-      }
+      const participant = await repository.getParticipant(participantId);
+      if (cancelled || !participant) return;
+      // Revamped flow: the only thing required before the app is the quick quiz
+      // (name + a goal). Everything else — uploads, ReCOGnAIze, wearables — is
+      // optional and reachable from inside the app. So land on the app once the
+      // quiz is done; otherwise send them to finish it. (The app tabs themselves
+      // are gated on auth only — see ParticipantGuard.)
+      const quizDone =
+        Boolean(participant.name) &&
+        participant.name !== "New participant" &&
+        (participant.goals?.length ?? 0) > 0;
+      router.replace(quizDone ? "/(tabs)/card" : "/onboarding/quiz");
     })();
     return () => {
       cancelled = true;

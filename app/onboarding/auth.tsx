@@ -54,7 +54,7 @@ export default function ParticipantAuthPage() {
       if (mode === "signup") {
         const hasSession = await signUpParticipant(email.trim(), password);
         if (hasSession) {
-          router.push("/onboarding/capture");
+          router.push("/onboarding/quiz");
         } else {
           setAwaitingConfirmation(true);
         }
