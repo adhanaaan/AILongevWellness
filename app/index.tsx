@@ -153,7 +153,7 @@ export default function WelcomePage() {
             <Button
               size="lg"
               style={styles.getStartedButton}
-              onPress={() => router.push("/onboarding/intro-hook")}
+              onPress={() => router.push({ pathname: "/onboarding/auth", params: { mode: "signup" } })}
             >
               Get started
             </Button>

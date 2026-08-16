@@ -1,14 +1,36 @@
 import React, { useState } from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { Mail } from "lucide-react-native";
+import { Mail, Check } from "lucide-react-native";
 import { Input } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
+import { TermsModal } from "@/components/ui/TermsModal";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
-import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
+
+// Consent (previously a separate 3-checkbox screen) is folded into sign-up as a
+// single acknowledgment that opens the full terms — the legal points live in the
+// modal body; consent_given is still recorded by AuthProvider on first auth.
+const PRIVACY_POLICY_BODY = `We take the security of your wellness data seriously. This summary explains what we collect, how it's used, and who can see it during your time in the programme.
+
+What we collect
+We collect the information you provide during onboarding (profile, goals, lifestyle), any wearable, body composition, or lab data you choose to upload, and your ongoing check-ins inside the app.
+
+How it's used
+Your data is used to generate your personal wellness snapshot and to support the suggested discussion points your care team prepares for you. We never use your data for any purpose outside this programme.
+
+Who can see it
+Your assigned GP and TCM practitioner review your wellness snapshot before it's shared with you. No one outside your care team has access to your individual data.
+
+This is a wellness programme — it provides wellness insights, not a medical diagnosis or treatment plan.
+
+Data handling
+All data is encrypted in transit and at rest. You can request a copy of your data or ask for it to be deleted at any time by contacting the programme team.
+
+By accepting, you confirm you've read this summary and agree to how your data will be handled during the programme.`;
 
 export default function ParticipantAuthPage() {
   const router = useRouter();
@@ -19,13 +41,11 @@ export default function ParticipantAuthPage() {
   );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [consent, setConsent] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
-
-  const passwordsMismatch =
-    mode === "signup" && confirmPassword.length > 0 && password !== confirmPassword;
 
   async function onContinue() {
     setError(null);
@@ -121,18 +141,28 @@ export default function ParticipantAuthPage() {
             secureTextEntry
             placeholder="At least 6 characters"
           />
-          {mode === "signup" && (
-            <Input
-              label="Confirm password"
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              secureTextEntry
-              placeholder="Re-enter your password"
-              error={passwordsMismatch ? "Passwords don't match." : undefined}
-            />
-          )}
           {error && <Text style={styles.error}>{error}</Text>}
         </View>
+
+        {mode === "signup" && (
+          <TouchableOpacity
+            style={styles.consentRow}
+            onPress={() => setConsent((c) => !c)}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.checkbox, consent && styles.checkboxChecked]}>
+              {consent && <Check size={14} color={colors.white} strokeWidth={3} />}
+            </View>
+            <Text style={styles.consentText}>
+              I agree this is a wellness programme (not medical care), consent to my care team
+              reviewing my data, and accept the{" "}
+              <Text style={styles.consentLink} onPress={() => setTermsOpen(true)}>
+                privacy &amp; data terms
+              </Text>
+              .
+            </Text>
+          </TouchableOpacity>
+        )}
 
         <Button
           variant="ghost"
@@ -149,25 +179,30 @@ export default function ParticipantAuthPage() {
       </ScrollView>
 
       <View style={styles.footer}>
-        {mode === "signup" && (
-          <Text style={styles.legal}>
-            By creating an account, you agree to our terms and acknowledge our
-            privacy policy.
-          </Text>
-        )}
         <Button
           size="lg"
           disabled={
             submitting ||
             !email.trim() ||
             password.length < 6 ||
-            (mode === "signup" && password !== confirmPassword)
+            (mode === "signup" && !consent)
           }
           onPress={onContinue}
         >
           {mode === "signup" ? "Create account" : "Sign in"}
         </Button>
       </View>
+
+      <TermsModal
+        visible={termsOpen}
+        title="Privacy & Data Handling"
+        body={PRIVACY_POLICY_BODY}
+        onClose={() => setTermsOpen(false)}
+        onAccept={() => {
+          setConsent(true);
+          setTermsOpen(false);
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -218,13 +253,36 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.caption,
     color: colors.danger,
   },
-  legal: {
+  consentRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.md,
+    marginTop: spacing.xl,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: radii.sm,
+    borderWidth: 2,
+    borderColor: colors.borderStrong,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 1,
+  },
+  checkboxChecked: {
+    backgroundColor: colors.teal,
+    borderColor: colors.teal,
+  },
+  consentText: {
+    flex: 1,
     fontFamily: fontFamilies.body,
-    fontSize: fontSizes.caption,
+    fontSize: fontSizes.labelMd,
     color: colors.inkMuted,
-    textAlign: "center",
-    lineHeight: 18,
-    marginBottom: spacing.sm,
+    lineHeight: 20,
+  },
+  consentLink: {
+    fontFamily: fontFamilies.bodySemiBold,
+    color: colors.teal,
   },
   footer: {
     paddingHorizontal: spacing["2xl"],
