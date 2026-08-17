@@ -130,7 +130,10 @@ export function AdminShell({ children, title, headerActions }: AdminShellProps) 
           </View>
           <ScrollView
             style={styles.content}
-            contentContainerStyle={styles.contentInner}
+            contentContainerStyle={[
+              styles.contentInner,
+              isWide && styles.contentInnerWide,
+            ]}
           >
             {children}
           </ScrollView>
@@ -236,17 +239,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    gap: 12,
+    gap: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     backgroundColor: colors.surface,
-    paddingHorizontal: 16,
-    paddingVertical: 16,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.xl,
   },
   headerLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: spacing.md,
     flex: 1,
   },
   headerTitle: {
@@ -259,7 +262,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentInner: {
-    padding: 16,
-    paddingBottom: 32,
+    padding: spacing.lg,
+    paddingBottom: spacing["4xl"],
+  },
+  contentInnerWide: {
+    paddingHorizontal: spacing["3xl"],
+    paddingTop: spacing["2xl"],
+    paddingBottom: spacing["5xl"],
+    maxWidth: 1120,
+    width: "100%",
   },
 });
