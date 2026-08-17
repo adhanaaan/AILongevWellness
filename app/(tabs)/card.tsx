@@ -6,6 +6,8 @@ import { MobileShell } from "@/components/layout/MobileShell";
 import { FadeInView } from "@/components/ui/FadeInView";
 import { InsightsSkeleton } from "@/components/participant/InsightsSkeleton";
 import { BodyMap } from "@/components/participant/BodyMap";
+import { BiologicalAgeHero } from "@/components/participant/BiologicalAgeHero";
+import { ScoreRing } from "@/components/participant/ScoreRing";
 import { BiomarkerSummaryBar } from "@/components/participant/BiomarkerSummaryBar";
 import { KeyContributorItem } from "@/components/participant/KeyContributorItem";
 import { SuggestedFocusGrid } from "@/components/participant/SuggestedFocusGrid";
@@ -195,12 +197,39 @@ export default function CardPage() {
         )}
 
         <View style={styles.section}>
-          <BodyMap
-            bioAge={bioAgeReady ? aiDraft.biological_age : null}
-            chronoAge={aiDraft.chronological_age}
-            pillars={bodyPillars}
-            onPressBio={bioAgeReady ? () => router.push("/bio-age") : undefined}
-          />
+          {bioAgeReady ? (
+            // The "reveal": the premium big-number hero, then three clean pillar
+            // rings (the approved snapshot design). Shown once a real biological
+            // age exists; the anatomical BodyMap stays as the partial-data
+            // fallback below.
+            <>
+              <BiologicalAgeHero
+                bioAge={aiDraft.biological_age}
+                chronoAge={aiDraft.chronological_age}
+                onPress={() => router.push("/bio-age")}
+              />
+              <View style={styles.revealPillars}>
+                {pillarItems.map((p) => (
+                  <Pressable
+                    key={p.key}
+                    onPress={p.onPress}
+                    accessibilityRole="button"
+                    accessibilityLabel={p.accessibilityLabel}
+                    style={styles.revealPillar}
+                  >
+                    <ScoreRing value={p.value} label={p.label} status={p.status} size={78} />
+                  </Pressable>
+                ))}
+              </View>
+            </>
+          ) : (
+            <BodyMap
+              bioAge={null}
+              chronoAge={aiDraft.chronological_age}
+              pillars={bodyPillars}
+              onPressBio={undefined}
+            />
+          )}
         </View>
 
         <View style={styles.narrativeSection}>
@@ -318,6 +347,12 @@ const styles = StyleSheet.create({
     color: colors.sageDark,
   },
   section: { marginTop: 24 },
+  revealPillars: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: spacing.xl,
+  },
+  revealPillar: { alignItems: "center" },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
