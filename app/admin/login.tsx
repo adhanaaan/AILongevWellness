@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, spacing, radii, shadows } from "@/lib/theme/tokens";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -44,7 +44,7 @@ export default function AdminLoginPage() {
     return (
       <ScrollView style={styles.screen} contentContainerStyle={styles.scrollContent}>
         <View style={styles.iconWrap}>
-          <ShieldCheck size={28} color={colors.sageDark} />
+          <ShieldCheck size={26} color={colors.sageDark} strokeWidth={1.75} />
         </View>
         <Text style={styles.title}>Check your email</Text>
         <Text style={styles.subtitle}>
@@ -58,6 +58,7 @@ export default function AdminLoginPage() {
             setAwaitingConfirmation(false);
             setMode("signin");
           }}
+          style={styles.backButton}
         >
           Back to sign in
         </Button>
@@ -71,8 +72,10 @@ export default function AdminLoginPage() {
       contentContainerStyle={styles.scrollContent}
       keyboardShouldPersistTaps="handled"
     >
+      <Text style={styles.brand}>AI Wellness · Admin Portal</Text>
+
       <View style={styles.iconWrap}>
-        <ShieldCheck size={28} color={colors.sageDark} />
+        <ShieldCheck size={26} color={colors.sageDark} strokeWidth={1.75} />
       </View>
       <Text style={styles.title}>Care team access</Text>
       <Text style={styles.subtitle}>
@@ -81,7 +84,7 @@ export default function AdminLoginPage() {
           : "Create a care team account (GP or TCM reviewer)."}
       </Text>
 
-      <Card style={styles.card}>
+      <Card padding="lg" style={styles.card}>
         <Input
           label="Email"
           value={email}
@@ -125,6 +128,10 @@ export default function AdminLoginPage() {
             : "Already have an account? Sign in"}
         </Button>
       </Card>
+
+      <Text style={styles.footnote}>
+        Secure access for authorised care team reviewers only.
+      </Text>
     </ScrollView>
   );
 }
@@ -140,14 +147,22 @@ const styles = StyleSheet.create({
     width: "100%",
     alignSelf: "center",
   },
+  brand: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    color: colors.inkMuted,
+    marginBottom: spacing.xl,
+  },
   iconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 52,
+    height: 52,
+    borderRadius: radii.lg,
     backgroundColor: colors.sageTint,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xl,
   },
   title: {
     fontFamily: fontFamilies.displaySemiBold,
@@ -158,15 +173,29 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.inkMuted,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
     marginBottom: spacing["2xl"],
     lineHeight: 24,
   },
   card: {
     gap: spacing.lg,
+    ...shadows.soft,
+  },
+  backButton: {
+    alignSelf: "flex-start",
+    marginTop: spacing.md,
   },
   error: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.danger,
+  },
+  footnote: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    textAlign: "center",
+    marginTop: spacing["2xl"],
+    lineHeight: 18,
   },
 });
