@@ -1,8 +1,7 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
-import { Sparkles } from "lucide-react-native";
+import { Text, StyleSheet } from "react-native";
 import { Card } from "@/components/ui/Card";
-import { colors, fontSizes, lineHeights, radii, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, lineHeights, spacing } from "@/lib/theme/tokens";
 
 export interface SnapshotSummaryCardProps {
   /** One-line plain-English takeaway, e.g. from buildPillarNarrative(). */
@@ -10,16 +9,13 @@ export interface SnapshotSummaryCardProps {
 }
 
 // The plain-English "am I okay?" answer is the emotional anchor of the Insights
-// screen, so it gets an elevated insight card with a leading icon rather than
-// floating as centered body text (mirrors how Bevel/Oura present their headline
-// takeaway). Still sits directly under the biological-age hero, preserving the
-// deliberate narrative-led hierarchy.
+// screen. Calm-clinical register: a quiet overline over a slightly larger read,
+// on a soft tinted card — no icon-circle chrome. Sits directly under the
+// biological-age hero, preserving the deliberate narrative-led hierarchy.
 export function SnapshotSummaryCard({ narrative }: SnapshotSummaryCardProps) {
   return (
-    <Card tinted padding="md" style={styles.card}>
-      <View style={styles.iconCircle}>
-        <Sparkles size={16} color={colors.sageDark} />
-      </View>
+    <Card tinted padding="lg" style={styles.card}>
+      <Text style={styles.overline}>In summary</Text>
       <Text style={styles.text}>{narrative}</Text>
     </Card>
   );
@@ -27,23 +23,20 @@ export function SnapshotSummaryCard({ narrative }: SnapshotSummaryCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
     borderWidth: 0,
   },
-  iconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: radii.full,
-    backgroundColor: colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
+  overline: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    color: colors.sageDark,
+    marginBottom: spacing.sm,
   },
   text: {
-    flex: 1,
-    fontSize: fontSizes.bodyMd,
-    lineHeight: lineHeights.bodyMd,
+    fontFamily: fontFamilies.displaySemiBold,
+    fontSize: fontSizes.bodyLg,
+    lineHeight: lineHeights.bodyLg,
     color: colors.charcoal,
   },
 });

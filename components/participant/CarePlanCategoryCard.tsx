@@ -55,9 +55,16 @@ export function CarePlanCategoryCard({
               {previewItems.map((item, i) => (
                 <View key={i} style={styles.planItemRow}>
                   <View style={[styles.planItemDot, { backgroundColor: color }]} />
-                  <Text style={styles.plan} numberOfLines={1}>
-                    {item.title}
-                  </Text>
+                  <View style={styles.planItemText}>
+                    <Text style={styles.plan} numberOfLines={1}>
+                      {item.title}
+                    </Text>
+                    {item.detail ? (
+                      <Text style={styles.planDetail} numberOfLines={1}>
+                        {item.detail}
+                      </Text>
+                    ) : null}
+                  </View>
                 </View>
               ))}
             </View>
@@ -127,12 +134,12 @@ const styles = StyleSheet.create({
     color: colors.inkMuted,
   },
   planList: {
-    gap: 5,
-    marginTop: 2,
+    gap: spacing.sm,
+    marginTop: spacing.xs,
   },
   planItemRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: spacing.sm,
   },
   planItemDot: {
@@ -140,13 +147,25 @@ const styles = StyleSheet.create({
     height: 5,
     borderRadius: radii.full,
     flexShrink: 0,
+    marginTop: 7,
+  },
+  planItemText: {
+    flex: 1,
+    minWidth: 0,
+    gap: 1,
   },
   plan: {
-    flex: 1,
-    fontFamily: fontFamilies.bodyMedium,
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.labelMd,
+    fontWeight: fontWeights.semibold,
     color: colors.charcoal,
-    lineHeight: 18,
+    lineHeight: 19,
+  },
+  planDetail: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    lineHeight: 16,
   },
   chev: { marginTop: 2 },
   footer: {

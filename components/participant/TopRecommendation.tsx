@@ -1,8 +1,8 @@
 import React from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
-import { ChevronDown, ChevronUp, MessageCircle, Sparkles } from "lucide-react-native";
+import { ChevronDown, ChevronUp, MessageCircle } from "lucide-react-native";
 import { Card } from "@/components/ui/Card";
-import { colors, fontSizes, fontWeights, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, fontWeights, lineHeights, spacing } from "@/lib/theme/tokens";
 
 export interface TopRecommendationProps {
   topFocus?: string;
@@ -14,7 +14,8 @@ export interface TopRecommendationProps {
 
 // Busy executives act on one thing, not a grid of four -- this leads with a
 // single ranked focus + the single most important thing to ask a doctor, and
-// keeps the full lists one tap away instead of upfront.
+// keeps the full lists one tap away instead of upfront. Calm-clinical register:
+// quiet overlines instead of an icon-circle, generous card padding.
 export function TopRecommendation({
   topFocus,
   topDiscussionPoint,
@@ -26,14 +27,10 @@ export function TopRecommendation({
   const ChevronIcon = expanded ? ChevronUp : ChevronDown;
 
   return (
-    <Card>
-      <View style={styles.iconCircle}>
-        <Sparkles size={18} color={colors.sage} />
-      </View>
-
+    <Card padding="lg">
       {topFocus && (
         <>
-          <Text style={styles.label}>Your top focus</Text>
+          <Text style={styles.overline}>Your top focus</Text>
           <Text style={styles.focus}>{topFocus}</Text>
         </>
       )}
@@ -72,31 +69,25 @@ export function TopRecommendation({
 }
 
 const styles = StyleSheet.create({
-  iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.sageTint,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: spacing.sm,
-  },
-  label: {
-    fontSize: fontSizes.labelMd,
-    fontWeight: fontWeights.semibold,
-    color: colors.sageDark,
+  overline: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    color: colors.inkMuted,
   },
   focus: {
+    fontFamily: fontFamilies.displaySemiBold,
     fontSize: fontSizes.headlineSm,
-    fontWeight: fontWeights.bold,
     color: colors.charcoal,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
+    lineHeight: lineHeights.headlineSm,
   },
   discussionRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    marginTop: spacing.lg,
-    paddingTop: spacing.lg,
+    marginTop: spacing.xl,
+    paddingTop: spacing.xl,
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
@@ -113,23 +104,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   discussionLabel: {
-    fontSize: fontSizes.caption,
-    fontWeight: fontWeights.semibold,
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
     color: colors.inkMuted,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   discussionText: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.charcoal,
-    lineHeight: 22,
+    lineHeight: lineHeights.bodyMd,
   },
   toggle: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: spacing.xs,
-    marginTop: spacing.lg,
-    paddingVertical: spacing.md,
+    marginTop: spacing.xl,
+    paddingVertical: spacing.sm,
   },
   toggleText: {
     fontSize: fontSizes.labelMd,

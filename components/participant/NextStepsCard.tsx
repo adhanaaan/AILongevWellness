@@ -1,27 +1,25 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { MessageCircle } from "lucide-react-native";
 import { Card } from "@/components/ui/Card";
-import { colors, fontFamilies, fontSizes, fontWeights, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, lineHeights, radii, spacing } from "@/lib/theme/tokens";
 
 export interface NextStepsCardProps {
   points: string[];
 }
 
+// Calm-clinical register: a quiet overline heading and a spaced list of
+// discussion points, each led by a small sage dot instead of a bullet glyph.
 export function NextStepsCard({ points }: NextStepsCardProps) {
   if (points.length === 0) return null;
 
   return (
-    <Card>
-      <View style={styles.header}>
-        <MessageCircle size={20} color={colors.sage} />
-        <Text style={styles.heading}>Bring up with your doctor</Text>
-      </View>
+    <Card padding="lg">
+      <Text style={styles.overline}>Bring up with your doctor</Text>
 
       <View style={styles.list}>
         {points.map((point, index) => (
           <View key={index} style={styles.bulletRow}>
-            <Text style={styles.bullet}>{"•"}</Text>
+            <View style={styles.dot} />
             <Text style={styles.bulletText}>{point}</Text>
           </View>
         ))}
@@ -31,35 +29,34 @@ export function NextStepsCard({ points }: NextStepsCardProps) {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
+  overline: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    color: colors.inkMuted,
     marginBottom: spacing.lg,
   },
-  heading: {
-    fontFamily: fontFamilies.displaySemiBold,
-    fontSize: fontSizes.headlineSm,
-    fontWeight: fontWeights.semibold,
-    color: colors.charcoal,
-  },
   list: {
-    gap: spacing.sm,
+    gap: spacing.md,
   },
   bulletRow: {
     flexDirection: "row",
+    alignItems: "flex-start",
   },
-  bullet: {
-    fontSize: fontSizes.bodyMd,
-    color: colors.sage,
-    marginRight: spacing.sm,
-    lineHeight: 22,
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: radii.full,
+    backgroundColor: colors.sage,
+    marginTop: 9,
+    marginRight: spacing.md,
   },
   bulletText: {
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.charcoal,
     flex: 1,
-    lineHeight: 22,
+    lineHeight: lineHeights.bodyMd,
   },
 });

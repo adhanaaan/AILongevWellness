@@ -9,6 +9,7 @@ import { LoadingState } from "@/components/ui/LoadingState";
 import { FadeInView } from "@/components/ui/FadeInView";
 import { BiomarkerRangeRow } from "@/components/participant/BiomarkerRangeRow";
 import { BiomarkerSummaryBar } from "@/components/participant/BiomarkerSummaryBar";
+import { TrendSection } from "@/components/participant/TrendSection";
 import { ScoreRing } from "@/components/participant/ScoreRing";
 import { repository } from "@/lib/data/mock";
 import { useAskAva } from "@/lib/ava/useAskAva";
@@ -237,6 +238,13 @@ export default function PillarDetailPage() {
             </View>
           </View>
         )}
+
+        <TrendSection
+          history={history}
+          pillarKeys={pillarKeys}
+          biomarkers={biomarkers}
+          color={pillarColor}
+        />
 
         {outOfRange.length > 0 && (
           <View style={styles.section}>
