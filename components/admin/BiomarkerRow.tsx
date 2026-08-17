@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { View, Text, TextInput, StyleSheet } from "react-native";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react-native";
 import { Button } from "@/components/ui";
-import { colors, fontSizes, fontWeights, spacing, radii } from "@/lib/theme/tokens";
+import { RangeBar } from "@/components/ui/RangeBar";
+import { colors, fontFamilies, fontSizes, fontWeights, spacing, radii } from "@/lib/theme/tokens";
 import { updateBiomarkerAction } from "@/lib/data/actions";
 import type { Biomarker } from "@/lib/types/db";
 
@@ -30,6 +31,28 @@ const sourceColors: Record<string, { bg: string; text: string }> = {
   admin: { bg: colors.surfaceMuted, text: colors.charcoal },
 };
 
+// Pads the track a little beyond the reference band (and beyond the value, if it
+// sits outside) so the marker is always visible with the healthy zone for
+// context. Mirrors the participant-side BiomarkerRangeRow scale exactly.
+function computeScale(value: number, low: number, high: number) {
+  const span = high - low || Math.abs(high) || 1;
+  const pad = span * 0.5;
+  let min = low - pad;
+  let max = high + pad;
+  min = Math.min(min, value - span * 0.15);
+  max = Math.max(max, value + span * 0.15);
+  return { min, max };
+}
+
+function formatNum(n: number) {
+  return Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100);
+}
+
+// Admin biomarker row, restyled to the participant register: the value shown as
+// a marker on its own reference range with the optimal band highlighted
+// (mirroring BiomarkerRangeRow), while keeping the clinician's inline edit,
+// source provenance pill, and trend indicator fully intact. Editing collapses
+// the range visual into a focused numeric input, exactly as before.
 export function BiomarkerRow({
   biomarker,
   participantId,
@@ -44,10 +67,12 @@ export function BiomarkerRow({
   const [error, setError] = useState<string | null>(null);
 
   const isFlagged = biomarker.flagged;
-  const refRange =
-    biomarker.ref_low !== null && biomarker.ref_high !== null
-      ? `${biomarker.ref_low}–${biomarker.ref_high} ${biomarker.unit}`
-      : null;
+  const markerColor = isFlagged ? colors.terracotta : colors.sage;
+  const hasRange =
+    biomarker.value !== null &&
+    biomarker.ref_low !== null &&
+    biomarker.ref_high !== null &&
+    biomarker.ref_high > biomarker.ref_low;
 
   const sourcePalette = sourceColors[biomarker.source] ?? sourceColors.manual;
 
@@ -78,16 +103,13 @@ export function BiomarkerRow({
   };
 
   return (
-    <View>
-    <View style={[styles.row, isFlagged && styles.rowFlagged]}>
-      <View style={styles.labelCol}>
-        <Text style={[styles.label, isFlagged && styles.textFlagged]}>
-          {biomarker.label}
-        </Text>
-        {refRange && <Text style={styles.refRange}>{refRange}</Text>}
-      </View>
+    <View style={styles.container}>
+      <View style={styles.headerRow}>
+        <View style={styles.labelWrap}>
+          <View style={[styles.dot, { backgroundColor: markerColor }]} />
+          <Text style={styles.label}>{biomarker.label}</Text>
+        </View>
 
-      <View style={styles.valueCol}>
         {isEditing ? (
           <TextInput
             style={styles.input}
@@ -97,102 +119,145 @@ export function BiomarkerRow({
             autoFocus
           />
         ) : (
-          <View style={styles.valueRow}>
-            <Text style={[styles.value, isFlagged && styles.textFlagged]}>
-              {biomarker.value !== null ? biomarker.value : "—"}
+          <View style={styles.valueWrap}>
+            <Text style={styles.value}>
+              {biomarker.value !== null ? formatNum(biomarker.value) : "—"}
+              <Text style={styles.unit}> {biomarker.unit}</Text>
             </Text>
-            <Text style={styles.unit}>{biomarker.unit}</Text>
+            {isFlagged && (
+              <View style={styles.flagPill}>
+                <Text style={styles.flagPillText}>Out of range</Text>
+              </View>
+            )}
           </View>
         )}
       </View>
 
-      <View style={styles.sourcePill}>
-        <Text
-          style={[
-            styles.sourceText,
-            { backgroundColor: sourcePalette.bg, color: sourcePalette.text },
-          ]}
-        >
-          {biomarker.source.replace("_", " ")}
-        </Text>
-      </View>
+      {!isEditing && hasRange && (
+        <>
+          <View style={styles.barRow}>
+            <RangeBar
+              value={biomarker.value!}
+              min={computeScale(biomarker.value!, biomarker.ref_low!, biomarker.ref_high!).min}
+              max={computeScale(biomarker.value!, biomarker.ref_low!, biomarker.ref_high!).max}
+              zoneStart={biomarker.ref_low!}
+              zoneEnd={biomarker.ref_high!}
+              color={colors.sage}
+              markerColor={markerColor}
+            />
+          </View>
+          <Text style={styles.refLabel}>
+            Optimal {formatNum(biomarker.ref_low!)}–{formatNum(biomarker.ref_high!)} {biomarker.unit}
+          </Text>
+        </>
+      )}
 
-      <View style={styles.trendCol}>{trendIcons[trend]}</View>
-
-      {editable && (
-        <View style={styles.actions}>
-          {isEditing ? (
-            <>
+      <View style={styles.metaRow}>
+        <View style={styles.sourcePill}>
+          <Text
+            style={[
+              styles.sourceText,
+              { backgroundColor: sourcePalette.bg, color: sourcePalette.text },
+            ]}
+          >
+            {biomarker.source.replace("_", " ")}
+          </Text>
+        </View>
+        <View style={styles.trendCol}>{trendIcons[trend]}</View>
+        <View style={styles.metaSpacer} />
+        {editable &&
+          (isEditing ? (
+            <View style={styles.actions}>
               <Button variant="primary" size="sm" onPress={handleSave} disabled={saving}>
                 {saving ? "Saving..." : "Save"}
               </Button>
               <Button variant="ghost" size="sm" onPress={handleCancel} disabled={saving}>
                 Cancel
               </Button>
-            </>
+            </View>
           ) : (
-            <Button
-              variant="ghost"
-              size="sm"
-              onPress={() => setIsEditing(true)}
-            >
+            <Button variant="ghost" size="sm" onPress={() => setIsEditing(true)}>
               Edit
             </Button>
-          )}
-        </View>
-      )}
-    </View>
-    {isEditing && error && <Text style={styles.error}>{error}</Text>}
+          ))}
+      </View>
+
+      {isEditing && error && <Text style={styles.error}>{error}</Text>}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
+  container: {
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xl,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  rowFlagged: {
-    backgroundColor: colors.terracottaTint,
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: spacing.md,
   },
-  labelCol: {
-    flex: 2,
-    marginRight: spacing.sm,
+  labelWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    flex: 1,
+    paddingTop: 2,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: radii.full,
+    flexShrink: 0,
   },
   label: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.bodyMd,
-    fontWeight: fontWeights.medium,
+    fontWeight: fontWeights.semibold,
     color: colors.charcoal,
+    flexShrink: 1,
   },
-  textFlagged: {
-    color: colors.terracottaInk,
-  },
-  refRange: {
-    fontSize: fontSizes.caption,
-    color: colors.inkMuted,
-    marginTop: 2,
-  },
-  valueCol: {
-    flex: 1,
-    marginRight: spacing.sm,
-  },
-  valueRow: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    gap: spacing.xs,
+  valueWrap: {
+    alignItems: "flex-end",
+    gap: 4,
   },
   value: {
-    fontSize: fontSizes.bodyMd,
+    fontFamily: fontFamilies.displaySemiBold,
+    fontSize: fontSizes.headlineSm,
     fontWeight: fontWeights.semibold,
     color: colors.charcoal,
   },
   unit: {
+    fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
+    fontWeight: fontWeights.regular,
     color: colors.inkMuted,
+  },
+  flagPill: {
+    backgroundColor: colors.terracottaTint,
+    borderRadius: radii.full,
+    paddingVertical: 2,
+    paddingHorizontal: spacing.sm,
+  },
+  flagPillText: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    fontWeight: fontWeights.bold,
+    color: colors.terracottaInk,
+    textTransform: "uppercase",
+    letterSpacing: 0.4,
+  },
+  barRow: {
+    marginTop: spacing.lg,
+  },
+  refLabel: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.overline,
+    color: colors.inkMuted,
+    marginTop: spacing.sm,
   },
   input: {
     borderWidth: 1,
@@ -203,10 +268,16 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.bodyMd,
     color: colors.charcoal,
     backgroundColor: colors.surface,
+    minWidth: 96,
+    textAlign: "right",
   },
-  sourcePill: {
-    marginRight: spacing.sm,
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    marginTop: spacing.md,
   },
+  sourcePill: {},
   sourceText: {
     fontSize: fontSizes.caption,
     fontWeight: fontWeights.medium,
@@ -219,7 +290,9 @@ const styles = StyleSheet.create({
   trendCol: {
     width: 24,
     alignItems: "center",
-    marginRight: spacing.sm,
+  },
+  metaSpacer: {
+    flex: 1,
   },
   actions: {
     flexDirection: "row",
@@ -228,7 +301,6 @@ const styles = StyleSheet.create({
   error: {
     fontSize: fontSizes.caption,
     color: colors.danger,
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.sm,
+    marginTop: spacing.sm,
   },
 });

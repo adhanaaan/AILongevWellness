@@ -84,7 +84,7 @@ export function CarePlanEditor({ aiDraft, participantId, editable }: CarePlanEdi
   const isEmpty = CARE_PLAN_CATEGORIES.every(({ key }) => carePlan[key].length === 0);
 
   return (
-    <Card>
+    <Card padding="lg">
       <View style={styles.header}>
         <Text style={styles.heading}>Care Plan</Text>
         <View style={styles.headerRight}>
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontFamily: fontFamilies.displaySemiBold,
-    fontSize: fontSizes.headlineSm,
+    fontSize: fontSizes.bodyLg,
     color: colors.charcoal,
   },
   headerRight: {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import * as Linking from "expo-linking";
-import { ArrowLeft, ArrowRight, AlertTriangle, ShieldCheck, ShieldAlert } from "lucide-react-native";
+import { ArrowLeft, ArrowRight, AlertTriangle } from "lucide-react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { StatusTimeline } from "@/components/admin/StatusTimeline";
@@ -11,8 +11,10 @@ import { CarePlanEditor } from "@/components/admin/CarePlanEditor";
 import { SignOffStage } from "@/components/admin/SignOffStage";
 import { ReleaseButton } from "@/components/admin/ReleaseButton";
 import { DiscussionPointsCard } from "@/components/admin/DiscussionPointsCard";
-import { PipelineStatusBadge } from "@/components/admin/PipelineStatusBadge";
 import { PhenoAgeStatusCard } from "@/components/admin/PhenoAgeStatusCard";
+import { ReviewSectionHeader } from "@/components/admin/ReviewSectionHeader";
+import { ReviewParticipantHeader } from "@/components/admin/ReviewParticipantHeader";
+import { ReviewStatusSummary } from "@/components/admin/ReviewStatusSummary";
 import { Button, Card } from "@/components/ui";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { repository } from "@/lib/data/mock";
@@ -32,7 +34,7 @@ import type {
   DailyLog,
   ParticipantSummary,
 } from "@/lib/types/db";
-import { colors, fontFamilies, fontSizes, spacing, radii } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 
 // GP and TCM sign off independently, in either order -- collapsed into one
 // "Review" step rather than two sequential ones, since the pipeline no
@@ -220,42 +222,14 @@ export default function ParticipantDetailPage() {
           iconLeft={<ArrowLeft size={16} color={colors.inkMuted} />}
           onPress={() => router.back()}
         >
-          Back
+          Back to queue
         </Button>
 
-        <View style={styles.titleRow}>
-          <View style={styles.titleLeft}>
-            <Text style={styles.name}>{participant.name}</Text>
-            <Text style={styles.meta}>
-              {participant.age} · {participant.sex} · {participant.height_cm}cm ·{" "}
-              {participant.weight_kg}kg
-            </Text>
-            <View style={styles.consentRow}>
-              {participant.consent_withdrawn_at ? (
-                <>
-                  <ShieldAlert size={14} color={colors.danger} />
-                  <Text style={styles.consentTextMissing}>
-                    Consent withdrawn {formatDate(participant.consent_withdrawn_at)}
-                  </Text>
-                </>
-              ) : participant.consent_given ? (
-                <>
-                  <ShieldCheck size={14} color={colors.sage} />
-                  <Text style={styles.consentTextOk}>
-                    Consent given{participant.consented_at ? ` ${formatDate(participant.consented_at)}` : ""}
-                  </Text>
-                </>
-              ) : (
-                <>
-                  <ShieldAlert size={14} color={colors.danger} />
-                  <Text style={styles.consentTextMissing}>Consent not recorded</Text>
-                </>
-              )}
-            </View>
-          </View>
-          <PipelineStatusBadge
-            state={pipeline.state}
-            needsAttention={pipeline.needs_attention}
+        <View style={styles.headerBlock}>
+          <ReviewParticipantHeader
+            participant={participant}
+            pipeline={pipeline}
+            aiDraft={aiDraft}
             gpSigned={!!gpReview}
             tcmSigned={!!tcmReview}
           />
@@ -284,8 +258,15 @@ export default function ParticipantDetailPage() {
           </Card>
         )}
 
+        {pipeline.state !== "capturing" && pipeline.state !== "ai_drafted" && (
+          <View style={styles.section}>
+            <ReviewSectionHeader label="Review status" />
+            <ReviewStatusSummary pipeline={pipeline} gpReview={gpReview} tcmReview={tcmReview} />
+          </View>
+        )}
+
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Pipeline</Text>
+          <ReviewSectionHeader label="Pipeline" />
           <Card>
             <StatusTimeline stages={PIPELINE_STAGES} currentIndex={stateIdx} />
           </Card>
@@ -320,7 +301,7 @@ export default function ParticipantDetailPage() {
         {!aiDraft && pipeline.state === "ai_drafted" && isSupabaseConfigured && (
           <View style={styles.section}>
             <Card>
-              <Text style={styles.sectionTitle}>AI draft not generated yet</Text>
+              <Text style={styles.cardTitle}>AI draft not generated yet</Text>
               <Text style={styles.meta}>
                 Capture is complete, but the draft health card hasn't been generated —
                 this usually happens automatically right after submission. Retry it below.
@@ -336,7 +317,7 @@ export default function ParticipantDetailPage() {
         {aiDraft && isDraftSparse && isEditable && isSupabaseConfigured && (
           <View style={styles.section}>
             <Card>
-              <Text style={styles.sectionTitle}>This draft looks thin</Text>
+              <Text style={styles.cardTitle}>This draft looks thin</Text>
               <Text style={styles.meta}>
                 The draft was likely generated before all captured data had finished
                 processing (e.g. a wearable export that was still being extracted).
@@ -352,7 +333,7 @@ export default function ParticipantDetailPage() {
 
         {files.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Uploaded files</Text>
+            <ReviewSectionHeader label="Uploaded files" />
             <Card>
               {files.map((file, i) => {
                 const label =
@@ -410,7 +391,7 @@ export default function ParticipantDetailPage() {
         )}
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Biomarkers</Text>
+          <ReviewSectionHeader label="Biomarkers" />
           {biomarkers.length === 0 ? (
             <Card>
               <Text style={styles.meta}>
@@ -445,7 +426,7 @@ export default function ParticipantDetailPage() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Daily tracking</Text>
+          <ReviewSectionHeader label="Daily tracking" />
           {dailyLogs.length === 0 ? (
             <Card>
               <Text style={styles.meta}>No daily check-ins logged yet.</Text>
@@ -480,7 +461,7 @@ export default function ParticipantDetailPage() {
 
         {pipeline.state !== "capturing" && pipeline.state !== "ai_drafted" && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Sign-off</Text>
+            <ReviewSectionHeader label="Sign-off" />
             <View style={styles.signOffStack}>
               <SignOffStage
                 stage="gp"
@@ -498,7 +479,15 @@ export default function ParticipantDetailPage() {
           </View>
         )}
 
-        <View style={styles.section}>
+        <View style={styles.releaseSection}>
+          <ReviewSectionHeader label="Deliver" />
+          <Text style={styles.releaseHelper}>
+            {pipeline.state === "delivered"
+              ? "This card has been delivered to the participant."
+              : pipeline.state === "signed"
+              ? "Both sign-offs are complete. Release the card to make it visible to the participant."
+              : "Release unlocks once both GP and TCM sign-offs are complete."}
+          </Text>
           <ReleaseButton
             participantId={id!}
             enabled={pipeline.state === "signed"}
@@ -514,21 +503,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing["5xl"],
     gap: spacing.xs,
   },
-  titleRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+  headerBlock: {
     marginTop: spacing.md,
-    marginBottom: spacing.xl,
-  },
-  titleLeft: {
-    flex: 1,
-    marginRight: spacing.md,
-  },
-  name: {
-    fontFamily: fontFamilies.displayBold,
-    fontSize: fontSizes.headlineLg,
-    color: colors.charcoal,
+    marginBottom: spacing["2xl"],
   },
   meta: {
     fontFamily: fontFamilies.body,
@@ -536,27 +513,11 @@ const styles = StyleSheet.create({
     color: colors.inkMuted,
     marginTop: spacing.xs,
   },
-  consentRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.xs,
-    marginTop: spacing.sm,
-  },
-  consentTextOk: {
-    fontFamily: fontFamilies.bodyMedium,
-    fontSize: fontSizes.caption,
-    color: colors.sageDark,
-  },
-  consentTextMissing: {
-    fontFamily: fontFamilies.bodySemiBold,
-    fontSize: fontSizes.caption,
-    color: colors.danger,
-  },
   attentionCard: {
     backgroundColor: colors.dangerTint,
     borderColor: colors.danger,
     borderWidth: 1,
-    marginBottom: spacing.lg,
+    marginBottom: spacing["2xl"],
   },
   attentionRow: {
     flexDirection: "row",
@@ -578,13 +539,24 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   section: {
-    marginBottom: spacing.xl,
+    marginBottom: spacing["2xl"],
   },
-  sectionTitle: {
+  cardTitle: {
     fontFamily: fontFamilies.displaySemiBold,
     fontSize: fontSizes.headlineSm,
     color: colors.charcoal,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  releaseSection: {
+    marginTop: spacing.md,
+    marginBottom: spacing.xl,
+  },
+  releaseHelper: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.labelMd,
+    color: colors.inkMuted,
+    marginBottom: spacing.lg,
+    marginTop: -spacing.sm,
   },
   pillarGroup: {
     marginBottom: spacing.md,

@@ -13,7 +13,7 @@ export function TableRowSkeleton() {
   return (
     <View style={styles.row}>
       <View style={styles.nameCol}>
-        <SkeletonBlock width={36} height={36} radius={radii.full} />
+        <SkeletonBlock width={40} height={40} radius={radii.full} />
         <View style={styles.nameText}>
           <SkeletonBlock width="70%" height={14} />
           <SkeletonBlock width="40%" height={11} style={styles.metaGap} />
@@ -36,8 +36,8 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xl,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,

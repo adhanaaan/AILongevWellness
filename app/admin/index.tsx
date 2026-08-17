@@ -5,6 +5,7 @@ import { AdminShell } from "@/components/layout/AdminShell";
 import { SummaryStatCard } from "@/components/admin/SummaryStatCard";
 import { ParticipantTableRow } from "@/components/admin/ParticipantTableRow";
 import { TableRowSkeleton } from "@/components/admin/TableRowSkeleton";
+import { InsightsSectionHeader } from "@/components/participant/InsightsSectionHeader";
 import { repository } from "@/lib/data/mock";
 import type { ParticipantSummary, PipelineState } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, spacing, radii, shadows } from "@/lib/theme/tokens";
@@ -52,7 +53,7 @@ export default function AdminParticipantsPage() {
       <View style={styles.stats}>
         <View style={styles.statItem}>
           <SummaryStatCard
-            icon={<Users size={20} color={colors.inkMuted} />}
+            icon={<Users size={14} color={colors.inkMuted} />}
             label="Total"
             value={total}
             tone="neutral"
@@ -60,26 +61,30 @@ export default function AdminParticipantsPage() {
         </View>
         <View style={styles.statItem}>
           <SummaryStatCard
-            icon={<ClipboardCheck size={20} color={colors.sageDark} />}
-            label="Awaiting GP/TCM"
+            icon={<ClipboardCheck size={14} color={colors.inkMuted} />}
+            label="Awaiting review"
             value={awaiting}
-            tone="sage"
+            tone="terracotta"
+            caption={awaiting > 0 ? "GP / TCM sign-off pending" : "Queue clear"}
           />
         </View>
         <View style={styles.statItem}>
           <SummaryStatCard
-            icon={<CheckCircle2 size={20} color={colors.sageDark} />}
+            icon={<CheckCircle2 size={14} color={colors.inkMuted} />}
             label="Delivered"
             value={delivered}
             tone="sage"
+            progress={total > 0 ? (delivered / total) * 100 : 0}
+            caption={`of ${total} participant${total !== 1 ? "s" : ""}`}
           />
         </View>
         <View style={styles.statItem}>
           <SummaryStatCard
-            icon={<AlertTriangle size={20} color={colors.danger} />}
+            icon={<AlertTriangle size={14} color={colors.inkMuted} />}
             label="Needs attention"
             value={needsAttention}
             tone="danger"
+            caption={needsAttention > 0 ? "Flagged for follow-up" : "None flagged"}
           />
         </View>
       </View>
@@ -100,6 +105,17 @@ export default function AdminParticipantsPage() {
           />
         </View>
       </View>
+
+      <InsightsSectionHeader
+        label="Participants"
+        action={
+          loaded ? (
+            <Text style={styles.sectionCount}>
+              {filtered.length} shown
+            </Text>
+          ) : null
+        }
+      />
 
       <View style={styles.listContainer}>
         <View style={styles.listHeader}>
@@ -141,21 +157,19 @@ const styles = StyleSheet.create({
   stats: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: spacing.md,
-    marginBottom: spacing["2xl"],
+    gap: spacing.lg,
+    marginBottom: spacing["3xl"],
   },
   statItem: {
     flexGrow: 1,
-    flexBasis: 140,
+    flexBasis: 160,
   },
   searchRow: {
-    marginBottom: spacing.xl,
+    marginBottom: spacing["2xl"],
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: colors.border,
     backgroundColor: colors.surface,
     borderRadius: radii.lg,
     paddingHorizontal: spacing.lg,
@@ -171,19 +185,22 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.bodyMd,
     color: colors.charcoal,
   },
+  sectionCount: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+  },
   listContainer: {
-    borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: radii.xl,
     backgroundColor: colors.surface,
     overflow: "hidden",
-    ...shadows.card,
+    ...shadows.soft,
   },
   listHeader: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.surfaceMuted,
-    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,

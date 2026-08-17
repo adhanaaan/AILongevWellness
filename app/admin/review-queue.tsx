@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
-import { ClipboardCheck } from "lucide-react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { ParticipantTableRow } from "@/components/admin/ParticipantTableRow";
 import { TableRowSkeleton } from "@/components/admin/TableRowSkeleton";
@@ -48,20 +47,19 @@ export default function ReviewQueuePage() {
 
   return (
     <AdminShell title="Review Queue">
-      <View style={styles.headerRow}>
-        <View style={styles.headerIcon}>
-          <ClipboardCheck size={22} color={colors.sageDark} />
-        </View>
-        <View style={styles.headerText}>
-          <Text style={styles.heading}>
-            {loaded
-              ? `${queued.length} participant${queued.length !== 1 ? "s" : ""} awaiting review`
-              : "Loading review queue…"}
+      <View style={styles.lead}>
+        <Text style={styles.overline}>Awaiting sign-off</Text>
+        {loaded ? (
+          <Text style={styles.leadTitle}>
+            <Text style={styles.leadCount}>{queued.length}</Text>
+            {` participant${queued.length !== 1 ? "s" : ""} awaiting review`}
           </Text>
-          <Text style={styles.subheading}>
-            GP and TCM reviewers sign off independently, in either order.
-          </Text>
-        </View>
+        ) : (
+          <Text style={styles.leadTitle}>Loading review queue…</Text>
+        )}
+        <Text style={styles.subheading}>
+          GP and TCM reviewers sign off independently, in either order.
+        </Text>
       </View>
 
       <View style={styles.segmentRow}>
@@ -109,50 +107,46 @@ export default function ReviewQueuePage() {
 }
 
 const styles = StyleSheet.create({
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    marginBottom: spacing.xl,
+  lead: {
+    marginBottom: spacing["2xl"],
   },
-  headerIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: radii.full,
-    backgroundColor: colors.sageTint,
-    alignItems: "center",
-    justifyContent: "center",
+  overline: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    color: colors.inkMuted,
+    marginBottom: spacing.sm,
   },
-  headerText: {
-    flex: 1,
-  },
-  heading: {
+  leadTitle: {
     fontFamily: fontFamilies.displaySemiBold,
-    fontSize: fontSizes.headlineSm,
+    fontSize: fontSizes.headlineMd,
     color: colors.charcoal,
+  },
+  leadCount: {
+    fontFamily: fontFamilies.displayBold,
+    color: colors.tealDark,
   },
   subheading: {
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.inkMuted,
-    marginTop: 2,
+    marginTop: spacing.xs,
   },
   segmentRow: {
-    marginBottom: spacing.xl,
+    marginBottom: spacing["2xl"],
   },
   listContainer: {
-    borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: radii.xl,
     backgroundColor: colors.surface,
     overflow: "hidden",
-    ...shadows.card,
+    ...shadows.soft,
   },
   listHeader: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.surfaceMuted,
-    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.surface,
+    paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,

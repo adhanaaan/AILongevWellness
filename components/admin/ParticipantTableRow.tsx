@@ -86,8 +86,8 @@ export function ParticipantTableRow({
 
 const styles = StyleSheet.create({
   row: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.xl,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -107,8 +107,8 @@ const styles = StyleSheet.create({
     marginRight: spacing.md,
   },
   avatar: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     borderRadius: radii.full,
     backgroundColor: colors.sageTint,
     alignItems: "center",

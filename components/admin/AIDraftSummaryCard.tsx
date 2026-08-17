@@ -54,7 +54,7 @@ export function AIDraftSummaryCard({
   };
 
   return (
-    <Card>
+    <Card padding="lg">
       <View style={styles.header}>
         <Text style={styles.heading}>AI Draft Summary</Text>
         <View style={styles.headerRight}>
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontFamily: fontFamilies.displaySemiBold,
-    fontSize: fontSizes.headlineSm,
+    fontSize: fontSizes.bodyLg,
     color: colors.charcoal,
   },
   headerRight: {

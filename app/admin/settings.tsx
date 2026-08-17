@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from "react-native";
 import { Shield, Bell, Database, Users, LogOut } from "lucide-react-native";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { Card, Avatar, Button } from "@/components/ui";
+import { InsightsSectionHeader } from "@/components/participant/InsightsSectionHeader";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured, SUPABASE_URL } from "@/lib/config/env";
 import { getSupabaseClient } from "@/lib/data/supabase";
@@ -37,55 +38,63 @@ export default function AdminSettingsPage() {
 
   return (
     <AdminShell title="Settings">
-      <Text style={styles.heading}>Admin settings</Text>
-
-      <Card style={styles.profileCard}>
-        <Avatar initials={initials} size="lg" />
-        <View style={styles.profileInfo}>
-          <Text style={styles.profileName} numberOfLines={1}>{email}</Text>
-          <View style={styles.roleBadge}>
-            <Text style={styles.roleBadgeText}>Care team</Text>
+      <View style={styles.section}>
+        <InsightsSectionHeader label="Account" />
+        <Card padding="lg" style={styles.profileCard}>
+          <Avatar initials={initials} size="lg" />
+          <View style={styles.profileInfo}>
+            <Text style={styles.profileName} numberOfLines={1}>{email}</Text>
+            <View style={styles.roleBadge}>
+              <Text style={styles.roleBadgeText}>Care team</Text>
+            </View>
           </View>
-        </View>
-      </Card>
+        </Card>
+      </View>
 
-      <View style={styles.sections}>
-        <SettingSection
-          icon={<Shield size={20} color={colors.sageDark} />}
-          title="Permissions"
-          description="Full care team access. Can review, sign off, and release participant cards."
-        />
-        <SettingSection
-          icon={<Database size={20} color={colors.sageDark} />}
-          title="Data source"
-          description={
-            isSupabaseConfigured
-              ? `Connected to Supabase (${projectHost(SUPABASE_URL)}).`
-              : "Using in-memory mock data — no Supabase project configured."
-          }
-        />
-        <SettingSection
-          icon={<Users size={20} color={colors.sageDark} />}
-          title="Team"
-          description={
-            isSupabaseConfigured
-              ? teamCount !== null
-                ? `${teamCount} care team account${teamCount === 1 ? "" : "s"} registered.`
-                : "Loading…"
-              : "Connect Supabase to see your team roster."
-          }
-        />
-        <SettingSection
-          icon={<Bell size={20} color={colors.sageDark} />}
-          title="Notifications"
-          description="Not yet built — review queue and attention alerts are checked in-app for now, not by email."
-        />
+      <View style={styles.section}>
+        <InsightsSectionHeader label="Access & data" />
+        <Card padding="none" style={styles.groupCard}>
+          <SettingRow
+            icon={<Shield size={18} color={colors.inkMuted} strokeWidth={1.75} />}
+            title="Permissions"
+            description="Full care team access. Can review, sign off, and release participant cards."
+          />
+          <View style={styles.divider} />
+          <SettingRow
+            icon={<Database size={18} color={colors.inkMuted} strokeWidth={1.75} />}
+            title="Data source"
+            description={
+              isSupabaseConfigured
+                ? `Connected to Supabase (${projectHost(SUPABASE_URL)}).`
+                : "Using in-memory mock data — no Supabase project configured."
+            }
+          />
+          <View style={styles.divider} />
+          <SettingRow
+            icon={<Users size={18} color={colors.inkMuted} strokeWidth={1.75} />}
+            title="Team"
+            description={
+              isSupabaseConfigured
+                ? teamCount !== null
+                  ? `${teamCount} care team account${teamCount === 1 ? "" : "s"} registered.`
+                  : "Loading…"
+                : "Connect Supabase to see your team roster."
+            }
+          />
+          <View style={styles.divider} />
+          <SettingRow
+            icon={<Bell size={18} color={colors.inkMuted} strokeWidth={1.75} />}
+            title="Notifications"
+            description="Review queue and attention alerts are checked in-app for now, not by email."
+            badge="Not yet built"
+          />
+        </Card>
       </View>
 
       {isSupabaseConfigured && (
         <Button
           variant="secondary"
-          iconLeft={<LogOut size={16} color={colors.sageDark} />}
+          iconLeft={<LogOut size={16} color={colors.teal} strokeWidth={2} />}
           onPress={signOut}
           style={styles.signOut}
         >
@@ -96,40 +105,43 @@ export default function AdminSettingsPage() {
   );
 }
 
-function SettingSection({
+function SettingRow({
   icon,
   title,
   description,
+  badge,
 }: {
   icon: React.ReactNode;
   title: string;
   description: string;
+  badge?: string;
 }) {
   return (
-    <Card style={styles.sectionCard}>
-      <View style={styles.sectionRow}>
-        <View style={styles.sectionIcon}>{icon}</View>
-        <View style={styles.sectionContent}>
-          <Text style={styles.sectionTitle}>{title}</Text>
-          <Text style={styles.sectionDesc}>{description}</Text>
+    <View style={styles.row}>
+      <View style={styles.rowIcon}>{icon}</View>
+      <View style={styles.rowContent}>
+        <View style={styles.rowTitleLine}>
+          <Text style={styles.rowTitle}>{title}</Text>
+          {badge ? (
+            <View style={styles.pendingBadge}>
+              <Text style={styles.pendingBadgeText}>{badge}</Text>
+            </View>
+          ) : null}
         </View>
+        <Text style={styles.rowDesc}>{description}</Text>
       </View>
-    </Card>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  heading: {
-    fontFamily: fontFamilies.displaySemiBold,
-    fontSize: fontSizes.headlineMd,
-    color: colors.charcoal,
-    marginBottom: spacing.xl,
+  section: {
+    marginBottom: spacing["2xl"],
   },
   profileCard: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.lg,
-    marginBottom: spacing.xl,
   },
   profileInfo: {
     flex: 1,
@@ -145,50 +157,65 @@ const styles = StyleSheet.create({
     borderRadius: radii.full,
     paddingVertical: 2,
     paddingHorizontal: spacing.md,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
   },
   roleBadgeText: {
     fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.caption,
     color: colors.sageDark,
   },
-  sections: {
-    gap: spacing.md,
+  groupCard: {
+    overflow: "hidden",
   },
-  sectionCard: {
-    padding: spacing.lg,
-  },
-  sectionRow: {
+  row: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: spacing.md,
+    paddingHorizontal: spacing["2xl"],
+    paddingVertical: spacing.xl,
   },
-  sectionIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: radii.full,
-    backgroundColor: colors.sageTint,
-    alignItems: "center",
-    justifyContent: "center",
+  rowIcon: {
+    paddingTop: 1,
   },
-  sectionContent: {
+  rowContent: {
     flex: 1,
-    paddingTop: 2,
   },
-  sectionTitle: {
+  rowTitleLine: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  rowTitle: {
     fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.bodyMd,
     color: colors.charcoal,
   },
-  sectionDesc: {
-    fontFamily: fontFamilies.body,
-    fontSize: fontSizes.caption,
+  pendingBadge: {
+    borderRadius: radii.full,
+    backgroundColor: colors.surfaceMuted,
+    paddingVertical: 2,
+    paddingHorizontal: spacing.sm,
+  },
+  pendingBadgeText: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    letterSpacing: 0.4,
     color: colors.inkMuted,
-    marginTop: 2,
-    lineHeight: 18,
+  },
+  rowDesc: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.labelMd,
+    color: colors.inkMuted,
+    marginTop: 3,
+    lineHeight: 20,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginLeft: spacing["2xl"],
   },
   signOut: {
-    marginTop: spacing.xl,
+    marginTop: spacing.sm,
     alignSelf: "flex-start",
   },
 });
