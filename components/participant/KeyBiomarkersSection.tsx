@@ -41,7 +41,7 @@ export function KeyBiomarkersSection({
   return (
     <View>
       <View style={styles.header}>
-        <Text style={styles.title}>Your biomarkers</Text>
+        <Text style={styles.title}>Key biomarkers</Text>
         <Pressable
           style={styles.seeAll}
           onPress={onSeeAll}
@@ -88,9 +88,10 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: fontFamilies.bodySemiBold,
-    fontSize: fontSizes.labelMd,
-    fontWeight: fontWeights.semibold,
-    color: colors.charcoal,
+    fontSize: fontSizes.overline,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    color: colors.inkMuted,
   },
   seeAll: { flexDirection: "row", alignItems: "center", gap: 2 },
   seeAllText: {

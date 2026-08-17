@@ -3,8 +3,9 @@ import { View, Text, StyleSheet } from "react-native";
 import { Footprints, Moon, Wind, Utensils, Dumbbell, Apple, Sparkles, type LucideIcon } from "lucide-react-native";
 import {
   colors,
+  fontFamilies,
   fontSizes,
-  fontWeights,
+  lineHeights,
   radii,
   shadows,
   spacing,
@@ -31,6 +32,9 @@ function iconFor(label: string): LucideIcon {
   return ICON_KEYWORDS.find(([pattern]) => pattern.test(label))?.[1] ?? Sparkles;
 }
 
+// Calm-clinical tiles: a quiet sage-tinted icon (no filled circle), soft
+// surface card, no heavy border — restrained enough to read as clinical, still
+// visually distinct per topic.
 export function SuggestedFocusGrid({ items }: SuggestedFocusGridProps) {
   return (
     <View style={styles.grid}>
@@ -38,9 +42,7 @@ export function SuggestedFocusGrid({ items }: SuggestedFocusGridProps) {
         const Icon = iconFor(item);
         return (
           <View key={index} style={styles.card}>
-            <View style={styles.iconCircle}>
-              <Icon size={18} color={colors.sage} />
-            </View>
+            <Icon size={20} color={colors.sage} strokeWidth={1.75} style={styles.icon} />
             <Text style={styles.label}>{item}</Text>
           </View>
         );
@@ -58,25 +60,18 @@ const styles = StyleSheet.create({
   card: {
     width: "48%",
     backgroundColor: colors.surface,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: colors.border,
+    borderRadius: radii.lg,
     padding: spacing.lg,
     margin: "1%",
     ...shadows.card,
   },
-  iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.sageTint,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: spacing.sm,
+  icon: {
+    marginBottom: spacing.md,
   },
   label: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.labelMd,
-    fontWeight: fontWeights.medium,
+    lineHeight: lineHeights.labelMd,
     color: colors.charcoal,
   },
 });

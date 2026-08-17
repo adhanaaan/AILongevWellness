@@ -252,8 +252,9 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.displayBold,
     fontSize: 96,
     lineHeight: 100,
-    letterSpacing: -1.5,
+    letterSpacing: -2,
     color: colors.inkOnDark,
+    fontVariant: ["tabular-nums"],
   },
   unit: {
     fontFamily: fontFamilies.bodyMedium,

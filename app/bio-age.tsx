@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { FadeInView } from "@/components/ui/FadeInView";
 import { AskAvaButton } from "@/components/participant/AskAvaButton";
+import { TrendEmptyState } from "@/components/participant/TrendEmptyState";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { pillarStatus, BIOMARKER_KEYS_BY_PILLAR } from "@/lib/ai/scoring";
@@ -167,6 +168,16 @@ export default function BioAgePage() {
             );
           })}
         </View>
+
+        <View style={styles.section}>
+          <Text style={styles.overline}>Biological age over time</Text>
+          <TrendEmptyState
+            message="This is your first biological age. We'll chart how it moves as you re-test over time — nothing before today is estimated or filled in."
+            currentValue={bioAge}
+            unit="yrs"
+            color={colors.sage}
+          />
+        </View>
         </>
         )}
 
@@ -265,6 +276,14 @@ const styles = StyleSheet.create({
     fontWeight: fontWeights.semibold,
     color: colors.charcoal,
     marginBottom: spacing.sm,
+  },
+  overline: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    color: colors.inkMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: spacing.md,
   },
   paragraph: {
     fontFamily: fontFamilies.body,

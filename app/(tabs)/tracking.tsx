@@ -13,6 +13,7 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { CARE_PLAN_CATEGORIES, normalizePlanItem } from "@/lib/carePlan/categories";
 import { CarePlanCategoryCard, type CarePlanTodayStatus } from "@/components/participant/CarePlanCategoryCard";
 import { CarePlanTodayHero } from "@/components/participant/CarePlanTodayHero";
+import { CarePlanSectionLabel } from "@/components/participant/CarePlanSectionLabel";
 import { TodayActionsList } from "@/components/participant/TodayActionsList";
 import { DraftStatusBadge } from "@/components/participant/DraftStatusBadge";
 import { GeneratePlanCard } from "@/components/participant/GeneratePlanCard";
@@ -238,7 +239,7 @@ export default function TrackingPage() {
 
           <CarePlanTodayHero done={actionsDone} total={actionsTotal} dateLabel={todayLabel()} />
 
-          <Text style={styles.sectionTitle}>Today&apos;s actions</Text>
+          <CarePlanSectionLabel>Today&apos;s actions</CarePlanSectionLabel>
           <TodayActionsList
             medications={medCatalog}
             takenToday={takenToday}
@@ -248,7 +249,7 @@ export default function TrackingPage() {
             onManageMeds={() => router.push("/care-plan/medications")}
           />
 
-          <Text style={styles.sectionTitle}>Your plan</Text>
+          <CarePlanSectionLabel>Your plan</CarePlanSectionLabel>
           {!carePlan && (
             <Text style={styles.starterNote}>
               {isDelivered
@@ -280,7 +281,7 @@ export default function TrackingPage() {
 
           {last7.some((log) => log.mood) && (
             <>
-              <Text style={styles.sectionTitle}>Mood this week</Text>
+              <CarePlanSectionLabel>Mood this week</CarePlanSectionLabel>
               <Card>
                 <View style={styles.barsContainer}>
                   {last7.map((log) => {
@@ -306,7 +307,7 @@ export default function TrackingPage() {
             </>
           )}
 
-          <Text style={styles.sectionTitle}>Sharpen your plan</Text>
+          <CarePlanSectionLabel>Sharpen your plan</CarePlanSectionLabel>
           <Card style={styles.addDataCard}>
             {ADD_DATA_ROWS.map(({ Icon, label, description, route }, i) => (
               <TouchableOpacity
@@ -345,14 +346,6 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.labelMd,
     color: colors.inkMuted,
     marginTop: 4,
-  },
-  sectionTitle: {
-    fontFamily: fontFamilies.displaySemiBold,
-    fontSize: fontSizes.bodyLg,
-    fontWeight: "700",
-    color: colors.charcoal,
-    marginTop: spacing["2xl"],
-    marginBottom: spacing.md,
   },
   starterNote: {
     fontFamily: fontFamilies.body,

@@ -9,6 +9,7 @@ import { Toggle } from "@/components/ui/Toggle";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { FadeInView } from "@/components/ui/FadeInView";
 import { ProgressRing } from "@/components/participant/ProgressRing";
+import { CarePlanSectionLabel } from "@/components/participant/CarePlanSectionLabel";
 import { AskAvaButton } from "@/components/participant/AskAvaButton";
 import { repository } from "@/lib/data/mock";
 import { listDailyLogsAction, upsertDailyLogAction, updateParticipantAction } from "@/lib/data/actions";
@@ -227,7 +228,7 @@ export default function CarePlanCategoryPage() {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Your plan</Text>
+            <CarePlanSectionLabel style={styles.sectionLabel}>Your plan</CarePlanSectionLabel>
             <Card padding="lg">
               <View style={styles.planList}>
                 {planItems.map((raw, i) => {
@@ -267,7 +268,7 @@ export default function CarePlanCategoryPage() {
           {config.tracked ? (
             <>
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Track</Text>
+                <CarePlanSectionLabel style={styles.sectionLabel}>Track</CarePlanSectionLabel>
                 <Card padding="lg">
                   {category === "mindfulness" && (
                     <>
@@ -329,7 +330,7 @@ export default function CarePlanCategoryPage() {
               </View>
 
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>This week</Text>
+                <CarePlanSectionLabel style={styles.sectionLabel}>This week</CarePlanSectionLabel>
                 <Card padding="lg">
                   {last7.length > 0 ? (
                     <View style={styles.barsContainer}>
@@ -459,12 +460,8 @@ const styles = StyleSheet.create({
   section: {
     marginTop: spacing["2xl"],
   },
-  sectionTitle: {
-    fontFamily: fontFamilies.bodySemiBold,
-    fontSize: fontSizes.labelMd,
-    fontWeight: fontWeights.semibold,
-    color: colors.charcoal,
-    marginBottom: spacing.md,
+  sectionLabel: {
+    marginTop: 0,
   },
   askAva: { marginTop: spacing.md },
   planList: { gap: spacing.md },

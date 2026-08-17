@@ -1,10 +1,9 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Stethoscope } from "lucide-react-native";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
 import type { Review } from "@/lib/types/db";
-import { colors, fontFamilies, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, fontWeights, spacing } from "@/lib/theme/tokens";
 
 export interface CareTeamNotesCardProps {
   gp?: Review;
@@ -38,13 +37,8 @@ export function CareTeamNotesCard({ gp, tcm }: CareTeamNotesCardProps) {
   if (!gp && !tcm) return null;
 
   return (
-    <Card tinted>
-      <View style={styles.header}>
-        <View style={styles.iconCircle}>
-          <Stethoscope size={18} color={colors.sageDark} />
-        </View>
-        <Text style={styles.heading}>Notes from your care team</Text>
-      </View>
+    <Card tinted padding="lg">
+      <Text style={styles.overline}>Notes from your care team</Text>
       {gp && <ReviewerNote review={gp} />}
       {gp && tcm && <View style={styles.divider} />}
       {tcm && <ReviewerNote review={tcm} />}
@@ -53,25 +47,13 @@ export function CareTeamNotesCard({ gp, tcm }: CareTeamNotesCardProps) {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
+  overline: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    color: colors.sageDark,
     marginBottom: spacing.lg,
-  },
-  iconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: radii.full,
-    backgroundColor: colors.surface,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  heading: {
-    fontFamily: fontFamilies.displaySemiBold,
-    fontSize: fontSizes.headlineSm,
-    fontWeight: fontWeights.semibold,
-    color: colors.charcoal,
   },
   reviewerRow: {
     flexDirection: "row",

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useRouter } from "expo-router";
-import { MessageCircle, ListChecks, Target, ClipboardList, ChevronRight } from "lucide-react-native";
+import { MessageCircle, ClipboardList, ChevronRight } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { FadeInView } from "@/components/ui/FadeInView";
 import { InsightsSkeleton } from "@/components/participant/InsightsSkeleton";
@@ -15,6 +15,7 @@ import { SnapshotPending } from "@/components/participant/SnapshotPending";
 import { CareTeamNotesCard } from "@/components/participant/CareTeamNotesCard";
 import { DraftStatusBadge } from "@/components/participant/DraftStatusBadge";
 import { TopRecommendation } from "@/components/participant/TopRecommendation";
+import { InsightsSectionHeader } from "@/components/participant/InsightsSectionHeader";
 import { NextStepsCard } from "@/components/participant/NextStepsCard";
 import { SnapshotSummaryCard } from "@/components/participant/SnapshotSummaryCard";
 import { WellnessDisclaimer } from "@/components/participant/WellnessDisclaimer";
@@ -26,7 +27,7 @@ import { pillarStatus, buildPillarNarrative, BIOMARKER_KEYS_BY_PILLAR } from "@/
 import { isCaptureComplete } from "@/lib/onboarding/flow";
 import type { SignedCard } from "@/lib/data/repository";
 import type { AiDraft, Biomarker, OnboardingProgress, Participant, Pipeline } from "@/lib/types/db";
-import { colors, fontSizes, radii, shadows, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, lineHeights, radii, shadows, spacing } from "@/lib/theme/tokens";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -258,12 +259,7 @@ export default function CardPage() {
         </View>
 
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <View style={styles.sectionIconCircle}>
-              <ListChecks size={16} color={colors.sageDark} />
-            </View>
-            <Text style={styles.sectionTitle}>Driving your scores</Text>
-          </View>
+          <InsightsSectionHeader label="Driving your scores" />
           <View style={styles.contributorList}>
             {visibleContributors.map((c) => (
               <KeyContributorItem key={c.text} text={c.text} tone={c.tone} />
@@ -285,12 +281,7 @@ export default function CardPage() {
 
         {(topFocus || topDiscussionPoint) && (
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionIconCircle}>
-                <Target size={16} color={colors.sageDark} />
-              </View>
-              <Text style={styles.sectionTitle}>Your next steps</Text>
-            </View>
+            <InsightsSectionHeader label="Your next steps" />
             <TopRecommendation
               topFocus={topFocus}
               topDiscussionPoint={topDiscussionPoint}
@@ -329,14 +320,17 @@ export default function CardPage() {
 const styles = StyleSheet.create({
   scrollContent: { paddingBottom: 96 },
   title: {
+    fontFamily: fontFamilies.displaySemiBold,
     fontSize: fontSizes.headlineLg,
-    fontWeight: "600",
+    lineHeight: lineHeights.headlineLg,
+    letterSpacing: -0.5,
     color: colors.charcoal,
   },
   subtitle: {
-    fontSize: fontSizes.bodyMd,
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.labelMd,
     color: colors.inkMuted,
-    marginTop: 4,
+    marginTop: 2,
   },
   captureBanner: {
     flexDirection: "row",
@@ -353,28 +347,9 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: colors.sageDark,
   },
-  section: { marginTop: 24 },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-    marginBottom: 12,
-  },
-  sectionIconCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: radii.full,
-    backgroundColor: colors.sageTint,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  sectionTitle: {
-    fontSize: fontSizes.labelMd,
-    fontWeight: "600",
-    color: colors.charcoal,
-  },
-  narrativeSection: { marginTop: 16 },
-  contributorList: { gap: 8 },
+  section: { marginTop: spacing["3xl"] },
+  narrativeSection: { marginTop: spacing.lg },
+  contributorList: { gap: spacing.md },
   seeAll: {
     flexDirection: "row",
     alignItems: "center",
