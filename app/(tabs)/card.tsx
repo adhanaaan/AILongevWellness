@@ -6,6 +6,7 @@ import { MobileShell } from "@/components/layout/MobileShell";
 import { FadeInView } from "@/components/ui/FadeInView";
 import { InsightsSkeleton } from "@/components/participant/InsightsSkeleton";
 import { BodyMap } from "@/components/participant/BodyMap";
+import { BioAgeReveal } from "@/components/participant/BioAgeReveal";
 import { BiomarkerSummaryBar } from "@/components/participant/BiomarkerSummaryBar";
 import { KeyContributorItem } from "@/components/participant/KeyContributorItem";
 import { SuggestedFocusGrid } from "@/components/participant/SuggestedFocusGrid";
@@ -91,6 +92,20 @@ export default function CardPage() {
   const gp = reviews.find((r) => r.stage === "gp");
   const tcm = reviews.find((r) => r.stage === "tcm");
   const missingCount = aiDraft.missing_biomarkers?.length ?? 0;
+  const firstName = (card?.participant.name ?? participant?.name ?? "").trim().split(/\s+/)[0] || undefined;
+
+  // Fresh account: a draft exists (from the quick quiz) but no biomarkers have
+  // been captured yet, so the bio-age hero + pillars would render as empty
+  // dashes — which reads as broken, not premium. Show the polished "build your
+  // snapshot" pending state instead until at least one real value lands.
+  const totalMarkers = Object.values(BIOMARKER_KEYS_BY_PILLAR).flat().length;
+  if (!isDelivered && missingCount >= totalMarkers) {
+    return (
+      <MobileShell name={card?.participant.name ?? participant?.name}>
+        <SnapshotPending pipelineState={pipeline?.state ?? "capturing"} />
+      </MobileShell>
+    );
+  }
 
   const askAva = () => ask("Can you walk me through what's driving my scores?");
 
@@ -182,17 +197,40 @@ export default function CardPage() {
         )}
 
         <View style={styles.section}>
-          <BodyMap
-            bioAge={bioAgeReady ? aiDraft.biological_age : null}
-            chronoAge={aiDraft.chronological_age}
-            pillars={bodyPillars}
-            onPressBio={bioAgeReady ? () => router.push("/bio-age") : undefined}
-          />
+          {bioAgeReady ? (
+            // The reveal: premium forest-dark hero — big biological-age number,
+            // younger/older delta, plain-English read, and three pillar rings —
+            // the signed-off snapshot design. BodyMap stays as the partial-data
+            // fallback; the all-empty case is handled above (SnapshotPending).
+            <BioAgeReveal
+              bioAge={aiDraft.biological_age}
+              chronoAge={aiDraft.chronological_age}
+              name={firstName}
+              narrative={buildPillarNarrative(aiDraft.scores)}
+              pillars={pillarItems.map((p) => ({
+                key: p.key,
+                label: p.label,
+                value: p.value,
+                onPress: p.onPress,
+                accessibilityLabel: p.accessibilityLabel,
+              }))}
+              onPressBio={() => router.push("/bio-age")}
+            />
+          ) : (
+            <BodyMap
+              bioAge={null}
+              chronoAge={aiDraft.chronological_age}
+              pillars={bodyPillars}
+              onPressBio={undefined}
+            />
+          )}
         </View>
 
-        <View style={styles.narrativeSection}>
-          <SnapshotSummaryCard narrative={buildPillarNarrative(aiDraft.scores)} />
-        </View>
+        {!bioAgeReady && (
+          <View style={styles.narrativeSection}>
+            <SnapshotSummaryCard narrative={buildPillarNarrative(aiDraft.scores)} />
+          </View>
+        )}
 
         {(gp || tcm) && (
           <View style={styles.section}>
