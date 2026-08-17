@@ -8,6 +8,7 @@ import { InsightsSkeleton } from "@/components/participant/InsightsSkeleton";
 import { BodyMap } from "@/components/participant/BodyMap";
 import { BioAgeReveal } from "@/components/participant/BioAgeReveal";
 import { BiomarkerSummaryBar } from "@/components/participant/BiomarkerSummaryBar";
+import { KeyBiomarkersSection } from "@/components/participant/KeyBiomarkersSection";
 import { KeyContributorItem } from "@/components/participant/KeyContributorItem";
 import { SuggestedFocusGrid } from "@/components/participant/SuggestedFocusGrid";
 import { SnapshotPending } from "@/components/participant/SnapshotPending";
@@ -24,7 +25,7 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { pillarStatus, buildPillarNarrative, BIOMARKER_KEYS_BY_PILLAR } from "@/lib/ai/scoring";
 import { isCaptureComplete } from "@/lib/onboarding/flow";
 import type { SignedCard } from "@/lib/data/repository";
-import type { AiDraft, OnboardingProgress, Participant, Pipeline } from "@/lib/types/db";
+import type { AiDraft, Biomarker, OnboardingProgress, Participant, Pipeline } from "@/lib/types/db";
 import { colors, fontSizes, radii, shadows, spacing } from "@/lib/theme/tokens";
 
 function formatDate(iso: string) {
@@ -44,6 +45,7 @@ export default function CardPage() {
   const [pendingDraft, setPendingDraft] = useState<AiDraft | null | undefined>(undefined);
   const [onboardingProgress, setOnboardingProgress] = useState<OnboardingProgress | null>(null);
   const [participant, setParticipant] = useState<Participant | null>(null);
+  const [biomarkers, setBiomarkers] = useState<Biomarker[]>([]);
   const [showAllRecommendations, setShowAllRecommendations] = useState(false);
   const [showAllContributors, setShowAllContributors] = useState(false);
 
@@ -53,6 +55,7 @@ export default function CardPage() {
       repository.getSignedCard(participantId!).then(setCard);
       repository.getPipeline(participantId!).then(setPipeline);
       repository.getParticipant(participantId!).then(setParticipant);
+      repository.getBiomarkers(participantId!).then(setBiomarkers);
       // Only actually used pre-delivery (see the !card branch below) -- fetched
       // unconditionally here so it's ready the moment the pipeline advances,
       // rather than adding a second effect keyed on pipeline state.
@@ -239,11 +242,19 @@ export default function CardPage() {
         )}
 
         <View style={styles.section}>
-          <BiomarkerSummaryBar
-            inRange={markerInRange}
-            outOfRange={markerOutOfRange}
-            notCaptured={markerNotCaptured}
-          />
+          {biomarkers.some((b) => b.value !== null) ? (
+            <KeyBiomarkersSection
+              biomarkers={biomarkers}
+              notCaptured={markerNotCaptured}
+              onSeeAll={() => router.push("/biomarkers")}
+            />
+          ) : (
+            <BiomarkerSummaryBar
+              inRange={markerInRange}
+              outOfRange={markerOutOfRange}
+              notCaptured={markerNotCaptured}
+            />
+          )}
         </View>
 
         <View style={styles.section}>
