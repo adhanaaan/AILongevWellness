@@ -53,7 +53,7 @@ export function SignOffStage({
 
   if (locked) {
     return (
-      <Card>
+      <Card padding="lg">
         <View style={styles.lockedContainer}>
           <Lock size={20} color={colors.inkMuted} />
           <View style={styles.lockedTextContainer}>
@@ -69,7 +69,7 @@ export function SignOffStage({
 
   if (isSigned && review) {
     return (
-      <Card style={styles.cardSigned}>
+      <Card padding="lg" style={styles.cardSigned}>
         <View style={styles.signedContainer}>
           <CheckCircle2 size={20} color={colors.sageDark} />
           <View style={styles.signedContent}>
@@ -101,7 +101,7 @@ export function SignOffStage({
   }
 
   return (
-    <Card>
+    <Card padding="lg">
       <Text style={styles.stageTitle}>{stageLabels[stage]}</Text>
       <View style={styles.form}>
         <Input

@@ -1,6 +1,5 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { MessageCircle } from "lucide-react-native";
 import { Card } from "@/components/ui";
 import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 
@@ -10,9 +9,8 @@ interface DiscussionPointsCardProps {
 
 export function DiscussionPointsCard({ points }: DiscussionPointsCardProps) {
   return (
-    <Card>
+    <Card padding="lg">
       <View style={styles.header}>
-        <MessageCircle size={20} color={colors.sage} />
         <Text style={styles.heading}>Discussion Points</Text>
       </View>
 
@@ -30,14 +28,11 @@ export function DiscussionPointsCard({ points }: DiscussionPointsCardProps) {
 
 const styles = StyleSheet.create({
   header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
     marginBottom: spacing.lg,
   },
   heading: {
     fontFamily: fontFamilies.displaySemiBold,
-    fontSize: fontSizes.headlineSm,
+    fontSize: fontSizes.bodyLg,
     color: colors.charcoal,
   },
   list: {

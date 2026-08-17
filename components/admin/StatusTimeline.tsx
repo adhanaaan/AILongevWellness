@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Check, Lock } from "lucide-react-native";
-import { colors, fontSizes, fontWeights, spacing, radii } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, fontWeights, spacing, radii } from "@/lib/theme/tokens";
 
 interface StatusTimelineProps {
   stages: string[];
@@ -94,6 +94,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceMuted,
   },
   activeNumber: {
+    fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.labelMd,
     fontWeight: fontWeights.bold,
     color: colors.sage,
@@ -106,15 +107,18 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.xs,
   },
   label: {
+    fontFamily: fontFamilies.bodyMedium,
     fontSize: fontSizes.caption,
     fontWeight: fontWeights.medium,
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
     textAlign: "center",
   },
   labelDone: {
+    fontFamily: fontFamilies.bodySemiBold,
     color: colors.sageDark,
   },
   labelActive: {
+    fontFamily: fontFamilies.bodySemiBold,
     color: colors.charcoal,
     fontWeight: fontWeights.semibold,
   },
