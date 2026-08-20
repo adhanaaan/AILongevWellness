@@ -171,12 +171,15 @@ export class SupabaseRepository implements Repository {
       )
       .select()
       .single();
-    return must(data, error, "capture channel");
+    const channelRow = must(data, error, "capture channel");
+    this.notify();
+    return channelRow;
   }
 
   async submitCapture(participantId: string): Promise<Pipeline> {
     const { data, error } = await this.client.rpc("submit_capture", { p_participant_id: participantId });
     if (error) throw new Error(error.message);
+    this.notify();
     return data as Pipeline;
   }
 
@@ -266,6 +269,7 @@ export class SupabaseRepository implements Repository {
         .eq("participant_id", updated.participant_id);
     }
 
+    this.notify();
     return updated;
   }
 
@@ -292,7 +296,9 @@ export class SupabaseRepository implements Repository {
       .eq("participant_id", participantId)
       .select()
       .single();
-    return must(data, error, "AI draft");
+    const draftRow = must(data, error, "AI draft");
+    this.notify();
+    return draftRow;
   }
 
   async getReviews(participantId: string): Promise<Review[]> {
@@ -314,6 +320,7 @@ export class SupabaseRepository implements Repository {
       p_notes: data.notes,
     });
     if (error) throw new Error(error.message);
+    this.notify();
     return row as Review;
   }
 
@@ -326,12 +333,14 @@ export class SupabaseRepository implements Repository {
   async releaseCard(participantId: string): Promise<Pipeline> {
     const { data, error } = await this.client.rpc("release_card", { p_participant_id: participantId });
     if (error) throw new Error(error.message);
+    this.notify();
     return data as Pipeline;
   }
 
   async resolveAttention(participantId: string): Promise<Pipeline> {
     const { data, error } = await this.client.rpc("resolve_attention", { p_participant_id: participantId });
     if (error) throw new Error(error.message);
+    this.notify();
     return data as Pipeline;
   }
 
