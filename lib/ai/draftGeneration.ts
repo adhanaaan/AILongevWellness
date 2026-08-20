@@ -184,6 +184,21 @@ export async function regenerateDraft(
     return { status: "skipped", reason: "not_regeneratable" };
   }
 
+  // Under async GP/TCM review the state stays "gp_review" after the first
+  // signature, so REGENERATABLE_STATES alone isn't enough: regenerating now would
+  // silently rewrite scores + narrative a reviewer has already signed. Skip once
+  // either stage has signed (a late biomarker write instead raises needs_attention
+  // via flagIfPastSignoff, so the care team re-reviews).
+  const { data: signedReviews } = await serviceClient
+    .from("reviews")
+    .select("signed_at")
+    .eq("participant_id", participantId)
+    .not("signed_at", "is", null)
+    .limit(1);
+  if (signedReviews && signedReviews.length > 0) {
+    return { status: "skipped", reason: "not_regeneratable" };
+  }
+
   const [{ data: participant }, { data: biomarkers }] = await Promise.all([
     serviceClient.from("participants").select("*").eq("id", participantId).maybeSingle(),
     serviceClient.from("biomarkers").select("*").eq("participant_id", participantId),

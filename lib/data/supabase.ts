@@ -5,7 +5,12 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/config/env";
 import type { Repository, SignedCard, UploadableFile } from "./repository";
 import { BUCKET_BY_KIND } from "./storageBuckets";
 import { computeUnlockedSections, deriveOnboardingProgress } from "../onboarding/flow";
-import { computePillarScores, computeBiologicalAge } from "../ai/scoring";
+import {
+  computePillarScores,
+  computeBiologicalAge,
+  computeMissingBiomarkers,
+  computeOutOfRange,
+} from "../ai/scoring";
 import { computePhenoAge } from "../ai/phenoAge";
 import type {
   AiDraft,
@@ -252,7 +257,12 @@ export class SupabaseRepository implements Repository {
         computePhenoAge(allBiomarkers, draft.chronological_age) ?? computeBiologicalAge(scores, draft.chronological_age);
       await this.client
         .from("ai_draft")
-        .update({ scores, biological_age })
+        .update({
+          scores,
+          biological_age,
+          missing_biomarkers: computeMissingBiomarkers(allBiomarkers),
+          out_of_range: computeOutOfRange(allBiomarkers),
+        })
         .eq("participant_id", updated.participant_id);
     }
 

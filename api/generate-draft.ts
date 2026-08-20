@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { missingServerEnv, CORE_API_ENV } from "../lib/config/serverEnv";
 import { createClient } from "@supabase/supabase-js";
 import { regenerateDraft, REGENERATABLE_STATES } from "../lib/ai/draftGeneration";
 
@@ -16,6 +17,11 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
     res.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+  const missing = missingServerEnv(CORE_API_ENV);
+  if (missing.length > 0) {
+    res.status(500).json({ error: `Server misconfigured — missing env var(s): ${missing.join(", ")}` });
     return;
   }
 

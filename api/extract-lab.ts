@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { missingServerEnv, CORE_API_ENV } from "../lib/config/serverEnv";
 import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
 import { LAB_CATALOG_BY_KEY } from "../lib/ai/labCatalog";
@@ -7,7 +8,6 @@ import { convertToTargetUnit } from "../lib/ai/unitConversion";
 import { flagIfPastSignoff } from "../lib/data/pipelineAttention";
 import { writeBiomarkerReadings } from "../lib/data/biomarkerReadings";
 import { resyncDraftScores } from "../lib/data/resyncDraftScores";
-import { regenerateDraft } from "../lib/ai/draftGeneration";
 
 // This is a Vercel serverless function (not an Expo Router API route) — see
 // vercel.json's rewrite, which excludes /api/* from the SPA catch-all so
@@ -146,6 +146,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(405).json({ error: "Method not allowed" });
     return;
   }
+  const missing = missingServerEnv(CORE_API_ENV);
+  if (missing.length > 0) {
+    res.status(500).json({ error: `Server misconfigured — missing env var(s): ${missing.join(", ")}` });
+    return;
+  }
 
   const authHeader = req.headers.authorization;
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
@@ -210,7 +215,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // headroom since Opus 5 thinks by default and thinking + output share
       // one budget.
       model: "claude-opus-5",
-      max_tokens: 4096,
+      max_tokens: 8000,
       tools: [EXTRACTION_TOOL],
       tool_choice: { type: "tool", name: "report_lab_values" },
       messages: [
@@ -268,15 +273,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // screen's generateDraft already fired (before this extraction finished), so
     // without this the upload wouldn't move the numbers until a later regen.
     await resyncDraftScores(serviceClient, participantId);
-    // Then re-run the *full* draft (AI narrative + care plan too), so the whole
-    // card reflects the new labs, not just the numbers. Best-effort: the resync
-    // above already guaranteed the numbers, so a transient AI failure here won't
-    // leave them stale -- the narrative catches up on the next regen.
-    try {
-      await regenerateDraft(serviceClient, participantId);
-    } catch {
-      /* numbers already resynced above */
-    }
+    // The full AI narrative/care-plan regen is deliberately NOT awaited here:
+    // chaining a second Opus call inside this one function risks a 60s serverless
+    // timeout (504), which the client reads as an upload failure even though the
+    // biomarkers + numbers already landed above. The narrative is refreshed
+    // separately -- the onboarding flow fires /api/generate-draft after each
+    // upload, and the admin console has a "Regenerate AI draft" action.
   }
 
   await serviceClient.from("files").update({ extracted: true }).eq("id", fileId);
