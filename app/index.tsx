@@ -38,7 +38,7 @@ const HERO_TOP_CROP_FRACTION = 195 / 1675;
 
 export default function WelcomePage() {
   const router = useRouter();
-  const { participantId } = useAuth();
+  const { participantId, role } = useAuth();
   const { height: windowHeight } = useWindowDimensions();
   const [heroWidth, setHeroWidth] = useState(0);
 
@@ -51,7 +51,14 @@ export default function WelcomePage() {
   // leave them stranded on the marketing screen instead of continuing where
   // they left off (profile, capture, or their card).
   useEffect(() => {
-    if (!isSupabaseConfigured || !participantId) return;
+    if (!isSupabaseConfigured) return;
+    // A signed-in care_team member has no participant_id; send them to the admin
+    // portal instead of stranding them on the participant marketing screen.
+    if (role === "care_team") {
+      router.replace("/admin");
+      return;
+    }
+    if (!participantId) return;
     let cancelled = false;
     (async () => {
       const participant = await repository.getParticipant(participantId);
@@ -70,7 +77,7 @@ export default function WelcomePage() {
     return () => {
       cancelled = true;
     };
-  }, [participantId, router]);
+  }, [participantId, role, router]);
 
   return (
     <SafeAreaView style={styles.safe} edges={["bottom"]}>

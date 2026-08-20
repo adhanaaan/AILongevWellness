@@ -53,14 +53,17 @@ export default function CardPage() {
   useEffect(() => {
     if (!participantId) return;
     function load() {
-      repository.getSignedCard(participantId!).then(setCard);
-      repository.getPipeline(participantId!).then(setPipeline);
-      repository.getParticipant(participantId!).then(setParticipant);
-      repository.getBiomarkers(participantId!).then(setBiomarkers);
+      // .catch on the three gating fetches so a transient Supabase/RLS error
+      // degrades to the pending state instead of an infinite skeleton (they only
+      // resolve to null on the happy empty path otherwise).
+      repository.getSignedCard(participantId!).then(setCard).catch(() => setCard(null));
+      repository.getPipeline(participantId!).then(setPipeline).catch(() => setPipeline(null));
+      repository.getParticipant(participantId!).then(setParticipant).catch(() => setParticipant(null));
+      repository.getBiomarkers(participantId!).then(setBiomarkers).catch(() => setBiomarkers([]));
       // Only actually used pre-delivery (see the !card branch below) -- fetched
       // unconditionally here so it's ready the moment the pipeline advances,
       // rather than adding a second effect keyed on pipeline state.
-      repository.getAiDraft(participantId!).then(setPendingDraft);
+      repository.getAiDraft(participantId!).then(setPendingDraft).catch(() => setPendingDraft(null));
       // Drives the "Continue your data capture" banner below -- a participant
       // who lands here (via the Data Capture hub's insights preview banner)
       // before finishing every section otherwise has no way back except the
