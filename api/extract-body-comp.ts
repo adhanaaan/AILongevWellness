@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { missingServerEnv, CORE_API_ENV } from "../lib/config/serverEnv";
 import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
 import { BODY_COMP_CATALOG_BY_KEY } from "../lib/ai/bodyCompCatalog";
@@ -7,7 +8,6 @@ import { BUCKET_BY_KIND } from "../lib/data/storageBuckets";
 import { flagIfPastSignoff } from "../lib/data/pipelineAttention";
 import { writeBiomarkerReadings } from "../lib/data/biomarkerReadings";
 import { resyncDraftScores } from "../lib/data/resyncDraftScores";
-import { regenerateDraft } from "../lib/ai/draftGeneration";
 
 // This is a Vercel serverless function — see vercel.json's rewrite, which
 // excludes /api/* from the SPA catch-all so requests here reach this file
@@ -83,6 +83,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(405).json({ error: "Method not allowed" });
     return;
   }
+  const missing = missingServerEnv(CORE_API_ENV);
+  if (missing.length > 0) {
+    res.status(500).json({ error: `Server misconfigured — missing env var(s): ${missing.join(", ")}` });
+    return;
+  }
 
   const authHeader = req.headers.authorization;
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
@@ -153,7 +158,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // headroom since Opus 5 thinks by default and thinking + output share
       // one budget.
       model: "claude-opus-5",
-      max_tokens: 4096,
+      max_tokens: 8000,
       tools: [EXTRACTION_TOOL],
       tool_choice: { type: "tool", name: "report_body_comp_values" },
       messages: [
@@ -210,14 +215,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return;
     }
     await flagIfPastSignoff(serviceClient, participantId, "New body composition scan uploaded — biomarkers pending review");
-    // Re-derive scores/bio age from the just-written values (see resyncDraftScores),
-    // then re-run the full draft (AI narrative too) best-effort.
+    // Re-derive scores/bio age from the just-written values (see resyncDraftScores).
+    // The full AI narrative regen is deliberately NOT awaited here -- chaining a
+    // second Opus call inside this function risks a 60s serverless timeout (504)
+    // that the client reads as an upload failure even though the numbers landed.
+    // The narrative refreshes via /api/generate-draft (fired post-upload) and the
+    // admin "Regenerate AI draft" action.
     await resyncDraftScores(serviceClient, participantId);
-    try {
-      await regenerateDraft(serviceClient, participantId);
-    } catch {
-      /* numbers already resynced above */
-    }
   }
 
   await serviceClient.from("files").update({ extracted: true }).eq("id", fileId);

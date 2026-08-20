@@ -56,6 +56,18 @@ export async function resyncDraftScores(
     .maybeSingle();
   if (pipeline?.state === "signed" || pipeline?.state === "delivered") return;
 
+  // Also skip once EITHER stage has signed (state can still be "gp_review" under
+  // async GP/TCM review). Recomputing numbers here would overwrite values a
+  // reviewer has already put their name to; flagIfPastSignoff (run by every
+  // caller first) raises needs_attention so the care team re-reviews instead.
+  const { data: signedReviews } = await serviceClient
+    .from("reviews")
+    .select("signed_at")
+    .eq("participant_id", participantId)
+    .not("signed_at", "is", null)
+    .limit(1);
+  if (signedReviews && signedReviews.length > 0) return;
+
   const { data: biomarkers, error: bmErr } = await serviceClient
     .from("biomarkers")
     .select("*")
