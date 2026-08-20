@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { GOALS } from "@/app/onboarding/profile-goals";
-import { updateParticipantAction, updateCaptureChannelAction } from "@/lib/data/actions";
+import { updateParticipantAction, updateCaptureChannelAction, submitCaptureAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { generateDraft } from "@/lib/ai/client";
@@ -89,7 +89,14 @@ export default function QuizPage() {
         status: "complete",
         entered_by: "participant",
       });
-      // Kick off the first AI draft from the basics (fire-and-forget, real backend).
+      // Advance into the review pipeline (capturing -> ai_drafted) so the care
+      // team can actually review and deliver this participant's card. Without
+      // this the quiz-only path stays in "capturing" forever and never reaches
+      // the review queue. ReCOGnAIze/labs are optional enrichment added after.
+      await submitCaptureAction(participantId);
+      // Kick off the first AI draft from the basics, which also advances
+      // ai_drafted -> gp_review (fire-and-forget, real backend). If it fails the
+      // admin console's "Advance to review" recovery card handles it.
       if (isSupabaseConfigured && session?.access_token) {
         generateDraft(session.access_token, participantId).catch(() => {});
       }

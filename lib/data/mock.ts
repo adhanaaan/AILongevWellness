@@ -718,15 +718,11 @@ class MockRepository implements Repository {
       throw new Error("Capture has already been submitted for this participant.");
     }
     const channels = await this.getCaptureChannels(participantId);
-    // Only the required channels gate submission; Wearables / Body Composition /
-    // Lab Reports are optional (see lib/onboarding/flow.ts). Kept in sync with
-    // the submit_capture RPC (supabase/migrations/0010) per CLAUDE.md rule #3.
-    if (
-      channels.some(
-        (c) => (c.channel === "manual" || c.channel === "recognize") && c.status !== "complete"
-      )
-    ) {
-      throw new Error("Please finish the questionnaire and ReCOGnAIze before submitting.");
+    // Only the questionnaire (manual) gates submission; ReCOGnAIze and every
+    // upload are optional enrichment. Kept in sync with the submit_capture RPC
+    // (supabase/migrations/0012) per CLAUDE.md rule #3.
+    if (channels.some((c) => c.channel === "manual" && c.status !== "complete")) {
+      throw new Error("Please finish the questionnaire before submitting.");
     }
     const draft = this.pendingAiDrafts.get(participantId);
     if (draft) {

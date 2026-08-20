@@ -111,7 +111,7 @@ export default function WearableConnectedPage() {
         </View>
 
         <View style={styles.footer}>
-          <Button size="lg" style={styles.cta} onPress={() => router.replace("/onboarding/capture")}>
+          <Button size="lg" style={styles.cta} onPress={() => router.replace("/(tabs)/card")}>
             Continue
           </Button>
         </View>

@@ -39,8 +39,26 @@ export default function BioAgePage() {
 
   useEffect(() => {
     if (!participantId) return;
-    function load() {
-      repository.getSignedCard(participantId!).then(setCard);
+    async function load() {
+      const signed = await repository.getSignedCard(participantId!);
+      if (signed) {
+        setCard(signed);
+        return;
+      }
+      // Pre-sign-off (the normal review-window state): no signed card yet, but a
+      // draft exists. Fall back to it so this drill-down works during review,
+      // mirroring app/(tabs)/card.tsx — otherwise the reveal's "How this is
+      // calculated" link and the AVA bio-age chip bounce straight back.
+      const [draft, biomarkers, participant] = await Promise.all([
+        repository.getAiDraft(participantId!),
+        repository.getBiomarkers(participantId!),
+        repository.getParticipant(participantId!),
+      ]);
+      if (draft && participant) {
+        setCard({ participant, aiDraft: draft, biomarkers, reviews: [] });
+      } else {
+        setCard(null);
+      }
     }
     load();
     return repository.subscribe(load);

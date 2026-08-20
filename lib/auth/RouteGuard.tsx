@@ -9,12 +9,14 @@ import { isSupabaseConfigured } from "@/lib/config/env";
 
 export function ParticipantGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const { loading, participantId } = useAuth();
+  const { loading, participantId, role } = useAuth();
 
   useEffect(() => {
     if (!isSupabaseConfigured || loading) return;
-    if (!participantId) router.replace("/onboarding/auth");
-  }, [loading, participantId, router]);
+    // A care_team account has no participant_id — send it to the admin portal,
+    // not into participant signup.
+    if (!participantId) router.replace(role === "care_team" ? "/admin" : "/onboarding/auth");
+  }, [loading, participantId, role, router]);
 
   if (isSupabaseConfigured && (loading || !participantId)) return null;
   return <>{children}</>;

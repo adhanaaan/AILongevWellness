@@ -121,7 +121,9 @@ export function respondAsAva(message: string, card: SignedCard): AvaResponse {
 
   if (text.includes("contributor") || text.includes("why")) {
     const contributor = card.aiDraft.key_contributors[0];
-    return { text: `One of the key contributors on your card: "${contributor.text}."`, disclaimer: AVA_DISCLAIMER };
+    if (contributor) {
+      return { text: `One of the key contributors on your card: "${contributor.text}."`, disclaimer: AVA_DISCLAIMER };
+    }
   }
 
   const { vascular, metabolic, mental } = card.aiDraft.scores;

@@ -298,17 +298,32 @@ export default function ParticipantDetailPage() {
           </>
         )}
 
-        {!aiDraft && pipeline.state === "ai_drafted" && isSupabaseConfigured && (
+        {pipeline.state === "ai_drafted" && isSupabaseConfigured && (
+          // Recovery for a participant stuck at ai_drafted: the post-capture
+          // generateDraft is what advances ai_drafted -> gp_review, and it's
+          // fired fire-and-forget, so if it failed the participant never reaches
+          // the review queue. A draft usually already exists (generated during
+          // capture), so gate on the STATE, not on !aiDraft — otherwise this
+          // recovery card never renders and the participant is a dead end.
           <View style={styles.section}>
             <Card>
-              <Text style={styles.cardTitle}>AI draft not generated yet</Text>
+              <Text style={styles.cardTitle}>
+                {aiDraft ? "Ready to send to review" : "AI draft not generated yet"}
+              </Text>
               <Text style={styles.meta}>
-                Capture is complete, but the draft health card hasn't been generated —
-                this usually happens automatically right after submission. Retry it below.
+                {aiDraft
+                  ? "A draft exists but hasn't moved into the review queue yet — this normally happens automatically right after capture. Advance it below to start GP/TCM sign-off."
+                  : "Capture is complete, but the draft health card hasn't been generated — this usually happens automatically right after submission. Generate it below."}
               </Text>
               {generateError && <Text style={styles.attentionReason}>{generateError}</Text>}
               <Button size="sm" disabled={generating} onPress={onGenerateDraft}>
-                {generating ? "Generating…" : "Generate AI draft"}
+                {generating
+                  ? aiDraft
+                    ? "Advancing…"
+                    : "Generating…"
+                  : aiDraft
+                    ? "Advance to review"
+                    : "Generate AI draft"}
               </Button>
             </Card>
           </View>

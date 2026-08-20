@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
 import { backfillCarePlan } from "../lib/ai/draftGeneration";
+import { missingServerEnv, CORE_API_ENV } from "../lib/config/serverEnv";
 
 // Backfills the care_plan on an EXISTING draft without touching the signed
 // assessment — for a card that was delivered before the care-plan feature
@@ -16,6 +17,11 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
     res.status(405).json({ error: "Method not allowed" });
+    return;
+  }
+  const missing = missingServerEnv(CORE_API_ENV);
+  if (missing.length > 0) {
+    res.status(500).json({ error: `Server misconfigured — missing env var(s): ${missing.join(", ")}` });
     return;
   }
 

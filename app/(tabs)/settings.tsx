@@ -43,10 +43,20 @@ export default function SettingsPage() {
           <Avatar initials={participant.name.slice(0, 1)} size="lg" />
           <View style={styles.profileText}>
             <Text style={styles.profileName}>{participant.name}</Text>
-            <Text style={styles.profileMeta}>
-              {participant.age} · {participant.sex} · {participant.height_cm}cm ·{" "}
-              {participant.weight_kg}kg
-            </Text>
+            {(() => {
+              // Age/sex/height/weight are all skippable in the quiz — only join
+              // the ones that are actually set, so a quiz-only account doesn't
+              // read "undefined · undefined · undefinedcm".
+              const parts = [
+                participant.age ? `${participant.age}` : null,
+                participant.sex || null,
+                participant.height_cm ? `${participant.height_cm}cm` : null,
+                participant.weight_kg ? `${participant.weight_kg}kg` : null,
+              ].filter(Boolean);
+              return parts.length > 0 ? (
+                <Text style={styles.profileMeta}>{parts.join(" · ")}</Text>
+              ) : null;
+            })()}
           </View>
         </Card>
 
