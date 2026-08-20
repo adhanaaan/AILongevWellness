@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { missingServerEnv, CORE_API_ENV } from "../lib/config/serverEnv";
+import { sniffMediaType, UNSUPPORTED_FILE_MESSAGE } from "../lib/ai/sniffMediaType";
 import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
 import { LAB_CATALOG_BY_KEY } from "../lib/ai/labCatalog";
@@ -198,7 +199,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const arrayBuffer = await blob.arrayBuffer();
   const base64 = Buffer.from(arrayBuffer).toString("base64");
-  const mediaType = detectMediaType(fileRow.storage_path, blob.type);
+  // Trust the file's actual bytes over its name/content-type (mobile uploads
+  // mislabel constantly). Catch HEIC up front with a clear message rather than
+  // letting Anthropic reject it with an opaque 400.
+  const sniff = sniffMediaType(new Uint8Array(arrayBuffer));
+  if (sniff.kind === "unsupported") {
+    res.status(400).json({ error: UNSUPPORTED_FILE_MESSAGE });
+    return;
+  }
+  const mediaType =
+    sniff.kind === "supported" ? sniff.mediaType : detectMediaType(fileRow.storage_path, blob.type);
 
   const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 
