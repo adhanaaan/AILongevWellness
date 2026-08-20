@@ -81,7 +81,11 @@ export function CarePlanEditor({ aiDraft, participantId, editable }: CarePlanEdi
   };
 
   const carePlan = aiDraft.care_plan ?? EMPTY_CARE_PLAN;
-  const isEmpty = CARE_PLAN_CATEGORIES.every(({ key }) => carePlan[key].length === 0);
+  // Coalesce per key: a partial/legacy/backfilled care_plan jsonb may be missing
+  // a category, and `carePlan[key].length` on undefined would blank-screen the
+  // whole review page.
+  const itemsFor = (key: keyof typeof carePlan) => carePlan[key] ?? [];
+  const isEmpty = CARE_PLAN_CATEGORIES.every(({ key }) => itemsFor(key).length === 0);
 
   return (
     <Card padding="lg">
@@ -104,7 +108,7 @@ export function CarePlanEditor({ aiDraft, participantId, editable }: CarePlanEdi
       )}
 
       {CARE_PLAN_CATEGORIES.map(({ key, label }) => {
-        const items = carePlan[key];
+        const items = itemsFor(key);
         if (!isEditing && items.length === 0) return null;
         return (
           <View key={key} style={styles.section}>

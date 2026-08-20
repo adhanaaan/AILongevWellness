@@ -12,6 +12,7 @@ interface ReleaseButtonProps {
 
 export function ReleaseButton({ participantId, enabled }: ReleaseButtonProps) {
   const [releasing, setReleasing] = useState(false);
+  const [released, setReleased] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleRelease = async () => {
@@ -19,6 +20,10 @@ export function ReleaseButton({ participantId, enabled }: ReleaseButtonProps) {
     setReleasing(true);
     try {
       await releaseCardAction(participantId);
+      // Latch locally so a second press can't hit release_card again while the
+      // pipeline prop is still catching up (a re-release throws a misleading
+      // "locked until sign-off" error).
+      setReleased(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Release failed. Please try again.");
     } finally {
@@ -33,10 +38,10 @@ export function ReleaseButton({ participantId, enabled }: ReleaseButtonProps) {
         variant="primary"
         size="lg"
         iconLeft={<Send size={18} color={colors.white} />}
-        disabled={!enabled || releasing}
+        disabled={!enabled || releasing || released}
         onPress={handleRelease}
       >
-        {releasing ? "Releasing..." : "Release Card to Participant"}
+        {releasing ? "Releasing..." : released ? "Released" : "Release Card to Participant"}
       </Button>
     </View>
   );

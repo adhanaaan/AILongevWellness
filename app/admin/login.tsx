@@ -46,7 +46,7 @@ export default function AdminLoginPage() {
         <View style={styles.iconWrap}>
           <ShieldCheck size={26} color={colors.sageDark} strokeWidth={1.75} />
         </View>
-        <Text style={styles.title}>Check your email</Text>
+        <Text style={styles.title}>Verify your email</Text>
         <Text style={styles.subtitle}>
           We sent a confirmation link to {email.trim()}. Click it, then come
           back and sign in.
