@@ -14,6 +14,10 @@ const CONVERSIONS: Record<string, ConversionFn> = {
   "uric_acid|mg/dl": (v) => v * 59.48,
   "creatinine|mg/dl": (v) => v * 88.4,
   "fasting_glucose|mmol/l": (v) => v * 18.02,
+  // Chinese/European labs often report HbA1c in IFCC mmol/mol; the catalog uses
+  // DCCT %. DCCT% = 0.09148 x IFCC + 2.152 (an unconverted mmol/mol value would
+  // read as a wildly out-of-range % and corrupt the metabolic pillar).
+  "hba1c|mmol/mol": (v) => 0.09148 * v + 2.152,
   "hscrp|mg/dl": (v) => v * 10,
   "hscrp|mg/l": (v) => v,
   "vitamin_d|ng/ml": (v) => v * 2.496,

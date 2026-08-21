@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Toggle } from "@/components/ui/Toggle";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { FadeInView } from "@/components/ui/FadeInView";
+import { WellnessDisclaimer } from "@/components/participant/WellnessDisclaimer";
 import { ProgressRing } from "@/components/participant/ProgressRing";
 import { CarePlanSectionLabel } from "@/components/participant/CarePlanSectionLabel";
 import { AskAvaButton } from "@/components/participant/AskAvaButton";
@@ -372,6 +373,7 @@ export default function CarePlanCategoryPage() {
               </Card>
             </View>
           )}
+          <WellnessDisclaimer />
         </FadeInView>
       </ScrollView>
     </SafeAreaView>

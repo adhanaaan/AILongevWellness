@@ -6,6 +6,7 @@ import { MobileShell } from "@/components/layout/MobileShell";
 import { Card } from "@/components/ui/Card";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { FadeInView } from "@/components/ui/FadeInView";
+import { WellnessDisclaimer } from "@/components/participant/WellnessDisclaimer";
 import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 import { listDailyLogsAction, upsertDailyLogAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
@@ -327,6 +328,7 @@ export default function TrackingPage() {
               </TouchableOpacity>
             ))}
           </Card>
+          <WellnessDisclaimer />
         </FadeInView>
       </ScrollView>
     </MobileShell>

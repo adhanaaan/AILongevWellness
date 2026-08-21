@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { FadeInView } from "@/components/ui/FadeInView";
+import { WellnessDisclaimer } from "@/components/participant/WellnessDisclaimer";
 import { AskAvaButton } from "@/components/participant/AskAvaButton";
 import { TrendEmptyState } from "@/components/participant/TrendEmptyState";
 import { repository } from "@/lib/data/mock";
@@ -140,7 +141,7 @@ export default function BioAgePage() {
                 Your biological age of {bioAge} is calculated with PhenoAge (Levine et al., 2018), a published
                 formula built from nine blood biomarkers — albumin, creatinine, glucose, CRP, lymphocyte percent,
                 MCV, RDW, alkaline phosphatase, and white blood cell count — alongside your chronological age of{" "}
-                {chronoAge}. In the study it was developed on, it predicted 10-year mortality risk more accurately
+                {chronoAge}. In the study it was developed on, it tracked long-term health outcomes more closely
                 than chronological age alone.
               </Text>
               <Text style={styles.paragraph}>
@@ -209,6 +210,7 @@ export default function BioAgePage() {
           <Text style={styles.methodologyLinkText}>See full methodology & sources</Text>
           <ChevronRight size={16} color={colors.sageDark} />
         </TouchableOpacity>
+          <WellnessDisclaimer />
         </FadeInView>
       </ScrollView>
     </SafeAreaView>
