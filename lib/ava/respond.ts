@@ -1,5 +1,6 @@
 import type { SignedCard } from "../data/repository";
-import type { Biomarker } from "../types/db";
+import type { Biomarker, PlanCategory } from "../types/db";
+import { CARE_PLAN_CATEGORIES_BY_KEY, normalizePlanItem } from "../carePlan/categories";
 import { AVA_DISCLAIMER } from "./constants";
 
 const DEFER = "That's a good question for your care team.";
@@ -49,7 +50,26 @@ function describeBiomarker(b: Biomarker): string {
 
 // A handful of common lab names not covered by our biomarker set — used only to distinguish
 // "asking about a specific marker we don't have" from "asking something more general".
-const KNOWN_UNTRACKED_MARKERS = /\bcortisol\b|\btestosterone\b|\bthyroid\b|\btsh\b|\bcreatinine\b|\bferritin\b|\bpotassium\b|\bsodium\b|\bestrogen\b|\bpsa\b|\btriglyceride/i;
+const KNOWN_UNTRACKED_MARKERS = /\bcortisol\b|\btestosterone\b|\bthyroid\b|\btsh\b|\bcreatinine\b|\bferritin\b|\bpotassium\b|\bsodium\b|\bestrogen\b|\bpsa\b/i;
+
+// Maps a care-plan question to one of the five categories. Only consulted once
+// the message reads like a "what should I do / what's my plan" question, so a
+// plain "how's my sleep score" still routes to the mental pillar instead.
+const CARE_PLAN_PATTERNS: Array<{ re: RegExp; key: PlanCategory }> = [
+  { re: /nutrition|diet|protein|fibre|fiber|meal|eating|food|hydrat/, key: "nutrition" },
+  { re: /exercise|workout|movement|training|walk|zone ?2|strength|vo2/, key: "exercise" },
+  { re: /supplement|medication|\bmeds?\b|vitamin|omega|magnesium/, key: "medications" },
+  { re: /sleep|recovery|bedtime|rest|circadian/, key: "sleep" },
+  { re: /mindful|breathing|meditat|calm|relax|de-?stress|\bstress\b/, key: "mindfulness" },
+];
+
+function carePlanLine(card: SignedCard, key: PlanCategory): string {
+  const cfg = CARE_PLAN_CATEGORIES_BY_KEY[key];
+  const items = card.aiDraft.care_plan?.[key];
+  const list = (items && items.length ? items : cfg.starter).map(normalizePlanItem);
+  const titles = list.slice(0, 3).map((i) => i.title.toLowerCase()).join("; ");
+  return `On your ${cfg.label.toLowerCase()} plan, your care team suggests: ${titles}. Open the Care Plan tab for the full detail.`;
+}
 
 export function respondAsAva(message: string, card: SignedCard): AvaResponse {
   const text = message.toLowerCase();
@@ -88,6 +108,19 @@ export function respondAsAva(message: string, card: SignedCard): AvaResponse {
     return { text: NOT_ON_CARD };
   }
 
+  // Care-plan questions. Triggered when the message reads like "what's my plan"
+  // or names a plan-only track (nutrition/exercise/supplements) that has no pillar
+  // of its own — sleep/stress alone still route to the mental pillar below.
+  const wantsPlan =
+    text.includes("plan") ||
+    /nutrition|diet|supplement|medication|\bmeds?\b|vitamin|omega|exercise|workout/.test(text);
+  if (wantsPlan) {
+    const match = CARE_PLAN_PATTERNS.find((p) => p.re.test(text));
+    if (match) {
+      return { text: carePlanLine(card, match.key), disclaimer: AVA_DISCLAIMER };
+    }
+  }
+
   if (text.includes("metabolic")) {
     const flagged = card.biomarkers.find((b) => b.pillar === "metabolic" && b.flagged);
     const extra = flagged ? ` Your card notes ${flagged.label.toLowerCase()} (${flagged.value} ${flagged.unit}) as one of the areas to monitor.` : "";
@@ -111,12 +144,17 @@ export function respondAsAva(message: string, card: SignedCard): AvaResponse {
     };
   }
 
-  if (text.includes("focus") || text.includes("improve") || text.includes("should i") || text.includes("recommend")) {
-    const focus = card.aiDraft.suggested_focus.join(", ").toLowerCase();
-    return {
-      text: `Your reviewed card highlights ${focus} as focus areas — in plain terms, that's where your care team suggests putting attention. For a specific plan, ${DEFER[0].toLowerCase()}${DEFER.slice(1)}`,
-      disclaimer: AVA_DISCLAIMER,
-    };
+  if (text.includes("focus") || text.includes("improve") || text.includes("should i") || text.includes("recommend") || text.includes("priorit")) {
+    const focusAreas = card.aiDraft.suggested_focus;
+    const top = focusAreas[0];
+    const rest = focusAreas.slice(1).join(", ").toLowerCase();
+    if (top) {
+      const more = rest ? ` Your card also flags ${rest}.` : "";
+      return {
+        text: `The first area your care team suggests focusing on is ${top.toLowerCase()}.${more} A good first step is to open your Care Plan tab and start with one small, repeatable change there.`,
+        disclaimer: AVA_DISCLAIMER,
+      };
+    }
   }
 
   if (text.includes("contributor") || text.includes("why")) {

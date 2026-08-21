@@ -1,6 +1,9 @@
-import React from "react";
-import { View, StyleSheet } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { Animated, Easing, View, StyleSheet } from "react-native";
 import Svg, { Circle, Defs, LinearGradient, Stop } from "react-native-svg";
+import { useReducedMotion } from "@/lib/anim/useReducedMotion";
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export interface ProgressRingProps {
   /** 0–1 completion. Clamped. */
@@ -38,6 +41,30 @@ export function ProgressRing({
   const clamped = Math.max(0, Math.min(1, fraction));
   const dashoffset = circumference * (1 - clamped);
 
+  // Fill the arc from empty to its fraction on mount. Reduce-motion jumps to
+  // the final offset. Re-runs if the fraction changes.
+  const reduceMotion = useReducedMotion();
+  const progress = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (reduceMotion) {
+      progress.setValue(1);
+      return;
+    }
+    progress.setValue(0);
+    const anim = Animated.timing(progress, {
+      toValue: 1,
+      duration: 900,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    });
+    anim.start();
+    return () => anim.stop();
+  }, [progress, reduceMotion, clamped]);
+  const animatedOffset = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [circumference, dashoffset],
+  });
+
   return (
     <View
       style={{ width: size, height: size }}
@@ -52,7 +79,7 @@ export function ProgressRing({
           </LinearGradient>
         </Defs>
         <Circle cx={size / 2} cy={size / 2} r={radius} stroke={trackColor} strokeWidth={stroke} fill="none" />
-        <Circle
+        <AnimatedCircle
           cx={size / 2}
           cy={size / 2}
           r={radius}
@@ -61,7 +88,7 @@ export function ProgressRing({
           fill="none"
           strokeLinecap="round"
           strokeDasharray={`${circumference}`}
-          strokeDashoffset={dashoffset}
+          strokeDashoffset={animatedOffset}
           rotation={-90}
           origin={`${size / 2}, ${size / 2}`}
         />

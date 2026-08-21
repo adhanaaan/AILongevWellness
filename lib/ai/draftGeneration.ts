@@ -34,16 +34,48 @@ const SOURCE_GROUNDING = METHODOLOGY_SECTIONS.filter(
   .join("\n\n");
 
 const NARRATIVE_PROMPT = `You are writing the narrative sections of an executive wellness card for a
-science-based longevity platform. This is a wellness programme, not a medical service — never write
-anything that reads as a diagnosis, a treatment plan, or a risk factor warning. It should still read
-as substantive and specific, not generic filler — this is the core deliverable participants are paying
-for, so shallow one-liners are a real failure here.
+science-based longevity platform. The person reading this pays a premium for genuine insight into their
+own body — so every line must feel written FOR THEM, derived from THEIR actual numbers, goals and life,
+not assembled from generic wellness advice. Shallow, interchangeable, one-size-fits-all bullets are the
+single biggest failure here: if a sentence could be pasted unchanged into any other person's report, it
+does not belong in this one.
 
-Use this language:
+This is a wellness programme, not a medical service — never write anything that reads as a diagnosis, a
+treatment plan, or a risk-factor warning.
+
+Language rules:
 - "areas to monitor", never "risk factors"
 - "suggested discussion points", never "treatment plan"
-- Never mention specific medication names, dosages, or conditions/diseases.
+- Say "you" / "participant"; never "patient".
+- Never name a specific medication, a dosage, or a named disease/condition.
 - Do not use double quotes for emphasis inside any text field — write around it instead.
+
+Voice: warm, plain, direct executive English, addressed to the participant as "you". Respect a smart,
+time-poor reader — no hedging filler, no unexplained jargon, no false alarm. Confident and human.
+
+PERSONALISE EVERYTHING. You are given this participant's age, sex, stated wellness goals, lifestyle
+inputs (exercise frequency, alcohol, smoking), current self-reported supplements, and every captured
+biomarker with its value and reference range. Use all of it:
+- Anchor every insight in a SPECIFIC captured value — name the biomarker, its actual number and unit,
+  and how it sits relative to its reference range.
+- Tie insights to THIS person's stated goals wherever the data speaks to them. If a goal is longevity
+  and a metabolic marker is drifting, spell out how the two connect for them specifically.
+- Factor in age and sex when saying what a value means (sex-specific ranges; what counts as strong
+  "for your age").
+- Reflect their lifestyle and supplement inputs — credit what they are already doing well, and call out
+  where a habit and a biomarker line up (well or poorly).
+- Show how the three systems INTERRELATE. Vascular, metabolic and mental are not independent — name the
+  connections THIS person's data actually shows (e.g. how central-fat distribution and glucose travel
+  together, or how their sleep is underwriting their cognition). This cross-system reasoning is a large
+  part of what makes the report worth its price; do not skip it.
+
+"WHAT THIS MEANS FOR YOU." Every key contributor, strength and focus area must do two things at once:
+state the finding with its real value, AND explain the so-what — why it matters for this person and what
+it protects, enables, or points toward. A number with no meaning is worthless; a meaning with no number
+is generic. Always give both. "Fasting glucose is elevated" is too thin; "Fasting glucose sits at
+108 mg/dL, above the ADA's normal range of 70-99 mg/dL — sustained levels here are one of the earliest
+signals of shifting metabolic health, and given your longevity goal it is the highest-value number to
+move" is the bar.
 
 Grounding sources you may reference by name (a real guideline body — ADA, AHA, WHO, KDIGO, ACE, etc.)
 when explaining why a specific biomarker or category matters:
@@ -56,36 +88,39 @@ Rules for using these sources:
   appears above, so none of it should appear in your output either.
 - If a biomarker or topic isn't covered by the sources above, write generally without naming a source
   rather than guessing one.
+- Never invent a value that isn't in the data you are given.
 
-For key_contributors, strengths, and areas_to_monitor: ground each one in a specific captured value —
-name the biomarker, its actual value, and briefly explain (one clause, citing the relevant source by
-name where you can) what that pattern typically means. "Fasting glucose is elevated" is too thin;
-"Fasting glucose sits at 108 mg/dL, above the ADA's normal range of 70-99 mg/dL — sustained levels here
-are one of the earliest signals of shifting metabolic health" is the bar. Never invent a value that
-isn't in the data given.
+Call write_narrative with:
+- key_contributors (5-8): the heart of the report. Each a full, specific sentence naming a real value
+  and what it means for this person. Use tone "monitor" for something drifting, "good" for a genuine
+  strength. Lead with what matters most; include at least one that connects two pillars.
+- strengths (4-6): what is genuinely working — each anchored to a real value and why it is protective
+  FOR THEM, not vague praise.
+- areas_to_monitor: only what the data actually supports, each naming the value and why it is worth
+  watching. Short or empty is fine — never invent a concern to fill the list.
+- suggested_focus (4-6): the highest-leverage things for THIS person to put attention on, ORDERED
+  most-impactful first, each explaining the why and tied to their values and goals. Focus areas, not a
+  treatment plan.
+- discussion_points (3-5): precise, high-value questions this person can bring to their care team — the
+  specific things worth a professional's time given their exact data, not generic check-in prompts.
+- care_plan: 2-4 SHORT, scannable actions per category, ORDERED highest-leverage first — a checklist a
+  busy executive reads in seconds. The depth and the specific values live in the sections above; the
+  care plan turns them into crisp actions. Each item has TWO parts:
+  - title: imperative headline, ~3-7 words, no trailing period (e.g. "Shift caffeine earlier", "Protect
+    your strong lipid profile"). Under ~50 characters.
+  - detail: ONE supporting line, ~8-16 words — the reason or the specifics. Do NOT recite raw biomarker
+    values/units here (no "triglycerides of 0.66 mmol/L" — that belongs in the sections above). Under
+    ~120 characters.
+  Think premium protocol cards (Superpower/Withings): a bold action, one line of why. Categories:
+  - nutrition: diet/weight-related suggestions
+  - exercise: movement/activity suggestions
+  - medications: only ever "continue current supplement routine" style or "discuss X with your doctor"
+    style — never suggest starting, stopping, or dosing anything
+  - sleep: sleep habit suggestions
+  - mindfulness: stress/recovery suggestions
 
-Call write_narrative with 5-8 key_contributors, 4-6 strengths, 4-6 suggested_focus items, and 3-5
-discussion_points — each a full sentence with real substance, not a 2-3 word label. areas_to_monitor
-should only include what the data actually supports (it's fine for this to be short, or empty, if
-nothing is genuinely concerning — never pad it with invented concerns).
-
-Also fill in care_plan: 2-4 SHORT, scannable actions per category — a checklist a busy executive reads
-in seconds. key_contributors, strengths and discussion_points carry the depth and the specific values;
-the care plan turns that into crisp actions. Each item has TWO parts:
-- title: the action as a short imperative headline, ~3-7 words, no trailing period (e.g. "Shift caffeine
-  earlier", "Protect your strong lipid profile"). Keep under ~50 characters.
-- detail: ONE short supporting line, ~8-16 words — the reason or the specifics. Do NOT recite raw
-  biomarker values or units here (no "triglycerides of 0.66 mmol/L" — that belongs in the sections
-  above). Keep under ~120 characters.
-Think premium protocol cards (Superpower/Withings): a bold action, one line of why. This will be
-reviewed and edited by the participant's doctor before it's shown, so draft it as a strong starting
-point, not a final instruction:
-- nutrition: diet/weight-related suggestions
-- exercise: movement/activity suggestions
-- medications: only ever "continue current supplement routine" style or "discuss X with your
-  doctor" style — never suggest starting, stopping, or dosing anything
-- sleep: sleep habit suggestions
-- mindfulness: stress/recovery suggestions`;
+This whole draft is reviewed and edited by the participant's doctor before it is ever shown, so make it
+a strong, specific, personal starting point — never a final instruction.`;
 
 // Forcing a tool call instead of asking Claude to free-write a JSON string: the
 // API validates/constrains the output to this schema server-side, so there's no
@@ -152,6 +187,50 @@ interface Narrative {
   suggested_focus: string[];
   discussion_points: string[];
   care_plan: CarePlan;
+}
+
+// The participant profile the model gets alongside the biomarkers. Passing the
+// lifestyle inputs, current supplements, and body metrics (not just age/sex/goals)
+// is what lets the narrative credit what the participant is already doing and tie
+// insights to how they actually live -- the difference between a personal report
+// and a generic one. All of these already live on the participants row.
+function participantContext(p: {
+  age: number;
+  sex: string;
+  goals: string[] | null;
+  height_cm?: number | null;
+  weight_kg?: number | null;
+  exercise_frequency?: string | null;
+  smoking?: boolean | null;
+  alcohol_drinks_per_week?: string | null;
+  medications?: string[] | null;
+}) {
+  return {
+    age: p.age,
+    sex: p.sex,
+    goals: p.goals ?? [],
+    height_cm: p.height_cm ?? null,
+    weight_kg: p.weight_kg ?? null,
+    exercise_frequency: p.exercise_frequency ?? null,
+    smoking: p.smoking ?? null,
+    alcohol_drinks_per_week: p.alcohol_drinks_per_week ?? null,
+    current_supplements: p.medications ?? [],
+  };
+}
+
+// The biomarker shape the model sees -- one place so both the full regeneration
+// and the care-plan backfill send identical fields.
+function biomarkerContext(rows: Biomarker[]) {
+  return rows.map((b) => ({
+    key: b.key,
+    label: b.label,
+    pillar: b.pillar,
+    value: b.value,
+    unit: b.unit,
+    ref_low: b.ref_low,
+    ref_high: b.ref_high,
+    flagged: b.flagged,
+  }));
 }
 
 export type RegenerateResult =
@@ -229,19 +308,11 @@ export async function regenerateDraft(
       {
         role: "user",
         content: JSON.stringify({
-          participant: { age: participant.age, sex: participant.sex, goals: participant.goals },
+          participant: participantContext(participant),
           scores,
           biological_age: biologicalAge,
-          biomarkers: rows.map((b) => ({
-            key: b.key,
-            label: b.label,
-            pillar: b.pillar,
-            value: b.value,
-            unit: b.unit,
-            ref_low: b.ref_low,
-            ref_high: b.ref_high,
-            flagged: b.flagged,
-          })),
+          chronological_age: participant.age,
+          biomarkers: biomarkerContext(rows),
           missing_biomarkers: missingBiomarkers,
         }),
       },
@@ -349,19 +420,11 @@ export async function backfillCarePlan(
         content: JSON.stringify({
           // Ground the plan in the card's own signed values, not a fresh
           // recompute — we're filling a gap in this delivered card, not redoing it.
-          participant: { age: participant.age, sex: participant.sex, goals: participant.goals },
+          participant: participantContext(participant),
           scores: existingDraft.scores,
           biological_age: existingDraft.biological_age,
-          biomarkers: rows.map((b) => ({
-            key: b.key,
-            label: b.label,
-            pillar: b.pillar,
-            value: b.value,
-            unit: b.unit,
-            ref_low: b.ref_low,
-            ref_high: b.ref_high,
-            flagged: b.flagged,
-          })),
+          chronological_age: participant.age,
+          biomarkers: biomarkerContext(rows),
           missing_biomarkers: existingDraft.missing_biomarkers ?? [],
         }),
       },
