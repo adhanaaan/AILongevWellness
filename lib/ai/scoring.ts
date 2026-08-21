@@ -1,4 +1,5 @@
 import type { Biomarker, OutOfRangeBiomarker, Pillar, PillarScores } from "../types/db";
+import { scoreMarker } from "./markerDirection";
 
 // The full biomarker vocabulary the platform knows how to score, by pillar —
 // used to report which ones are still missing for a participant, regardless
@@ -19,14 +20,16 @@ export const BIOMARKER_KEYS_BY_PILLAR: Record<Pillar, string[]> = {
 
 const NEUTRAL_SCORE = 70;
 
-/** 100 if within range; degrades toward 0 the further outside [ref_low, ref_high] the value falls. */
+/**
+ * 100 if within range / on the good side; degrades toward 0 the further PAST THE
+ * BAD BOUND the value falls. Direction-aware (lib/ai/markerDirection.ts): a
+ * one-directional marker read past its GOOD bound (e.g. HRV above its ceiling)
+ * scores 100, not a penalty. Re-derives from the value rather than the stored
+ * `flagged` flag so scoring can never disagree with direction.
+ */
 function markerScore(b: Biomarker): number {
-  if (!b.flagged || b.ref_low === null || b.ref_high === null || b.value === null) return 100;
-  const band = b.ref_high - b.ref_low;
-  if (band <= 0) return 100;
-  const distance = b.value < b.ref_low ? b.ref_low - b.value : b.value - b.ref_high;
-  const overshoot = distance / band;
-  return Math.max(0, Math.round(100 - overshoot * 100));
+  if (b.ref_low === null || b.ref_high === null || b.value === null) return 100;
+  return scoreMarker(b.key, b.value, b.ref_low, b.ref_high);
 }
 
 /**

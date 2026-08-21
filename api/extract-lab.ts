@@ -4,6 +4,7 @@ import { sniffMediaType, UNSUPPORTED_FILE_MESSAGE } from "../lib/ai/sniffMediaTy
 import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
 import { LAB_CATALOG_BY_KEY } from "../lib/ai/labCatalog";
+import { isMarkerFlagged } from "../lib/ai/markerDirection";
 import { BUCKET_BY_KIND } from "../lib/data/storageBuckets";
 import { convertToTargetUnit } from "../lib/ai/unitConversion";
 import { flagIfPastSignoff } from "../lib/data/pipelineAttention";
@@ -275,7 +276,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ref_high: entry.ref_high,
         source: "lab_extract",
         status: "needs_review",
-        flagged: value < entry.ref_low || value > entry.ref_high,
+        flagged: isMarkerFlagged(entry.key, value, entry.ref_low, entry.ref_high),
         measured_at: measuredAt,
       };
     });

@@ -185,6 +185,7 @@ export default function CarePlanCategoryPage() {
         <Button
           variant="ghost"
           size="sm"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           iconLeft={<ArrowLeft size={16} color={colors.inkMuted} />}
           onPress={() => router.back()}
         >
@@ -454,7 +455,7 @@ const styles = StyleSheet.create({
   },
   ringCaption: {
     fontFamily: fontFamilies.bodySemiBold,
-    fontSize: 8,
+    fontSize: 11,
     letterSpacing: 0.6,
     color: colors.inkMuted,
     marginTop: 1,

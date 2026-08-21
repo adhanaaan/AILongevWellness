@@ -15,6 +15,8 @@ export interface TrendSparklineProps {
   refHigh?: number | null;
   width?: number;
   height?: number;
+  /** Screen-reader label. Defaults to a concise latest-value + direction summary. */
+  accessibilityLabel?: string;
 }
 
 // A calm-clinical sparkline: one thin line over a soft, low-opacity area fill,
@@ -29,6 +31,7 @@ export function TrendSparkline({
   refHigh,
   width = 260,
   height = 88,
+  accessibilityLabel,
 }: TrendSparklineProps) {
   const gradientId = React.useId();
   const padX = 6;
@@ -79,8 +82,20 @@ export function TrendSparkline({
 
   const last = pts[pts.length - 1];
 
+  const latestValue = values[values.length - 1];
+  const direction =
+    values.length >= 2
+      ? latestValue > values[0]
+        ? "trending up"
+        : latestValue < values[0]
+          ? "trending down"
+          : "holding steady"
+      : "single reading";
+  const resolvedLabel =
+    accessibilityLabel ?? `Trend chart, latest value ${latestValue}, ${direction}`;
+
   return (
-    <View style={styles.wrap}>
+    <View style={styles.wrap} accessibilityRole="image" accessibilityLabel={resolvedLabel}>
       <Svg width={width} height={height}>
         <Defs>
           <LinearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">

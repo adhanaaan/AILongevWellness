@@ -12,6 +12,7 @@ import {
   computeOutOfRange,
 } from "../ai/scoring";
 import { computePhenoAge } from "../ai/phenoAge";
+import { isMarkerFlagged } from "../ai/markerDirection";
 import type {
   AiDraft,
   Biomarker,
@@ -149,6 +150,15 @@ export class SupabaseRepository implements Repository {
     return result;
   }
 
+  async withdrawConsent(_participantId: string): Promise<void> {
+    // Consent columns are non-forgeable (migration 0014): a direct participant
+    // UPDATE to them is blocked, so withdrawal goes through the security-definer
+    // withdraw_consent() RPC, which targets the caller's own participant.
+    const { error } = await this.client.rpc("withdraw_consent");
+    if (error) throw new Error(error.message);
+    this.notify();
+  }
+
   async getCaptureChannels(participantId: string): Promise<CaptureChannel[]> {
     const { data, error } = await this.client
       .from("capture_channels")
@@ -236,7 +246,7 @@ export class SupabaseRepository implements Repository {
     const merged = { ...existing, ...patch };
     const flagged =
       merged.value !== null && merged.ref_low !== null && merged.ref_high !== null
-        ? merged.value < merged.ref_low || merged.value > merged.ref_high
+        ? isMarkerFlagged(merged.key, merged.value, merged.ref_low, merged.ref_high)
         : merged.flagged;
 
     const { data, error } = await this.client

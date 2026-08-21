@@ -248,6 +248,7 @@ function AvaChatContent({
                       onPress={() => router.push(a.route as never)}
                       accessibilityRole="button"
                       accessibilityLabel={a.label}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       activeOpacity={0.8}
                     >
                       <Text style={styles.actionChipText}>{a.label}</Text>

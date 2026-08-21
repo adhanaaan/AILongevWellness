@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   ScrollView,
   StyleSheet,
-  Dimensions,
+  useWindowDimensions,
   Modal,
   Platform,
 } from "react-native";
@@ -34,7 +34,8 @@ export function AdminShell({ children, title, headerActions }: AdminShellProps) 
   const pathname = usePathname();
   const { session } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
-  const isWide = Dimensions.get("window").width >= 768;
+  const { width } = useWindowDimensions();
+  const isWide = width >= 768;
 
   const email = session?.user?.email ?? "Demo clinician";
   const initials = email.slice(0, 2).toUpperCase();
@@ -47,7 +48,12 @@ export function AdminShell({ children, title, headerActions }: AdminShellProps) 
           <Text style={styles.sidebarSubtitle}>Admin Portal</Text>
         </View>
         {!isWide && (
-          <TouchableOpacity onPress={() => setMenuOpen(false)}>
+          <TouchableOpacity
+            onPress={() => setMenuOpen(false)}
+            accessibilityRole="button"
+            accessibilityLabel="Close menu"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
             <X size={20} color={colors.inkMuted} />
           </TouchableOpacity>
         )}
@@ -118,7 +124,12 @@ export function AdminShell({ children, title, headerActions }: AdminShellProps) 
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               {!isWide && (
-                <TouchableOpacity onPress={() => setMenuOpen(true)}>
+                <TouchableOpacity
+                  onPress={() => setMenuOpen(true)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Open menu"
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
                   <Menu size={22} color={colors.charcoal} />
                 </TouchableOpacity>
               )}

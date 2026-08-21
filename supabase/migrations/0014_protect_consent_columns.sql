@@ -33,7 +33,7 @@ language plpgsql security definer set search_path = public as $$
 begin
   perform set_config('app.trusted_consent', 'on', true);
   update public.participants
-    set consent_withdrawn_at = now()
+    set consent_withdrawn_at = now(), consent_given = false
     where id = current_user_participant_id();
 end;
 $$;

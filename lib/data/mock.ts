@@ -29,6 +29,7 @@ import type { Repository, SignedCard } from "./repository";
 import { createSupabaseRepository } from "./supabase";
 import { computeUnlockedSections } from "../onboarding/flow";
 import { sexAwareRange } from "../ai/sexAwareRanges";
+import { MARKER_DIRECTION, isMarkerFlagged } from "../ai/markerDirection";
 import { computePillarScores, computeBiologicalAge } from "../ai/scoring";
 import { computePhenoAge } from "../ai/phenoAge";
 
@@ -108,6 +109,10 @@ interface BiomarkerTemplate {
   ref_low: number;
   ref_high: number;
   source: BiomarkerSource;
+  // Generation-realism hint for value CENTERING only, and only for markers that
+  // lib/ai/markerDirection.ts leaves two-sided but that still read best when low
+  // (stress). Flagging/direction for every mapped marker is single-sourced from
+  // MARKER_DIRECTION — do not duplicate a mapped marker's direction here.
   lowerIsBetter?: boolean;
 }
 
@@ -117,10 +122,10 @@ const BIOMARKER_TEMPLATES: Record<Pillar, BiomarkerTemplate[]> = {
     { key: "diastolic_bp", label: "Diastolic blood pressure", unit: "mmHg", ref_low: 60, ref_high: 80, source: "wearable" },
     { key: "resting_hr", label: "Resting heart rate", unit: "bpm", ref_low: 50, ref_high: 80, source: "wearable" },
     { key: "hrv", label: "Heart rate variability", unit: "ms", ref_low: 40, ref_high: 70, source: "wearable" },
-    { key: "total_cholesterol", label: "Total cholesterol", unit: "mmol/L", ref_low: 2.5, ref_high: 5.2, source: "lab_extract", lowerIsBetter: true },
-    { key: "ldl_c", label: "LDL cholesterol", unit: "mmol/L", ref_low: 1.0, ref_high: 3.0, source: "lab_extract", lowerIsBetter: true },
+    { key: "total_cholesterol", label: "Total cholesterol", unit: "mmol/L", ref_low: 2.5, ref_high: 5.2, source: "lab_extract" },
+    { key: "ldl_c", label: "LDL cholesterol", unit: "mmol/L", ref_low: 1.0, ref_high: 3.0, source: "lab_extract" },
     { key: "hdl_c", label: "HDL cholesterol", unit: "mmol/L", ref_low: 1.0, ref_high: 2.5, source: "lab_extract" },
-    { key: "hscrp", label: "hs-CRP", unit: "mg/L", ref_low: 0, ref_high: 3.0, source: "lab_extract", lowerIsBetter: true },
+    { key: "hscrp", label: "hs-CRP", unit: "mg/L", ref_low: 0, ref_high: 3.0, source: "lab_extract" },
   ],
   metabolic: [
     { key: "fasting_glucose", label: "Fasting glucose", unit: "mg/dL", ref_low: 70, ref_high: 99, source: "lab_extract" },
@@ -130,7 +135,7 @@ const BIOMARKER_TEMPLATES: Record<Pillar, BiomarkerTemplate[]> = {
     { key: "waist_hip_ratio", label: "Waist-to-hip ratio", unit: "ratio", ref_low: 0.7, ref_high: 0.9, source: "body_comp" },
     { key: "bmi", label: "BMI", unit: "kg/m²", ref_low: 18.5, ref_high: 25, source: "body_comp" },
     { key: "body_fat_pct", label: "Body fat %", unit: "%", ref_low: 8, ref_high: 24, source: "body_comp" },
-    { key: "visceral_fat", label: "Visceral fat", unit: "level", ref_low: 1, ref_high: 12, source: "body_comp", lowerIsBetter: true },
+    { key: "visceral_fat", label: "Visceral fat", unit: "level", ref_low: 1, ref_high: 12, source: "body_comp" },
     { key: "vitamin_d", label: "Vitamin D", unit: "nmol/L", ref_low: 50, ref_high: 125, source: "lab_extract" },
     { key: "creatinine", label: "Creatinine", unit: "µmol/L", ref_low: 60, ref_high: 110, source: "lab_extract" },
     // CBC + general chemistry -- exist (with creatinine/fasting_glucose above
@@ -138,14 +143,14 @@ const BIOMARKER_TEMPLATES: Record<Pillar, BiomarkerTemplate[]> = {
     // all 9 PhenoAge inputs and the health card shows the real formula, not
     // just the fallback composite.
     { key: "albumin", label: "Albumin", unit: "g/L", ref_low: 35, ref_high: 50, source: "lab_extract" },
-    { key: "lymphocyte_pct", label: "Lymphocytes (%)", unit: "%", ref_low: 20, ref_high: 40, source: "lab_extract", lowerIsBetter: true },
+    { key: "lymphocyte_pct", label: "Lymphocytes (%)", unit: "%", ref_low: 20, ref_high: 40, source: "lab_extract" },
     { key: "mcv", label: "MCV (mean cell volume)", unit: "fL", ref_low: 80, ref_high: 100, source: "lab_extract" },
-    { key: "rdw", label: "RDW (red cell distribution width)", unit: "%", ref_low: 11.5, ref_high: 14.5, source: "lab_extract", lowerIsBetter: true },
-    { key: "alp", label: "ALP (alkaline phosphatase)", unit: "U/L", ref_low: 44, ref_high: 147, source: "lab_extract", lowerIsBetter: true },
-    { key: "wbc", label: "White blood cell count", unit: "10³/µL", ref_low: 4.5, ref_high: 11.0, source: "lab_extract", lowerIsBetter: true },
+    { key: "rdw", label: "RDW (red cell distribution width)", unit: "%", ref_low: 11.5, ref_high: 14.5, source: "lab_extract" },
+    { key: "alp", label: "ALP (alkaline phosphatase)", unit: "U/L", ref_low: 44, ref_high: 147, source: "lab_extract" },
+    { key: "wbc", label: "White blood cell count", unit: "10³/µL", ref_low: 4.5, ref_high: 11.0, source: "lab_extract" },
   ],
   mental: [
-    { key: "reaction_time", label: "Cognitive reaction time", unit: "ms", ref_low: 250, ref_high: 400, source: "recognize", lowerIsBetter: true },
+    { key: "reaction_time", label: "Cognitive reaction time", unit: "ms", ref_low: 250, ref_high: 400, source: "recognize" },
     { key: "cog_composite", label: "Cognitive composite score", unit: "/100", ref_low: 70, ref_high: 100, source: "recognize" },
     { key: "sleep_quality", label: "Sleep quality index", unit: "/100", ref_low: 70, ref_high: 100, source: "wearable" },
     { key: "sleep_hours", label: "Sleep duration", unit: "hours", ref_low: 7, ref_high: 9, source: "wearable" },
@@ -163,10 +168,17 @@ function genBiomarkersForScore(participantId: string, pillar: Pillar, score: num
     const { ref_low, ref_high } = sexAwareRange(t.key, sex, t);
     const r = mulberry32(seed + i * 17)();
     const span = ref_high - ref_low;
-    const center = t.lowerIsBetter ? ref_low + span * (1 - score / 100) : ref_low + span * (score / 100);
+    // Direction for value CENTERING comes from the central map first (a
+    // lower-is-better marker's high score sits near ref_low); t.lowerIsBetter
+    // is only a generation-realism hint for the few markers the map leaves
+    // two-sided but that still read best low (stress).
+    const lowerIsBetter = MARKER_DIRECTION[t.key] === "lower" || t.lowerIsBetter === true;
+    const center = lowerIsBetter ? ref_low + span * (1 - score / 100) : ref_low + span * (score / 100);
     const jitter = (r - 0.5) * span * 0.3;
     const value = Math.round((center + jitter) * 100) / 100;
-    const flagged = value < ref_low || value > ref_high;
+    // Flagging is direction-aware and single-sourced (lib/ai/markerDirection.ts),
+    // matching the real backend (CLAUDE.md rule #3).
+    const flagged = isMarkerFlagged(t.key, value, ref_low, ref_high);
     return {
       id: `bm-${participantId}-${t.key}`,
       participant_id: participantId,
@@ -691,6 +703,17 @@ class MockRepository implements Repository {
     return updated;
   }
 
+  async withdrawConsent(participantId: string): Promise<void> {
+    const existing = this.participants.get(participantId);
+    if (!existing) throw new Error(`Unknown participant ${participantId}`);
+    this.participants.set(participantId, {
+      ...existing,
+      consent_given: false,
+      consent_withdrawn_at: nowIso(),
+    });
+    this.notify();
+  }
+
   async getCaptureChannels(participantId: string): Promise<CaptureChannel[]> {
     return CHANNELS.map((c) => this.captureChannels.get(`${participantId}:${c}`)).filter(
       (c): c is CaptureChannel => Boolean(c)
@@ -779,7 +802,7 @@ class MockRepository implements Repository {
     // pre-correction reading.
     const flagged =
       merged.value !== null && merged.ref_low !== null && merged.ref_high !== null
-        ? merged.value < merged.ref_low || merged.value > merged.ref_high
+        ? isMarkerFlagged(merged.key, merged.value, merged.ref_low, merged.ref_high)
         : merged.flagged;
     const updated: Biomarker = { ...merged, flagged, updated_at: nowIso() };
     this.biomarkers.set(id, updated);
