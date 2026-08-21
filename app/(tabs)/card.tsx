@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { MessageCircle, ClipboardList, ChevronRight } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { FadeInView } from "@/components/ui/FadeInView";
+import { PressableScale } from "@/components/ui/PressableScale";
 import { InsightsSkeleton } from "@/components/participant/InsightsSkeleton";
 import { BodyMap } from "@/components/participant/BodyMap";
 import { BioAgeReveal } from "@/components/participant/BioAgeReveal";
@@ -308,15 +309,17 @@ export default function CardPage() {
         </FadeInView>
       </ScrollView>
 
-      <Pressable
+      <PressableScale
         onPress={askAva}
+        haptics="light"
         accessibilityRole="button"
         accessibilityLabel="Ask Ava a follow-up question"
+        containerStyle={styles.askAvaFabPos}
         style={styles.askAvaFab}
       >
         <MessageCircle size={18} color={colors.white} />
         <Text style={styles.askAvaFabText}>Ask Ava</Text>
-      </Pressable>
+      </PressableScale>
     </MobileShell>
   );
 }
@@ -368,10 +371,12 @@ const styles = StyleSheet.create({
   },
   expanded: { marginTop: 16 },
   nextStepsCard: { marginTop: 12 },
-  askAvaFab: {
+  askAvaFabPos: {
     position: "absolute",
     right: spacing.xl,
     bottom: spacing.xl,
+  },
+  askAvaFab: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.sm,

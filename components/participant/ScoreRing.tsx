@@ -1,7 +1,10 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { Animated, Easing, View, Text, StyleSheet } from "react-native";
 import Svg, { Circle, Defs, LinearGradient, Stop } from "react-native-svg";
 import { colors, fontFamilies, fontSizes, spacing, teal } from "@/lib/theme/tokens";
+import { useReducedMotion } from "@/lib/anim/useReducedMotion";
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export interface ScoreRingProps {
   value: number;
@@ -27,6 +30,31 @@ export function ScoreRing({
   const circumference = 2 * Math.PI * radius;
   const clamped = Math.max(0, Math.min(100, value));
   const strokeDashoffset = circumference * (1 - clamped / 100);
+
+  // Sweep the arc from empty to its value on mount (once). Reduce-motion jumps
+  // straight to the final offset. The 0→1 progress interpolates to the offset.
+  const reduceMotion = useReducedMotion();
+  const progress = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (reduceMotion) {
+      progress.setValue(1);
+      return;
+    }
+    progress.setValue(0);
+    const anim = Animated.timing(progress, {
+      toValue: 1,
+      duration: 900,
+      easing: Easing.out(Easing.cubic),
+      // Animating an SVG stroke prop, which the native driver can't handle.
+      useNativeDriver: false,
+    });
+    anim.start();
+    return () => anim.stop();
+  }, [progress, reduceMotion, clamped]);
+  const animatedOffset = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: [circumference, strokeDashoffset],
+  });
 
   const isGood = status === "good";
   // Gradient sweeps a lighter tint into the brand hue so the stroke has depth
@@ -62,7 +90,7 @@ export function ScoreRing({
             strokeWidth={strokeWidth}
             fill="none"
           />
-          <Circle
+          <AnimatedCircle
             cx={size / 2}
             cy={size / 2}
             r={radius}
@@ -71,7 +99,7 @@ export function ScoreRing({
             fill="none"
             strokeLinecap="round"
             strokeDasharray={`${circumference}`}
-            strokeDashoffset={strokeDashoffset}
+            strokeDashoffset={animatedOffset}
             rotation={-90}
             origin={`${size / 2}, ${size / 2}`}
           />

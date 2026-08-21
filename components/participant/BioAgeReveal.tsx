@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { Animated, Easing, View, Text, StyleSheet } from "react-native";
 import Svg, {
   Defs,
   RadialGradient,
@@ -13,7 +13,20 @@ import Svg, {
 } from "react-native-svg";
 import { ChevronUp, ChevronDown, ChevronRight } from "lucide-react-native";
 import { GradientOrb } from "@/components/ui/GradientOrb";
+import { PressableScale } from "@/components/ui/PressableScale";
+import { FadeInView } from "@/components/ui/FadeInView";
+import { useCountUp } from "@/lib/anim/useCountUp";
+import { useReducedMotion } from "@/lib/anim/useReducedMotion";
+import { haptic } from "@/lib/anim/haptics";
 import { colors, fontFamilies, fontSizes, radii, shadows, spacing, teal } from "@/lib/theme/tokens";
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const AnimatedG = Animated.createAnimatedComponent(G);
+
+// SVG number props are typed string|number; Animated values are accepted at
+// runtime (that's the whole point of createAnimatedComponent) but not by the
+// static prop types, so animated offsets/opacity/scale are cast at the boundary.
+const anim = (v: Animated.Animated) => v as unknown as number;
 
 export interface RevealPillar {
   key: string;
@@ -66,6 +79,34 @@ function BodyFigure({ pillars }: { pillars: RevealPillar[] }) {
   const byKey = (k: BodyKey) => pillars.find((p) => p.key === k);
   const order: BodyKey[] = ["mental", "vascular", "metabolic"];
 
+  // One 0→1 value per node: drives the ring draw-on (stroke offset), a gentle
+  // scale-up and the fade of its glow/value. Staggered so the systems light up
+  // in sequence. Reduce-motion sets them straight to their final state.
+  const reduceMotion = useReducedMotion();
+  const nodeAnims = useRef(order.map(() => new Animated.Value(0))).current;
+  useEffect(() => {
+    if (reduceMotion) {
+      nodeAnims.forEach((a) => a.setValue(1));
+      return;
+    }
+    nodeAnims.forEach((a) => a.setValue(0));
+    const seq = Animated.stagger(
+      150,
+      nodeAnims.map((a) =>
+        Animated.timing(a, {
+          toValue: 1,
+          duration: 650,
+          delay: 820,
+          easing: Easing.out(Easing.cubic),
+          // Driving SVG stroke/opacity/scale props — cannot use the native driver.
+          useNativeDriver: false,
+        })
+      )
+    );
+    seq.start();
+    return () => seq.stop();
+  }, [reduceMotion, nodeAnims]);
+
   return (
     <View style={styles.svgWrap}>
       <Svg width="100%" height="100%" viewBox="0 0 320 400" preserveAspectRatio="xMidYMid meet">
@@ -99,30 +140,52 @@ function BodyFigure({ pillars }: { pillars: RevealPillar[] }) {
         </G>
         <Ellipse cx="150" cy="150" rx="34" ry="60" fill="#ffffff" opacity={0.04} />
 
-        {/* region glows */}
-        {order.map((k) => {
-          const p = byKey(k);
-          if (!p) return null;
-          const L = BODY_LAYOUT[k];
-          return <Circle key={`glow-${k}`} cx={CX} cy={L.cy} r={L.glowR} fill={`url(#${id(`glow-${k}`)})`} />;
-        })}
-
-        {/* nodes */}
-        {order.map((k) => {
+        {/* nodes: glow + drawing-on ring + score, fading and scaling in together */}
+        {order.map((k, i) => {
           const p = byKey(k);
           if (!p) return null;
           const L = BODY_LAYOUT[k];
           const { color } = pillarMeta(p.value);
+          const a = nodeAnims[i];
+          const circ = 2 * Math.PI * L.r;
+          const ringOffset = a.interpolate({ inputRange: [0, 1], outputRange: [circ, 0] });
+          const scale = a.interpolate({ inputRange: [0, 1], outputRange: [0.82, 1] });
+          const onPress = () => {
+            haptic("selection");
+            p.onPress();
+          };
           return (
-            <G key={`node-${k}`} onPress={p.onPress} accessibilityLabel={p.accessibilityLabel}>
-              <Circle cx={CX} cy={L.cy} r={L.r} fill={`url(#${id("glass")})`} stroke={color} strokeWidth={2.5} />
+            <AnimatedG
+              key={`node-${k}`}
+              opacity={anim(a)}
+              scale={anim(scale)}
+              originX={CX}
+              originY={L.cy}
+              onPress={onPress}
+              accessibilityLabel={p.accessibilityLabel}
+            >
+              <Circle cx={CX} cy={L.cy} r={L.glowR} fill={`url(#${id(`glow-${k}`)})`} />
+              <Circle cx={CX} cy={L.cy} r={L.r} fill={`url(#${id("glass")})`} />
+              <AnimatedCircle
+                cx={CX}
+                cy={L.cy}
+                r={L.r}
+                fill="none"
+                stroke={color}
+                strokeWidth={2.5}
+                strokeLinecap="round"
+                strokeDasharray={`${circ}`}
+                strokeDashoffset={anim(ringOffset)}
+                rotation={-90}
+                origin={`${CX}, ${L.cy}`}
+              />
               <SvgText x={CX} y={L.cy + L.fs * 0.34} fill={colors.inkOnDark} fontSize={L.fs} fontWeight="800" textAnchor="middle">
                 {p.value}
               </SvgText>
               <SvgText x={CX} y={L.labelY} fill={color} fontSize={10} fontWeight="700" textAnchor="middle">
                 {L.label}
               </SvgText>
-            </G>
+            </AnimatedG>
           );
         })}
       </Svg>
@@ -142,51 +205,73 @@ export function BioAgeReveal({ bioAge, chronoAge, name, narrative, pillars, onPr
   const max = chronoAge + AGE_WINDOW;
   const markerPct = Math.max(5, Math.min(95, ((bioAge - min) / (max - min)) * 100));
 
+  // The reveal: the big number eases up to its value on mount, and everything
+  // below it fades/slides in staggered behind it.
+  const displayAge = useCountUp(bioAge, { duration: 900 });
+
   return (
     <View style={styles.card}>
       <GradientOrb tone="teal" size={320} style={styles.orbBack} />
       <GradientOrb tone="amber" size={200} style={styles.orbFront} />
 
       {onPressBio && (
-        <Pressable style={styles.hint} onPress={onPressBio} accessibilityRole="button" accessibilityLabel="See how your biological age is calculated">
+        <PressableScale
+          style={styles.hint}
+          onPress={onPressBio}
+          haptics="selection"
+          accessibilityRole="button"
+          accessibilityLabel="See how your biological age is calculated"
+        >
           <Text style={styles.hintText}>How this is calculated</Text>
           <ChevronRight size={13} color={colors.inkOnDarkMuted} />
-        </Pressable>
+        </PressableScale>
       )}
 
       <Text style={styles.eyebrow}>
         {name ? `${name}, your biological age is` : "Your biological age"}
       </Text>
 
-      <View style={styles.numberRow}>
-        <Text style={styles.number}>{bioAge}</Text>
+      <View
+        style={styles.numberRow}
+        accessibilityRole="text"
+        accessibilityLabel={`Your biological age is ${bioAge} years`}
+      >
+        <Text style={styles.number}>{displayAge}</Text>
         <Text style={styles.unit}>years</Text>
       </View>
 
-      <View style={[styles.delta, younger ? styles.deltaYounger : styles.deltaOlder]}>
-        {delta !== 0 &&
-          (younger ? (
-            <ChevronUp size={14} color={colors.terracotta} strokeWidth={2.4} />
-          ) : (
-            <ChevronDown size={14} color={colors.amberLight} strokeWidth={2.4} />
-          ))}
-        <Text style={[styles.deltaText, younger ? styles.deltaTextYounger : styles.deltaTextOlder]}>{deltaLabel}</Text>
-      </View>
+      <FadeInView delay={480}>
+        <View style={[styles.delta, younger ? styles.deltaYounger : styles.deltaOlder]}>
+          {delta !== 0 &&
+            (younger ? (
+              <ChevronUp size={14} color={colors.terracotta} strokeWidth={2.4} />
+            ) : (
+              <ChevronDown size={14} color={colors.amberLight} strokeWidth={2.4} />
+            ))}
+          <Text style={[styles.deltaText, younger ? styles.deltaTextYounger : styles.deltaTextOlder]}>{deltaLabel}</Text>
+        </View>
+      </FadeInView>
 
-      {narrative ? <Text style={styles.narrative}>{narrative}</Text> : null}
+      {narrative ? (
+        <FadeInView delay={620}>
+          <Text style={styles.narrative}>{narrative}</Text>
+        </FadeInView>
+      ) : null}
 
       {/* Younger <-> older position bar */}
-      <View style={styles.bar}>
-        <View style={styles.track}>
-          <View style={styles.centerTick} />
-          <View style={[styles.marker, { left: `${markerPct}%`, backgroundColor: younger ? colors.terracotta : colors.amberLight }]} />
+      <FadeInView delay={740} style={styles.barFade}>
+        <View style={styles.bar}>
+          <View style={styles.track}>
+            <View style={styles.centerTick} />
+            <View style={[styles.marker, { left: `${markerPct}%`, backgroundColor: younger ? colors.terracotta : colors.amberLight }]} />
+          </View>
+          <View style={styles.barEnds}>
+            <Text style={styles.barEnd}>Younger</Text>
+            <Text style={styles.barAnchor}>Your age {chronoAge}</Text>
+            <Text style={styles.barEnd}>Older</Text>
+          </View>
         </View>
-        <View style={styles.barEnds}>
-          <Text style={styles.barEnd}>Younger</Text>
-          <Text style={styles.barAnchor}>Your age {chronoAge}</Text>
-          <Text style={styles.barEnd}>Older</Text>
-        </View>
-      </View>
+      </FadeInView>
 
       <View style={styles.divider} />
 
@@ -194,24 +279,27 @@ export function BioAgeReveal({ bioAge, chronoAge, name, narrative, pillars, onPr
       <BodyFigure pillars={pillars} />
 
       {/* Status legend — pillar name + Strong/Watch/Focus, tappable */}
-      <View style={styles.legend}>
-        {pillars.map((p) => {
-          const meta = pillarMeta(p.value);
-          return (
-            <Pressable
-              key={p.key}
-              style={styles.legendItem}
-              onPress={p.onPress}
-              accessibilityRole="button"
-              accessibilityLabel={p.accessibilityLabel}
-            >
-              <View style={[styles.legendDot, { backgroundColor: meta.color }]} />
-              <Text style={styles.legendName}>{p.label}</Text>
-              <Text style={[styles.legendTag, { color: meta.color }]}>{meta.tag}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      <FadeInView delay={1150} style={styles.legendFade}>
+        <View style={styles.legend}>
+          {pillars.map((p) => {
+            const meta = pillarMeta(p.value);
+            return (
+              <PressableScale
+                key={p.key}
+                style={styles.legendItem}
+                onPress={p.onPress}
+                haptics="selection"
+                accessibilityRole="button"
+                accessibilityLabel={p.accessibilityLabel}
+              >
+                <View style={[styles.legendDot, { backgroundColor: meta.color }]} />
+                <Text style={styles.legendName}>{p.label}</Text>
+                <Text style={[styles.legendTag, { color: meta.color }]}>{meta.tag}</Text>
+              </PressableScale>
+            );
+          })}
+        </View>
+      </FadeInView>
 
       <Text style={styles.foot}>Tap a system to see what&apos;s driving it.</Text>
     </View>
@@ -237,6 +325,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 2,
+    zIndex: 2,
   },
   hintText: { fontFamily: fontFamilies.body, fontSize: fontSizes.caption, color: colors.inkOnDarkMuted },
   eyebrow: {
@@ -286,6 +375,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl,
     maxWidth: 320,
   },
+  barFade: { width: "100%" },
   bar: {
     width: "100%",
     marginTop: spacing["2xl"],
@@ -332,6 +422,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   svgWrap: { width: "100%", height: 380 },
+  legendFade: { width: "100%" },
   legend: {
     flexDirection: "row",
     justifyContent: "space-around",
