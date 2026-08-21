@@ -144,7 +144,7 @@ export default function WelcomePage() {
           <View style={styles.textBlock}>
             <Text style={styles.eyebrow}>EMBRACING LONGEVITY</Text>
             <Text style={styles.title}>
-              Your Executive{"\n"}Health Intelligence
+              Integrated Longevity{"\n"}Wellness Intelligence
             </Text>
             <Text style={styles.subtitle}>
               All your wellness data in one place, reviewed by your care team.
