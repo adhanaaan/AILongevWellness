@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
 import { RECOGNIZE_CATALOG_BY_KEY } from "../lib/ai/recognizeCatalog";
+import { isMarkerFlagged } from "../lib/ai/markerDirection";
 import { flagIfPastSignoff } from "../lib/data/pipelineAttention";
 import { resyncDraftScores } from "../lib/data/resyncDraftScores";
 import { regenerateDraft } from "../lib/ai/draftGeneration";
@@ -89,7 +90,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       ref_high: entry.ref_high,
       source: "recognize",
       status: "entered",
-      flagged: value < entry.ref_low || value > entry.ref_high,
+      flagged: isMarkerFlagged(entry.key, value, entry.ref_low, entry.ref_high),
       updated_at: new Date().toISOString(),
     };
   });

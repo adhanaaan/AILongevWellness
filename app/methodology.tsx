@@ -17,6 +17,7 @@ export default function MethodologyPage() {
         <Button
           variant="ghost"
           size="sm"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           iconLeft={<ArrowLeft size={16} color={colors.inkMuted} />}
           onPress={() => router.back()}
         >

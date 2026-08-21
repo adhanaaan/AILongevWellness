@@ -155,13 +155,13 @@ const styles = StyleSheet.create({
   },
   refLabel: {
     fontFamily: fontFamilies.body,
-    fontSize: fontSizes.overline,
+    fontSize: fontSizes.caption,
     color: colors.inkMuted,
     flexShrink: 1,
   },
   trend: {
     fontFamily: fontFamilies.bodyMedium,
-    fontSize: fontSizes.overline,
+    fontSize: fontSizes.caption,
     color: colors.inkMuted,
   },
   trendSolo: { marginTop: spacing.md },

@@ -13,6 +13,8 @@ export interface ProgressRingProps {
   trackColor: string;
   /** Centered content (a count, an icon) rendered in the ring well. */
   children?: React.ReactNode;
+  /** Screen-reader label. Defaults to a "N% complete" summary of `fraction`. */
+  accessibilityLabel?: string;
 }
 
 // A generic gradient progress ring with a faint track underneath and arbitrary
@@ -27,6 +29,7 @@ export function ProgressRing({
   to,
   trackColor,
   children,
+  accessibilityLabel,
 }: ProgressRingProps) {
   // useId() strings contain colons which break svg url(#id) refs; strip them.
   const gradientId = React.useId().replace(/:/g, "");
@@ -36,7 +39,11 @@ export function ProgressRing({
   const dashoffset = circumference * (1 - clamped);
 
   return (
-    <View style={{ width: size, height: size }}>
+    <View
+      style={{ width: size, height: size }}
+      accessibilityRole="image"
+      accessibilityLabel={accessibilityLabel ?? `${Math.round(clamped * 100)}% complete`}
+    >
       <Svg width={size} height={size}>
         <Defs>
           <LinearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">

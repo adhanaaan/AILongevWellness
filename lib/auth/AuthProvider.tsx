@@ -66,17 +66,10 @@ function RealAuthProvider({ children }: { children: React.ReactNode }) {
       // it once here instead of threading a boolean through every signup/
       // sign-in/email-confirmation branch. Guarded so it only ever writes once.
       if (data?.role === "participant" && data.participant_id) {
-        const { data: participant } = await client
-          .from("participants")
-          .select("consent_given")
-          .eq("id", data.participant_id)
-          .maybeSingle();
-        if (participant && !participant.consent_given) {
-          await client
-            .from("participants")
-            .update({ consent_given: true, consented_at: new Date().toISOString() })
-            .eq("id", data.participant_id);
-        }
+        // Consent columns are non-forgeable (migration 0014): a direct client
+        // write is blocked, so record it through the security-definer RPC, which
+        // is idempotent (only sets consent on the caller's own row, once).
+        await client.rpc("record_consent");
       }
     },
     [client]

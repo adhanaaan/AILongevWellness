@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import { ArrowLeft, ShieldCheck, ShieldOff, Database } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { updateParticipantAction } from "@/lib/data/actions";
+import { withdrawConsentAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import type { Participant } from "@/lib/types/db";
@@ -41,10 +41,9 @@ export default function PrivacyPage() {
     setError(null);
     setBusy(true);
     try {
-      await updateParticipantAction(participantId, {
-        consent_given: false,
-        consent_withdrawn_at: new Date().toISOString(),
-      });
+      // Goes through the withdraw_consent RPC — consent columns are non-forgeable
+      // (a direct participant write to them is blocked by migration 0014).
+      await withdrawConsentAction(participantId);
       // Sign out so processing stops from the participant's side. The care team
       // sees the withdrawal on the admin detail page and handles data per the
       // retreat's policy — withdrawal here does not auto-delete anything.
@@ -72,6 +71,7 @@ export default function PrivacyPage() {
         <Button
           variant="ghost"
           size="sm"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           iconLeft={<ArrowLeft size={16} color={colors.inkMuted} />}
           onPress={() => router.back()}
         >

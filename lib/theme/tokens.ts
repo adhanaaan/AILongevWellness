@@ -55,7 +55,10 @@ export const colors = {
 
   // Text
   ink: gray[900],
-  inkMuted: gray[500],
+  // gray[600] (#6B7386), not gray[500] — the lighter grey was ~3:1 on white and
+  // failed WCAG AA for body copy (this app is used by an older audience). gray[600]
+  // is ~4.8:1 on white / ~4.5:1 on bone and still reads as a calm muted grey.
+  inkMuted: gray[600],
   inkOnDark: "#FFFFFF",
   inkOnDarkMuted: "rgba(255,255,255,0.6)",
 

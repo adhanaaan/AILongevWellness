@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { WEARABLE_CATALOG_BY_KEY } from "../ai/wearableCatalog";
 import { sexAwareRange } from "../ai/sexAwareRanges";
+import { isMarkerFlagged } from "../ai/markerDirection";
 import { flagIfPastSignoff } from "./pipelineAttention";
 import { resyncDraftScores } from "./resyncDraftScores";
 import { regenerateDraft } from "../ai/draftGeneration";
@@ -63,7 +64,7 @@ export async function writeWearableBiomarkers(
         ref_high,
         source: opts.source,
         status: "imported",
-        flagged: v.value < ref_low || v.value > ref_high,
+        flagged: isMarkerFlagged(entry.key, v.value, ref_low, ref_high),
         updated_at: new Date().toISOString(),
       };
     });

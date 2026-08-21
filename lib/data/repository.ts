@@ -40,6 +40,9 @@ export interface Repository {
   listParticipants(): Promise<ParticipantSummary[]>;
   getParticipant(id: string): Promise<Participant | null>;
   updateParticipant(id: string, patch: Partial<Participant>): Promise<Participant>;
+  /** Withdraw consent. Goes through a server RPC (real backend) so the consent
+   *  columns stay non-forgeable; a direct participant write to them is blocked. */
+  withdrawConsent(participantId: string): Promise<void>;
 
   getCaptureChannels(participantId: string): Promise<CaptureChannel[]>;
   updateCaptureChannel(

@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
 import { BODY_COMP_CATALOG_BY_KEY } from "../lib/ai/bodyCompCatalog";
 import { sexAwareRange } from "../lib/ai/sexAwareRanges";
+import { isMarkerFlagged } from "../lib/ai/markerDirection";
 import { BUCKET_BY_KIND } from "../lib/data/storageBuckets";
 import { flagIfPastSignoff } from "../lib/data/pipelineAttention";
 import { writeBiomarkerReadings } from "../lib/data/biomarkerReadings";
@@ -219,7 +220,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         ref_high,
         source: "body_comp",
         status: "needs_review",
-        flagged: r.value < ref_low || r.value > ref_high,
+        flagged: isMarkerFlagged(entry.key, r.value, ref_low, ref_high),
         measured_at: measuredAt,
       };
     });

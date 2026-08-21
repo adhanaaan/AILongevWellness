@@ -5,6 +5,7 @@ import {
   StyleSheet,
   type ViewStyle,
   type TextStyle,
+  type Insets,
   View,
 } from "react-native";
 import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
@@ -22,6 +23,8 @@ export interface ButtonProps {
   iconRight?: React.ReactNode;
   disabled?: boolean;
   onPress?: () => void;
+  /** Extends the touch area beyond the visual bounds (accessibility tap-target size). */
+  hitSlop?: Insets | number;
   children: string;
 }
 
@@ -49,6 +52,7 @@ export function Button({
   iconRight,
   disabled = false,
   onPress,
+  hitSlop,
   children,
 }: ButtonProps) {
   const borderRadius = shape === "full" ? radii.full : radii.lg;
@@ -78,6 +82,7 @@ export function Button({
       onPress={onPress}
       disabled={disabled}
       activeOpacity={0.7}
+      hitSlop={hitSlop}
     >
       {iconLeft && <View style={styles.iconLeft}>{iconLeft}</View>}
       <Text style={textStyle}>{children}</Text>

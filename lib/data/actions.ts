@@ -20,6 +20,10 @@ export async function updateParticipantAction(id: string, patch: Partial<Partici
   return repository.updateParticipant(id, patch);
 }
 
+export async function withdrawConsentAction(participantId: string) {
+  return repository.withdrawConsent(participantId);
+}
+
 export async function updateCaptureChannelAction(
   participantId: string,
   channel: CaptureChannelName,

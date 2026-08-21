@@ -38,9 +38,15 @@ export function ScoreRing({
 
   const valueFontSize = Math.round(size * 0.34);
 
+  const statusWord = isGood ? "on track" : "monitor";
+
   return (
     <View style={styles.container}>
-      <View style={{ width: size, height: size }}>
+      <View
+        style={{ width: size, height: size }}
+        accessibilityRole="image"
+        accessibilityLabel={`${label} ${clamped} out of 100, ${statusWord}`}
+      >
         <Svg width={size} height={size}>
           <Defs>
             <LinearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">

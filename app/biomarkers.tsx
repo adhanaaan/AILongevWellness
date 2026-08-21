@@ -68,7 +68,7 @@ export default function BiomarkersPage() {
     return (
       <SafeAreaView style={styles.container} edges={["top"]}>
         <View style={styles.header}>
-          <Button variant="ghost" size="sm" iconLeft={<ArrowLeft size={16} color={colors.inkMuted} />} onPress={() => router.back()}>
+          <Button variant="ghost" size="sm" hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} iconLeft={<ArrowLeft size={16} color={colors.inkMuted} />} onPress={() => router.back()}>
             Back
           </Button>
         </View>
@@ -108,7 +108,7 @@ export default function BiomarkersPage() {
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.header}>
-        <Button variant="ghost" size="sm" iconLeft={<ArrowLeft size={16} color={colors.inkMuted} />} onPress={() => router.back()}>
+        <Button variant="ghost" size="sm" hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} iconLeft={<ArrowLeft size={16} color={colors.inkMuted} />} onPress={() => router.back()}>
           Back
         </Button>
       </View>

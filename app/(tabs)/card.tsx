@@ -272,6 +272,7 @@ export default function CardPage() {
             <Pressable
               onPress={() => setShowAllContributors((v) => !v)}
               accessibilityRole="button"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
               style={styles.seeAll}
             >
               <Text style={styles.seeAllText}>
