@@ -56,6 +56,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
+  // Object-level authZ: the service-role download bypasses storage RLS, so enforce
+  // the participant-controlled storage_path is inside the caller's own folder.
+  if (!fileRow.storage_path?.startsWith(`${participantId}/`)) {
+    res.status(403).json({ error: "Not authorized for this file" });
+    return;
+  }
+
   const serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   const bucket = BUCKET_BY_KIND[fileRow.kind as keyof typeof BUCKET_BY_KIND];

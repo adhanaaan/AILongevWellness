@@ -478,7 +478,7 @@ class MockRepository implements Repository {
       chronological_age: 58,
       key_contributors: [
         { text: "Fasting glucose sits at 108 mg/dL, above the ADA's normal range of 70-99 mg/dL — sustained levels here are one of the earliest signals of shifting metabolic health.", tone: "monitor" },
-        { text: "Waist-to-hip ratio is 0.93, above the WHO's healthy ceiling of 0.90 for men — this pattern of central fat distribution tracks more closely with metabolic risk than BMI alone.", tone: "monitor" },
+        { text: "Waist-to-hip ratio is 0.93, above the WHO's healthy ceiling of 0.90 for men — this pattern of central fat distribution is a more useful area to monitor for metabolic health than BMI alone.", tone: "monitor" },
         { text: "Visceral fat reads 13 on your body composition scan, just above the reference ceiling of 12 — worth watching alongside the waist-to-hip trend.", tone: "monitor" },
         { text: "Resting heart rate (58 bpm) and heart rate variability (62 ms) both sit comfortably within range, reflecting strong cardiovascular fitness for your age.", tone: "good" },
         { text: "LDL (2.6 mmol/L) and HDL (1.4 mmol/L) cholesterol both fall within the standard lipid reference bands, with low inflammation (hs-CRP 1.2 mg/L, well under the AHA's 3.0 mg/L threshold).", tone: "good" },

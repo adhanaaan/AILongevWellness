@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { FadeInView } from "@/components/ui/FadeInView";
+import { WellnessDisclaimer } from "@/components/participant/WellnessDisclaimer";
 import { BiomarkerRangeRow } from "@/components/participant/BiomarkerRangeRow";
 import { BiomarkerSummaryBar } from "@/components/participant/BiomarkerSummaryBar";
 import { TrendSection } from "@/components/participant/TrendSection";
@@ -300,6 +301,7 @@ export default function PillarDetailPage() {
             <ChevronRight size={16} color={colors.inkMuted} />
           </Pressable>
         </View>
+          <WellnessDisclaimer />
         </FadeInView>
       </ScrollView>
     </SafeAreaView>

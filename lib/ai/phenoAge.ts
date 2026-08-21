@@ -40,10 +40,12 @@ export function missingPhenoAgeInputs(biomarkers: Biomarker[]): string[] {
  * unvalidated number that happens to use the same formula shape.
  *
  * Units expected by the published formula: albumin g/L, creatinine µmol/L,
- * glucose mmol/L, CRP mg/L, lymphocyte %, MCV fL, RDW %, ALP U/L, WBC
- * 10³/µL, age in years. This app already stores creatinine in µmol/L and
- * hs-CRP in mg/L (lib/ai/labCatalog.ts), so only fasting glucose (stored in
- * mg/dL) needs converting here.
+ * glucose mmol/L, CRP mg/dL, lymphocyte %, MCV fL, RDW %, ALP U/L, WBC
+ * 10³/µL, age in years. This app already stores creatinine in µmol/L, so
+ * fasting glucose (stored mg/dL → mmol/L) and hs-CRP (stored mg/L → mg/dL)
+ * are both converted here. The Levine 2018 model was fit on NHANES CRP in
+ * mg/dL — the reference BioAge implementation divides an mg/L value by 10
+ * before the ln() term, so we do the same.
  */
 export function computePhenoAge(biomarkers: Biomarker[], chronologicalAge: number): number | null {
   if (missingPhenoAgeInputs(biomarkers).length > 0) return null;
@@ -59,10 +61,12 @@ export function computePhenoAge(biomarkers: Biomarker[], chronologicalAge: numbe
   const wbc = findValue(biomarkers, "wbc")!;
 
   const glucoseMmolL = glucoseMgDl / 18.02;
-  // CRP floored at a small positive epsilon before the log transform -- ln(0)
-  // is undefined, and a true zero doesn't occur on a real hs-CRP assay
-  // (reported as e.g. "<0.1" rather than 0).
-  const crpSafe = Math.max(crp, 0.01);
+  // hs-CRP is stored in mg/L, but the Levine formula's ln(CRP) term expects
+  // mg/dL (NHANES units; the reference BioAge package divides mg/L by 10). Then
+  // floor at a small positive epsilon -- ln(0) is undefined, and a true zero
+  // doesn't occur on a real hs-CRP assay (reported as e.g. "<0.1" not 0).
+  const crpMgDl = crp / 10;
+  const crpSafe = Math.max(crpMgDl, 0.01);
 
   const xb =
     -19.907 -

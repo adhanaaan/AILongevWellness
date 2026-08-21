@@ -121,6 +121,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
+  // Object-level authZ: the service-role download below bypasses storage RLS, so
+  // enforce the participant-controlled storage_path is inside the caller's own
+  // folder (a forged path must not read another participant's file).
+  if (!fileRow.storage_path?.startsWith(`${participantId}/`)) {
+    res.status(403).json({ error: "Not authorized for this file" });
+    return;
+  }
+
   // Extraction writes to biomarkers as the system, not the participant —
   // biomarkers are participant-read-only in RLS, so this needs the service-role key.
   const serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
