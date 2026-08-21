@@ -15,18 +15,20 @@ interface Rule {
   action: AvaAction;
 }
 
-// Order matters only for readability; final list is deduped by route and capped.
+// Order is priority: the most specific/actionable topics first, since the final
+// list is deduped by route and capped. Patterns are intentionally generous with
+// synonyms so an answer reliably surfaces the right screen.
 const RULES: Rule[] = [
-  { pattern: /vascular|heart|blood pressure|cholesterol|cardio/i, action: { label: "View vascular", route: "/pillar/vascular" } },
-  { pattern: /metabolic|glucose|blood sugar|insulin|a1c|hba1c|triglyceride/i, action: { label: "View metabolic", route: "/pillar/metabolic" } },
-  { pattern: /mental|cognitive|brain|mood|stress|reaction time/i, action: { label: "View mental", route: "/pillar/mental" } },
-  { pattern: /biological age|bio.?age|phenoage|younger|older than your age/i, action: { label: "Biological age", route: "/bio-age" } },
-  { pattern: /supplement|medication|omega|vitamin|magnesium/i, action: { label: "Medications plan", route: "/care-plan/medications" } },
-  { pattern: /sleep|recovery|bedtime|rest/i, action: { label: "Sleep plan", route: "/care-plan/sleep" } },
-  { pattern: /nutrition|diet|protein|meal|eating|food/i, action: { label: "Nutrition plan", route: "/care-plan/nutrition" } },
-  { pattern: /exercise|zone 2|workout|movement|walk|training|vo2/i, action: { label: "Exercise plan", route: "/care-plan/exercise" } },
-  { pattern: /mindful|breathing|meditat|calm/i, action: { label: "Mindfulness plan", route: "/care-plan/mindfulness" } },
-  { pattern: /methodolog|how.*calculat|reference range|source|citation|guideline/i, action: { label: "How this is measured", route: "/methodology" } },
+  { pattern: /biological age|bio.?age|phenoage|younger than|older than|aging|ageing/i, action: { label: "Biological age", route: "/bio-age" } },
+  { pattern: /vascular|heart|blood pressure|\bbp\b|cholesterol|ldl|hdl|cardio|circulat|artery|arterial/i, action: { label: "View vascular", route: "/pillar/vascular" } },
+  { pattern: /metabolic|glucose|blood sugar|insulin|a1c|hba1c|triglyceride|waist|\bbmi\b|body fat|visceral/i, action: { label: "View metabolic", route: "/pillar/metabolic" } },
+  { pattern: /mental|cognitive|brain|mood|stress|reaction time|hrv|resilien|burnout/i, action: { label: "View mental", route: "/pillar/mental" } },
+  { pattern: /supplement|medication|\bmeds?\b|omega|vitamin|magnesium|fish oil|adherence/i, action: { label: "Medications plan", route: "/care-plan/medications" } },
+  { pattern: /sleep|recovery|bedtime|\brest\b|circadian|wind ?down/i, action: { label: "Sleep plan", route: "/care-plan/sleep" } },
+  { pattern: /nutrition|diet|protein|fibre|fiber|meal|eating|\bfood\b|hydrat/i, action: { label: "Nutrition plan", route: "/care-plan/nutrition" } },
+  { pattern: /exercise|zone ?2|workout|movement|\bwalk\b|training|vo2|strength|cardio fitness/i, action: { label: "Exercise plan", route: "/care-plan/exercise" } },
+  { pattern: /mindful|breathing|meditat|calm|relax|de-?stress/i, action: { label: "Mindfulness plan", route: "/care-plan/mindfulness" } },
+  { pattern: /methodolog|how.*(calculat|measur|scored?|work out)|reference range|\bsource\b|citation|guideline|evidence/i, action: { label: "How this is measured", route: "/methodology" } },
 ];
 
 const MAX_ACTIONS = 3;

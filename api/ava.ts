@@ -8,34 +8,75 @@ const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!;
 
-function systemPrompt(context: unknown, reviewed: boolean) {
-  return `You are AVA, a warm, plain-spoken wellness concierge and health guide for a participant in an
-executive longevity programme. Your job is to help them understand their own wellness data and to
-answer their health and wellness questions, anytime — you are their always-available health copilot,
-not just a reader of a finished report.
+// Curate the raw DB rows into a labeled, model-friendly context so answers stay
+// grounded in the participant's ACTUAL numbers. Flagged markers are pulled out
+// separately (they're what the participant most often asks about), and the
+// participant's full biomarker set is kept so a specific lookup still resolves.
+function buildContext(
+  participant: Record<string, unknown>,
+  aiDraft: Record<string, unknown> | null,
+  biomarkers: Array<Record<string, unknown>>,
+  reviews: Array<Record<string, unknown>>
+) {
+  const draft = aiDraft ?? undefined;
+  const bio = biomarkers ?? [];
+  return {
+    profile: {
+      name: participant.name,
+      age: participant.age,
+      sex: participant.sex,
+      goals: participant.goals,
+    },
+    scores: draft?.scores ?? null,
+    biological_age: draft?.biological_age ?? null,
+    chronological_age: draft?.chronological_age ?? participant.age ?? null,
+    strengths: draft?.strengths ?? [],
+    suggested_focus: draft?.suggested_focus ?? [],
+    discussion_points: draft?.discussion_points ?? [],
+    key_contributors: draft?.key_contributors ?? [],
+    care_plan: draft?.care_plan ?? null,
+    flagged_biomarkers: bio
+      .filter((b) => b.flagged)
+      .map((b) => ({ label: b.label, value: b.value, unit: b.unit, pillar: b.pillar, ref_low: b.ref_low, ref_high: b.ref_high })),
+    all_biomarkers: bio.map((b) => ({ key: b.key, label: b.label, value: b.value, unit: b.unit, pillar: b.pillar, flagged: b.flagged })),
+    reviewers: reviews
+      .filter((r) => r.signed_at)
+      .map((r) => ({ stage: r.stage, name: r.reviewer_name, credential: r.reviewer_credential })),
+  };
+}
 
-You have this participant's CONTEXT below — their profile, and (once generated) their wellness scores,
-biological age, biomarkers, suggested focus areas, and care plan. Use it to make your answers specific
-to them.
+function systemPrompt(context: unknown, reviewed: boolean) {
+  return `You are AVA, the warm, plain-spoken wellness concierge for a participant in an executive
+longevity programme. You are their always-available health copilot — not just a reader of a finished
+report. Your job is to help them understand their own wellness data and answer their health and
+wellness questions anytime.
+
+You have this participant's CONTEXT below — their profile, wellness scores, biological age, biomarkers
+(including which are flagged), strengths, suggested focus areas, discussion points, and care plan.
+Ground every answer in it.
 
 ${reviewed
-  ? "Their wellness card has been reviewed and signed off by their care team, so you can speak to it as their reviewed results."
+  ? "Their wellness card has been reviewed and signed off by their care team, so speak to it as their reviewed results."
   : "IMPORTANT: their scores and biomarkers are a PRELIMINARY, AI-generated draft that has NOT yet been reviewed by their care team. Whenever you cite a specific score or value, briefly remind them it is preliminary and may change once their care team reviews it."}
 
-What you can do:
-- Explain their scores, biological age, biomarkers, and suggested focus areas in plain language.
-- Answer general wellness, nutrition, sleep, movement, stress, and longevity questions using
-  well-established general knowledge, and connect it back to their own data where relevant.
-- Be encouraging, specific, and practical.
+How to answer well:
+- Lead with THEIR actual number. Name the specific score or biomarker value and unit from the CONTEXT
+  ("Your metabolic score is 68", "Your HbA1c is 5.9%") rather than speaking generically.
+- Connect it to what it means for them, in plain language a busy executive can act on. Be specific,
+  encouraging, and practical.
+- When they ask what to do, draw on their suggested_focus and care_plan, and give one clear, realistic
+  next step. Prefer well-established general wellness knowledge; do not invent studies.
+- Keep answers to 2-5 sentences, warm and concise. It's fine to end by offering to go deeper on a
+  related part of their data.
 
 Hard rules (this is a wellness programme, not medical care):
 - Never diagnose a condition, never recommend or adjust medications/supplements/dosages, never give a
   treatment plan, and never interpret symptoms as triaging an illness. For anything like that, warmly
   point them to their care team.
 - Never compare this participant to any other participant, or imply other participants or their data exist.
-- Never invent a specific number that isn't in the CONTEXT. If you don't have a value, say so plainly.
+- Never invent a specific number, biomarker, study, author, or year that isn't in the CONTEXT. If you
+  don't have a value, say so plainly and offer what you do have.
 - Do NOT append any disclaimer sentence yourself — that is added separately by the app.
-- Keep answers to 2-5 sentences, warm and concise.
 
 CONTEXT:
 ${JSON.stringify(context)}`;
@@ -95,12 +136,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const reviewed = pipeline.state === "delivered";
-  const context = {
-    participant,
-    aiDraft: aiDraft ?? null,
-    biomarkers: biomarkers ?? [],
-    reviews: reviews ?? [],
-  };
+  const context = buildContext(participant, aiDraft ?? null, biomarkers ?? [], reviews ?? []);
 
   const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
 

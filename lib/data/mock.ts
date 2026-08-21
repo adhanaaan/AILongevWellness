@@ -10,6 +10,7 @@ import type {
   EnteredBy,
   FileKind,
   FileRecord,
+  KeyContributor,
   WearableConnection,
   OnboardingProgress,
   OnboardingSectionKey,
@@ -207,9 +208,55 @@ function computeMissingBiomarkers(biomarkers: Biomarker[]): string[] {
   return biomarkers.filter((b) => b.value === null).map((b) => b.key);
 }
 
+const PILLAR_LABEL: Record<Pillar, string> = {
+  vascular: "vascular",
+  metabolic: "metabolic",
+  mental: "mental",
+};
+
+// Formats a biomarker as "value unit" the way the hand-authored James draft does,
+// handling the units that don't take a trailing space ("/100", "ratio", "level").
+function bmDisplay(b: Biomarker): string {
+  const u = b.unit;
+  if (u === "ratio" || u === "level") return `${b.value}`;
+  if (u.startsWith("/")) return `${b.value}${u}`;
+  return `${b.value} ${u}`;
+}
+
+// A short guideline-body phrase for the markers the Methodology page actually
+// cites, so generic demo drafts can name a real source the same way the
+// hand-authored one does -- and stay silent (empty string) for everything else,
+// never inventing a source. Mirrors lib/methodology/content.ts.
+const GENERIC_GUIDELINE_NOTE: Record<string, string> = {
+  fasting_glucose: " against the ADA's normal range",
+  hba1c: " against the ADA's thresholds",
+  waist_hip_ratio: " on the WHO's waist-to-hip guidance",
+  bmi: " on the WHO's weight classifications",
+  body_fat_pct: " on the ACE body-composition categories",
+  ldl_c: " within the standard lipid reference bands",
+  hdl_c: " within the standard lipid reference bands",
+  total_cholesterol: " within the standard lipid reference bands",
+  hscrp: " relative to the AHA's cardiovascular threshold",
+  vitamin_d: " against NIH/IOM thresholds",
+  systolic_bp: " against ACC/AHA blood-pressure categories",
+  diastolic_bp: " against ACC/AHA blood-pressure categories",
+};
+
+function humanizeGoals(goals: string[]): string {
+  const g = goals.map((x) => x.toLowerCase());
+  if (g.length === 0) return "your long-term wellness";
+  if (g.length === 1) return g[0];
+  return `${g.slice(0, -1).join(", ")} and ${g[g.length - 1]}`;
+}
+
+// Generates a demo participant's draft to the same depth standard as the
+// hand-authored James Chen one: every point anchored to a real captured value,
+// tied to the participant's stated goals, and reasoned across pillars -- so
+// previews/demos show the deep report, not filler. James's own draft is
+// hand-authored (pendingAiDrafts) and untouched; this covers the other 19.
 function genAiDraftForScores(
   participantId: string,
-  _name: string,
+  participant: Participant,
   scores: PillarScores,
   bioAgeOffset: number,
   chronologicalAge: number,
@@ -220,80 +267,130 @@ function genAiDraftForScores(
   const strongest = entries.slice().sort((a, b) => b[1] - a[1])[0];
   const monitorPillar = weakest[1] < 70 ? weakest[0] : null;
 
-  const pillarLabel: Record<Pillar, string> = {
-    vascular: "vascular",
-    metabolic: "metabolic",
-    mental: "mental",
+  const named = biomarkers.filter((b) => b.value !== null);
+  const flagged = named.filter((b) => b.flagged);
+  const inRange = named.filter((b) => !b.flagged);
+  const strongestInRange = inRange.filter((b) => b.pillar === strongest[0]);
+
+  const biologicalAge =
+    computePhenoAge(biomarkers, chronologicalAge) ?? Math.max(18, chronologicalAge - bioAgeOffset);
+  const youngerBy = chronologicalAge - biologicalAge;
+  const goalPhrase = humanizeGoals(participant.goals);
+
+  // --- key_contributors: real values first, then cross-pillar + goal framing ---
+  const keyContributors: KeyContributor[] = [];
+  for (const b of flagged.slice(0, 3)) {
+    keyContributors.push({
+      text: `${b.label} is reading ${bmDisplay(b)}, outside its reference range of ${b.ref_low}–${b.ref_high}${GENERIC_GUIDELINE_NOTE[b.key] ?? ""} — one to keep an eye on as part of your ${PILLAR_LABEL[b.pillar]} picture.`,
+      tone: "monitor",
+    });
+  }
+  for (const b of strongestInRange.slice(0, 2)) {
+    keyContributors.push({
+      text: `${b.label} sits comfortably in range at ${bmDisplay(b)}, a genuine strength in your ${PILLAR_LABEL[strongest[0]]} profile and part of why it is your standout pillar (${strongest[1]}).`,
+      tone: "good",
+    });
+  }
+  keyContributors.push({
+    text:
+      youngerBy > 0
+        ? `Your biological age is estimated at ${biologicalAge}, tracking ${youngerBy} year${youngerBy === 1 ? "" : "s"} younger than your chronological age of ${chronologicalAge} — a composite read across all three pillars, and a good sign for the longevity side of your goals.`
+        : `Your biological age is estimated at ${biologicalAge}, close to your chronological age of ${chronologicalAge} — a composite read across all three pillars, with room to open up a gap as the areas below improve.`,
+    tone: "good",
+  });
+  keyContributors.push({
+    text: monitorPillar
+      ? `Your stated focus on ${goalPhrase} lines up well with where the data points: your ${PILLAR_LABEL[monitorPillar]} pillar (${weakest[1]}) is where focused effort will show up fastest, while your ${PILLAR_LABEL[strongest[0]]} strength gives you the headroom to work on it.`
+      : `Your stated focus on ${goalPhrase} is well supported here — all three pillars are in a healthy band, so the task is maintaining the balance across vascular, metabolic and mental rather than chasing any one number.`,
+    tone: "good",
+  });
+
+  // --- strengths: anchored to real in-range values ---
+  const strengths: string[] = [
+    `${PILLAR_LABEL[strongest[0]].replace(/^./, (c) => c.toUpperCase())} health is your standout pillar (${strongest[1]}), a strong foundation for ${goalPhrase}.`,
+  ];
+  for (const b of strongestInRange.slice(0, 2)) {
+    strengths.push(`${b.label} is comfortably in range at ${bmDisplay(b)}, a marker worth protecting.`);
+  }
+  strengths.push("Capture across wearables, labs and body composition is consistent, so this composite is a reliable picture rather than a partial one.");
+  if (!monitorPillar) {
+    strengths.push("No pillar is trending toward its reference boundary — an unusually balanced profile.");
+  }
+
+  // --- areas_to_monitor: only real flagged values, never invented ---
+  const areasToMonitor: string[] = flagged.slice(0, 3).map(
+    (b) => `${b.label} (${bmDisplay(b)}) is outside its reference range of ${b.ref_low}–${b.ref_high} and is worth tracking at your next check-in.`
+  );
+  if (monitorPillar && areasToMonitor.length === 0) {
+    areasToMonitor.push(`Your ${PILLAR_LABEL[monitorPillar]} pillar (${weakest[1]}) is the lowest of the three and worth a follow-up conversation to confirm the trend.`);
+  }
+
+  // --- suggested_focus: highest-leverage first, tied to weakest pillar + goals ---
+  const focusByPillar: Record<Pillar, string> = {
+    metabolic: "Make your metabolic markers the primary focus — a lower-glycemic, higher-fibre approach is the highest-leverage lever you have, and it speaks directly to your longevity goals.",
+    vascular: "Prioritise your vascular markers — steady aerobic activity and a lipid-friendly diet are the most reliable ways to move them, and they underpin the cardiovascular side of your goals.",
+    mental: "Prioritise sleep and stress recovery — they are the fastest levers on your mental pillar and feed straight into your energy and focus.",
   };
+  const suggestedFocus: string[] = [
+    monitorPillar ? focusByPillar[monitorPillar] : focusByPillar[weakest[0]],
+    "Add a weekly resistance session alongside your cardio — one of the most consistently supported ways to improve body composition and metabolic markers over time.",
+    "Protect a consistent sleep window — it quietly supports cognition, cardiovascular recovery and glucose regulation all at once.",
+    "Keep meal timing steady rather than skipping and over-compensating later, which tends to smooth out both energy and metabolic readings.",
+    "Hold onto what is already working in your strongest pillar — maintenance there frees your attention for the areas that need it.",
+  ];
+
+  // --- discussion_points: precise, tied to the actual weak spots ---
+  const discussionPoints: string[] = [];
+  if (flagged.length > 0) {
+    discussionPoints.push(`Ask about rechecking ${flagged.slice(0, 2).map((b) => b.label).join(" and ")} in three to six months to confirm whether the trend is moving rather than guessing.`);
+  } else {
+    discussionPoints.push(`Review your ${PILLAR_LABEL[weakest[0]]} markers at the next check-in to see whether they are stable or beginning to shift.`);
+  }
+  discussionPoints.push("Discuss whether your current activity mix is weighted the right way between cardio and resistance training for where your body composition sits.");
+  discussionPoints.push("Talk through current recovery and stress load, since those shape several markers that a single snapshot cannot fully explain.");
+  discussionPoints.push("Raise any relevant family history, which sits outside this data and would sharpen how closely the areas above are worth watching.");
 
   return {
     id: `draft-${participantId}`,
     participant_id: participantId,
     scores,
     // Real PhenoAge when the demo participant's synthesized biomarkers happen
-    // to cover all 9 of its required inputs; otherwise the existing
-    // synthetic offset (James Chen's hand-authored draft is untouched --
-    // this function only generates the other 19 demo participants).
-    biological_age: computePhenoAge(biomarkers, chronologicalAge) ?? Math.max(18, chronologicalAge - bioAgeOffset),
+    // to cover all 9 of its required inputs; otherwise the synthetic offset.
+    biological_age: biologicalAge,
     chronological_age: chronologicalAge,
-    key_contributors: [
-      monitorPillar
-        ? { text: `${pillarLabel[monitorPillar]} markers are trending outside the optimal range for your age — worth tracking at your next check-in`, tone: "monitor" as const }
-        : { text: `${pillarLabel[weakest[0]]} markers are within the optimal range, though the lowest-scoring of your three pillars`, tone: "good" as const },
-      { text: `${pillarLabel[strongest[0]]} health reflects strong overall condition for your age, the standout of your three pillar scores`, tone: "good" as const },
-      { text: "Overall wellness trend is stable across the last capture cycle, with no sharp swings in any pillar", tone: "good" as const },
-      { text: "Capture completeness across wearables, labs, and body composition supports a reliable overall picture", tone: "good" as const },
-      { text: `Your ${chronologicalAge - Math.max(18, chronologicalAge - bioAgeOffset) >= 0 ? "biological age tracking younger than" : "biological age tracking close to"} your chronological age reflects the balance across all three pillars`, tone: "good" as const },
-    ],
-    strengths: [
-      `Strong ${pillarLabel[strongest[0]]} health for age`,
-      "Consistent capture across all channels, supporting a reliable composite score",
-      "No pillar shows a sharp or sudden decline from the last capture cycle",
-      "Overall biological age tracks closely with the pillar score composite",
-    ],
-    areas_to_monitor: monitorPillar
-      ? [
-          `${pillarLabel[monitorPillar]} markers are trending toward the reference boundary and are worth a follow-up conversation`,
-          `Consider a repeat capture for ${pillarLabel[monitorPillar]} markers at the next check-in to confirm the trend`,
-        ]
-      : [],
-    suggested_focus: [
-      "Maintain consistent daily movement, even on busy days.",
-      "Protect a regular sleep window — consistency matters as much as duration.",
-      "Build in brief daily stress-recovery time.",
-      "Keep meal timing consistent rather than skipping and over-compensating later.",
-    ],
-    discussion_points: [
-      `Review the ${pillarLabel[weakest[0]]} trend at the next check-in to see whether it's stable or continuing to shift`,
-      "Discuss current recovery and stress load with your care team",
-      "Ask whether a repeat capture in three to six months would help confirm any early trends",
-    ],
+    key_contributors: keyContributors,
+    strengths,
+    areas_to_monitor: areasToMonitor,
+    suggested_focus: suggestedFocus,
+    discussion_points: discussionPoints,
     care_plan: {
       nutrition: [
-        { title: "Eat balanced, whole-food meals", detail: "Keep consistent meal timing through the day." },
-        { title: "Keep hydration steady", detail: "Spread water out rather than front- or back-loading it." },
+        { title: "Favour whole foods and steady meals", detail: "Consistent timing helps smooth energy and metabolic readings." },
+        { title: "Lower the glycemic load at breakfast", detail: "The meal that most often drives an early glucose drift." },
+        { title: "Keep hydration steady", detail: "Spread water through the day rather than front- or back-loading it." },
       ],
       exercise: [
-        { title: "Move most days of the week", detail: "Regular activity is the foundation." },
-        { title: "Add a weekly resistance session", detail: "Mix it in alongside your cardio." },
+        { title: "Add a weekly resistance session", detail: "The most reliable lever on body composition over time." },
+        { title: "Keep moving most days", detail: "Regular aerobic activity is the foundation your vascular markers rest on." },
+        { title: "Add a short post-meal walk", detail: "A simple, effective way to blunt glucose spikes." },
       ],
       medications: [
-        { title: "Log what you currently take", detail: "Include any supplements, all in one place." },
-        { title: "Review changes with your care team", detail: "Before your next check-in." },
+        { title: "Keep your supplements in one place", detail: "Log what you currently take so your care team has the full picture." },
+        { title: "Review any changes with your care team", detail: "Before adjusting anything, ahead of your next check-in." },
       ],
       sleep: [
-        { title: "Keep a consistent 7–9 hour window", detail: "Aim for the same wake time each day." },
-        { title: "Hold your wind-down routine", detail: "Especially on travel or high-stress days." },
+        { title: "Guard a consistent 7-9 hour window", detail: "Aim for the same wake time, even on weekends." },
+        { title: "Hold your wind-down on hard days", detail: "Travel and high-stress days are when sleep slips first." },
       ],
       mindfulness:
         monitorPillar === "mental"
           ? [
               { title: "Build in daily stress-recovery time", detail: "Your mental markers are trending toward the reference boundary." },
-              { title: "Try a brief midday reset", detail: "On high-demand days." },
+              { title: "Try a brief midday reset", detail: "A few quiet minutes on your highest-demand days." },
             ]
           : [
-              { title: "Make room for daily recovery", detail: "Build moments of rest into each day." },
-              { title: "Notice what drains you", detail: "Add recovery around the most draining parts of your week." },
+              { title: "Make room for daily recovery", detail: "Small, regular pauses protect the pillar that is already strong." },
+              { title: "Notice what drains you most", detail: "Add recovery around the heaviest parts of your week." },
             ],
     },
     generated_at: nowIso(),
@@ -489,58 +586,61 @@ class MockRepository implements Repository {
       biological_age: 54,
       chronological_age: 58,
       key_contributors: [
-        { text: "Fasting glucose sits at 108 mg/dL, above the ADA's normal range of 70-99 mg/dL — sustained levels here are one of the earliest signals of shifting metabolic health.", tone: "monitor" },
-        { text: "Waist-to-hip ratio is 0.93, above the WHO's healthy ceiling of 0.90 for men — this pattern of central fat distribution is a more useful area to monitor for metabolic health than BMI alone.", tone: "monitor" },
-        { text: "Visceral fat reads 13 on your body composition scan, just above the reference ceiling of 12 — worth watching alongside the waist-to-hip trend.", tone: "monitor" },
-        { text: "Resting heart rate (58 bpm) and heart rate variability (62 ms) both sit comfortably within range, reflecting strong cardiovascular fitness for your age.", tone: "good" },
-        { text: "LDL (2.6 mmol/L) and HDL (1.4 mmol/L) cholesterol both fall within the standard lipid reference bands, with low inflammation (hs-CRP 1.2 mg/L, well under the AHA's 3.0 mg/L threshold).", tone: "good" },
-        { text: "Cognitive reaction time (320 ms) and composite score (88/100) are both strong, consistent with the sleep quality and duration you're getting.", tone: "good" },
-        { text: "Sleep duration (7.4 hours) and quality index (82/100) both sit within healthy ranges, supporting the strong mental pillar score overall.", tone: "good" },
+        { text: "Fasting glucose sits at 108 mg/dL, above the ADA's normal range of 70-99 mg/dL, while HbA1c (5.6%) is still just inside range — together they suggest your longer-term average is holding but your day-to-day glucose is starting to drift. Given that longevity is your top goal, this is the single highest-value number for you to move, because metabolic drift compounds quietly over years.", tone: "monitor" },
+        { text: "Waist-to-hip ratio is 0.93, above the WHO's healthy ceiling of 0.90 for men — for someone your age this pattern of central fat distribution is a more telling metabolic signal than BMI alone, and it is closely linked to the same glucose trend above.", tone: "monitor" },
+        { text: "Visceral fat reads 13 on your body composition scan, just over the reference ceiling of 12 — it travels with the waist-to-hip ratio and the glucose reading as one connected central-adiposity story, which is why addressing them together tends to move all three at once.", tone: "monitor" },
+        { text: "Your cardiovascular engine is genuinely strong for 58: resting heart rate of 58 bpm and HRV of 62 ms are both squarely in range and point to real aerobic conditioning — direct evidence you are already delivering on your cardiovascular-fitness goal.", tone: "good" },
+        { text: "Your lipid profile is a clear asset — LDL at 2.6 mmol/L and HDL at 1.4 mmol/L both sit in the healthy NCEP reference bands, and hs-CRP of 1.2 mg/L is well under the AHA's 3.0 mg/L threshold, so systemic inflammation is low. This is the vascular headroom that lets you focus your effort on the metabolic side.", tone: "good" },
+        { text: "Cognitive reaction time (320 ms) and composite score (88/100) are both strong, and they are being underwritten by your sleep — sharp processing speed like this is hard to sustain on poor rest, so your mental and sleep numbers are reinforcing each other and feeding directly into your energy-and-focus goal.", tone: "good" },
+        { text: "Sleep is doing quiet, load-bearing work across your whole picture: 7.4 hours a night at a quality index of 82/100 is protecting your cognition, supporting your low resting heart rate, and helping regulate the very glucose pattern you are watching — one habit paying dividends in all three pillars.", tone: "good" },
       ],
       strengths: [
-        "Vascular health is a clear strength — blood pressure, resting heart rate, HRV, and lipids are all within range.",
-        "Cognitive performance is strong, with reaction time and composite score both well above the healthy floor.",
-        "Sleep consistency (7.4 hours nightly, quality index 82/100) is clearly supporting the mental pillar's strong overall score.",
-        "Inflammation markers (hs-CRP) are low, a good sign for long-term cardiovascular health.",
+        "Vascular health is your standout pillar (74): blood pressure of 118/76, a resting heart rate of 58 bpm, HRV of 62 ms and clean lipids are all in range — a strong foundation for the cardiovascular fitness you told us you care about.",
+        "Cognitive performance is high for your age — reaction time (320 ms) and composite score (88/100) are both well above the healthy floor, which is what a demanding executive schedule actually runs on.",
+        "Your sleep is a genuine competitive advantage: 7.4 hours nightly at 82/100 quality is consistent enough to be protecting your cognition and your cardiovascular markers at the same time.",
+        "Low inflammation (hs-CRP 1.2 mg/L) points to a well-managed vascular system and is a reassuring long-term signal for the longevity goal at the centre of your programme.",
+        "You are already doing several of the right things — non-smoker, four active days a week, and a sensible supplement base of Omega-3, Vitamin D and Magnesium — so the metabolic work ahead builds on solid habits rather than starting from scratch.",
       ],
       areas_to_monitor: [
-        "Fasting glucose (108 mg/dL) is trending above the ADA's normal range and is worth tracking at your next check-in.",
-        "Waist-to-hip ratio (0.93) and visceral fat (13) both sit just outside their reference ranges, pointing toward the same central-fat-distribution pattern.",
-        "BMI (26.1) is in the WHO's overweight band, just above the healthy-weight ceiling of 25.",
+        "Fasting glucose (108 mg/dL) is above the ADA's normal range and is the clearest early metabolic signal in your data — worth a recheck alongside HbA1c to confirm the direction.",
+        "Waist-to-hip ratio (0.93) and visceral fat (13) both sit just outside their reference ranges and point to the same central-fat pattern, which is the mechanism most likely driving the glucose trend.",
+        "BMI (26.1) is in the WHO's overweight band, just over the healthy-weight ceiling of 25 — less informative on its own than the waist and visceral readings, but consistent with them.",
       ],
       suggested_focus: [
-        "Shift toward lower-glycemic-load meals, particularly at breakfast, given the fasting glucose trend.",
-        "Add one additional day of resistance training weekly — one of the more consistently supported ways to improve waist-to-hip ratio and visceral fat over time.",
-        "Keep protecting your current sleep routine — it's clearly supporting your strong mental pillar score.",
-        "Continue your current cardiovascular activity level; your vascular markers reflect it well.",
-        "Moderate alcohol intake alongside diet changes, since both affect fasting glucose and visceral fat similarly.",
+        "Make the central-fat cluster your primary focus — glucose, waist-to-hip ratio and visceral fat move together, so a lower-glycemic, higher-fibre approach (especially at breakfast) is the highest-leverage lever you have and speaks directly to your longevity goal.",
+        "Add one weekly resistance session on top of your existing cardio — for a metabolically-drifting 58-year-old this is one of the most consistently supported ways to bring down waist-to-hip ratio and visceral fat over time.",
+        "Trim alcohol toward the lower end of your current 1-7 drinks a week — it feeds both the glucose and the visceral-fat pattern, so easing off compounds with the dietary change rather than fighting it.",
+        "Protect your sleep window deliberately — at 7.4 hours it is already an asset supporting your energy, focus and glucose regulation, and it is the easiest thing to lose first on a heavy travel week.",
+        "Keep your cardiovascular base exactly where it is — your vascular numbers reflect it and it is squarely on your fitness goal, so this is about maintenance, not more.",
       ],
       discussion_points: [
-        "Ask your GP about a follow-up fasting glucose and HbA1c recheck in three to six months to see whether dietary changes are moving the trend.",
-        "Discuss whether your current activity mix (4 days/week) should shift toward more resistance training given the waist-to-hip and visceral fat pattern.",
-        "Review whether a continuous glucose monitor for a short period would help identify which meals are driving the glucose trend.",
-        "Ask about family history relevant to metabolic health, since that context isn't captured in this data alone.",
+        "Ask about rechecking fasting glucose and HbA1c together in three to six months to see whether the dietary and activity changes are actually moving the trend, rather than guessing.",
+        "Discuss whether your weekly activity mix should tilt from mostly cardio toward more resistance training, given that the central-fat pattern responds best to added strength work.",
+        "Explore whether a short spell wearing a continuous glucose monitor would show which specific meals are spiking your glucose — targeted data beats general dietary advice for someone with your profile.",
+        "Raise any family history relevant to metabolic and cardiovascular health, since that context sits outside this data and would sharpen how closely the central-fat cluster is worth watching.",
       ],
       care_plan: {
         nutrition: [
-          { title: "Favor lower-glycemic-load meals", detail: "More fibre, less refined carbohydrate — especially at breakfast." },
-          { title: "Add a couple of alcohol-free days", detail: "Alcohol affects both glucose and visceral fat." },
+          { title: "Rebuild breakfast around fibre and protein", detail: "Lower the glycemic load where your glucose drifts most." },
+          { title: "Anchor meals to a steady window", detail: "Avoid skipping then over-compensating later in the day." },
+          { title: "Ease alcohol toward the low end", detail: "It feeds both the glucose and visceral-fat pattern." },
         ],
         exercise: [
-          { title: "Add a weekly resistance session", detail: "One of the most evidence-supported ways to shift visceral fat." },
-          { title: "Keep up your current cardio", detail: "It's clearly supporting your strong vascular numbers." },
+          { title: "Add one resistance session weekly", detail: "The most reliable lever on visceral fat and waist ratio." },
+          { title: "Protect your cardio base", detail: "It is already delivering your strong vascular numbers." },
+          { title: "Add a short post-meal walk", detail: "A simple, effective way to blunt glucose spikes." },
         ],
         medications: [
-          { title: "Continue Omega-3 and Vitamin D", detail: "Your Vitamin D level is healthy per NIH/IOM thresholds." },
-          { title: "Consider a follow-up metabolic panel", detail: "In three to six months, given the fasting glucose trend." },
+          { title: "Continue your current supplement base", detail: "Omega-3, Vitamin D and Magnesium suit your profile." },
+          { title: "Discuss a follow-up metabolic panel", detail: "Timed to check whether the glucose trend is moving." },
         ],
         sleep: [
-          { title: "Protect your 7–9 hour sleep window", detail: "It's clearly paying off in your mental pillar score." },
-          { title: "Hold your routine on travel days", detail: "That's typically when sleep quality slips first." },
+          { title: "Guard your 7-9 hour window", detail: "It is quietly protecting cognition, heart rate and glucose." },
+          { title: "Hold the routine on travel days", detail: "That is when your sleep quality slips first." },
         ],
         mindfulness: [
-          { title: "Build a short daily wind-down", detail: "Your stress index is in range but in the upper half." },
-          { title: "Try a midday reset on busy days", detail: "Stress and glucose regulation are closely linked." },
+          { title: "Keep a short daily wind-down", detail: "Your stress index is in range but in the upper half." },
+          { title: "Build in a midday reset", detail: "Stress and glucose regulation are closely linked for you." },
         ],
       },
       generated_at: nowIso(),
@@ -611,7 +711,7 @@ class MockRepository implements Repository {
 
       if (pastAiDraft) {
         const bioAgeOffset = Math.floor(mulberry32(idx * 37 + 10)() * 8) - 2;
-        this.aiDrafts.set(id, genAiDraftForScores(id, person.name, scores, bioAgeOffset, person.age, participantBiomarkers));
+        this.aiDrafts.set(id, genAiDraftForScores(id, participant, scores, bioAgeOffset, person.age, participantBiomarkers));
       }
 
       const needsAttention = ATTENTION_INDEXES.has(idx);

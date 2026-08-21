@@ -24,6 +24,8 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { askAva } from "@/lib/ai/client";
 import { suggestedActions, type AvaAction } from "@/lib/ava/suggestedActions";
+import { starterPrompts, avaGreeting } from "@/lib/ava/starterPrompts";
+import { followUpQuestions } from "@/lib/ava/followUps";
 import type { SignedCard } from "@/lib/data/repository";
 import type { AiDraft, Biomarker, Participant, Pipeline } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, radii, shadows, spacing } from "@/lib/theme/tokens";
@@ -34,20 +36,9 @@ interface Message {
   disclaimer?: string;
   /** Deep-link chips shown under an AVA answer (see suggestedActions). */
   actions?: AvaAction[];
+  /** Contextual follow-up questions shown under the latest AVA answer (see followUps). */
+  followUps?: string[];
 }
-
-const REVIEWED_SUGGESTIONS = [
-  "What does my vascular score mean?",
-  "Tell me about my biological age",
-  "What are my focus areas?",
-  "Who reviewed my card?",
-];
-const PRELIMINARY_SUGGESTIONS = [
-  "What does my vascular score mean?",
-  "Tell me about my biological age",
-  "How can I improve my metabolic health?",
-  "What should I focus on first?",
-];
 
 export default function AvaPage() {
   const { participantId } = useAuth();
@@ -133,16 +124,12 @@ function AvaChatContent({
   // content presented as if they'd asked it. A static greeting behaves identically
   // in mock and real mode and matches how every assistant UI opens (greet, then
   // let the user drive) -- the real grounded answer comes from their first message.
+  // Personalized opening prompts derived from this participant's own data, so the
+  // chat opens with specific, tappable starting points rather than a static list.
+  const starters = React.useMemo(() => starterPrompts(card), [card]);
   const [messages, setMessages] = useState<Message[]>(() => {
     if (seedQuestion) return [];
-    return [
-      {
-        role: "ava",
-        text: reviewed
-          ? "I can walk you through your scores, your biological age, or your focus areas — or answer any wellness question you have. Where would you like to start?"
-          : "I can walk you through your early results so far, or answer any wellness question. Just note these scores are still being reviewed by your care team. Where would you like to start?",
-      },
-    ];
+    return [{ role: "ava", text: avaGreeting(card, reviewed) }];
   });
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -165,7 +152,13 @@ function AvaChatContent({
         const { reply, disclaimer } = await askAva(session.access_token, participantId, trimmed, history);
         setMessages((prev) => [
           ...prev,
-          { role: "ava", text: reply, disclaimer, actions: suggestedActions(trimmed, reply) },
+          {
+            role: "ava",
+            text: reply,
+            disclaimer,
+            actions: suggestedActions(trimmed, reply),
+            followUps: followUpQuestions(trimmed, reply, card),
+          },
         ]);
       } catch (e) {
         setMessages((prev) => [
@@ -182,7 +175,13 @@ function AvaChatContent({
     const reply = respondAsAva(trimmed, card);
     setMessages((prev) => [
       ...prev,
-      { role: "ava", text: reply.text, disclaimer: reply.disclaimer, actions: suggestedActions(trimmed, reply.text) },
+      {
+        role: "ava",
+        text: reply.text,
+        disclaimer: reply.disclaimer,
+        actions: suggestedActions(trimmed, reply.text),
+        followUps: followUpQuestions(trimmed, reply.text, card),
+      },
     ]);
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 100);
   }
@@ -257,16 +256,38 @@ function AvaChatContent({
                   ))}
                 </View>
               )}
+              {m.role === "ava" &&
+                i === messages.length - 1 &&
+                !sending &&
+                m.followUps &&
+                m.followUps.length > 0 && (
+                  <View style={styles.followUpsRow}>
+                    {m.followUps.map((f) => (
+                      <TouchableOpacity
+                        key={f}
+                        style={styles.followUpChip}
+                        onPress={() => send(f)}
+                        accessibilityRole="button"
+                        accessibilityLabel={f}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.followUpChipText}>{f}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
             </View>
           ))}
           {sending && <TypingIndicator />}
         </ScrollView>
 
         <View style={styles.inputArea}>
-          <View>
-            <Text style={styles.suggestLabel}>Try asking</Text>
-            <SuggestionChips items={reviewed ? REVIEWED_SUGGESTIONS : PRELIMINARY_SUGGESTIONS} onPick={send} />
-          </View>
+          {!messages.some((m) => m.role === "user") && starters.length > 0 && (
+            <View>
+              <Text style={styles.suggestLabel}>Ask about your data</Text>
+              <SuggestionChips items={starters} onPick={send} />
+            </View>
+          )}
           <View style={styles.composer}>
             <TextInput
               value={input}
@@ -369,6 +390,27 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.caption,
     color: colors.sageDark,
+  },
+  followUpsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+    marginLeft: spacing.xs,
+  },
+  followUpChip: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.full,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    ...shadows.soft,
+  },
+  followUpChipText: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.caption,
+    color: colors.charcoal,
   },
   inputArea: {
     gap: spacing.lg,
