@@ -84,10 +84,11 @@ ${SOURCE_GROUNDING}
 
 Rules for using these sources:
 - You may name the guideline body itself (e.g. "per ADA guidelines" or "the WHO's classification").
-- Never invent a specific study, journal article, author name, or publication year — none of that
-  appears above, so none of it should appear in your output either.
-- If a biomarker or topic isn't covered by the sources above, write generally without naming a source
-  rather than guessing one.
+- Do not put academic citations in your output — no study titles, author names, or publication years.
+  A few appear in the grounding text above (e.g. in the age-clock notes); they are background context
+  for you only, not something to quote to the participant. Refer to the guideline body by name instead.
+- Never invent a study, author, year, or source of any kind. If a biomarker or topic isn't covered by
+  the sources above, write generally without naming a source rather than guessing one.
 - Never invent a value that isn't in the data you are given.
 
 Call write_narrative with:

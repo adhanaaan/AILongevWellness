@@ -198,10 +198,24 @@ function genBiomarkersForScore(participantId: string, pillar: Pillar, score: num
   });
 }
 
+// Direction-aware, mirrors lib/ai/scoring.ts's computeOutOfRange (mock↔real
+// parity, CLAUDE.md rule #3): a higher-is-better marker flagged low reports
+// against ref_low, not ref_high.
 function computeOutOfRange(biomarkers: Biomarker[]): OutOfRangeBiomarker[] {
-  return biomarkers
-    .filter((b) => b.flagged && b.value !== null && b.ref_high !== null)
-    .map((b) => ({ key: b.key, value: b.value as number, ref_high: b.ref_high as number }));
+  const out: OutOfRangeBiomarker[] = [];
+  for (const b of biomarkers) {
+    if (!b.flagged || b.value === null) continue;
+    const value = b.value;
+    const dir = MARKER_DIRECTION[b.key];
+    let side: "low" | "high";
+    if (dir === "higher") side = "low";
+    else if (dir === "lower") side = "high";
+    else side = b.ref_low !== null && value < b.ref_low ? "low" : "high";
+    if (side === "high" && b.ref_high === null) continue;
+    if (side === "low" && b.ref_low === null) continue;
+    out.push({ key: b.key, value, ref_high: b.ref_high ?? 0, ref_low: b.ref_low ?? undefined, side });
+  }
+  return out;
 }
 
 function computeMissingBiomarkers(biomarkers: Biomarker[]): string[] {
@@ -543,7 +557,7 @@ class MockRepository implements Repository {
       { id: "bm-james-chen-hrv", participant_id: james.id, pillar: "vascular", key: "hrv", label: "Heart rate variability", value: 62, unit: "ms", ref_low: 40, ref_high: 70, source: "wearable", status: "imported", flagged: false, updated_at: nowIso() },
       { id: "bm-james-chen-total_cholesterol", participant_id: james.id, pillar: "vascular", key: "total_cholesterol", label: "Total cholesterol", value: 4.9, unit: "mmol/L", ref_low: 2.5, ref_high: 5.2, source: "lab_extract", status: "extracted", flagged: false, updated_at: nowIso() },
       { id: "bm-james-chen-ldl_c", participant_id: james.id, pillar: "vascular", key: "ldl_c", label: "LDL cholesterol", value: 2.6, unit: "mmol/L", ref_low: 1.0, ref_high: 3.0, source: "lab_extract", status: "extracted", flagged: false, updated_at: nowIso() },
-      { id: "bm-james-chen-hdl_c", participant_id: james.id, pillar: "vascular", key: "hdl_c", label: "HDL cholesterol", value: 1.4, unit: "mmol/L", ref_low: 1.0, ref_high: 2.5, source: "lab_extract", status: "extracted", flagged: false, updated_at: nowIso() },
+      { id: "bm-james-chen-hdl_c", participant_id: james.id, pillar: "vascular", key: "hdl_c", label: "HDL cholesterol", value: 1.4, unit: "mmol/L", ref_low: 1.03, ref_high: 2.5, source: "lab_extract", status: "extracted", flagged: false, updated_at: nowIso() },
       { id: "bm-james-chen-hscrp", participant_id: james.id, pillar: "vascular", key: "hscrp", label: "hs-CRP", value: 1.2, unit: "mg/L", ref_low: 0, ref_high: 3.0, source: "lab_extract", status: "extracted", flagged: false, updated_at: nowIso() },
 
       // Metabolic — Monitor (68): glucose + waist-hip already flagged; BMI and visceral fat
