@@ -377,11 +377,11 @@ The static, human-reviewed source content shown to participants lives in
 | Blood pressure upper bounds | 2017 ACC/AHA hypertension guideline ("Normal" category) | — |
 | Resting heart rate | AHA commonly-cited 60–100 bpm; platform band is narrower | Narrower than general guidance by design |
 | Heart rate variability | Typical consumer-wearable values | **No clinical reference range exists** — not a guideline figure |
-| Lipids (total, LDL, HDL, triglycerides) | NCEP ATP III lipid classification | HDL is **sex-aware** (men <1.03, women <1.29 mmol/L) — see below |
+| Lipids (total, LDL, HDL, triglycerides) | NCEP ATP III lipid classification; Singapore MOH/ACE 2023 lipid guidance noted for LDL | HDL is **sex-aware** (men <1.03, women <1.29 mmol/L) — see below. **[MEDICAL REVIEW]** — MOH/ACE sets risk-based LDL targets (SG-FRS-2023); platform shows a general band, not a personalized target |
 | hs-CRP | AHA/CDC cardiovascular risk-stratification categories | — |
 | Homocysteine | Standard clinical lab reference interval | Not a single named guideline |
 | Lipoprotein(a) | National Lipid Association 2024 risk-tier framework (lower-risk threshold) | **[MEDICAL REVIEW]** — confirm NLA 2024 threshold used |
-| Fasting glucose, HbA1c | ADA Standards of Care diagnostic thresholds | Also used to proxy diabetes in the age clocks |
+| Fasting glucose, HbA1c | ADA Standards of Care **and Singapore MOH** diabetes CPG thresholds (diabetes at FPG ≥7.0 mmol/L or HbA1c ≥6.5%) | Also used to proxy diabetes in the age clocks |
 | Fasting insulin | Common commercial-lab reference interval | No standardized guideline; immunoassays vary by manufacturer |
 | Vitamin D | NIH / Institute of Medicine thresholds | Endocrine Society 2024 argues against a single universal cutoff — disclosed |
 | Vitamin B12, ferritin, uric acid | Standard clinical lab reference intervals | Not a single named guideline |
@@ -390,7 +390,7 @@ The static, human-reviewed source content shown to participants lives in
 | Creatinine, albumin, ALP | Standard clinical lab reference intervals | Albumin & ALP exist primarily as PhenoAge inputs |
 | CBC (lymphocyte %, MCV, RDW, WBC) | Standard adult clinical lab reference intervals | Exist primarily as PhenoAge inputs |
 | TSH | General adult range cited by the American Thyroid Association | — |
-| BMI | WHO weight classifications | — |
+| BMI | **Singapore HPB-MOH Asian cut-offs** (healthy 18.5–22.9, overweight ≥23, obese ≥27.5) | Regional standard, not the WHO 25/30 — see below |
 | Body fat %, waist-to-hip ratio | **Sex-aware.** ACE body-composition categories (body fat %); WHO 2008 waist-to-hip guidance | See below |
 | Visceral fat | Device-specific scale (e.g. InBody) | Not an external clinical guideline |
 | CGM stats (TIR, TAR, TBR, variability) | 2019 International Consensus on Time in Range (ADA/EASD-endorsed) | Battelino et al. 2019 |
@@ -417,6 +417,35 @@ Three markers use meaningfully different healthy bands by sex
 > publication; the NCEP ATP III / IDF low-HDL sex thresholds are formal guideline
 > values. All are described accurately as such.
 
+### Singapore MOH grounding
+
+Because the platform serves an Asian population, region-specific guidance from
+Singapore's Ministry of Health (MOH), Health Promotion Board (HPB), and Agency
+for Care Effectiveness (ACE) is used wherever it applies, in preference to a
+generic international default:
+
+- **BMI — HPB-MOH Asian cut-offs.** Healthy 18.5–22.9, overweight ≥23, obese
+  ≥27.5 (HPB–MOH Clinical Practice Guidelines on Obesity), replacing the WHO
+  international 25/30. Asians develop diabetes, hypertension, and CVD at a lower
+  BMI at equivalent body fat, so the WHO cut-off under-flags this cohort.
+- **Diabetes — MOH diabetes CPG.** The fasting-glucose and HbA1c diagnostic
+  thresholds the platform uses (diabetes at FPG ≥7.0 mmol/L or HbA1c ≥6.5%)
+  coincide with both the ADA Standards of Care and the MOH CPG, so no value
+  changed — MOH is now cited alongside the ADA.
+- **Lipids — MOH/ACE 2023 lipid guidance.** **[MEDICAL REVIEW]** ACE's 2023
+  *Lipid management* guidance sets LDL targets by an individual's cardiovascular
+  risk (the SG-FRS-2023 risk score), not a single cut-off. The platform does not
+  compute SG-FRS-2023 (it does not capture every input the score needs), so LDL
+  is shown against a general wellness reference band and explicitly framed as not
+  a personalized target. Adopting risk-based LDL targets would require capturing
+  the risk-score inputs and is a decision for the care team.
+
+> **Not yet adopted (candidates for the care team):** MOH/HPB and the
+> Asian-Pacific consensus also define an Asian **waist-circumference** cut-off
+> (men ≥90 cm, women ≥80 cm). The platform currently scores waist-to-hip ratio,
+> not raw waist circumference; adding waist circumference with these cut-offs is a
+> proposed enhancement, not a shipped range.
+
 ### Corrections found and made during range review
 
 A citation-research pass over the ranges caught genuine defects (all fixed
@@ -435,6 +464,8 @@ in the referenced files):
   in women. A prior direction bug that reported a low-flagged higher-is-better
   marker (e.g. low HDL) against its *upper* bound was also fixed to report the
   correct (lower) bound.
+- The **BMI ceiling** was moved from the WHO's 25 to Singapore's HPB-MOH Asian
+  cut-off of 22.9 (overweight ≥23), matching the population the platform serves.
 
 ### Unit conversion
 
@@ -602,6 +633,23 @@ verification and the method is otherwise described accurately in the body above.
 
 15. National Lipid Association. **2024 Lp(a) risk-tier framework.** — *Lp(a)
     threshold (Section 7).* **[VERIFY exact document/threshold]**
+
+16. Health Promotion Board – Ministry of Health, Singapore. **Clinical Practice
+    Guidelines: Obesity.** — *Asian BMI cut-offs (healthy 18.5–22.9, overweight
+    ≥23, obese ≥27.5) adopted in Section 7.*
+
+17. Ministry of Health, Singapore. **Clinical Practice Guidelines: Diabetes
+    Mellitus.** — *Fasting glucose / HbA1c diagnostic thresholds, cited alongside
+    the ADA (Sections 5, 7).*
+
+18. Agency for Care Effectiveness (ACE), Ministry of Health, Singapore. **"Lipid
+    management: focus on cardiovascular risk."** ACE Clinical Guidance, Dec 2023.
+    — *Risk-based (SG-FRS-2023) LDL targets; noted in Section 7.* **[MEDICAL
+    REVIEW — not implemented as a personalized target]**
+
+19. Alberti KGMM, Zimmet P, Shaw J. **"The IDF consensus worldwide definition of
+    the metabolic syndrome."** International Diabetes Federation, 2006. —
+    *Sex-specific low-HDL threshold, metabolic-syndrome criteria (Sections 5, 7).*
 
 ---
 

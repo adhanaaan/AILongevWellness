@@ -14,6 +14,7 @@ export const METHODOLOGY_SECTIONS: MethodologySection[] = [
     title: "How your scores are calculated",
     paragraphs: [
       "Each of your three pillar scores (Vascular, Metabolic, Mental) reflects how your captured biomarkers compare with their reference ranges: a value within range scores 100, and scores decrease the further a value sits outside its range. This scoring approach is proprietary to AI Wellness, not a specific named clinical algorithm, and it is not a diagnosis. The reference ranges it's measured against, listed below, are drawn from established clinical and scientific sources where one exists.",
+      "Because this platform serves an Asian population, where Singapore's Ministry of Health (MOH), Health Promotion Board (HPB), or Agency for Care Effectiveness (ACE) publishes region-specific guidance — notably the Asian BMI cut-offs and the diabetes and lipid guidelines — the ranges below follow it. Where no region-specific standard applies, internationally recognised guidelines are used.",
       "Biological age uses a real published formula when your data supports it: PhenoAge (Levine et al., 2018, \"An epigenetic biomarker of aging for lifespan and healthspan,\" Aging, 10(4):573–591), built from nine blood biomarkers — albumin, creatinine, fasting glucose, hs-CRP, lymphocyte percent, mean cell volume (MCV), red cell distribution width (RDW), alkaline phosphatase, and white blood cell count — plus your chronological age. In the NHANES-derived cohort it was developed and validated on, it predicted 10-year all-cause mortality more accurately than chronological age alone. This is the actual published formula and coefficients, not our own reinterpretation of it, unlike the age clocks below.",
       "All nine inputs are required — a complete blood count plus a standard metabolic panel and hs-CRP, which most comprehensive lab panels already include. Until all nine are on file, biological age falls back to our own composite estimate (chronological age adjusted by how your three pillar scores compare with a neutral baseline) so you still see a number, honestly labeled as our own construction rather than PhenoAge.",
     ],
@@ -37,7 +38,8 @@ export const METHODOLOGY_SECTIONS: MethodologySection[] = [
   {
     title: "Lipid panel",
     paragraphs: [
-      "Total cholesterol, LDL, HDL, and triglyceride ranges align closely with the classic NCEP ATP III lipid classification framework.",
+      "Total cholesterol, LDL, HDL, and triglyceride ranges align closely with the classic NCEP ATP III lipid classification framework. HDL uses sex-specific low thresholds (men <1.03 mmol/L, women <1.29 mmol/L), consistent with NCEP ATP III and the IDF.",
+      "Singapore's MOH / Agency for Care Effectiveness (ACE) 2023 lipid guidance sets LDL treatment targets by an individual's cardiovascular risk (via the SG-FRS-2023 risk score) rather than a single cut-off. This platform does not compute that risk score, so LDL is shown against a general wellness reference band, not a personalized target — interpreting it against a risk-based target is a discussion for your care team.",
     ],
   },
   {
@@ -51,7 +53,7 @@ export const METHODOLOGY_SECTIONS: MethodologySection[] = [
   {
     title: "Glucose & metabolic",
     paragraphs: [
-      "Fasting glucose and HbA1c align with American Diabetes Association Standards of Care diagnostic thresholds.",
+      "Fasting glucose and HbA1c align with the diagnostic thresholds shared by the American Diabetes Association and Singapore's MOH diabetes clinical practice guidelines (diabetes at fasting glucose ≥7.0 mmol/L or HbA1c ≥6.5%).",
       "Fasting insulin has no standardized clinical guideline — immunoassays vary by manufacturer, so ours reflects a common commercial-lab reference interval.",
     ],
   },
@@ -83,7 +85,7 @@ export const METHODOLOGY_SECTIONS: MethodologySection[] = [
   {
     title: "Body composition",
     paragraphs: [
-      "BMI aligns with World Health Organization weight classifications.",
+      "BMI uses Singapore's HPB-MOH Asian cut-offs (healthy 18.5–22.9, overweight ≥23, obese ≥27.5) rather than the WHO's international 25/30 thresholds, because Asian populations develop cardiometabolic risk at a lower BMI. This is appropriate for the population this platform serves.",
       "Body fat % and waist-to-hip ratio use separate ranges for men and women, since healthy ranges genuinely differ by sex — aligned with the American Council on Exercise's body composition categories and the WHO's 2008 waist-to-hip ratio guidance, respectively.",
       "Visceral fat level uses a device-specific scale (as reported by body composition scanners like InBody), not an external clinical guideline.",
     ],

@@ -18,7 +18,8 @@ export const WEARABLE_CATALOG: WearableCatalogEntry[] = [
   { key: "hrv", label: "Heart rate variability", pillar: "vascular", unit: "ms", ref_low: 40, ref_high: 70 },
   { key: "systolic_bp", label: "Systolic blood pressure", pillar: "vascular", unit: "mmHg", ref_low: 90, ref_high: 120 },
   { key: "diastolic_bp", label: "Diastolic blood pressure", pillar: "vascular", unit: "mmHg", ref_low: 60, ref_high: 80 },
-  { key: "bmi", label: "BMI", pillar: "metabolic", unit: "kg/m²", ref_low: 18.5, ref_high: 25 },
+  // Asian (HPB-MOH) cutoff 22.9, not WHO 25 -- see lib/ai/bodyCompCatalog.ts.
+  { key: "bmi", label: "BMI", pillar: "metabolic", unit: "kg/m²", ref_low: 18.5, ref_high: 23 },
   { key: "body_fat_pct", label: "Body fat %", pillar: "metabolic", unit: "%", ref_low: 8, ref_high: 25 },
   { key: "sleep_hours", label: "Sleep duration", pillar: "mental", unit: "hours", ref_low: 7, ref_high: 9 },
   { key: "sleep_quality", label: "Sleep quality index", pillar: "mental", unit: "/100", ref_low: 70, ref_high: 100 },

@@ -134,7 +134,7 @@ const BIOMARKER_TEMPLATES: Record<Pillar, BiomarkerTemplate[]> = {
     // waist_hip_ratio/body_fat_pct's ref_low/ref_high below are display fallbacks
     // only -- genBiomarkersForScore always overrides them via sexAwareRange().
     { key: "waist_hip_ratio", label: "Waist-to-hip ratio", unit: "ratio", ref_low: 0.7, ref_high: 0.9, source: "body_comp" },
-    { key: "bmi", label: "BMI", unit: "kg/m²", ref_low: 18.5, ref_high: 25, source: "body_comp" },
+    { key: "bmi", label: "BMI", unit: "kg/m²", ref_low: 18.5, ref_high: 23, source: "body_comp" },
     { key: "body_fat_pct", label: "Body fat %", unit: "%", ref_low: 8, ref_high: 24, source: "body_comp" },
     { key: "visceral_fat", label: "Visceral fat", unit: "level", ref_low: 1, ref_high: 12, source: "body_comp" },
     { key: "vitamin_d", label: "Vitamin D", unit: "nmol/L", ref_low: 50, ref_high: 125, source: "lab_extract" },
@@ -245,7 +245,7 @@ const GENERIC_GUIDELINE_NOTE: Record<string, string> = {
   fasting_glucose: " against the ADA's normal range",
   hba1c: " against the ADA's thresholds",
   waist_hip_ratio: " on the WHO's waist-to-hip guidance",
-  bmi: " on the WHO's weight classifications",
+  bmi: " on the HPB-MOH Asian BMI cut-offs",
   body_fat_pct: " on the ACE body-composition categories",
   ldl_c: " within the standard lipid reference bands",
   hdl_c: " within the standard lipid reference bands",
@@ -565,7 +565,7 @@ class MockRepository implements Repository {
       { id: "bm-james-chen-fasting_glucose", participant_id: james.id, pillar: "metabolic", key: "fasting_glucose", label: "Fasting glucose", value: 108, unit: "mg/dL", ref_low: 70, ref_high: 99, source: "lab_extract", status: "needs_review", flagged: true, updated_at: nowIso() },
       { id: "bm-james-chen-hba1c", participant_id: james.id, pillar: "metabolic", key: "hba1c", label: "HbA1c", value: 5.6, unit: "%", ref_low: 4.0, ref_high: 5.7, source: "lab_extract", status: "extracted", flagged: false, updated_at: nowIso() },
       { id: "bm-james-chen-waist_hip_ratio", participant_id: james.id, pillar: "metabolic", key: "waist_hip_ratio", label: "Waist-to-hip ratio", value: 0.93, unit: "ratio", ref_low: 0.7, ref_high: 0.9, source: "body_comp", status: "entered", flagged: true, updated_at: nowIso() },
-      { id: "bm-james-chen-bmi", participant_id: james.id, pillar: "metabolic", key: "bmi", label: "BMI", value: 26.1, unit: "kg/m²", ref_low: 18.5, ref_high: 25, source: "body_comp", status: "entered", flagged: true, updated_at: nowIso() },
+      { id: "bm-james-chen-bmi", participant_id: james.id, pillar: "metabolic", key: "bmi", label: "BMI", value: 26.1, unit: "kg/m²", ref_low: 18.5, ref_high: 23, source: "body_comp", status: "entered", flagged: true, updated_at: nowIso() },
       { id: "bm-james-chen-body_fat_pct", participant_id: james.id, pillar: "metabolic", key: "body_fat_pct", label: "Body fat %", value: 24, unit: "%", ref_low: 8, ref_high: 24, source: "body_comp", status: "entered", flagged: false, updated_at: nowIso() },
       { id: "bm-james-chen-visceral_fat", participant_id: james.id, pillar: "metabolic", key: "visceral_fat", label: "Visceral fat", value: 13, unit: "level", ref_low: 1, ref_high: 12, source: "body_comp", status: "entered", flagged: true, updated_at: nowIso() },
       { id: "bm-james-chen-vitamin_d", participant_id: james.id, pillar: "metabolic", key: "vitamin_d", label: "Vitamin D", value: 58, unit: "nmol/L", ref_low: 50, ref_high: 125, source: "lab_extract", status: "extracted", flagged: false, updated_at: nowIso() },
@@ -618,7 +618,7 @@ class MockRepository implements Repository {
       areas_to_monitor: [
         "Fasting glucose (108 mg/dL) is above the ADA's normal range and is the clearest early metabolic signal in your data — worth a recheck alongside HbA1c to confirm the direction.",
         "Waist-to-hip ratio (0.93) and visceral fat (13) both sit just outside their reference ranges and point to the same central-fat pattern, which is the mechanism most likely driving the glucose trend.",
-        "BMI (26.1) is in the WHO's overweight band, just over the healthy-weight ceiling of 25 — less informative on its own than the waist and visceral readings, but consistent with them.",
+        "BMI (26.1) is in the overweight band on Singapore's HPB-MOH Asian cut-offs (healthy ceiling 22.9) — less informative on its own than the waist and visceral readings, but consistent with them.",
       ],
       suggested_focus: [
         "Make the central-fat cluster your primary focus — glucose, waist-to-hip ratio and visceral fat move together, so a lower-glycemic, higher-fibre approach (especially at breakfast) is the highest-leverage lever you have and speaks directly to your longevity goal.",
