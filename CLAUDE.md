@@ -220,6 +220,18 @@ lib/
       `lib/onboarding/goals.ts` (imported by both `quiz.tsx` and `profile-goals.tsx`).
       The `flow.ts` `questionnaire` section route repointed to `/onboarding/quiz`
       (the entry is filtered out of the hub UI; it stays only for the gating helpers).
+      The quiz's basics step (sex/age/height/weight) is now **required** (was
+      skippable) — sex drives the sex-aware ranges, age the biological-age/age
+      clocks, and height+weight the BMI, so a skipped step left the snapshot weak;
+      only the lifestyle step stays optional.
+- [x] Admin portal separated from the consumer app (`lib/auth/RouteGuard.tsx`
+      `CareTeamGuard`): a signed-in participant (a lay user) who reaches any
+      `/admin` route — including `/admin/login` — is now redirected back to their
+      own app (`/`) instead of being shown the care-team login. Only a genuinely
+      signed-out visitor sees `/admin/login`, and only a `care_team` account sees
+      the portal itself. Care-team access stays gated to specific people via the
+      `care_team_allowlist` (migration 0013); the admin login is the sole,
+      unlinked entry point (never surfaced anywhere in the participant UI).
 - [x] Data Capture hub revamp: `CaptureFlowStepper` (shared by every capture-*
       screen) dropped its tappable section pill row entirely and simplified its
       back button from a chevron + "Back" label + "Data Capture" caption down to a

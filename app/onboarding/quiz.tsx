@@ -61,9 +61,19 @@ export default function QuizPage() {
   const [smoking, setSmoking] = useState<boolean | null>(null);
   const [alcohol, setAlcohol] = useState<AlcoholDrinksPerWeek | null>(null);
 
+  // Step 2 (sex/age/height/weight) is REQUIRED — sex drives the sex-aware
+  // reference ranges, age drives biological age & the age clocks, and
+  // height+weight drive BMI, so the snapshot is materially weaker without them.
+  // Only the lifestyle step (3) stays optional.
   const canAdvance =
-    step === 0 ? name.trim().length > 0 : step === 1 ? goals.length > 0 : true;
-  const isOptional = step >= 2;
+    step === 0
+      ? name.trim().length > 0
+      : step === 1
+        ? goals.length > 0
+        : step === 2
+          ? Boolean(sex) && age.length > 0 && height.length > 0 && weight.length > 0
+          : true;
+  const isOptional = step >= 3;
   const isLast = step === TOTAL_STEPS - 1;
 
   function toggleGoal(label: string) {
@@ -173,7 +183,7 @@ export default function QuizPage() {
         {step === 2 && (
           <>
             <Text style={styles.title}>A few basics</Text>
-            <Text style={styles.subtitle}>Optional — this sharpens your snapshot. Skip if you like.</Text>
+            <Text style={styles.subtitle}>These power your biological age, BMI and personalised scores.</Text>
             <View style={styles.body}>
               <View style={styles.chipRow}>
                 {SEX_OPTIONS.map((o) => (
