@@ -81,7 +81,7 @@ export default function AdminLoginPage() {
       <Text style={styles.subtitle}>
         {mode === "signin"
           ? "Sign in with your care team account to review participant data."
-          : "Create a care team account (GP or TCM reviewer)."}
+          : "Care-team accounts are approved in advance. If an administrator has added your email, set your password below to activate it."}
       </Text>
 
       <Card padding="lg" style={styles.card}>
@@ -106,13 +106,19 @@ export default function AdminLoginPage() {
             That account is registered as a participant, not care team.
           </Text>
         )}
+        {mode === "signup" && (
+          <Text style={styles.approvalNote}>
+            Approved emails only — sign-up fails if an administrator hasn't added
+            yours yet.
+          </Text>
+        )}
 
         <Button
           size="lg"
           disabled={submitting || !email.trim() || password.length < 6}
           onPress={onSubmit}
         >
-          {mode === "signin" ? "Sign in" : "Create account"}
+          {mode === "signin" ? "Sign in" : "Activate account"}
         </Button>
 
         <Button
@@ -124,7 +130,7 @@ export default function AdminLoginPage() {
           }}
         >
           {mode === "signin"
-            ? "New team member? Create an account"
+            ? "Approved by an admin? Activate your account"
             : "Already have an account? Sign in"}
         </Button>
       </Card>
@@ -189,6 +195,12 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.danger,
+  },
+  approvalNote: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    lineHeight: 18,
   },
   footnote: {
     fontFamily: fontFamilies.body,

@@ -50,9 +50,32 @@ same way:
 - `supabase/migrations/0009_wearable_ingest.sql` — adds the `wearable_connections`
   table and `participants.ingest_token`, for the Terra + health-export ingestion
   (see "Wearables & health data" below). Only needed if you wire those up.
+- `supabase/migrations/0013_gate_care_team_role.sql` — **SECURITY, required.**
+  Adds the `care_team_allowlist` table and stops anyone from self-asserting the
+  `care_team` role at signup (which has full read/write to every participant's
+  health data). Without it, the admin role is not safe.
+- `supabase/migrations/0015_require_care_team_approval.sql` — **SECURITY, required
+  (run after 0013).** Makes admin signup a hard approval gate: a `care_team`
+  signup from an email that is NOT on the allowlist is rejected outright (no
+  account is created), instead of being silently downgraded to a participant.
 
 Any future numbered migration file works the same way: run it once, in
 order, after pulling new code that references it.
+
+## Approving care-team (admin) accounts
+
+Admin access is **approval-only** — random people cannot sign themselves up as
+admins. The approval step is adding the person's email to the allowlist *before*
+they sign up. In Dashboard → **SQL Editor**:
+
+```sql
+insert into public.care_team_allowlist (email) values ('dr.smith@clinic.example');
+```
+
+Then that clinician goes to `/admin/login` → "Approved by an admin? Activate your
+account" → sets a password → lands in the portal. Any email that isn't on the
+allowlist is refused at signup. To revoke, delete their `care_team_allowlist` row
+and their `user_roles` row.
 
 ## 3. Turn off email confirmation (recommended for this pilot)
 
@@ -137,11 +160,14 @@ required after changing them — a running deployment won't pick them up live).
 
 ## 7. Verify
 
-- Visit the deployed URL → **Begin Assessment** → consent → create an account
-  → you should land on the profile screen with a real Supabase user created
-  (check Dashboard → Authentication → Users).
-- Visit `/admin/login` → create a care team account → you should land on the
-  admin participant list (initially empty until participants sign up).
+- Visit the deployed URL → **Get started** → create an account (email + password
+  + consent) → the quiz (name, goal, then the required basics: sex/age/height/
+  weight) → you should land on the Insights card, with a real Supabase user
+  created (check Dashboard → Authentication → Users).
+- Add your own email to `care_team_allowlist` (see "Approving care-team accounts"
+  above), then visit `/admin/login` → "Activate your account" → you should land
+  on the admin participant list (initially empty until participants sign up). Try
+  it with a NON-allowlisted email too: signup should be refused.
 - Upload a real lab report PDF/photo during capture → within a few seconds,
   check Dashboard → Table Editor → `biomarkers` for new rows with
   `source = lab_extract`, `status = needs_review` — the care team confirms or
