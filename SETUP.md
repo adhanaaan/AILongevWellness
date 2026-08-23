@@ -84,29 +84,28 @@ a participant — delete that user + its participant row, add the allowlist entr
 then recreate the user. To revoke access later, delete the person's `user_roles`
 row and their `care_team_allowlist` entry (and the auth user).
 
-## 3. Turn off email confirmation (recommended for this pilot)
+## 3. Email confirmation + redirect URLs (REQUIRED)
 
-Dashboard → **Authentication** → **Providers** → **Email** → turn off
-**Confirm email**.
+Email confirmation is **kept ON**. Keep it enabled at Dashboard →
+**Authentication** → **Providers** → **Email** → **Confirm email** = on.
 
-Why: with it on, `signUp()` doesn't produce a live session until the user
-clicks a confirmation link, so a participant can't fill in their profile or
-start capture right after creating their account — they'd have to check email
-first. For a small, known group of ~20 executives at a retreat, turning this
-off gives a frictionless sign-up → profile → capture flow. The app already
-handles either setting (it shows a "check your email" screen if confirmation
-is required) — this step is a UX recommendation, not a hard requirement.
-
-**If you already hit "confirm email" going to a broken/localhost link**: fresh
-Supabase projects default their **Site URL** to `http://localhost:3000`, so a
-confirmation link clicked from anywhere else lands nowhere. Either turn off
-Confirm Email as above (simplest — makes this a non-issue), or fix it properly
-at Dashboard → **Authentication** → **URL Configuration**:
+Because it's on, the confirmation link MUST point at your real app, or it
+dead-ends. Fresh Supabase projects default their **Site URL** to
+`http://localhost:3000`, so a link clicked from anywhere else lands nowhere.
+Fix it at Dashboard → **Authentication** → **URL Configuration**:
 - **Site URL** → your deployed URL (production domain, or the PR preview URL
-  you're testing on)
-- **Redirect URLs** → add that same URL (wildcards work, e.g.
-  `https://*.vercel.app/**`, useful since every PR/branch gets its own preview
-  URL)
+  you're testing on).
+- **Redirect URLs** → add that same URL. Wildcards work, e.g.
+  `https://*.vercel.app/**` — useful since every PR/branch gets its own preview
+  URL.
+
+How the flow behaves with confirmation on (this is intended):
+sign up (email + password + consent) → the app shows a "Check your inbox"
+screen → the participant opens the link **in the same browser** → they're
+signed in automatically and taken straight to the quiz (no manual re-login).
+If they open the link on a different device, they just return to the app and
+sign in. The app handles all of this — your only job is the Site/Redirect URL
+config above.
 
 Any account stuck mid-confirmation from before this fix: Dashboard →
 **Authentication** → **Users** → delete that row and sign up again.
@@ -129,9 +128,8 @@ dashboard task, not a code change:
   and **Change email** templates: replace the default subject/body with
   AI-Wellness-branded copy (they support HTML, so you can add a logo, the sage
   palette, and a footer). Keep the `{{ .ConfirmationURL }}` token intact.
-- If you followed step 3 and turned **Confirm email** off, the confirmation
-  email isn't sent at all — but password-reset still is, so branding the reset
-  template is still worthwhile.
+- Since **Confirm email** is on, the **Confirm signup** template is the first
+  email every participant receives — brand it well; it's their first impression.
 
 ## 4. Collect your keys
 

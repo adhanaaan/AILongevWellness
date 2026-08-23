@@ -84,10 +84,14 @@ export default function ParticipantAuthPage() {
           <GlassCard tint="light" padding="none" radius="full" style={styles.headerIcon}>
             <Mail size={24} color={colors.teal} />
           </GlassCard>
-          <Text style={styles.title}>Verify your email</Text>
+          <Text style={styles.title}>Check your inbox</Text>
           <Text style={styles.subtitle}>
-            We sent a confirmation link to {email.trim()}. Click it, then come
-            back and sign in below.
+            We sent a confirmation link to {email.trim()}. Open it in this browser
+            and you&apos;ll be signed in automatically and taken straight to setting
+            up your profile — no need to come back here.
+          </Text>
+          <Text style={styles.confirmHint}>
+            Opened it on your phone instead? Just come back here and sign in.
           </Text>
           <View style={styles.confirmAction}>
             <Button
@@ -240,6 +244,13 @@ const styles = StyleSheet.create({
     color: colors.inkMuted,
     marginTop: spacing.sm,
     lineHeight: 24,
+  },
+  confirmHint: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    marginTop: spacing.lg,
+    lineHeight: 20,
   },
   confirmAction: {
     marginTop: spacing["2xl"],
