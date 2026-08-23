@@ -232,13 +232,16 @@ lib/
       the portal itself. Care-team access stays gated to specific people via the
       `care_team_allowlist` (migration 0013); the admin login is the sole,
       unlinked entry point (never surfaced anywhere in the participant UI).
-- [x] Admin signup is approval-only (`supabase/migrations/0015_require_care_team_approval.sql`,
-      run after 0013): a `care_team` signup from a non-allowlisted email is now
-      REJECTED outright (no auth user, no junk participant row) rather than silently
-      downgraded to a participant as 0013 did. An admin approves someone by adding
-      their email to `care_team_allowlist` before they sign up. `app/admin/login.tsx`
-      copy reframed to "approved emails only / Activate your account" so it never
-      reads as open registration. See SETUP.md "Approving care-team (admin) accounts".
+- [x] Care-team accounts are admin-created, not self-service
+      (`supabase/migrations/0016_admin_created_care_team.sql`, run after 0013;
+      supersedes 0015). The signup trigger now decides the role **solely from the
+      `care_team_allowlist`** (client `role` metadata is ignored entirely, so it
+      can never be escalated from the client): an allowlisted email → `care_team`
+      (no participant row), everyone else → participant. `app/admin/login.tsx` is
+      now **sign-in only** — the signup toggle / `signUpCareTeam` UI was removed, so
+      there is no public admin registration. An admin creates an account by
+      allowlisting the email then adding the user in the Supabase dashboard. See
+      SETUP.md "Creating admin (care-team) accounts".
 - [x] Data Capture hub revamp: `CaptureFlowStepper` (shared by every capture-*
       screen) dropped its tappable section pill row entirely and simplified its
       back button from a chevron + "Back" label + "Data Capture" caption down to a

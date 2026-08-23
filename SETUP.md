@@ -54,28 +54,35 @@ same way:
   Adds the `care_team_allowlist` table and stops anyone from self-asserting the
   `care_team` role at signup (which has full read/write to every participant's
   health data). Without it, the admin role is not safe.
-- `supabase/migrations/0015_require_care_team_approval.sql` — **SECURITY, required
-  (run after 0013).** Makes admin signup a hard approval gate: a `care_team`
-  signup from an email that is NOT on the allowlist is rejected outright (no
-  account is created), instead of being silently downgraded to a participant.
+- `supabase/migrations/0015_require_care_team_approval.sql` — superseded by 0016;
+  safe to skip if you run 0016 (0016 redefines the same function).
+- `supabase/migrations/0016_admin_created_care_team.sql` — **SECURITY, required
+  (run after 0013).** Care-team accounts are admin-created, not self-service. The
+  signup trigger decides the role **solely from the allowlist** (client metadata
+  is ignored): an allowlisted email becomes `care_team`, everyone else becomes a
+  participant. The admin login is sign-in only — there is no public admin sign-up.
 
 Any future numbered migration file works the same way: run it once, in
 order, after pulling new code that references it.
 
-## Approving care-team (admin) accounts
+## Creating admin (care-team) accounts
 
-Admin access is **approval-only** — random people cannot sign themselves up as
-admins. The approval step is adding the person's email to the allowlist *before*
-they sign up. In Dashboard → **SQL Editor**:
+Admin access is **not self-service** — you create each account yourself. Two
+steps, both in the Supabase Dashboard, in this order:
 
-```sql
-insert into public.care_team_allowlist (email) values ('dr.smith@clinic.example');
-```
+1. **SQL Editor** — allowlist the email first:
+   ```sql
+   insert into public.care_team_allowlist (email) values ('dr.smith@clinic.example');
+   ```
+2. **Authentication → Users → Add user** — create the account with that email and
+   a password (or send an invite). The signup trigger sees the allowlisted email
+   and grants `care_team` automatically (no participant row is created). Hand the
+   credentials to the clinician; they sign in at `/admin/login`.
 
-Then that clinician goes to `/admin/login` → "Approved by an admin? Activate your
-account" → sets a password → lands in the portal. Any email that isn't on the
-allowlist is refused at signup. To revoke, delete their `care_team_allowlist` row
-and their `user_roles` row.
+Do step 1 before step 2. If you create the user first, they'll be provisioned as
+a participant — delete that user + its participant row, add the allowlist entry,
+then recreate the user. To revoke access later, delete the person's `user_roles`
+row and their `care_team_allowlist` entry (and the auth user).
 
 ## 3. Turn off email confirmation (recommended for this pilot)
 
@@ -164,10 +171,11 @@ required after changing them — a running deployment won't pick them up live).
   + consent) → the quiz (name, goal, then the required basics: sex/age/height/
   weight) → you should land on the Insights card, with a real Supabase user
   created (check Dashboard → Authentication → Users).
-- Add your own email to `care_team_allowlist` (see "Approving care-team accounts"
-  above), then visit `/admin/login` → "Activate your account" → you should land
-  on the admin participant list (initially empty until participants sign up). Try
-  it with a NON-allowlisted email too: signup should be refused.
+- Create an admin account (see "Creating admin (care-team) accounts" above:
+  allowlist your email, then add the user in Authentication → Users), then visit
+  `/admin/login` → sign in → you should land on the admin participant list
+  (initially empty until participants sign up). Confirm there is no sign-up option
+  on that screen.
 - Upload a real lab report PDF/photo during capture → within a few seconds,
   check Dashboard → Table Editor → `biomarkers` for new rows with
   `source = lab_extract`, `status = needs_review` — the care team confirms or

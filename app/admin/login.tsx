@@ -8,62 +8,31 @@ import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { colors, fontFamilies, fontSizes, spacing, radii, shadows } from "@/lib/theme/tokens";
 
+// Sign-in only. Care-team accounts are NOT self-service — an administrator
+// creates them out-of-band (see SETUP.md "Creating admin accounts": allowlist
+// the email, then create the user in Supabase). This screen only lets an already
+// provisioned care_team account sign in; there is no signup path to abuse.
 export default function AdminLoginPage() {
   const router = useRouter();
-  const { signIn, signUpCareTeam, role } = useAuth();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const { signIn, role } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [awaitingConfirmation, setAwaitingConfirmation] = useState(false);
 
   async function onSubmit() {
     setError(null);
     setSubmitting(true);
     try {
-      if (mode === "signin") {
-        await signIn(email.trim(), password);
-        router.replace("/admin");
-      } else {
-        const hasSession = await signUpCareTeam(email.trim(), password);
-        if (hasSession) {
-          router.replace("/admin");
-        } else {
-          setAwaitingConfirmation(true);
-        }
-      }
+      await signIn(email.trim(), password);
+      // CareTeamGuard routes from here: a real care_team account lands in the
+      // portal; anything else is bounced back to the consumer app.
+      router.replace("/admin");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Something went wrong.");
     } finally {
       setSubmitting(false);
     }
-  }
-
-  if (awaitingConfirmation) {
-    return (
-      <ScrollView style={styles.screen} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.iconWrap}>
-          <ShieldCheck size={26} color={colors.sageDark} strokeWidth={1.75} />
-        </View>
-        <Text style={styles.title}>Verify your email</Text>
-        <Text style={styles.subtitle}>
-          We sent a confirmation link to {email.trim()}. Click it, then come
-          back and sign in.
-        </Text>
-        <Button
-          variant="ghost"
-          size="sm"
-          onPress={() => {
-            setAwaitingConfirmation(false);
-            setMode("signin");
-          }}
-          style={styles.backButton}
-        >
-          Back to sign in
-        </Button>
-      </ScrollView>
-    );
   }
 
   return (
@@ -79,9 +48,8 @@ export default function AdminLoginPage() {
       </View>
       <Text style={styles.title}>Care team access</Text>
       <Text style={styles.subtitle}>
-        {mode === "signin"
-          ? "Sign in with your care team account to review participant data."
-          : "Care-team accounts are approved in advance. If an administrator has added your email, set your password below to activate it."}
+        Sign in with the care team account provided to you. Accounts are created
+        by your administrator — there is no public sign-up.
       </Text>
 
       <Card padding="lg" style={styles.card}>
@@ -98,18 +66,12 @@ export default function AdminLoginPage() {
           value={password}
           onChangeText={setPassword}
           secureTextEntry
-          placeholder="At least 6 characters"
+          placeholder="Your password"
         />
         {error && <Text style={styles.error}>{error}</Text>}
         {role === "participant" && (
           <Text style={styles.error}>
             That account is registered as a participant, not care team.
-          </Text>
-        )}
-        {mode === "signup" && (
-          <Text style={styles.approvalNote}>
-            Approved emails only — sign-up fails if an administrator hasn't added
-            yours yet.
           </Text>
         )}
 
@@ -118,25 +80,13 @@ export default function AdminLoginPage() {
           disabled={submitting || !email.trim() || password.length < 6}
           onPress={onSubmit}
         >
-          {mode === "signin" ? "Sign in" : "Activate account"}
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          onPress={() => {
-            setError(null);
-            setMode((m) => (m === "signin" ? "signup" : "signin"));
-          }}
-        >
-          {mode === "signin"
-            ? "Approved by an admin? Activate your account"
-            : "Already have an account? Sign in"}
+          Sign in
         </Button>
       </Card>
 
       <Text style={styles.footnote}>
-        Secure access for authorised care team reviewers only.
+        Secure access for authorised care team reviewers only. Need access? Ask
+        your administrator to set up an account for you.
       </Text>
     </ScrollView>
   );
@@ -187,20 +137,10 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     ...shadows.soft,
   },
-  backButton: {
-    alignSelf: "flex-start",
-    marginTop: spacing.md,
-  },
   error: {
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.danger,
-  },
-  approvalNote: {
-    fontFamily: fontFamilies.body,
-    fontSize: fontSizes.caption,
-    color: colors.inkMuted,
-    lineHeight: 18,
   },
   footnote: {
     fontFamily: fontFamilies.body,
