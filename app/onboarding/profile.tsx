@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter } from "expo-router";
 import { User } from "lucide-react-native";
 import { SelectField, type SelectFieldOption } from "@/components/ui/SelectField";
 import { Input } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { updateParticipantAction, updateSectionStatusAction } from "@/lib/data/actions";
+import { updateParticipantAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
@@ -39,9 +39,6 @@ function digitsOnly(text: string): string {
 export default function ProfilePersonalPage() {
   const router = useRouter();
   const { participantId, session } = useAuth();
-  const { mode } = useLocalSearchParams<{ mode?: string }>();
-  const isEditing = mode === "edit";
-
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
@@ -113,12 +110,9 @@ export default function ProfilePersonalPage() {
       if (isSupabaseConfigured && session?.access_token) {
         generateDraft(session.access_token, participantId).catch(() => {});
       }
-      if (isEditing) {
-        router.back();
-      } else {
-        await updateSectionStatusAction("personal_info", "in_progress", participantId);
-        router.push("/onboarding/profile-wellness-intro");
-      }
+      // Reached only as an edit surface from the Data Capture hub now — the old
+      // sequential questionnaire chain was replaced by app/onboarding/quiz.tsx.
+      router.back();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't save — please try again.");
     } finally {

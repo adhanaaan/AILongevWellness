@@ -1,44 +1,16 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import {
-  Target,
-  Check,
-  Infinity as InfinityIcon,
-  Zap,
-  Scale,
-  Shield,
-  Moon,
-  HeartPulse,
-  type LucideIcon,
-} from "lucide-react-native";
+import { useRouter } from "expo-router";
+import { Target, Check } from "lucide-react-native";
 import { GradientOverlay } from "@/components/ui/GradientOverlay";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { updateParticipantAction, updateSectionStatusAction } from "@/lib/data/actions";
+import { updateParticipantAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
+import { GOALS } from "@/lib/onboarding/goals";
 import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
-
-export interface Goal {
-  label: string;
-  description: string;
-  icon: LucideIcon;
-}
-
-export const GOALS: Goal[] = [
-  { label: "Longevity", description: "Build habits that add healthy years.", icon: InfinityIcon },
-  { label: "Energy & focus", description: "Feel sharper and less drained.", icon: Zap },
-  { label: "Weight management", description: "Find a sustainable, healthy weight.", icon: Scale },
-  { label: "Stress resilience", description: "Handle pressure with more ease.", icon: Shield },
-  { label: "Sleep quality", description: "Fall asleep faster and rest deeper.", icon: Moon },
-  {
-    label: "Cardiovascular fitness",
-    description: "Strengthen your heart and stamina.",
-    icon: HeartPulse,
-  },
-];
 
 const SELECTED_GRADIENT_STOPS = [
   { offset: "0", color: `${colors.amber}00` },
@@ -48,8 +20,6 @@ const SELECTED_GRADIENT_STOPS = [
 export default function ProfileGoalsPage() {
   const router = useRouter();
   const { participantId } = useAuth();
-  const { mode } = useLocalSearchParams<{ mode?: string }>();
-  const isEditing = mode === "edit";
 
   const [loading, setLoading] = useState(true);
   const [selectedGoals, setSelectedGoals] = useState<string[]>([]);
@@ -80,12 +50,9 @@ export default function ProfileGoalsPage() {
     setSaving(true);
     try {
       await updateParticipantAction(participantId, { goals: selectedGoals });
-      if (isEditing) {
-        router.back();
-      } else {
-        await updateSectionStatusAction("personal_info", "in_progress", participantId);
-        router.push("/onboarding/profile-lifestyle");
-      }
+      // Reached only as an edit surface from the Data Capture hub now — the old
+      // sequential questionnaire chain was replaced by app/onboarding/quiz.tsx.
+      router.back();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't save — please try again.");
     } finally {

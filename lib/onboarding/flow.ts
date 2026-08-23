@@ -46,7 +46,11 @@ export interface CaptureSectionDef {
 }
 
 export const CAPTURE_SECTIONS: CaptureSectionDef[] = [
-  { id: "questionnaire", label: "Questionnaire", keys: ["personal_info", "lifestyle"], route: "/onboarding/profile-intro" },
+  // Questionnaire is handled at signup by app/onboarding/quiz.tsx and is filtered
+  // out of the capture hub UI; this entry stays only for the gating helpers
+  // (deriveSectionState / isCaptureComplete / computeUnlockedSections). The route
+  // is a safe live fallback and isn't actually navigated to from the hub.
+  { id: "questionnaire", label: "Questionnaire", keys: ["personal_info", "lifestyle"], route: "/onboarding/quiz" },
   { id: "wearables", label: "Wearables", keys: ["wearables"], route: "/onboarding/capture-wearables-intro", optional: true },
   {
     id: "body_composition",

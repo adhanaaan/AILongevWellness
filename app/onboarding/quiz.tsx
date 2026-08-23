@@ -6,7 +6,7 @@ import { ArrowLeft, Check } from "lucide-react-native";
 import { Input } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { GOALS } from "@/app/onboarding/profile-goals";
+import { GOALS } from "@/lib/onboarding/goals";
 import { updateParticipantAction, updateCaptureChannelAction, submitCaptureAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
@@ -14,12 +14,13 @@ import { generateDraft } from "@/lib/ai/client";
 import type { AlcoholDrinksPerWeek, ExerciseFrequency, Sex } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, lineHeights, radii, spacing } from "@/lib/theme/tokens";
 
-// A light, Bumble-style card stack that replaces the old multi-screen
-// questionnaire (profile-intro -> profile -> wellness-intro -> goals -> lifestyle
-// -> snapshot). Only Name + one Goal are required to reach the app; the basics
-// and lifestyle cards are skippable and can be filled later from Settings. The
-// app tabs are gated on auth only (ParticipantGuard), so finishing here routes
-// straight into the app.
+// A light, Bumble-style card stack — the single onboarding questionnaire. It
+// replaced the old multi-screen chain (now removed); the standalone
+// profile / profile-goals / profile-lifestyle screens survive only as edit
+// surfaces reached from the Data Capture hub. Only Name + one Goal are required
+// to reach the app; the basics and lifestyle cards are skippable and can be
+// edited later from that hub. The app tabs are gated on auth only
+// (ParticipantGuard), so finishing here routes straight into the app.
 
 const SEX_OPTIONS: { label: string; value: Sex }[] = [
   { label: "Male", value: "male" },

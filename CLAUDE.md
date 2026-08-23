@@ -206,6 +206,20 @@ lib/
       WELLNESS SNAPSHOT" explainer, and the same "data capture isn't finished yet"
       status line AVA's own promo uses, tap-through "Continue" button, no
       auto-advance) before landing back on the Data Capture hub.
+- [x] Onboarding consolidated onto the single `quiz.tsx` (Bumble-style card stack:
+      Name + Goal required, sex/age/height/weight + lifestyle optional). The old
+      multi-screen pre-signup + questionnaire chain that this superseded was removed
+      (`intro-hook`, `intro-longevity`, `consent`, `profile-intro`,
+      `profile-wellness-intro`, `intro-wellness-snapshot` deleted — they were
+      unreachable once "Get started" pointed straight at `/onboarding/auth`, and
+      consent now lives inside `auth.tsx`'s signup form + `TermsModal`). The
+      surviving `profile.tsx` / `profile-goals.tsx` / `profile-lifestyle.tsx` are now
+      **edit-only** surfaces (always `router.back()` on save), reachable from the
+      Data Capture hub's "Edit your profile" section (Personal info / Wellness goals
+      / Lifestyle rows). `GOALS` moved out of `profile-goals.tsx` into shared
+      `lib/onboarding/goals.ts` (imported by both `quiz.tsx` and `profile-goals.tsx`).
+      The `flow.ts` `questionnaire` section route repointed to `/onboarding/quiz`
+      (the entry is filtered out of the hub UI; it stays only for the gating helpers).
 - [x] Data Capture hub revamp: `CaptureFlowStepper` (shared by every capture-*
       screen) dropped its tappable section pill row entirely and simplified its
       back button from a chevron + "Back" label + "Data Capture" caption down to a
