@@ -7,7 +7,7 @@ import { LAB_CATALOG_BY_KEY } from "../lib/ai/labCatalog";
 import { isMarkerFlagged } from "../lib/ai/markerDirection";
 import { sexAwareRange } from "../lib/ai/sexAwareRanges";
 import { BUCKET_BY_KIND } from "../lib/data/storageBuckets";
-import { convertToTargetUnit } from "../lib/ai/unitConversion";
+import { convertToTargetUnit, isUnitConvertible } from "../lib/ai/unitConversion";
 import { flagIfPastSignoff } from "../lib/data/pipelineAttention";
 import { writeBiomarkerReadings } from "../lib/data/biomarkerReadings";
 import { resyncDraftScores } from "../lib/data/resyncDraftScores";
@@ -273,20 +273,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     .filter((r) => LAB_CATALOG_BY_KEY[r.key] && typeof r.value === "number")
     .map((r) => {
       const entry = LAB_CATALOG_BY_KEY[r.key];
-      const value = convertToTargetUnit(entry.key, r.value, r.unit ?? entry.unit, entry.unit);
-      const { ref_low, ref_high } = sexAwareRange(entry.key, participant?.sex, entry);
+      const rawUnit = r.unit ?? entry.unit;
+      const value = convertToTargetUnit(entry.key, r.value, rawUnit, entry.unit);
+      // If the reported unit differs from our target and we have no converter for
+      // it, we can't trust the value against our reference range (e.g. Lp(a) in
+      // nmol/L scored against an mg/dL band reads as a false 0 and tanks the
+      // pillar). Store it for admin review but leave the range null so it isn't
+      // scored/flagged until a human confirms the unit.
+      const convertible = isUnitConvertible(entry.key, rawUnit, entry.unit);
+      const sexRange = sexAwareRange(entry.key, participant?.sex, entry);
+      const ref_low = convertible ? sexRange.ref_low : null;
+      const ref_high = convertible ? sexRange.ref_high : null;
       return {
         participant_id: participantId,
         pillar: entry.pillar,
         key: entry.key,
         label: entry.label,
         value,
-        unit: entry.unit,
+        unit: convertible ? entry.unit : rawUnit,
         ref_low,
         ref_high,
         source: "lab_extract",
         status: "needs_review",
-        flagged: isMarkerFlagged(entry.key, value, ref_low, ref_high),
+        flagged: convertible ? isMarkerFlagged(entry.key, value, ref_low as number, ref_high as number) : false,
         measured_at: measuredAt,
       };
     });
