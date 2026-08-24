@@ -155,7 +155,7 @@ export default function PrivacyPage() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bone },
+  container: { flex: 1, backgroundColor: colors.bone, width: "100%", maxWidth: 448, alignSelf: "center" },
   header: {
     flexDirection: "row",
     alignItems: "center",

@@ -48,6 +48,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bone,
+    // Phone-first product: on a wide (laptop) browser, keep the app as a centered
+    // phone-width column instead of stretching edge-to-edge. Matches the 448 cap
+    // the onboarding screens already use. No effect on real phones (screens are
+    // narrower than 448, so width:100% wins).
+    width: "100%",
+    maxWidth: 448,
+    alignSelf: "center",
   },
   header: {
     flexDirection: "row",

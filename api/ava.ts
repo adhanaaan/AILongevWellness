@@ -101,6 +101,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
+  // Deterministic out-of-scope guard (defense-in-depth; mirrors the mock path in
+  // lib/ava/respond.ts). Refuse diagnosis / medication / symptom questions BEFORE
+  // the model call, so a prompt-only guardrail can't be jailbroken into producing
+  // medical advice. The refusal deliberately OMITS the wellness disclaimer — the
+  // disclaimer belongs on substantive wellness answers, not on a refusal (where it
+  // would read as if the refusal itself were sanctioned advice).
+  if (/diagnos|medicat|prescri|drug|dosage|symptom|disease|treat(ment)?|cure/i.test(message)) {
+    res.status(200).json({
+      reply:
+        "I can only talk through what's on your reviewed wellness card — I'm not able to help with diagnoses, medications, or symptoms. That's a good question for your care team.",
+    });
+    return;
+  }
+
   // Scoped to the caller's own session — RLS ensures a participant can only ever
   // pull their own signed card, no matter what participantId is passed in.
   const callerClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {

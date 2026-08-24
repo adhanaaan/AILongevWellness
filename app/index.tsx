@@ -122,7 +122,7 @@ export default function WelcomePage() {
           </View>
           <View style={styles.snapshotDivider} />
           <Text style={styles.snapshotCaption}>
-            Biological age 54 — four years younger than 58
+            Example — biological age is a wellness estimate, not a diagnosis
           </Text>
         </Card>
       </View>
