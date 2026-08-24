@@ -140,14 +140,15 @@ export default function BioAgePage() {
             <>
               <Text style={styles.paragraph}>
                 Your biological age of {bioAge} is calculated with PhenoAge (Levine et al., 2018), a published
-                formula built from nine blood biomarkers — albumin, creatinine, glucose, CRP, lymphocyte percent,
-                MCV, RDW, alkaline phosphatase, and white blood cell count — alongside your chronological age of{" "}
-                {chronoAge}. In the study it was developed on, it tracked long-term health outcomes more closely
-                than chronological age alone.
+                formula built from nine blood biomarkers — albumin, creatinine, fasting glucose, hs-CRP, lymphocyte
+                percent, MCV, RDW, alkaline phosphatase, and white blood cell count — alongside your chronological
+                age of {chronoAge}. In the cohort it was developed and validated on, it predicted 10-year all-cause
+                mortality more closely than chronological age alone.
               </Text>
               <Text style={styles.paragraph}>
-                This is a real, published clinical formula computed directly from your lab values — not our own
-                estimate. See the full citation and calculation on the Methodology page.
+                This is a real, published research formula computed directly from your lab values — not our own
+                estimate — though it remains a wellness estimate, not a diagnostic test. See the full citation and
+                calculation on the Methodology page.
               </Text>
             </>
           ) : (

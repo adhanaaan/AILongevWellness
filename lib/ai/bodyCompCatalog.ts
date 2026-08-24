@@ -14,7 +14,11 @@ export interface BodyCompCatalogEntry {
 // meaning elsewhere in the app (lib/ai/scoring.ts's metabolic pillar list) --
 // narrower than this would just be extracting numbers nothing downstream uses.
 export const BODY_COMP_CATALOG: BodyCompCatalogEntry[] = [
-  { key: "bmi", label: "BMI", pillar: "metabolic", unit: "kg/m²", ref_low: 18.5, ref_high: 25 },
+  // Asian (HPB-MOH) cutoff, not the WHO 25: Singapore's HPB-MOH Obesity CPG sets
+  // the healthy ceiling at 22.9 (overweight >=23, obese >=27.5), because Asians
+  // carry more visceral fat and become dysglycaemic at a lower BMI. Correct for
+  // this platform's regional cohort.
+  { key: "bmi", label: "BMI", pillar: "metabolic", unit: "kg/m²", ref_low: 18.5, ref_high: 23 },
   { key: "body_fat_pct", label: "Body fat %", pillar: "metabolic", unit: "%", ref_low: 8, ref_high: 25 },
   { key: "visceral_fat", label: "Visceral fat", pillar: "metabolic", unit: "level", ref_low: 1, ref_high: 12 },
   { key: "waist_hip_ratio", label: "Waist-to-hip ratio", pillar: "metabolic", unit: "ratio", ref_low: 0.7, ref_high: 0.9 },

@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter, useLocalSearchParams } from "expo-router";
+import { useRouter } from "expo-router";
 import { Activity } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
-import { updateParticipantAction, updateSectionStatusAction, updateCaptureChannelAction } from "@/lib/data/actions";
+import { updateParticipantAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
-import { isSupabaseConfigured } from "@/lib/config/env";
-import { generateDraft } from "@/lib/ai/client";
 import type { ExerciseFrequency, AlcoholDrinksPerWeek } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 
@@ -37,10 +35,7 @@ function SectionLabel({ children }: { children: string }) {
 
 export default function ProfileLifestylePage() {
   const router = useRouter();
-  const { participantId, session } = useAuth();
-  const { mode } = useLocalSearchParams<{ mode?: string }>();
-  const isEditing = mode === "edit";
-
+  const { participantId } = useAuth();
   const [loading, setLoading] = useState(true);
   const [exercise, setExercise] = useState<ExerciseFrequency>("sometimes");
   const [smoking, setSmoking] = useState(false);
@@ -70,25 +65,9 @@ export default function ProfileLifestylePage() {
         smoking,
         alcohol_drinks_per_week: alcohol,
       });
-      if (isEditing) {
-        router.back();
-      } else {
-        // Personal Info + Goals + Lifestyle together are the fixed-start
-        // "Questionnaire" pair from the hub's point of view — both tracked keys
-        // complete together here, which unlocks the free-order middle trio.
-        await updateSectionStatusAction("personal_info", "done", participantId);
-        await updateSectionStatusAction("lifestyle", "done", participantId);
-        await updateCaptureChannelAction(participantId, "manual", {
-          status: "complete",
-          entered_by: "participant",
-        });
-        // First insights as soon as basic info is in, not gated behind full
-        // capture -- fire-and-forget, refined further as more data comes in.
-        if (isSupabaseConfigured && session?.access_token) {
-          generateDraft(session.access_token, participantId).catch(() => {});
-        }
-        router.push("/onboarding/intro-wellness-snapshot");
-      }
+      // Reached only as an edit surface from the Data Capture hub now — the old
+      // sequential questionnaire chain was replaced by app/onboarding/quiz.tsx.
+      router.back();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't save — please try again.");
     } finally {

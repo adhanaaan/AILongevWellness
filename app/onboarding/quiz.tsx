@@ -6,7 +6,7 @@ import { ArrowLeft, Check } from "lucide-react-native";
 import { Input } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { GOALS } from "@/app/onboarding/profile-goals";
+import { GOALS } from "@/lib/onboarding/goals";
 import { updateParticipantAction, updateCaptureChannelAction, submitCaptureAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
@@ -14,12 +14,13 @@ import { generateDraft } from "@/lib/ai/client";
 import type { AlcoholDrinksPerWeek, ExerciseFrequency, Sex } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, lineHeights, radii, spacing } from "@/lib/theme/tokens";
 
-// A light, Bumble-style card stack that replaces the old multi-screen
-// questionnaire (profile-intro -> profile -> wellness-intro -> goals -> lifestyle
-// -> snapshot). Only Name + one Goal are required to reach the app; the basics
-// and lifestyle cards are skippable and can be filled later from Settings. The
-// app tabs are gated on auth only (ParticipantGuard), so finishing here routes
-// straight into the app.
+// A light, Bumble-style card stack — the single onboarding questionnaire. It
+// replaced the old multi-screen chain (now removed); the standalone
+// profile / profile-goals / profile-lifestyle screens survive only as edit
+// surfaces reached from the Data Capture hub. Only Name + one Goal are required
+// to reach the app; the basics and lifestyle cards are skippable and can be
+// edited later from that hub. The app tabs are gated on auth only
+// (ParticipantGuard), so finishing here routes straight into the app.
 
 const SEX_OPTIONS: { label: string; value: Sex }[] = [
   { label: "Male", value: "male" },
@@ -60,9 +61,19 @@ export default function QuizPage() {
   const [smoking, setSmoking] = useState<boolean | null>(null);
   const [alcohol, setAlcohol] = useState<AlcoholDrinksPerWeek | null>(null);
 
+  // Step 2 (sex/age/height/weight) is REQUIRED — sex drives the sex-aware
+  // reference ranges, age drives biological age & the age clocks, and
+  // height+weight drive BMI, so the snapshot is materially weaker without them.
+  // Only the lifestyle step (3) stays optional.
   const canAdvance =
-    step === 0 ? name.trim().length > 0 : step === 1 ? goals.length > 0 : true;
-  const isOptional = step >= 2;
+    step === 0
+      ? name.trim().length > 0
+      : step === 1
+        ? goals.length > 0
+        : step === 2
+          ? Boolean(sex) && age.length > 0 && height.length > 0 && weight.length > 0
+          : true;
+  const isOptional = step >= 3;
   const isLast = step === TOTAL_STEPS - 1;
 
   function toggleGoal(label: string) {
@@ -172,7 +183,7 @@ export default function QuizPage() {
         {step === 2 && (
           <>
             <Text style={styles.title}>A few basics</Text>
-            <Text style={styles.subtitle}>Optional — this sharpens your snapshot. Skip if you like.</Text>
+            <Text style={styles.subtitle}>These power your biological age, BMI and personalised scores.</Text>
             <View style={styles.body}>
               <View style={styles.chipRow}>
                 {SEX_OPTIONS.map((o) => (

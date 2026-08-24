@@ -50,33 +50,62 @@ same way:
 - `supabase/migrations/0009_wearable_ingest.sql` — adds the `wearable_connections`
   table and `participants.ingest_token`, for the Terra + health-export ingestion
   (see "Wearables & health data" below). Only needed if you wire those up.
+- `supabase/migrations/0013_gate_care_team_role.sql` — **SECURITY, required.**
+  Adds the `care_team_allowlist` table and stops anyone from self-asserting the
+  `care_team` role at signup (which has full read/write to every participant's
+  health data). Without it, the admin role is not safe.
+- `supabase/migrations/0015_require_care_team_approval.sql` — superseded by 0016;
+  safe to skip if you run 0016 (0016 redefines the same function).
+- `supabase/migrations/0016_admin_created_care_team.sql` — **SECURITY, required
+  (run after 0013).** Care-team accounts are admin-created, not self-service. The
+  signup trigger decides the role **solely from the allowlist** (client metadata
+  is ignored): an allowlisted email becomes `care_team`, everyone else becomes a
+  participant. The admin login is sign-in only — there is no public admin sign-up.
 
 Any future numbered migration file works the same way: run it once, in
 order, after pulling new code that references it.
 
-## 3. Turn off email confirmation (recommended for this pilot)
+## Creating admin (care-team) accounts
 
-Dashboard → **Authentication** → **Providers** → **Email** → turn off
-**Confirm email**.
+Admin access is **not self-service** — you create each account yourself. Two
+steps, both in the Supabase Dashboard, in this order:
 
-Why: with it on, `signUp()` doesn't produce a live session until the user
-clicks a confirmation link, so a participant can't fill in their profile or
-start capture right after creating their account — they'd have to check email
-first. For a small, known group of ~20 executives at a retreat, turning this
-off gives a frictionless sign-up → profile → capture flow. The app already
-handles either setting (it shows a "check your email" screen if confirmation
-is required) — this step is a UX recommendation, not a hard requirement.
+1. **SQL Editor** — allowlist the email first:
+   ```sql
+   insert into public.care_team_allowlist (email) values ('dr.smith@clinic.example');
+   ```
+2. **Authentication → Users → Add user** — create the account with that email and
+   a password (or send an invite). The signup trigger sees the allowlisted email
+   and grants `care_team` automatically (no participant row is created). Hand the
+   credentials to the clinician; they sign in at `/admin/login`.
 
-**If you already hit "confirm email" going to a broken/localhost link**: fresh
-Supabase projects default their **Site URL** to `http://localhost:3000`, so a
-confirmation link clicked from anywhere else lands nowhere. Either turn off
-Confirm Email as above (simplest — makes this a non-issue), or fix it properly
-at Dashboard → **Authentication** → **URL Configuration**:
+Do step 1 before step 2. If you create the user first, they'll be provisioned as
+a participant — delete that user + its participant row, add the allowlist entry,
+then recreate the user. To revoke access later, delete the person's `user_roles`
+row and their `care_team_allowlist` entry (and the auth user).
+
+## 3. Email confirmation + redirect URLs (REQUIRED)
+
+Email confirmation is **kept ON**. Keep it enabled at Dashboard →
+**Authentication** → **Providers** → **Email** → **Confirm email** = on.
+
+Because it's on, the confirmation link MUST point at your real app, or it
+dead-ends. Fresh Supabase projects default their **Site URL** to
+`http://localhost:3000`, so a link clicked from anywhere else lands nowhere.
+Fix it at Dashboard → **Authentication** → **URL Configuration**:
 - **Site URL** → your deployed URL (production domain, or the PR preview URL
-  you're testing on)
-- **Redirect URLs** → add that same URL (wildcards work, e.g.
-  `https://*.vercel.app/**`, useful since every PR/branch gets its own preview
-  URL)
+  you're testing on).
+- **Redirect URLs** → add that same URL. Wildcards work, e.g.
+  `https://*.vercel.app/**` — useful since every PR/branch gets its own preview
+  URL.
+
+How the flow behaves with confirmation on (this is intended):
+sign up (email + password + consent) → the app shows a "Check your inbox"
+screen → the participant opens the link **in the same browser** → they're
+signed in automatically and taken straight to the quiz (no manual re-login).
+If they open the link on a different device, they just return to the app and
+sign in. The app handles all of this — your only job is the Site/Redirect URL
+config above.
 
 Any account stuck mid-confirmation from before this fix: Dashboard →
 **Authentication** → **Users** → delete that row and sign up again.
@@ -99,9 +128,8 @@ dashboard task, not a code change:
   and **Change email** templates: replace the default subject/body with
   AI-Wellness-branded copy (they support HTML, so you can add a logo, the sage
   palette, and a footer). Keep the `{{ .ConfirmationURL }}` token intact.
-- If you followed step 3 and turned **Confirm email** off, the confirmation
-  email isn't sent at all — but password-reset still is, so branding the reset
-  template is still worthwhile.
+- Since **Confirm email** is on, the **Confirm signup** template is the first
+  email every participant receives — brand it well; it's their first impression.
 
 ## 4. Collect your keys
 
@@ -137,11 +165,15 @@ required after changing them — a running deployment won't pick them up live).
 
 ## 7. Verify
 
-- Visit the deployed URL → **Begin Assessment** → consent → create an account
-  → you should land on the profile screen with a real Supabase user created
-  (check Dashboard → Authentication → Users).
-- Visit `/admin/login` → create a care team account → you should land on the
-  admin participant list (initially empty until participants sign up).
+- Visit the deployed URL → **Get started** → create an account (email + password
+  + consent) → the quiz (name, goal, then the required basics: sex/age/height/
+  weight) → you should land on the Insights card, with a real Supabase user
+  created (check Dashboard → Authentication → Users).
+- Create an admin account (see "Creating admin (care-team) accounts" above:
+  allowlist your email, then add the user in Authentication → Users), then visit
+  `/admin/login` → sign in → you should land on the admin participant list
+  (initially empty until participants sign up). Confirm there is no sign-up option
+  on that screen.
 - Upload a real lab report PDF/photo during capture → within a few seconds,
   check Dashboard → Table Editor → `biomarkers` for new rows with
   `source = lab_extract`, `status = needs_review` — the care team confirms or

@@ -136,7 +136,7 @@ export default function PillarDetailPage() {
   let ageClock: AgeClockResult | null = null;
   let ageClockLabel = "";
   if (participant && pillar === "vascular") {
-    ageClock = computeVascularAge(aiDraft.chronological_age, biomarkers, participant.smoking);
+    ageClock = computeVascularAge(aiDraft.chronological_age, biomarkers, participant.smoking, participant.sex);
     ageClockLabel = "Vascular age";
   } else if (participant && pillar === "metabolic") {
     ageClock = computeMetabolicAge(aiDraft.chronological_age, biomarkers, participant.sex);
@@ -179,6 +179,11 @@ export default function PillarDetailPage() {
               <Text style={styles.ageClockLabel}>{ageClockLabel}</Text>
               <Text style={[styles.ageClockValue, { color: pillarColor }]}>{ageClock.age}</Text>
             </View>
+            <Text style={styles.ageClockSubtext}>
+              {pillar === "vascular"
+                ? "Our own estimate, informed by published cardiovascular-risk models — not a validated clinical clock."
+                : "Our own estimate, informed by published metabolic-syndrome criteria — not a validated clinical clock."}
+            </Text>
             {ageClock.drivers.length > 0 ? (
               <View style={styles.ageClockDrivers}>
                 {ageClock.drivers.map((d) => (
@@ -255,7 +260,10 @@ export default function PillarDetailPage() {
             {outOfRange.map((o) => (
               <View key={o.key} style={[styles.flagRow, styles.flagRowMonitor]}>
                 <Text style={styles.flagText}>
-                  {humanizeKey(o.key)}: {o.value} (reference up to {o.ref_high})
+                  {humanizeKey(o.key)}: {o.value}{" "}
+                  {o.side === "low" && o.ref_low !== undefined
+                    ? `(reference at least ${o.ref_low})`
+                    : `(reference up to ${o.ref_high})`}
                 </Text>
               </View>
             ))}
@@ -369,6 +377,13 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.displaySemiBold,
     fontSize: fontSizes.headlineMd,
     fontWeight: fontWeights.semibold,
+  },
+  ageClockSubtext: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    marginTop: spacing.xs,
+    lineHeight: 16,
   },
   ageClockDrivers: {
     marginTop: spacing.sm,

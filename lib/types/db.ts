@@ -124,6 +124,13 @@ export interface OutOfRangeBiomarker {
   key: string;
   value: number;
   ref_high: number;
+  // Which bound the value actually crossed, and the low bound, so a
+  // higher-is-better marker flagged LOW (e.g. low HDL/eGFR/vitamin D) is
+  // reported against ref_low ("at least X"), not ref_high. Optional so cards
+  // whose out_of_range jsonb was stored before this field still render (they
+  // fall back to the ref_high wording).
+  ref_low?: number;
+  side?: "low" | "high";
 }
 
 /**

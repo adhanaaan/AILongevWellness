@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
 import { LAB_CATALOG_BY_KEY } from "../lib/ai/labCatalog";
 import { isMarkerFlagged } from "../lib/ai/markerDirection";
+import { sexAwareRange } from "../lib/ai/sexAwareRanges";
 import { BUCKET_BY_KIND } from "../lib/data/storageBuckets";
 import { convertToTargetUnit } from "../lib/ai/unitConversion";
 import { flagIfPastSignoff } from "../lib/data/pipelineAttention";
@@ -198,6 +199,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // are participant-read-only in RLS, so this step needs the service-role key.
   const serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+  // Sex drives the reference range for a few markers (e.g. HDL: men < 1.03,
+  // women < 1.29 mmol/L per NCEP ATP III / IDF) — see lib/ai/sexAwareRanges.ts.
+  const { data: participant } = await serviceClient
+    .from("participants")
+    .select("sex")
+    .eq("id", participantId)
+    .maybeSingle();
+
   const bucket = BUCKET_BY_KIND[fileRow.kind as keyof typeof BUCKET_BY_KIND];
   const { data: blob, error: downloadErr } = await serviceClient.storage
     .from(bucket)
@@ -265,6 +274,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     .map((r) => {
       const entry = LAB_CATALOG_BY_KEY[r.key];
       const value = convertToTargetUnit(entry.key, r.value, r.unit ?? entry.unit, entry.unit);
+      const { ref_low, ref_high } = sexAwareRange(entry.key, participant?.sex, entry);
       return {
         participant_id: participantId,
         pillar: entry.pillar,
@@ -272,11 +282,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         label: entry.label,
         value,
         unit: entry.unit,
-        ref_low: entry.ref_low,
-        ref_high: entry.ref_high,
+        ref_low,
+        ref_high,
         source: "lab_extract",
         status: "needs_review",
-        flagged: isMarkerFlagged(entry.key, value, entry.ref_low, entry.ref_high),
+        flagged: isMarkerFlagged(entry.key, value, ref_low, ref_high),
         measured_at: measuredAt,
       };
     });

@@ -31,7 +31,8 @@ function findValue(biomarkers: Biomarker[], key: string): number | null {
 export function computeVascularAge(
   chronologicalAge: number,
   biomarkers: Biomarker[],
-  smoking: boolean | undefined
+  smoking: boolean | undefined,
+  sex: Sex | undefined
 ): AgeClockResult {
   const drivers: AgeClockDriver[] = [];
 
@@ -51,7 +52,9 @@ export function computeVascularAge(
 
   const totalCholesterol = findValue(biomarkers, "total_cholesterol");
   const hdl = findValue(biomarkers, "hdl_c");
-  if ((totalCholesterol !== null && totalCholesterol > 5.2) || (hdl !== null && hdl < 1.0)) {
+  // NCEP ATP III low HDL is sex-specific: men < 1.03, women < 1.29 mmol/L.
+  const hdlFloor = sex === "female" ? 1.29 : 1.03;
+  if ((totalCholesterol !== null && totalCholesterol > 5.2) || (hdl !== null && hdl < hdlFloor)) {
     drivers.push({ label: "Cholesterol outside the NCEP ATP III reference band", years: 4 });
   }
 
@@ -107,7 +110,9 @@ export function computeMetabolicAge(
   }
 
   const hdl = findValue(biomarkers, "hdl_c");
-  if (hdl !== null && hdl < 1.0) {
+  // IDF low HDL is sex-specific: men < 1.03, women < 1.29 mmol/L.
+  const hdlFloor = sex === "female" ? 1.29 : 1.03;
+  if (hdl !== null && hdl < hdlFloor) {
     drivers.push({ label: "HDL below the IDF metabolic syndrome threshold", years: 3 });
   }
 

@@ -1,5 +1,5 @@
 import type { Biomarker, OutOfRangeBiomarker, Pillar, PillarScores } from "../types/db";
-import { scoreMarker } from "./markerDirection";
+import { MARKER_DIRECTION, scoreMarker } from "./markerDirection";
 
 // The full biomarker vocabulary the platform knows how to score, by pillar —
 // used to report which ones are still missing for a participant, regardless
@@ -93,10 +93,35 @@ export function buildPillarNarrative(scores: PillarScores): string {
   return `${joinPillarNames(good)} scores are strong; ${joinPillarNames(monitor)} ${monitorVerb} worth monitoring over the next few months.`;
 }
 
+/**
+ * The flagged biomarkers, each tagged with WHICH bound it crossed. Direction-aware
+ * (lib/ai/markerDirection.ts): a higher-is-better marker (HDL, eGFR, vitamin D) can
+ * only be flagged on the LOW side, so it's reported against ref_low, not ref_high —
+ * otherwise a consumer showing "reference up to {ref_high}" prints the wrong bound
+ * and wrong direction. Two-sided markers report whichever bound the value passed.
+ */
 export function computeOutOfRange(biomarkers: Biomarker[]): OutOfRangeBiomarker[] {
-  return biomarkers
-    .filter((b) => b.flagged && b.value !== null && b.ref_high !== null)
-    .map((b) => ({ key: b.key, value: b.value as number, ref_high: b.ref_high as number }));
+  const out: OutOfRangeBiomarker[] = [];
+  for (const b of biomarkers) {
+    if (!b.flagged || b.value === null) continue;
+    const value = b.value;
+    const dir = MARKER_DIRECTION[b.key];
+    let side: "low" | "high";
+    if (dir === "higher") side = "low";
+    else if (dir === "lower") side = "high";
+    else side = b.ref_low !== null && value < b.ref_low ? "low" : "high";
+    // Skip if the bound we'd report on doesn't exist.
+    if (side === "high" && b.ref_high === null) continue;
+    if (side === "low" && b.ref_low === null) continue;
+    out.push({
+      key: b.key,
+      value,
+      ref_high: b.ref_high ?? 0,
+      ref_low: b.ref_low ?? undefined,
+      side,
+    });
+  }
+  return out;
 }
 
 export function computeMissingBiomarkers(biomarkers: Biomarker[]): string[] {

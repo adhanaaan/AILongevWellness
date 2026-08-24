@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { ArrowLeft, Watch, PersonStanding, FileText, Brain, type LucideIcon } from "lucide-react-native";
+import { ArrowLeft, Watch, PersonStanding, FileText, Brain, ChevronRight, type LucideIcon } from "lucide-react-native";
 import { HubSectionCard } from "@/components/participant/HubSectionCard";
 import { getOnboardingProgressAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
@@ -79,13 +79,26 @@ export default function CaptureHubPage() {
           })}
         </View>
 
-        <TouchableOpacity
-          style={styles.editLink}
-          activeOpacity={0.7}
-          onPress={() => router.push({ pathname: "/onboarding/profile", params: { mode: "edit" } })}
-        >
-          <Text style={styles.editLinkText}>Edit your profile</Text>
-        </TouchableOpacity>
+        <View style={styles.editSection}>
+          <Text style={styles.editHeader}>Edit your profile</Text>
+          {(
+            [
+              { label: "Personal info", route: "/onboarding/profile" },
+              { label: "Wellness goals", route: "/onboarding/profile-goals" },
+              { label: "Lifestyle", route: "/onboarding/profile-lifestyle" },
+            ] as const
+          ).map((item) => (
+            <TouchableOpacity
+              key={item.route}
+              style={styles.editRow}
+              activeOpacity={0.7}
+              onPress={() => router.push({ pathname: item.route, params: { mode: "edit" } })}
+            >
+              <Text style={styles.editRowText}>{item.label}</Text>
+              <ChevronRight size={18} color={colors.inkMuted} />
+            </TouchableOpacity>
+          ))}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -123,14 +136,28 @@ const styles = StyleSheet.create({
     marginTop: spacing["2xl"],
     gap: spacing.md,
   },
-  editLink: {
-    alignItems: "center",
-    paddingVertical: spacing.lg,
-    marginTop: spacing.lg,
+  editSection: {
+    marginTop: spacing["2xl"],
   },
-  editLinkText: {
+  editHeader: {
+    fontFamily: fontFamilies.bodyBold,
+    fontSize: fontSizes.overline,
+    letterSpacing: 1,
+    textTransform: "uppercase",
+    color: colors.inkMuted,
+    marginBottom: spacing.sm,
+  },
+  editRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  editRowText: {
     fontFamily: fontFamilies.bodySemiBold,
-    fontSize: fontSizes.labelMd,
-    color: colors.teal,
+    fontSize: fontSizes.bodyMd,
+    color: colors.ink,
   },
 });

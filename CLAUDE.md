@@ -206,6 +206,42 @@ lib/
       WELLNESS SNAPSHOT" explainer, and the same "data capture isn't finished yet"
       status line AVA's own promo uses, tap-through "Continue" button, no
       auto-advance) before landing back on the Data Capture hub.
+- [x] Onboarding consolidated onto the single `quiz.tsx` (Bumble-style card stack:
+      Name + Goal required, sex/age/height/weight + lifestyle optional). The old
+      multi-screen pre-signup + questionnaire chain that this superseded was removed
+      (`intro-hook`, `intro-longevity`, `consent`, `profile-intro`,
+      `profile-wellness-intro`, `intro-wellness-snapshot` deleted — they were
+      unreachable once "Get started" pointed straight at `/onboarding/auth`, and
+      consent now lives inside `auth.tsx`'s signup form + `TermsModal`). The
+      surviving `profile.tsx` / `profile-goals.tsx` / `profile-lifestyle.tsx` are now
+      **edit-only** surfaces (always `router.back()` on save), reachable from the
+      Data Capture hub's "Edit your profile" section (Personal info / Wellness goals
+      / Lifestyle rows). `GOALS` moved out of `profile-goals.tsx` into shared
+      `lib/onboarding/goals.ts` (imported by both `quiz.tsx` and `profile-goals.tsx`).
+      The `flow.ts` `questionnaire` section route repointed to `/onboarding/quiz`
+      (the entry is filtered out of the hub UI; it stays only for the gating helpers).
+      The quiz's basics step (sex/age/height/weight) is now **required** (was
+      skippable) — sex drives the sex-aware ranges, age the biological-age/age
+      clocks, and height+weight the BMI, so a skipped step left the snapshot weak;
+      only the lifestyle step stays optional.
+- [x] Admin portal separated from the consumer app (`lib/auth/RouteGuard.tsx`
+      `CareTeamGuard`): a signed-in participant (a lay user) who reaches any
+      `/admin` route — including `/admin/login` — is now redirected back to their
+      own app (`/`) instead of being shown the care-team login. Only a genuinely
+      signed-out visitor sees `/admin/login`, and only a `care_team` account sees
+      the portal itself. Care-team access stays gated to specific people via the
+      `care_team_allowlist` (migration 0013); the admin login is the sole,
+      unlinked entry point (never surfaced anywhere in the participant UI).
+- [x] Care-team accounts are admin-created, not self-service
+      (`supabase/migrations/0016_admin_created_care_team.sql`, run after 0013;
+      supersedes 0015). The signup trigger now decides the role **solely from the
+      `care_team_allowlist`** (client `role` metadata is ignored entirely, so it
+      can never be escalated from the client): an allowlisted email → `care_team`
+      (no participant row), everyone else → participant. `app/admin/login.tsx` is
+      now **sign-in only** — the signup toggle / `signUpCareTeam` UI was removed, so
+      there is no public admin registration. An admin creates an account by
+      allowlisting the email then adding the user in the Supabase dashboard. See
+      SETUP.md "Creating admin (care-team) accounts".
 - [x] Data Capture hub revamp: `CaptureFlowStepper` (shared by every capture-*
       screen) dropped its tappable section pill row entirely and simplified its
       back button from a chevron + "Back" label + "Data Capture" caption down to a
