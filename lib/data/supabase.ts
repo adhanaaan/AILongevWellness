@@ -264,19 +264,41 @@ export class SupabaseRepository implements Repository {
     // reserved for an actual human rewrite of the narrative text.
     const draft = await this.getAiDraft(updated.participant_id);
     if (draft) {
-      const allBiomarkers = await this.getBiomarkers(updated.participant_id);
-      const scores = computePillarScores(allBiomarkers);
-      const biological_age =
-        computePhenoAge(allBiomarkers, draft.chronological_age) ?? computeBiologicalAge(scores, draft.chronological_age);
-      await this.client
-        .from("ai_draft")
-        .update({
-          scores,
-          biological_age,
-          missing_biomarkers: computeMissingBiomarkers(allBiomarkers),
-          out_of_range: computeOutOfRange(allBiomarkers),
-        })
-        .eq("participant_id", updated.participant_id);
+      // Never rewrite scores a clinician has already signed. Mirrors the guard in
+      // resyncDraftScores: once the card is signed/delivered or either review is
+      // signed, a post-sign-off biomarker correction must NOT silently change the
+      // numbers shown under the "Reviewed & signed off" badge. (The biomarker row
+      // itself is still corrected above; only the signed draft is left frozen.)
+      const { data: pipeline } = await this.client
+        .from("pipeline")
+        .select("state")
+        .eq("participant_id", updated.participant_id)
+        .maybeSingle();
+      const { data: signedReviews } = await this.client
+        .from("reviews")
+        .select("signed_at")
+        .eq("participant_id", updated.participant_id)
+        .not("signed_at", "is", null)
+        .limit(1);
+      const locked =
+        pipeline?.state === "signed" ||
+        pipeline?.state === "delivered" ||
+        (signedReviews?.length ?? 0) > 0;
+      if (!locked) {
+        const allBiomarkers = await this.getBiomarkers(updated.participant_id);
+        const scores = computePillarScores(allBiomarkers);
+        const biological_age =
+          computePhenoAge(allBiomarkers, draft.chronological_age) ?? computeBiologicalAge(scores, draft.chronological_age);
+        await this.client
+          .from("ai_draft")
+          .update({
+            scores,
+            biological_age,
+            missing_biomarkers: computeMissingBiomarkers(allBiomarkers),
+            out_of_range: computeOutOfRange(allBiomarkers),
+          })
+          .eq("participant_id", updated.participant_id);
+      }
     }
 
     this.notify();

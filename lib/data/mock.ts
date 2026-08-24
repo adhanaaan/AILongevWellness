@@ -927,11 +927,19 @@ class MockRepository implements Repository {
     // number sitting there until someone remembers to regenerate the draft.
     const draft = this.aiDrafts.get(updated.participant_id);
     if (draft) {
-      const allBiomarkers = await this.getBiomarkers(updated.participant_id);
-      const scores = computePillarScores(allBiomarkers);
-      const biological_age =
-        computePhenoAge(allBiomarkers, draft.chronological_age) ?? computeBiologicalAge(scores, draft.chronological_age);
-      this.aiDrafts.set(updated.participant_id, { ...draft, scores, biological_age });
+      // Don't rewrite scores a clinician has signed (mirrors the guard in
+      // resyncDraftScores / SupabaseRepository): once signed/delivered or either
+      // review is signed, a post-sign-off correction leaves the signed draft frozen.
+      const state = this.pipelines.get(updated.participant_id)?.state;
+      const hasSignedReview = (this.reviews.get(updated.participant_id) ?? []).some((r) => r.signed_at);
+      const locked = state === "signed" || state === "delivered" || hasSignedReview;
+      if (!locked) {
+        const allBiomarkers = await this.getBiomarkers(updated.participant_id);
+        const scores = computePillarScores(allBiomarkers);
+        const biological_age =
+          computePhenoAge(allBiomarkers, draft.chronological_age) ?? computeBiologicalAge(scores, draft.chronological_age);
+        this.aiDrafts.set(updated.participant_id, { ...draft, scores, biological_age });
+      }
     }
 
     this.notify();

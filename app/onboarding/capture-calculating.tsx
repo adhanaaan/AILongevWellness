@@ -51,11 +51,18 @@ export default function CaptureCalculatingPage() {
     submittedRef.current = true;
     (async () => {
       try {
-        await submitCaptureAction(participantId ?? undefined);
-        // Turns the just-submitted capture into an actual draft health card
-        // (scores, bio age, narrative) -- fire-and-forget so a slow or failed
-        // AI call doesn't block the participant from moving on; the care team
-        // can regenerate manually from the admin review queue if this fails.
+        // Capture is already submitted at quiz finish (quiz.tsx), and this screen
+        // is only ever reached AFTER the quiz (via ReCOGnAIze), so submit_capture
+        // would throw "already submitted". Attempt it for any legacy entry path
+        // but swallow that expected error rather than showing a false failure at
+        // the very end of a successful cognitive test.
+        try {
+          await submitCaptureAction(participantId ?? undefined);
+        } catch {
+          // Expected post-quiz ("Capture has already been submitted") — proceed.
+        }
+        // Refresh the draft so the just-completed ReCOGnAIze result is reflected
+        // (submit-recognize.ts also regenerates server-side) -- fire-and-forget.
         if (isSupabaseConfigured && session?.access_token && participantId) {
           generateDraft(session.access_token, participantId).catch(() => {});
         }
