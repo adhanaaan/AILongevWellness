@@ -13,10 +13,18 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY ?? "";
 
 // Accuracy-critical work (reading lab values, drafting the reviewed narrative)
 // uses Pro; the concierge chat uses Flash for speed/cost.
+//
+// Model IDs are env-overridable (GEMINI_MODEL_PRO / GEMINI_MODEL_FLASH) so a
+// Google model rename/retirement is a one-line Vercel env change + redeploy,
+// not a code PR. Google churns these fast — e.g. gemini-2.5-pro was retired for
+// new API keys, which 404'd every draft/extraction call. Defaults track the
+// current generation: 3.1 Pro (the flagship Google's own 404 recommends) and
+// 3.6 Flash (stable/GA). Do NOT use "-latest" aliases here — they resolve to
+// experimental builds with tighter rate limits, wrong for a production launch.
 export const GEMINI_MODELS = {
-  extract: "gemini-2.5-pro",
-  draft: "gemini-2.5-pro",
-  chat: "gemini-2.5-flash",
+  extract: process.env.GEMINI_MODEL_PRO || "gemini-3.1-pro-preview",
+  draft: process.env.GEMINI_MODEL_PRO || "gemini-3.1-pro-preview",
+  chat: process.env.GEMINI_MODEL_FLASH || "gemini-3.6-flash",
 } as const;
 
 // Re-export the schema Type enum so callers build response schemas without a
