@@ -111,7 +111,11 @@ export default function QuizPage() {
       if (isSupabaseConfigured && session?.access_token) {
         generateDraft(session.access_token, participantId).catch(() => {});
       }
-      router.replace("/(tabs)/card");
+      // Land on the Data Capture hub next, not straight in the app. Participants
+      // often have lab/body-comp reports in hand and want to upload them up front
+      // (they're not all collected later at an event) — so uploading is offered as
+      // the natural step right after the quiz, with a clear "Continue to the app".
+      router.replace("/onboarding/capture?fromQuiz=1");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't save — please try again.");
       setSaving(false);
