@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Platform } from "react-native";
 import * as DocumentPicker from "expo-document-picker";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { validateUploadSize } from "@/lib/data/uploadLimits";
@@ -67,6 +67,9 @@ export interface ChannelUploadState {
  */
 export function useChannelUpload(config: ChannelUploadConfig): ChannelUploadState {
   const router = useRouter();
+  // Preserve the onboarding context (`fromQuiz=1`) so returning to the hub after
+  // an upload/skip keeps the "Continue to the app" step, not a bare hub.
+  const { fromQuiz } = useLocalSearchParams<{ fromQuiz?: string }>();
   const { participantId, session } = useAuth();
   const [phase, setPhase] = useState<UploadPhase>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -89,8 +92,10 @@ export function useChannelUpload(config: ChannelUploadConfig): ChannelUploadStat
 
   const leave = useCallback(() => {
     if (config.isEditing) router.back();
+    else if (fromQuiz === "1")
+      router.replace({ pathname: "/onboarding/capture", params: { fromQuiz: "1" } });
     else router.replace("/onboarding/capture");
-  }, [config.isEditing, router]);
+  }, [config.isEditing, fromQuiz, router]);
 
   const pickAndUpload = useCallback(async () => {
     if (!participantId) return;

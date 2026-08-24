@@ -108,6 +108,10 @@ export const colors = {
   sage: teal[500],
   sageDark: teal[700],
   sageTint: teal[50],
+  // A soft sage edge — one step darker than sageTint so a border over a sageTint
+  // fill is actually visible (sageTint === tealTint === teal[50], so using either
+  // as a border on a sageTint bubble paints nothing).
+  sageEdge: teal[100],
   charcoal: gray[900],
   terracotta: "#E98A6D",
   terracottaInk: "#B85F44",

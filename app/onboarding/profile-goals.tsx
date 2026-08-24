@@ -120,7 +120,7 @@ export default function ProfileGoalsPage() {
 
       <View style={styles.footer}>
         <Button size="lg" disabled={saving || !isValid} onPress={onContinue}>
-          Continue
+          {saving ? "Saving…" : "Save changes"}
         </Button>
       </View>
     </SafeAreaView>

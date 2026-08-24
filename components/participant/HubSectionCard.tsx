@@ -58,11 +58,16 @@ export function HubSectionCard({
           )}
         </View>
         <Text style={[styles.description, done && styles.descriptionDone]}>{description}</Text>
-        <View style={[styles.statusBadge, done && styles.statusBadgeDone]}>
-          <Text style={[styles.statusText, done && styles.statusTextDone]}>
-            {STATUS_LABEL[state]}
-          </Text>
-        </View>
+        {/* Only show a status badge once something's actually happened. On an
+            all-optional hub, stamping "Not started" on every untouched row reads
+            as anxiety, not information — the chevron already invites the tap. */}
+        {(state === "in_progress" || done) && (
+          <View style={[styles.statusBadge, done && styles.statusBadgeDone]}>
+            <Text style={[styles.statusText, done && styles.statusTextDone]}>
+              {STATUS_LABEL[state]}
+            </Text>
+          </View>
+        )}
       </View>
 
       {locked ? (

@@ -368,8 +368,8 @@ export default function CarePlanCategoryPage() {
             <View style={styles.section}>
               <Card padding="lg">
                 <Text style={styles.untrackedNote}>
-                  This plan reflects your onboarding wearable and lab data. Daily tracking isn&apos;t part of this
-                  category yet — connect a wearable to fill it in automatically.
+                  This plan updates automatically from your wearable and lab data — connect a device to
+                  keep it fresh, no daily logging needed.
                 </Text>
               </Card>
             </View>

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { ArrowLeft, Watch, PersonStanding, FileText, Brain, ChevronRight, type LucideIcon } from "lucide-react-native";
 import { HubSectionCard } from "@/components/participant/HubSectionCard";
+import { Button } from "@/components/ui/Button";
 import { getOnboardingProgressAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
@@ -34,6 +35,12 @@ const SECTION_DESCRIPTION: Partial<Record<CaptureSectionId, string>> = {
 export default function CaptureHubPage() {
   const router = useRouter();
   const { participantId } = useAuth();
+  // `fromQuiz=1` means we arrived here right after the quiz (via router.replace,
+  // so there's no back stack). In that mode we drop the back arrow and show a
+  // "Continue to the app" CTA so this reads as an onboarding step, not a
+  // dead-end. Reached from inside the app (no param) it keeps the back button.
+  const { fromQuiz } = useLocalSearchParams<{ fromQuiz?: string }>();
+  const isOnboarding = fromQuiz === "1";
   const [progress, setProgress] = useState<OnboardingProgress | null>(null);
 
   useEffect(() => {
@@ -50,15 +57,21 @@ export default function CaptureHubPage() {
   return (
     <SafeAreaView style={styles.safe} edges={["top", "bottom"]}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
-          <ArrowLeft size={22} color={colors.ink} />
-        </TouchableOpacity>
+        {isOnboarding ? (
+          <View style={{ height: 22 }} />
+        ) : (
+          <TouchableOpacity onPress={() => router.back()} hitSlop={12}>
+            <ArrowLeft size={22} color={colors.ink} />
+          </TouchableOpacity>
+        )}
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.title}>Add your data</Text>
+        <Text style={styles.title}>{isOnboarding ? "Add your reports" : "Add your data"}</Text>
         <Text style={styles.subtitle}>
-          All optional — the more you share, the sharper your wellness snapshot gets.
+          {isOnboarding
+            ? "Have a recent lab or body-composition report? Upload it now for a sharper snapshot — or skip and add it anytime later."
+            : "All optional — the more you share, the sharper your wellness snapshot gets."}
         </Text>
 
         <View style={styles.list}>
@@ -73,7 +86,13 @@ export default function CaptureHubPage() {
                 description={SECTION_DESCRIPTION[section.id] ?? ""}
                 state={state}
                 optional={section.optional}
-                onPress={() => router.push(section.route as never)}
+                onPress={() =>
+                  router.push(
+                    isOnboarding
+                      ? ({ pathname: section.route, params: { fromQuiz: "1" } } as never)
+                      : (section.route as never)
+                  )
+                }
               />
             );
           })}
@@ -100,6 +119,14 @@ export default function CaptureHubPage() {
           ))}
         </View>
       </ScrollView>
+
+      {isOnboarding && (
+        <View style={styles.footer}>
+          <Button size="lg" onPress={() => router.replace("/(tabs)/card")}>
+            Continue to the app
+          </Button>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -159,5 +186,10 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.bodySemiBold,
     fontSize: fontSizes.bodyMd,
     color: colors.ink,
+  },
+  footer: {
+    paddingHorizontal: spacing["2xl"],
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
   },
 });

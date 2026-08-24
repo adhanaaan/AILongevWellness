@@ -338,9 +338,8 @@ export default function TrackingPage() {
 const styles = StyleSheet.create({
   scrollContent: { paddingBottom: 32 },
   title: {
-    fontFamily: fontFamilies.displayBold,
+    fontFamily: fontFamilies.displaySemiBold,
     fontSize: fontSizes.headlineLg,
-    fontWeight: "600",
     color: colors.charcoal,
   },
   subtitle: {

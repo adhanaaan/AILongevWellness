@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { ChevronLeft } from "lucide-react-native";
 import { GradientOrb } from "@/components/ui/GradientOrb";
 import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
@@ -20,6 +20,11 @@ export interface CaptureFlowStepperProps {
  */
 export function CaptureFlowStepper({ children, showBackButton = true }: CaptureFlowStepperProps) {
   const router = useRouter();
+  // Preserve the onboarding context (`fromQuiz=1`) when returning to the hub, so
+  // a participant who arrived from the quiz and dipped into a channel still lands
+  // back on the onboarding hub (with its "Continue to the app" CTA), not a
+  // back-stack dead-end.
+  const { fromQuiz } = useLocalSearchParams<{ fromQuiz?: string }>();
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -29,7 +34,13 @@ export function CaptureFlowStepper({ children, showBackButton = true }: CaptureF
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => router.replace("/onboarding/capture")}
+            onPress={() =>
+              router.replace(
+                fromQuiz === "1"
+                  ? { pathname: "/onboarding/capture", params: { fromQuiz: "1" } }
+                  : "/onboarding/capture"
+              )
+            }
             activeOpacity={0.7}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >

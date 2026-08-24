@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   userBubble: {
     backgroundColor: colors.sageTint,
     borderWidth: 1,
-    borderColor: colors.tealTint,
+    borderColor: colors.sageEdge,
     alignSelf: "flex-end",
     borderBottomRightRadius: radii.sm,
     ...shadows.card,
