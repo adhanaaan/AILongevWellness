@@ -89,7 +89,7 @@ export default function CardPage() {
   if (!card && !pendingDraft) {
     return (
       <MobileShell name={participant?.name}>
-        <SnapshotPending pipelineState={pipeline?.state ?? "capturing"} />
+        <SnapshotPending pipelineState="capturing" />
       </MobileShell>
     );
   }
@@ -106,11 +106,17 @@ export default function CardPage() {
   // been captured yet, so the bio-age hero + pillars would render as empty
   // dashes — which reads as broken, not premium. Show the polished "build your
   // snapshot" pending state instead until at least one real value lands.
+  //
+  // Force the "capturing" (Add your data) step regardless of pipeline state: the
+  // quiz advances the pipeline to gp_review, which would otherwise flip this
+  // screen to "your care team is reviewing your results" and HIDE the upload CTA
+  // — false (there's nothing to review with no data) and a dead end. With no
+  // data, the honest, useful screen is always "add your labs/reports".
   const totalMarkers = Object.values(BIOMARKER_KEYS_BY_PILLAR).flat().length;
   if (!isDelivered && missingCount >= totalMarkers) {
     return (
       <MobileShell name={card?.participant.name ?? participant?.name}>
-        <SnapshotPending pipelineState={pipeline?.state ?? "capturing"} />
+        <SnapshotPending pipelineState="capturing" />
       </MobileShell>
     );
   }
