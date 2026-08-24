@@ -12,9 +12,9 @@ import { useChannelUpload } from "@/lib/onboarding/useChannelUpload";
 import { colors, fontFamilies, fontSizes, radii, spacing, teal } from "@/lib/theme/tokens";
 
 const POINTS = [
-  { Icon: HeartPulse, label: "Lipids & cholesterol" },
-  { Icon: Activity, label: "hs-CRP & HbA1c" },
-  { Icon: Droplet, label: "Glucose & insulin" },
+  { Icon: HeartPulse, label: "Cholesterol & lipids" },
+  { Icon: Activity, label: "Inflammation markers" },
+  { Icon: Droplet, label: "Blood sugar" },
 ];
 
 const FORMATS = [

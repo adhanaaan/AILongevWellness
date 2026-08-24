@@ -142,7 +142,7 @@ export default function ProfilePersonalPage() {
         </GlassCard>
 
         <Text style={styles.title}>Personal Information</Text>
-        <Text style={styles.subtitle}>Let's start with a few basics about you.</Text>
+        <Text style={styles.subtitle}>Update your basic details.</Text>
 
         <Card padding="lg" style={styles.profileCard}>
           <View style={styles.nameField}>
@@ -202,7 +202,7 @@ export default function ProfilePersonalPage() {
 
       <View style={styles.footer}>
         <Button size="lg" disabled={saving || !isValid} onPress={onContinue}>
-          Continue
+          {saving ? "Saving…" : "Save changes"}
         </Button>
       </View>
     </SafeAreaView>

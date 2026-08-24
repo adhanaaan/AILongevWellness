@@ -183,7 +183,7 @@ export default function ProfileLifestylePage() {
 
       <View style={styles.footer}>
         <Button size="lg" disabled={saving} onPress={onContinue}>
-          Continue
+          {saving ? "Saving…" : "Save changes"}
         </Button>
       </View>
     </SafeAreaView>

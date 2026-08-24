@@ -25,8 +25,8 @@ export function SignOffStage({
   review,
   locked,
 }: SignOffStageProps) {
-  const [name, setName] = useState(() => getSavedReviewer()?.name ?? "");
-  const [credential, setCredential] = useState(() => getSavedReviewer()?.credential ?? "");
+  const [name, setName] = useState(() => getSavedReviewer(stage)?.name ?? "");
+  const [credential, setCredential] = useState(() => getSavedReviewer(stage)?.credential ?? "");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -43,7 +43,7 @@ export function SignOffStage({
         reviewer_credential: credential.trim(),
         notes: notes.trim(),
       });
-      saveReviewer({ name: name.trim(), credential: credential.trim() });
+      saveReviewer(stage, { name: name.trim(), credential: credential.trim() });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Sign-off failed. Please try again.");
     } finally {
