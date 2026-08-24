@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import Anthropic from "@anthropic-ai/sdk";
+import { generateJson, GeminiType } from "./gemini";
 import {
   computeBiologicalAge,
   computeMissingBiomarkers,
@@ -10,7 +10,6 @@ import { computePhenoAge } from "./phenoAge";
 import type { AiDraft, Biomarker, CarePlan, KeyContributor } from "../types/db";
 import { METHODOLOGY_SECTIONS } from "../methodology/content";
 
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!;
 
 // Regeneration is allowed any time before sign-off starts producing a permanent
 // record: this covers regenerating a draft created too early (e.g. before a slow
@@ -91,7 +90,7 @@ Rules for using these sources:
   the sources above, write generally without naming a source rather than guessing one.
 - Never invent a value that isn't in the data you are given.
 
-Call write_narrative with:
+Return JSON with these fields:
 - key_contributors (5-8): the heart of the report. Each a full, specific sentence naming a real value
   and what it means for this person. Use tone "monitor" for something drifting, "good" for a genuine
   strength. Lead with what matters most; include at least one that connects two pillars.
@@ -128,57 +127,50 @@ a strong, specific, personal starting point — never a final instruction.`;
 // JSON.parse involved and no way for a stray quote or markdown fence in the
 // model's output to break parsing — a whole class of bugs this hit repeatedly.
 // One care-plan action: a short imperative title + a one-line detail.
+// Item counts and brevity (title <=60 chars, detail <=140, the per-section
+// minimums) are specified in NARRATIVE_PROMPT rather than as schema keywords —
+// Gemini's responseSchema support for minItems/maxLength is inconsistent, and
+// the prompt already demands the ranges; downstream tolerates any count.
 const PLAN_ITEM_SCHEMA = {
-  type: "object",
+  type: GeminiType.OBJECT,
   properties: {
-    title: { type: "string", maxLength: 60 },
-    detail: { type: "string", maxLength: 140 },
+    title: { type: GeminiType.STRING },
+    detail: { type: GeminiType.STRING },
   },
   required: ["title", "detail"],
 };
 
-const NARRATIVE_TOOL: Anthropic.Tool = {
-  name: "write_narrative",
-  description: "Write the narrative sections of the wellness card.",
-  input_schema: {
-    type: "object",
-    properties: {
-      key_contributors: {
-        type: "array",
-        minItems: 5,
-        items: {
-          type: "object",
-          properties: {
-            text: { type: "string" },
-            tone: { type: "string", enum: ["good", "monitor"] },
-          },
-          required: ["text", "tone"],
-        },
-      },
-      strengths: { type: "array", minItems: 4, items: { type: "string" } },
-      // No minItems -- forcing a minimum here would pressure the model to
-      // invent concerns the data doesn't actually support.
-      areas_to_monitor: { type: "array", items: { type: "string" } },
-      suggested_focus: { type: "array", minItems: 4, items: { type: "string" } },
-      discussion_points: { type: "array", minItems: 3, items: { type: "string" } },
-      care_plan: {
-        type: "object",
-        // Each item is {title, detail}. maxLength on both is a hard guardrail
-        // against the model writing paragraph-length plan items — the plan must
-        // stay a scannable checklist. The depth lives in key_contributors /
-        // discussion_points, which have no such cap.
+const NARRATIVE_SCHEMA = {
+  type: GeminiType.OBJECT,
+  properties: {
+    key_contributors: {
+      type: GeminiType.ARRAY,
+      items: {
+        type: GeminiType.OBJECT,
         properties: {
-          nutrition: { type: "array", minItems: 2, items: PLAN_ITEM_SCHEMA },
-          exercise: { type: "array", minItems: 2, items: PLAN_ITEM_SCHEMA },
-          medications: { type: "array", minItems: 2, items: PLAN_ITEM_SCHEMA },
-          sleep: { type: "array", minItems: 2, items: PLAN_ITEM_SCHEMA },
-          mindfulness: { type: "array", minItems: 2, items: PLAN_ITEM_SCHEMA },
+          text: { type: GeminiType.STRING },
+          tone: { type: GeminiType.STRING, enum: ["good", "monitor"] },
         },
-        required: ["nutrition", "exercise", "medications", "sleep", "mindfulness"],
+        required: ["text", "tone"],
       },
     },
-    required: ["key_contributors", "strengths", "areas_to_monitor", "suggested_focus", "discussion_points", "care_plan"],
+    strengths: { type: GeminiType.ARRAY, items: { type: GeminiType.STRING } },
+    areas_to_monitor: { type: GeminiType.ARRAY, items: { type: GeminiType.STRING } },
+    suggested_focus: { type: GeminiType.ARRAY, items: { type: GeminiType.STRING } },
+    discussion_points: { type: GeminiType.ARRAY, items: { type: GeminiType.STRING } },
+    care_plan: {
+      type: GeminiType.OBJECT,
+      properties: {
+        nutrition: { type: GeminiType.ARRAY, items: PLAN_ITEM_SCHEMA },
+        exercise: { type: GeminiType.ARRAY, items: PLAN_ITEM_SCHEMA },
+        medications: { type: GeminiType.ARRAY, items: PLAN_ITEM_SCHEMA },
+        sleep: { type: GeminiType.ARRAY, items: PLAN_ITEM_SCHEMA },
+        mindfulness: { type: GeminiType.ARRAY, items: PLAN_ITEM_SCHEMA },
+      },
+      required: ["nutrition", "exercise", "medications", "sleep", "mindfulness"],
+    },
   },
+  required: ["key_contributors", "strengths", "areas_to_monitor", "suggested_focus", "discussion_points", "care_plan"],
 };
 
 interface Narrative {
@@ -294,36 +286,20 @@ export async function regenerateDraft(
   const missingBiomarkers = computeMissingBiomarkers(rows);
   const outOfRange = computeOutOfRange(rows);
 
-  const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
-  const message = await anthropic.messages.create({
-    // Opus, not Sonnet -- this writes the clinical narrative a doctor signs off
-    // on, so accuracy outweighs the cost/latency difference. max_tokens covers
-    // Opus 5's adaptive thinking (on by default) plus the actual narrative --
-    // thinking and response share one budget.
-    model: "claude-opus-5",
-    max_tokens: 8000,
+  // Gemini Pro writes the clinical narrative a doctor signs off on, so accuracy
+  // outweighs cost/latency; schema-constrained JSON output replaces the tool call.
+  const narrative = await generateJson<Narrative>({
     system: NARRATIVE_PROMPT,
-    tools: [NARRATIVE_TOOL],
-    tool_choice: { type: "tool", name: "write_narrative" },
-    messages: [
-      {
-        role: "user",
-        content: JSON.stringify({
-          participant: participantContext(participant),
-          scores,
-          biological_age: biologicalAge,
-          chronological_age: participant.age,
-          biomarkers: biomarkerContext(rows),
-          missing_biomarkers: missingBiomarkers,
-        }),
-      },
-    ],
+    prompt: JSON.stringify({
+      participant: participantContext(participant),
+      scores,
+      biological_age: biologicalAge,
+      chronological_age: participant.age,
+      biomarkers: biomarkerContext(rows),
+      missing_biomarkers: missingBiomarkers,
+    }),
+    responseSchema: NARRATIVE_SCHEMA,
   });
-  const toolUse = message.content.find(
-    (block): block is Anthropic.ToolUseBlock => block.type === "tool_use"
-  );
-  if (!toolUse) throw new Error("AI did not call the expected tool");
-  const narrative = toolUse.input as Narrative;
 
   const { data: draft, error: draftErr } = await serviceClient
     .from("ai_draft")
@@ -408,34 +384,20 @@ export async function backfillCarePlan(
 
   const rows: Biomarker[] = biomarkers ?? [];
 
-  const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
-  const message = await anthropic.messages.create({
-    model: "claude-opus-5",
-    max_tokens: 8000,
+  const narrative = await generateJson<Narrative>({
     system: NARRATIVE_PROMPT,
-    tools: [NARRATIVE_TOOL],
-    tool_choice: { type: "tool", name: "write_narrative" },
-    messages: [
-      {
-        role: "user",
-        content: JSON.stringify({
-          // Ground the plan in the card's own signed values, not a fresh
-          // recompute — we're filling a gap in this delivered card, not redoing it.
-          participant: participantContext(participant),
-          scores: existingDraft.scores,
-          biological_age: existingDraft.biological_age,
-          chronological_age: participant.age,
-          biomarkers: biomarkerContext(rows),
-          missing_biomarkers: existingDraft.missing_biomarkers ?? [],
-        }),
-      },
-    ],
+    // Ground the plan in the card's own signed values, not a fresh recompute —
+    // we're filling a gap in this delivered card, not redoing it.
+    prompt: JSON.stringify({
+      participant: participantContext(participant),
+      scores: existingDraft.scores,
+      biological_age: existingDraft.biological_age,
+      chronological_age: participant.age,
+      biomarkers: biomarkerContext(rows),
+      missing_biomarkers: existingDraft.missing_biomarkers ?? [],
+    }),
+    responseSchema: NARRATIVE_SCHEMA,
   });
-  const toolUse = message.content.find(
-    (block): block is Anthropic.ToolUseBlock => block.type === "tool_use"
-  );
-  if (!toolUse) throw new Error("AI did not call the expected tool");
-  const narrative = toolUse.input as Narrative;
 
   // Persist ONLY the care plan (and generated_at, so the caller can tell this
   // plan post-dates the sign-off and mark it "pending review"). Everything the

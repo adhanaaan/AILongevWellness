@@ -52,3 +52,17 @@ export function convertToTargetUnit(key: string, value: number, rawUnit: string,
   const converter = CONVERSIONS[`${key}|${normalizedRaw}`];
   return converter ? converter(value) : value;
 }
+
+/**
+ * True if we can trust `value` against the catalog's target-unit reference range:
+ * either the reported unit already IS the target unit, or we have a converter for
+ * it. False means a unit mismatch we don't know how to convert (e.g. Lp(a) in
+ * nmol/L against an mg/dL band) — the caller should store the value for review but
+ * NOT score/flag it against the target range, or it produces a false result.
+ */
+export function isUnitConvertible(key: string, rawUnit: string, targetUnit: string): boolean {
+  const normalizedRaw = normalizeUnit(rawUnit);
+  const normalizedTarget = normalizeUnit(targetUnit);
+  if (normalizedRaw === normalizedTarget) return true;
+  return Boolean(CONVERSIONS[`${key}|${normalizedRaw}`]);
+}

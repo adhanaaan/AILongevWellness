@@ -1,7 +1,7 @@
 /**
  * Client-safe config, read from EXPO_PUBLIC_* env vars (Expo inlines these into
  * the bundle at build time — see .env.example). Server-only secrets
- * (SUPABASE_SERVICE_ROLE_KEY, ANTHROPIC_API_KEY) are read directly inside the
+ * (SUPABASE_SERVICE_ROLE_KEY, GEMINI_API_KEY) are read directly inside the
  * /api/*.ts serverless functions instead of here, so they never get anywhere
  * near client code.
  */
