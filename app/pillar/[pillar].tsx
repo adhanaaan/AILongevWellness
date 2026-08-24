@@ -322,6 +322,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bone,
+    // Centered phone-width column on a wide (laptop) browser; unchanged on phones.
+    width: "100%",
+    maxWidth: 448,
+    alignSelf: "center",
   },
   header: {
     flexDirection: "row",

@@ -19,6 +19,11 @@ export default function TabsLayout() {
             borderTopWidth: 1,
             borderTopColor: colors.border,
             backgroundColor: colors.surface,
+            // Keep the bottom nav aligned with the 448 phone-width content column
+            // on a wide (laptop) browser instead of spanning the full window.
+            maxWidth: 448,
+            width: "100%",
+            alignSelf: "center",
           },
         }}
       >
