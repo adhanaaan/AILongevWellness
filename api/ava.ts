@@ -1,12 +1,10 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
-import Anthropic from "@anthropic-ai/sdk";
-import { extractText } from "../lib/ai/extractText";
+import { chatText } from "../lib/ai/gemini";
 import { AVA_DISCLAIMER } from "../lib/ava/constants";
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!;
 
 // Curate the raw DB rows into a labeled, model-friendly context so answers stay
 // grounded in the participant's ACTUAL numbers. Flagged markers are pulled out
@@ -152,8 +150,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const reviewed = pipeline.state === "delivered";
   const context = buildContext(participant, aiDraft ?? null, biomarkers ?? [], reviews ?? []);
 
-  const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
-
   const priorMessages: Array<{ role: "user" | "assistant"; content: string }> = Array.isArray(history)
     ? history.map((m: { role: "user" | "ava"; text: string }) => ({
         role: m.role === "ava" ? "assistant" : "user",
@@ -162,18 +158,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     : [];
 
   try {
-    const response = await anthropic.messages.create({
-      // Opus, not Sonnet, for grounding quality against the real card data.
-      // Thinking explicitly off -- this is plain-text chat with no tool
-      // call, so none of the disabled-thinking pitfalls (tool calls written
-      // as text) apply, and it keeps a concierge chat reply fast.
-      model: "claude-opus-5",
-      max_tokens: 1000,
-      thinking: { type: "disabled" },
-      system: systemPrompt(context, reviewed),
-      messages: [...priorMessages, { role: "user", content: message }],
-    });
-    const reply = extractText(response.content) || "I'm not able to answer that right now.";
+    // Grounded, plain-text concierge reply from Gemini Flash (fast/cheap; the
+    // grounding lives in the system prompt built from the participant's card).
+    const reply =
+      (await chatText({
+        system: systemPrompt(context, reviewed),
+        messages: [...priorMessages, { role: "user", content: message }],
+      })).trim() || "I'm not able to answer that right now.";
     res.status(200).json({ reply, disclaimer: AVA_DISCLAIMER });
   } catch (e) {
     res.status(502).json({ error: e instanceof Error ? e.message : "AVA is unavailable right now" });

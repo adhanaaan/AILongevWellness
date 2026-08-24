@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { missingServerEnv, CORE_API_ENV } from "../lib/config/serverEnv";
 import { sniffMediaType, UNSUPPORTED_FILE_MESSAGE } from "../lib/ai/sniffMediaType";
 import { createClient } from "@supabase/supabase-js";
-import Anthropic from "@anthropic-ai/sdk";
+import { extractJsonFromDocument, GeminiType } from "../lib/ai/gemini";
 import { BODY_COMP_CATALOG_BY_KEY } from "../lib/ai/bodyCompCatalog";
 import { sexAwareRange } from "../lib/ai/sexAwareRanges";
 import { isMarkerFlagged } from "../lib/ai/markerDirection";
@@ -18,7 +18,6 @@ import { resyncDraftScores } from "../lib/data/resyncDraftScores";
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!;
 
 const EXTRACTION_PROMPT = `You are extracting results from a body composition scan printout (e.g. InBody,
 Tanita, DEXA, or a retreat kiosk scan). This is an image or PDF of the scan's result sheet.
@@ -41,30 +40,24 @@ Rules:
   breakdowns, muscle-fat analysis grades, or InBody's proprietary "scores") — this
   platform only tracks the four markers above.
 
-Call report_body_comp_values with what you found.`;
+Return what you found as JSON matching the provided schema.`;
 
-// Forcing a tool call instead of asking Claude to free-write a JSON string —
-// same reasoning as extract-lab.ts.
-const EXTRACTION_TOOL: Anthropic.Tool = {
-  name: "report_body_comp_values",
-  description: "Report the body composition values found in the document.",
-  input_schema: {
-    type: "object",
-    properties: {
-      results: {
-        type: "array",
-        items: {
-          type: "object",
-          properties: {
-            key: { type: "string" },
-            value: { type: "number" },
-          },
-          required: ["key", "value"],
+const BODY_COMP_RESPONSE_SCHEMA = {
+  type: GeminiType.OBJECT,
+  properties: {
+    results: {
+      type: GeminiType.ARRAY,
+      items: {
+        type: GeminiType.OBJECT,
+        properties: {
+          key: { type: GeminiType.STRING },
+          value: { type: GeminiType.NUMBER },
         },
+        required: ["key", "value"],
       },
     },
-    required: ["results"],
   },
+  required: ["results"],
 };
 
 // Same reasoning as extract-lab.ts's detectMediaType: trust the extension we
@@ -161,39 +154,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const mediaType =
     sniff.kind === "supported" ? sniff.mediaType : detectMediaType(fileRow.storage_path, blob.type);
 
-  const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
-
+  // Gemini reads both PDFs and images natively via inline data.
   let parsed: { results: Array<{ key: string; value: number }> };
   try {
-    const content =
-      mediaType === "application/pdf"
-        ? ({ type: "document", source: { type: "base64", media_type: mediaType, data: base64 } } as const)
-        : ({ type: "image", source: { type: "base64", media_type: mediaType as any, data: base64 } } as const);
-
-    const message = await anthropic.messages.create({
-      // Opus, not Sonnet -- misreading a scan value here silently corrupts a
-      // pillar score and the AI draft built from it. max_tokens raised for
-      // headroom since Opus 5 thinks by default and thinking + output share
-      // one budget.
-      model: "claude-opus-5",
-      max_tokens: 8000,
-      tools: [EXTRACTION_TOOL],
-      tool_choice: { type: "tool", name: "report_body_comp_values" },
-      messages: [
-        {
-          role: "user",
-          content: [content, { type: "text", text: EXTRACTION_PROMPT }],
-        },
-      ],
+    parsed = await extractJsonFromDocument({
+      base64,
+      mimeType: mediaType,
+      prompt: EXTRACTION_PROMPT,
+      responseSchema: BODY_COMP_RESPONSE_SCHEMA,
     });
-    const toolUse = message.content.find(
-      (block): block is Anthropic.ToolUseBlock => block.type === "tool_use"
-    );
-    if (!toolUse) {
-      res.status(502).json({ error: "AI did not call the expected tool" });
-      return;
-    }
-    parsed = toolUse.input as typeof parsed;
   } catch (e) {
     res.status(502).json({ error: e instanceof Error ? e.message : "AI extraction failed" });
     return;

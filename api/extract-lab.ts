@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { missingServerEnv, CORE_API_ENV } from "../lib/config/serverEnv";
 import { sniffMediaType, UNSUPPORTED_FILE_MESSAGE } from "../lib/ai/sniffMediaType";
 import { createClient } from "@supabase/supabase-js";
-import Anthropic from "@anthropic-ai/sdk";
+import { extractJsonFromDocument, GeminiType } from "../lib/ai/gemini";
 import { LAB_CATALOG_BY_KEY } from "../lib/ai/labCatalog";
 import { isMarkerFlagged } from "../lib/ai/markerDirection";
 import { sexAwareRange } from "../lib/ai/sexAwareRanges";
@@ -19,7 +19,6 @@ import { resyncDraftScores } from "../lib/data/resyncDraftScores";
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY!;
 
 const EXTRACTION_PROMPT = `You are extracting results from a health report image or PDF. This may be
 either (a) a standard blood panel from a lab, or (b) a continuous glucose monitor
@@ -88,37 +87,33 @@ Rules:
   it matters that it's the date on the document, not today's date. Omit report_date
   entirely if no such date is printed anywhere on the document.
 
-Call report_lab_values with what you found.`;
+Return what you found as JSON matching the provided schema.`;
 
 // Forcing a tool call instead of asking Claude to free-write a JSON string: the
 // API validates/constrains the output to this schema server-side, so there's no
 // JSON.parse involved and no way for a stray quote or markdown fence in the
 // model's output to break parsing.
-const EXTRACTION_TOOL: Anthropic.Tool = {
-  name: "report_lab_values",
-  description: "Report the lab values found in the document.",
-  input_schema: {
-    type: "object",
-    properties: {
-      results: {
-        type: "array",
-        items: {
-          type: "object",
-          properties: {
-            key: { type: "string" },
-            value: { type: "number" },
-            unit: { type: "string", description: "The unit exactly as printed on the document, e.g. 'mg/dL'." },
-          },
-          required: ["key", "value", "unit"],
+const LAB_RESPONSE_SCHEMA = {
+  type: GeminiType.OBJECT,
+  properties: {
+    results: {
+      type: GeminiType.ARRAY,
+      items: {
+        type: GeminiType.OBJECT,
+        properties: {
+          key: { type: GeminiType.STRING },
+          value: { type: GeminiType.NUMBER },
+          unit: { type: GeminiType.STRING, description: "The unit exactly as printed on the document, e.g. 'mg/dL'." },
         },
-      },
-      report_date: {
-        type: "string",
-        description: "The specimen/collection/report date printed on the document, in YYYY-MM-DD format. Omit if not found.",
+        required: ["key", "value", "unit"],
       },
     },
-    required: ["results"],
+    report_date: {
+      type: GeminiType.STRING,
+      description: "The specimen/collection/report date printed on the document, in YYYY-MM-DD format. Omit if not found.",
+    },
   },
+  required: ["results"],
 };
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -229,39 +224,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const mediaType =
     sniff.kind === "supported" ? sniff.mediaType : detectMediaType(fileRow.storage_path, blob.type);
 
-  const anthropic = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
-
+  // Gemini reads both PDFs and images natively via inline data — no separate
+  // document/image block shape, and unit conversion stays in code afterward.
   let parsed: { results: Array<{ key: string; value: number; unit: string }>; report_date?: string };
   try {
-    const content =
-      mediaType === "application/pdf"
-        ? ({ type: "document", source: { type: "base64", media_type: mediaType, data: base64 } } as const)
-        : ({ type: "image", source: { type: "base64", media_type: mediaType as any, data: base64 } } as const);
-
-    const message = await anthropic.messages.create({
-      // Opus, not Sonnet -- misreading a lab value here silently corrupts a
-      // pillar score and the AI draft built from it. max_tokens raised for
-      // headroom since Opus 5 thinks by default and thinking + output share
-      // one budget.
-      model: "claude-opus-5",
-      max_tokens: 8000,
-      tools: [EXTRACTION_TOOL],
-      tool_choice: { type: "tool", name: "report_lab_values" },
-      messages: [
-        {
-          role: "user",
-          content: [content, { type: "text", text: EXTRACTION_PROMPT }],
-        },
-      ],
+    parsed = await extractJsonFromDocument({
+      base64,
+      mimeType: mediaType,
+      prompt: EXTRACTION_PROMPT,
+      responseSchema: LAB_RESPONSE_SCHEMA,
     });
-    const toolUse = message.content.find(
-      (block): block is Anthropic.ToolUseBlock => block.type === "tool_use"
-    );
-    if (!toolUse) {
-      res.status(502).json({ error: "AI did not call the expected tool" });
-      return;
-    }
-    parsed = toolUse.input as typeof parsed;
   } catch (e) {
     res.status(502).json({ error: e instanceof Error ? e.message : "AI extraction failed" });
     return;

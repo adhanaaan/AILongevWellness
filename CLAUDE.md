@@ -557,6 +557,21 @@ lib/
       headroom (thinking and output share one budget); `ava.ts` instead sets
       `thinking: {type: "disabled"}` since it's plain-text chat with no tool call, so
       none of the disabled-thinking pitfalls apply and it keeps replies fast.
+- [x] AI provider migrated from Anthropic/Claude to **Google Gemini** (Google AI
+      Studio). All model calls go through one helper (`lib/ai/gemini.ts`,
+      `@google/genai`): `extractJsonFromDocument` (vision/PDF → schema-constrained
+      JSON) for `api/extract-lab.ts` + `api/extract-body-comp.ts`, `generateJson`
+      for the two `lib/ai/draftGeneration.ts` narrative calls, and `chatText` for
+      `api/ava.ts`. Gemini Pro for extraction/draft (accuracy), Flash for AVA chat.
+      Env var is now `GEMINI_API_KEY` (server-only; `CORE_API_ENV` updated); the
+      Anthropic forced-tool-calls became Gemini `responseSchema` + `responseMimeType:
+      application/json`, and item-count/length limits moved from schema keywords to
+      the prompt (Gemini's schema support for `minItems`/`maxLength` is inconsistent).
+      Gemini ingests PDFs and images natively, so the old document-vs-image block
+      split is gone. The mock/rule-based fallbacks (`lib/ava/respond.ts`, mock draft)
+      are unchanged and still run with no AI configured. Reason for the swap: repeated
+      Anthropic API-account suspensions; the deterministic scoring/PhenoAge/age-clocks
+      never used an LLM and are untouched.
 - [x] Real PhenoAge as the biological-age formula: `lib/ai/phenoAge.ts` implements the
       actual published Levine et al. 2018 formula ("An epigenetic biomarker of aging
       for lifespan and healthspan," *Aging*, 10(4):573–591) — the real coefficients and
