@@ -26,11 +26,13 @@ export const MARKER_DIRECTION: Record<string, MarkerDirection> = {
   hrv: "higher",
   vo2max: "higher",
   cog_composite: "higher",
+  who5_wellbeing: "higher",
   cgm_time_in_range: "higher",
 
   // Lower is better — only the high bound is "bad".
   resting_hr: "lower",
   reaction_time: "lower",
+  pss4_stress: "lower",
   ldl_c: "lower",
   triglycerides: "lower",
   hscrp: "lower",

@@ -15,7 +15,7 @@ export const BIOMARKER_KEYS_BY_PILLAR: Record<Pillar, string[]> = {
     "cgm_avg_glucose", "cgm_gmi", "cgm_variability", "cgm_time_in_range", "cgm_time_above_range", "cgm_time_below_range",
     "albumin", "lymphocyte_pct", "mcv", "rdw", "alp", "wbc",
   ],
-  mental: ["reaction_time", "cog_composite", "sleep_quality", "sleep_hours", "stress_index", "stress_level", "exercise_freq"],
+  mental: ["reaction_time", "cog_composite", "who5_wellbeing", "pss4_stress", "sleep_quality", "sleep_hours", "stress_index", "stress_level", "exercise_freq"],
 };
 
 const NEUTRAL_SCORE = 70;

@@ -104,6 +104,14 @@ export const METHODOLOGY_SECTIONS: MethodologySection[] = [
     ],
   },
   {
+    title: "Wellbeing & stress questionnaires (WHO-5, PSS-4)",
+    paragraphs: [
+      "Your Mental pillar also draws on two short, validated self-report questionnaires. The WHO-5 Well-Being Index (World Health Organization, 1998; validation review: Topp et al., 2015, Psychotherapy and Psychosomatics) is a five-item measure of subjective psychological wellbeing over the past two weeks; its raw 0–25 score is multiplied by 4 to give a 0–100 wellbeing percentage, where higher is better. We treat a score below 50 as a wellness area worth attention — deliberately as a wellbeing signal, not as a screen or diagnosis for any condition.",
+      "The PSS-4 (Cohen & Williamson, 1988, the four-item short form of the Perceived Stress Scale, Cohen et al., 1983) measures how uncontrollable and overloaded you have found your life over the past month, scored 0–16 with two items reverse-keyed, where higher means more perceived stress. The PSS has no official clinical cut-offs, so the band we use to flag elevated stress is our own wellness heuristic, not a validated clinical threshold.",
+      "Both instruments are used here purely as wellness snapshots to make the Mental pillar more than a reaction-time proxy. They are not diagnostic tools; a low wellbeing or high stress result is a prompt to talk with your care team, never a diagnosis.",
+    ],
+  },
+  {
     title: "Composite scores without an external source",
     paragraphs: [
       "Sleep quality index, stress index, and cognitive composite score are calculated internally by AI Wellness from other captured measurements. They don't have an independent external clinical reference the way a lab value does.",

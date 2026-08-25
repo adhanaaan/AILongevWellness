@@ -153,6 +153,8 @@ const BIOMARKER_TEMPLATES: Record<Pillar, BiomarkerTemplate[]> = {
   mental: [
     { key: "reaction_time", label: "Cognitive reaction time", unit: "ms", ref_low: 250, ref_high: 400, source: "recognize" },
     { key: "cog_composite", label: "Cognitive composite score", unit: "/100", ref_low: 70, ref_high: 100, source: "recognize" },
+    { key: "who5_wellbeing", label: "Wellbeing (WHO-5)", unit: "/100", ref_low: 50, ref_high: 100, source: "questionnaire" },
+    { key: "pss4_stress", label: "Perceived stress (PSS-4)", unit: "/16", ref_low: 0, ref_high: 6, source: "questionnaire", lowerIsBetter: true },
     { key: "sleep_quality", label: "Sleep quality index", unit: "/100", ref_low: 70, ref_high: 100, source: "wearable" },
     { key: "sleep_hours", label: "Sleep duration", unit: "hours", ref_low: 7, ref_high: 9, source: "wearable" },
     { key: "stress_index", label: "Stress index", unit: "/100", ref_low: 0, ref_high: 40, source: "manual", lowerIsBetter: true },
@@ -573,6 +575,8 @@ class MockRepository implements Repository {
       // Mental — Strong (81): all markers in range.
       { id: "bm-james-chen-reaction_time", participant_id: james.id, pillar: "mental", key: "reaction_time", label: "Cognitive reaction time", value: 320, unit: "ms", ref_low: 250, ref_high: 400, source: "recognize", status: "imported", flagged: false, updated_at: nowIso() },
       { id: "bm-james-chen-cog_composite", participant_id: james.id, pillar: "mental", key: "cog_composite", label: "Cognitive composite score", value: 88, unit: "/100", ref_low: 70, ref_high: 100, source: "recognize", status: "imported", flagged: false, updated_at: nowIso() },
+      { id: "bm-james-chen-who5_wellbeing", participant_id: james.id, pillar: "mental", key: "who5_wellbeing", label: "Wellbeing (WHO-5)", value: 80, unit: "/100", ref_low: 50, ref_high: 100, source: "questionnaire", status: "entered", flagged: false, updated_at: nowIso() },
+      { id: "bm-james-chen-pss4_stress", participant_id: james.id, pillar: "mental", key: "pss4_stress", label: "Perceived stress (PSS-4)", value: 4, unit: "/16", ref_low: 0, ref_high: 6, source: "questionnaire", status: "entered", flagged: false, updated_at: nowIso() },
       { id: "bm-james-chen-sleep_quality", participant_id: james.id, pillar: "mental", key: "sleep_quality", label: "Sleep quality index", value: 82, unit: "/100", ref_low: 70, ref_high: 100, source: "wearable", status: "imported", flagged: false, updated_at: nowIso() },
       { id: "bm-james-chen-sleep_hours", participant_id: james.id, pillar: "mental", key: "sleep_hours", label: "Sleep duration", value: 7.4, unit: "hours", ref_low: 7, ref_high: 9, source: "wearable", status: "imported", flagged: false, updated_at: nowIso() },
       { id: "bm-james-chen-stress_index", participant_id: james.id, pillar: "mental", key: "stress_index", label: "Stress index", value: 34, unit: "/100", ref_low: 0, ref_high: 40, source: "manual", status: "entered", flagged: false, updated_at: nowIso() },

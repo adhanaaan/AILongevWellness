@@ -81,3 +81,12 @@ export function submitRecognizeResult(
 ): Promise<{ reaction_time: number; cog_composite: number }> {
   return postJson("/api/submit-recognize", token, { participantId, trialsMs });
 }
+
+export function submitMentalQuestionnaire(
+  token: string,
+  participantId: string,
+  who5: number[],
+  pss4: number[]
+): Promise<{ who5_wellbeing: number; pss4_stress: number }> {
+  return postJson("/api/submit-questionnaire", token, { participantId, who5, pss4 });
+}
