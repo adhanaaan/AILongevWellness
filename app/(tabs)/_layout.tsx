@@ -1,9 +1,16 @@
 import { Tabs } from "expo-router";
 import { Sparkles, MessageCircle, ClipboardList, Settings } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { colors, fontSizes } from "@/lib/theme/tokens";
 import { ParticipantGuard } from "@/lib/auth/RouteGuard";
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
+  // Real home-indicator inset now that the app has a SafeAreaProvider +
+  // viewport-fit=cover (app/+html.tsx). Keep a minimum so non-notched devices
+  // and desktop still get comfortable spacing.
+  const bottomInset = Math.max(insets.bottom, 12);
+
   return (
     <ParticipantGuard>
       <Tabs
@@ -24,13 +31,11 @@ export default function TabsLayout() {
             maxWidth: 448,
             width: "100%",
             alignSelf: "center",
-            // On mobile Safari there's no SafeAreaProvider + viewport-fit=cover, so
-            // env(safe-area-inset-bottom) reads 0 and the labels clip behind the
-            // home indicator / browser chrome. Give the bar real height + bottom
-            // padding so the icons and labels always clear that zone.
-            height: 80,
+            // Lift icons + labels clear of the home indicator / Safari chrome using
+            // the real safe-area inset (see app/+html.tsx + the root SafeAreaProvider).
+            height: 56 + bottomInset,
             paddingTop: 8,
-            paddingBottom: 26,
+            paddingBottom: bottomInset,
           },
           tabBarItemStyle: {
             paddingTop: 2,
