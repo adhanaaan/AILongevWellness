@@ -1,11 +1,11 @@
-# Going live: Supabase + Gemini + real accounts
+# Going live: Supabase + OpenAI + real accounts
 
 This app runs in two modes with zero config changes:
 
 - **Mock mode** (default, nothing set): in-memory data, one demo participant,
   always "signed in" — this is what every preview/demo deploy uses today.
 - **Real mode** (env vars set below): real Supabase-backed accounts for every
-  participant and every care team member, real file storage, real Gemini-powered
+  participant and every care team member, real file storage, real OpenAI-powered
   lab extraction and AVA chat.
 
 Nothing in the codebase needs to change to switch modes — it's entirely driven
@@ -139,9 +139,9 @@ Dashboard → **Project Settings** → **API**:
 - **anon / public** key (safe to embed client-side — protected by RLS)
 - **service_role / secret** key (server-only, never goes in client code)
 
-Then aistudio.google.com → **Get API key** → **Create API key** for your Gemini
+Then platform.openai.com → **API keys** → **Create new secret key** for your OpenAI
 key. (This is what the deployed app calls at runtime for lab/body-comp
-extraction, the AI draft narrative, and AVA. Gemini reads PDFs and images
+extraction, the AI draft narrative, and AVA. OpenAI reads PDFs and images
 natively.)
 
 ## 5. Set environment variables on Vercel
@@ -153,7 +153,7 @@ Project → **Settings** → **Environment Variables**:
 | `EXPO_PUBLIC_SUPABASE_URL` | Project URL | client-safe |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | anon key | client-safe |
 | `SUPABASE_SERVICE_ROLE_KEY` | service_role key | server-only — used only inside `/api/*.ts` |
-| `GEMINI_API_KEY` | your Google AI Studio key | server-only — used only inside `/api/*.ts` |
+| `OPENAI_API_KEY` | your OpenAI secret key | server-only — used only inside `/api/*.ts` |
 
 Leave `EXPO_PUBLIC_API_BASE_URL` unset unless you're building a native
 (iOS/Android) app — the web deploy calls `/api/*` on its own origin.
@@ -180,7 +180,7 @@ required after changing them — a running deployment won't pick them up live).
   `source = lab_extract`, `status = needs_review` — the care team confirms or
   edits these before they reach the participant's card.
 - Once a participant's card is signed off and released, ask AVA a question on
-  their card — replies should come from Gemini, grounded in that card's data.
+  their card — replies should come from OpenAI, grounded in that card's data.
 
 ## Wearables & health data (Terra + Health Auto Export)
 
@@ -241,6 +241,6 @@ The original path still works with no setup: Wearables capture → upload the
 
 - Everything else in capture is now real: the questionnaire saves real profile
   data, ReCOGnAIze runs a real reaction-time test (`api/submit-recognize.ts`),
-  lab reports and body-composition scans are both parsed by Gemini vision
+  lab reports and body-composition scans are both parsed by OpenAI vision
   (`api/extract-lab.ts`, `api/extract-body-comp.ts`), and each write re-derives
   the AI draft's scores + narrative.

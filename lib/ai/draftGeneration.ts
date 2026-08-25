@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { generateJson, GeminiType } from "./gemini";
+import { generateJson, JsonType } from "./openai";
 import {
   computeBiologicalAge,
   computeMissingBiomarkers,
@@ -129,43 +129,43 @@ a strong, specific, personal starting point — never a final instruction.`;
 // One care-plan action: a short imperative title + a one-line detail.
 // Item counts and brevity (title <=60 chars, detail <=140, the per-section
 // minimums) are specified in NARRATIVE_PROMPT rather than as schema keywords —
-// Gemini's responseSchema support for minItems/maxLength is inconsistent, and
+// schema keyword support for minItems/maxLength is unreliable across providers, and
 // the prompt already demands the ranges; downstream tolerates any count.
 const PLAN_ITEM_SCHEMA = {
-  type: GeminiType.OBJECT,
+  type: JsonType.OBJECT,
   properties: {
-    title: { type: GeminiType.STRING },
-    detail: { type: GeminiType.STRING },
+    title: { type: JsonType.STRING },
+    detail: { type: JsonType.STRING },
   },
   required: ["title", "detail"],
 };
 
 const NARRATIVE_SCHEMA = {
-  type: GeminiType.OBJECT,
+  type: JsonType.OBJECT,
   properties: {
     key_contributors: {
-      type: GeminiType.ARRAY,
+      type: JsonType.ARRAY,
       items: {
-        type: GeminiType.OBJECT,
+        type: JsonType.OBJECT,
         properties: {
-          text: { type: GeminiType.STRING },
-          tone: { type: GeminiType.STRING, enum: ["good", "monitor"] },
+          text: { type: JsonType.STRING },
+          tone: { type: JsonType.STRING, enum: ["good", "monitor"] },
         },
         required: ["text", "tone"],
       },
     },
-    strengths: { type: GeminiType.ARRAY, items: { type: GeminiType.STRING } },
-    areas_to_monitor: { type: GeminiType.ARRAY, items: { type: GeminiType.STRING } },
-    suggested_focus: { type: GeminiType.ARRAY, items: { type: GeminiType.STRING } },
-    discussion_points: { type: GeminiType.ARRAY, items: { type: GeminiType.STRING } },
+    strengths: { type: JsonType.ARRAY, items: { type: JsonType.STRING } },
+    areas_to_monitor: { type: JsonType.ARRAY, items: { type: JsonType.STRING } },
+    suggested_focus: { type: JsonType.ARRAY, items: { type: JsonType.STRING } },
+    discussion_points: { type: JsonType.ARRAY, items: { type: JsonType.STRING } },
     care_plan: {
-      type: GeminiType.OBJECT,
+      type: JsonType.OBJECT,
       properties: {
-        nutrition: { type: GeminiType.ARRAY, items: PLAN_ITEM_SCHEMA },
-        exercise: { type: GeminiType.ARRAY, items: PLAN_ITEM_SCHEMA },
-        medications: { type: GeminiType.ARRAY, items: PLAN_ITEM_SCHEMA },
-        sleep: { type: GeminiType.ARRAY, items: PLAN_ITEM_SCHEMA },
-        mindfulness: { type: GeminiType.ARRAY, items: PLAN_ITEM_SCHEMA },
+        nutrition: { type: JsonType.ARRAY, items: PLAN_ITEM_SCHEMA },
+        exercise: { type: JsonType.ARRAY, items: PLAN_ITEM_SCHEMA },
+        medications: { type: JsonType.ARRAY, items: PLAN_ITEM_SCHEMA },
+        sleep: { type: JsonType.ARRAY, items: PLAN_ITEM_SCHEMA },
+        mindfulness: { type: JsonType.ARRAY, items: PLAN_ITEM_SCHEMA },
       },
       required: ["nutrition", "exercise", "medications", "sleep", "mindfulness"],
     },
@@ -286,7 +286,7 @@ export async function regenerateDraft(
   const missingBiomarkers = computeMissingBiomarkers(rows);
   const outOfRange = computeOutOfRange(rows);
 
-  // Gemini Pro writes the clinical narrative a doctor signs off on, so accuracy
+  // The full model writes the clinical narrative a doctor signs off on, so accuracy
   // outweighs cost/latency; schema-constrained JSON output replaces the tool call.
   const narrative = await generateJson<Narrative>({
     system: NARRATIVE_PROMPT,

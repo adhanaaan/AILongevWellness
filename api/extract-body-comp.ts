@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { missingServerEnv, CORE_API_ENV } from "../lib/config/serverEnv";
 import { sniffMediaType, UNSUPPORTED_FILE_MESSAGE } from "../lib/ai/sniffMediaType";
 import { createClient } from "@supabase/supabase-js";
-import { extractJsonFromDocument, GeminiType } from "../lib/ai/gemini";
+import { extractJsonFromDocument, JsonType } from "../lib/ai/openai";
 import { BODY_COMP_CATALOG_BY_KEY } from "../lib/ai/bodyCompCatalog";
 import { sexAwareRange } from "../lib/ai/sexAwareRanges";
 import { isMarkerFlagged } from "../lib/ai/markerDirection";
@@ -43,15 +43,15 @@ Rules:
 Return what you found as JSON matching the provided schema.`;
 
 const BODY_COMP_RESPONSE_SCHEMA = {
-  type: GeminiType.OBJECT,
+  type: JsonType.OBJECT,
   properties: {
     results: {
-      type: GeminiType.ARRAY,
+      type: JsonType.ARRAY,
       items: {
-        type: GeminiType.OBJECT,
+        type: JsonType.OBJECT,
         properties: {
-          key: { type: GeminiType.STRING },
-          value: { type: GeminiType.NUMBER },
+          key: { type: JsonType.STRING },
+          value: { type: JsonType.NUMBER },
         },
         required: ["key", "value"],
       },
@@ -154,7 +154,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const mediaType =
     sniff.kind === "supported" ? sniff.mediaType : detectMediaType(fileRow.storage_path, blob.type);
 
-  // Gemini reads both PDFs and images natively via inline data.
+  // OpenAI reads PDFs (file part) and images (image_url) directly.
   let parsed: { results: Array<{ key: string; value: number }> };
   try {
     parsed = await extractJsonFromDocument({
