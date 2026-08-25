@@ -11,6 +11,7 @@ import { updateParticipantAction, updateCaptureChannelAction, submitCaptureActio
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { generateDraft } from "@/lib/ai/client";
+import { sendWelcomeEmail } from "@/lib/notify/email";
 import type { AlcoholDrinksPerWeek, ExerciseFrequency, Sex } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, lineHeights, radii, spacing } from "@/lib/theme/tokens";
 
@@ -110,6 +111,10 @@ export default function QuizPage() {
       // admin console's "Advance to review" recovery card handles it.
       if (isSupabaseConfigured && session?.access_token) {
         generateDraft(session.access_token, participantId).catch(() => {});
+        // One-time welcome + "upload your labs" nudge. Fire-and-forget: the
+        // endpoint no-ops when email isn't configured, so this never blocks the
+        // flow. Quiz finishes once, so this is naturally send-once.
+        sendWelcomeEmail(session.access_token, participantId).catch(() => {});
       }
       // Land on the Data Capture hub next, not straight in the app. Participants
       // often have lab/body-comp reports in hand and want to upload them up front
