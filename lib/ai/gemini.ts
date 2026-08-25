@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import type { GoogleGenAI } from "@google/genai";
 
 // Single place the app talks to Gemini (Google AI Studio). Centralised so the
 // model IDs, keys, and request shape live in one file — and so the provider can
@@ -27,11 +27,29 @@ export const GEMINI_MODELS = {
   chat: process.env.GEMINI_MODEL_FLASH || "gemini-3.6-flash",
 } as const;
 
-// Re-export the schema Type enum so callers build response schemas without a
-// second import.
-export { Type as GeminiType };
+// The SDK's `Type` enum, mirrored as a plain const so callers can build response
+// schemas WITHOUT statically importing @google/genai. That package is ESM-only
+// (`"type": "module"`), and the Vercel /api functions compile as CommonJS — a
+// static value import of it fails the build with TS1479. The enum's runtime
+// values are exactly these uppercase strings (verified against the installed
+// package), and the SDK only reads the string, so this is behaviourally
+// identical. (`GoogleGenAI` itself is loaded via dynamic import below, the
+// documented ESM-from-CJS workaround.)
+export const GeminiType = {
+  TYPE_UNSPECIFIED: "TYPE_UNSPECIFIED",
+  STRING: "STRING",
+  NUMBER: "NUMBER",
+  INTEGER: "INTEGER",
+  BOOLEAN: "BOOLEAN",
+  ARRAY: "ARRAY",
+  OBJECT: "OBJECT",
+  NULL: "NULL",
+} as const;
 
-function client(): GoogleGenAI {
+async function client(): Promise<GoogleGenAI> {
+  // Dynamic import so the ESM-only SDK is never pulled into the CommonJS require
+  // graph (esbuild preserves import(), Node loads it as native ESM at runtime).
+  const { GoogleGenAI } = await import("@google/genai");
   return new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 }
 
@@ -53,7 +71,7 @@ export async function extractJsonFromDocument<T>(opts: {
   responseSchema: unknown;
   model?: string;
 }): Promise<T> {
-  const res = await client().models.generateContent({
+  const res = await (await client()).models.generateContent({
     model: opts.model ?? GEMINI_MODELS.extract,
     contents: [
       {
@@ -84,7 +102,7 @@ export async function generateJson<T>(opts: {
   model?: string;
   temperature?: number;
 }): Promise<T> {
-  const res = await client().models.generateContent({
+  const res = await (await client()).models.generateContent({
     model: opts.model ?? GEMINI_MODELS.draft,
     contents: opts.prompt,
     config: {
@@ -106,7 +124,7 @@ export async function chatText(opts: {
   messages: Array<{ role: "user" | "assistant"; content: string }>;
   model?: string;
 }): Promise<string> {
-  const res = await client().models.generateContent({
+  const res = await (await client()).models.generateContent({
     model: opts.model ?? GEMINI_MODELS.chat,
     contents: opts.messages.map((m) => ({
       role: m.role === "assistant" ? "model" : "user",

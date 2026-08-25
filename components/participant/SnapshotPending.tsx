@@ -61,6 +61,52 @@ function PreliminaryPreview({ preview }: { preview: SnapshotPreview }) {
   );
 }
 
+// A "ghost" version of the real snapshot shown while the participant still has
+// no data: the biological-age hero and the three pillar rings rendered EMPTY
+// (with "—"), so the missing numbers themselves become the pull to upload —
+// instead of a bare CTA with nothing to fill in. Mirrors the real
+// BiologicalAgeHero / ScoreRing layout so it reads as "this is what you'll get".
+const BLANK_PILLARS = ["Vascular", "Metabolic", "Mental"];
+
+function BlankRing({ label }: { label: string }) {
+  return (
+    <View style={styles.blankRingItem}>
+      <View style={styles.blankRing}>
+        <Text style={styles.blankRingValue}>—</Text>
+      </View>
+      <Text style={styles.blankRingLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function BlankSnapshotPreview() {
+  return (
+    <View style={styles.blankWrap}>
+      <View style={styles.blankHero}>
+        <GradientOrb tone="teal" size={280} style={styles.blankOrbBack} />
+        <GradientOrb tone="amber" size={200} style={styles.blankOrbFront} />
+        <Text style={styles.blankHeroLabel}>Biological age</Text>
+        <Text style={styles.blankHeroValue}>—</Text>
+        <View style={styles.blankPill}>
+          <Lock size={12} color={colors.inkOnDarkMuted} />
+          <Text style={styles.blankPillText}>Upload a lab report to reveal</Text>
+        </View>
+        <Text style={styles.blankHeroExplain}>
+          Your vascular, metabolic and mental markers come from your labs. Add a recent report and
+          these fill in.
+        </Text>
+      </View>
+
+      <Text style={styles.blankSectionLabel}>YOUR PILLAR SCORES</Text>
+      <View style={styles.blankRingRow}>
+        {BLANK_PILLARS.map((label) => (
+          <BlankRing key={label} label={label} />
+        ))}
+      </View>
+    </View>
+  );
+}
+
 interface StageContent {
   headline: string;
   body: string;
@@ -323,6 +369,10 @@ export function SnapshotPending({ pipelineState, preview }: SnapshotPendingProps
 
         {preview && <PreliminaryPreview preview={preview} />}
 
+        {/* No data yet (still capturing): show the empty scores so the blanks
+            pull the participant to upload, rather than just a CTA button. */}
+        {!preview && stepIndex === 0 && <BlankSnapshotPreview />}
+
         <Animated.View
           style={{
             opacity: calloutOpacity,
@@ -473,5 +523,98 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: spacing.md,
     lineHeight: lineHeights.caption,
+  },
+  blankWrap: {
+    marginTop: spacing["3xl"],
+  },
+  blankHero: {
+    alignItems: "center",
+    overflow: "hidden",
+    backgroundColor: colors.navy,
+    borderRadius: radii["3xl"],
+    padding: spacing["2xl"],
+    // Lower opacity than the delivered hero so it reads as a placeholder, not a result.
+    opacity: 0.92,
+  },
+  blankOrbBack: {
+    bottom: -80,
+    right: -80,
+  },
+  blankOrbFront: {
+    top: -20,
+    left: "50%",
+    marginLeft: -100,
+  },
+  blankHeroLabel: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.labelMd,
+    color: colors.inkOnDarkMuted,
+    marginBottom: spacing.sm,
+  },
+  blankHeroValue: {
+    fontFamily: fontFamilies.displayBold,
+    fontSize: fontSizes.display,
+    color: "rgba(255,255,255,0.55)",
+    lineHeight: fontSizes.display * 1.05,
+  },
+  blankPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.xs,
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
+    backgroundColor: "rgba(255,255,255,0.12)",
+    borderRadius: radii.full,
+    paddingVertical: spacing.xs,
+    paddingHorizontal: spacing.md,
+  },
+  blankPillText: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.caption,
+    color: colors.inkOnDark,
+  },
+  blankHeroExplain: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    lineHeight: lineHeights.caption,
+    color: colors.inkOnDarkMuted,
+    textAlign: "center",
+  },
+  blankSectionLabel: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    letterSpacing: 1.2,
+    color: colors.sageDark,
+    marginTop: spacing["2xl"],
+    marginBottom: spacing.lg,
+  },
+  blankRingRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  blankRingItem: {
+    alignItems: "center",
+    flex: 1,
+  },
+  blankRing: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    borderWidth: 9,
+    borderColor: colors.surfaceMuted,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  blankRingValue: {
+    fontFamily: fontFamilies.displayBold,
+    fontSize: 30,
+    color: colors.borderStrong,
+    includeFontPadding: false,
+  },
+  blankRingLabel: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    marginTop: spacing.sm,
   },
 });
