@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { missingServerEnv, CORE_API_ENV } from "../lib/config/serverEnv";
 import { sniffMediaType, UNSUPPORTED_FILE_MESSAGE } from "../lib/ai/sniffMediaType";
 import { createClient } from "@supabase/supabase-js";
-import { extractJsonFromDocument, GeminiType } from "../lib/ai/gemini";
+import { extractJsonFromDocument, JsonType } from "../lib/ai/openai";
 import { LAB_CATALOG_BY_KEY } from "../lib/ai/labCatalog";
 import { isMarkerFlagged } from "../lib/ai/markerDirection";
 import { sexAwareRange } from "../lib/ai/sexAwareRanges";
@@ -94,22 +94,22 @@ Return what you found as JSON matching the provided schema.`;
 // JSON.parse involved and no way for a stray quote or markdown fence in the
 // model's output to break parsing.
 const LAB_RESPONSE_SCHEMA = {
-  type: GeminiType.OBJECT,
+  type: JsonType.OBJECT,
   properties: {
     results: {
-      type: GeminiType.ARRAY,
+      type: JsonType.ARRAY,
       items: {
-        type: GeminiType.OBJECT,
+        type: JsonType.OBJECT,
         properties: {
-          key: { type: GeminiType.STRING },
-          value: { type: GeminiType.NUMBER },
-          unit: { type: GeminiType.STRING, description: "The unit exactly as printed on the document, e.g. 'mg/dL'." },
+          key: { type: JsonType.STRING },
+          value: { type: JsonType.NUMBER },
+          unit: { type: JsonType.STRING, description: "The unit exactly as printed on the document, e.g. 'mg/dL'." },
         },
         required: ["key", "value", "unit"],
       },
     },
     report_date: {
-      type: GeminiType.STRING,
+      type: JsonType.STRING,
       description: "The specimen/collection/report date printed on the document, in YYYY-MM-DD format. Omit if not found.",
     },
   },
@@ -224,7 +224,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const mediaType =
     sniff.kind === "supported" ? sniff.mediaType : detectMediaType(fileRow.storage_path, blob.type);
 
-  // Gemini reads both PDFs and images natively via inline data — no separate
+  // OpenAI reads PDFs (as a file part) and images (as image_url) — no separate
   // document/image block shape, and unit conversion stays in code afterward.
   let parsed: { results: Array<{ key: string; value: number; unit: string }>; report_date?: string };
   try {

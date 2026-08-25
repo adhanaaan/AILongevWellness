@@ -14,10 +14,10 @@ export function missingServerEnv(required: string[]): string[] {
   });
 }
 
-/** The vars every core AI + data endpoint needs to touch Supabase and Gemini. */
+/** The vars every core AI + data endpoint needs to touch Supabase and OpenAI. */
 export const CORE_API_ENV = [
   "EXPO_PUBLIC_SUPABASE_URL",
   "EXPO_PUBLIC_SUPABASE_ANON_KEY",
   "SUPABASE_SERVICE_ROLE_KEY",
-  "GEMINI_API_KEY",
+  "OPENAI_API_KEY",
 ];

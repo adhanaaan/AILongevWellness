@@ -572,6 +572,23 @@ lib/
       are unchanged and still run with no AI configured. Reason for the swap: repeated
       Anthropic API-account suspensions; the deterministic scoring/PhenoAge/age-clocks
       never used an LLM and are untouched.
+- [x] AI provider migrated again from Gemini to **OpenAI** (`lib/ai/openai.ts`,
+      `openai` SDK). Same three helpers, same signatures, so no endpoint changed:
+      `extractJsonFromDocument` (image/PDF → JSON), `generateJson` (draft narrative
+      + care plan), `chatText` (AVA). `gpt-4o` for extraction/draft, `gpt-4o-mini`
+      for chat; env-overridable via `OPENAI_MODEL` / `OPENAI_MODEL_MINI`. Env var is
+      now `OPENAI_API_KEY` (server-only; `CORE_API_ENV` updated). Structured output
+      uses OpenAI **strict** `response_format: json_schema` — a `toStrictSchema`
+      helper deep-adds `additionalProperties:false` + full `required` and makes
+      source-optional fields nullable, since strict mode requires it. Schema type
+      constants moved from Gemini's uppercase `Type` enum to a local lowercase
+      `JsonType` (standard JSON Schema). PDFs go in as a `file` content part, images
+      as `image_url`. `lib/ai/gemini.ts` + `@google/genai` removed. Reason for the
+      swap: Gemini's relentless model-name churn and SDK-version lag (2.5-pro retired
+      for new keys, then an ESM-only-SDK build failure, then a cryptic runtime error
+      on 3.x) — OpenAI has stable model names, first-class strict structured output,
+      and a CJS-compatible SDK (no Vercel ESM/CJS build drama). Deterministic
+      scoring/PhenoAge/age-clocks and the mock fallbacks are still untouched.
 - [x] Real PhenoAge as the biological-age formula: `lib/ai/phenoAge.ts` implements the
       actual published Levine et al. 2018 formula ("An epigenetic biomarker of aging
       for lifespan and healthspan," *Aging*, 10(4):573–591) — the real coefficients and

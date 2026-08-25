@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
-import { chatText } from "../lib/ai/gemini";
+import { chatText } from "../lib/ai/openai";
 import { AVA_DISCLAIMER } from "../lib/ava/constants";
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
@@ -158,7 +158,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     : [];
 
   try {
-    // Grounded, plain-text concierge reply from Gemini Flash (fast/cheap; the
+    // Grounded, plain-text concierge reply from OpenAI (gpt-4o-mini; fast/cheap; the
     // grounding lives in the system prompt built from the participant's card).
     const reply =
       (await chatText({

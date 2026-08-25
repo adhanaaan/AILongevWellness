@@ -2,10 +2,6 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    // ESNext module so dynamic import() type-checks (used in lib/ai/gemini.ts to
-    // load the ESM-only @google/genai SDK from code that Vercel compiles as CJS).
-    // Type-check only — Metro does the actual app bundling, unaffected by this.
-    "module": "esnext",
     "baseUrl": ".",
     "paths": {
       "@/*": ["./*"]
