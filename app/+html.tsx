@@ -24,10 +24,19 @@ export default function Root({ children }: PropsWithChildren) {
   );
 }
 
-// Fill the dynamic viewport (100dvh) so the app's bottom edge sits above Safari's
-// auto-hiding toolbar instead of under it, and paint the brand background (bone)
-// behind everything to avoid a white flash on load.
+// Make the app exactly the DYNAMIC viewport tall (100dvh), not 100% — on iOS
+// Safari `height: 100%` resolves to the *large* viewport (incl. the bottom
+// toolbar area), so the app extends under Safari's chrome and the bottom tab
+// labels clip. `height: 100dvh` keeps the app's bottom edge above the toolbar.
+// This must be `height` (not `min-height`) and must override Expo's
+// ScrollViewStyleReset `#root{height:100%}` — hence it's placed after it in the
+// <head>. Also paints the brand background (bone) to avoid a white flash.
 const baseStyle = `
 html, body { margin: 0; height: 100%; background-color: #FAF9F4; }
-#root { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
+#root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+}
 `;

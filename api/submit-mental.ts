@@ -1,30 +1,31 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { createClient } from "@supabase/supabase-js";
 import { RECOGNIZE_CATALOG_BY_KEY } from "../lib/ai/recognizeCatalog";
+import {
+  scoreWho5,
+  scorePss4,
+  QUESTIONNAIRE_CATALOG_BY_KEY,
+} from "../lib/ai/mentalQuestionnaire";
 import { isMarkerFlagged } from "../lib/ai/markerDirection";
 import { flagIfPastSignoff } from "../lib/data/pipelineAttention";
 import { resyncDraftScores } from "../lib/data/resyncDraftScores";
 import { regenerateDraft } from "../lib/ai/draftGeneration";
 
-// This is a Vercel serverless function — see vercel.json's rewrite, which
-// excludes /api/* from the SPA catch-all so requests here reach this file
-// instead of index.html.
-//
-// Unlike the extract-*.ts routes, there's no AI call here -- the reaction-time
-// test itself runs entirely client-side (a stimulus/response timer needs no
-// server round-trip), and this endpoint just persists the result. It still
-// needs to be a server route rather than a direct client write because
-// biomarkers are participant-read-only in RLS (care team/service role write
-// them), even when the data came straight from this participant's own test.
+// Vercel serverless function. One endpoint for BOTH halves of the Mental capture
+// — the ReCOGnAIze reaction-time test (trialsMs) and the WHO-5 + PSS-4
+// questionnaires (who5/pss4). Merged into a single function to stay under the
+// Vercel Hobby-plan 12-function cap; it writes whichever inputs are provided, so
+// the client can submit either half independently (as the flow does today) or
+// both together. Both tests run client-side; this only scores + persists the
+// derived mental biomarkers (raw answers/trials aren't stored → no schema change).
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-// Maps average reaction time (ms) onto the 0-100 cognitive composite scale,
-// anchored so the two biomarkers' healthy bands line up (250ms -> 100,
-// 400ms -> 70, matching reaction_time's own reference band), extrapolated
-// and clamped beyond that rather than only valid inside it.
+// Maps average reaction time (ms) onto the 0-100 cognitive composite scale
+// (250ms -> 100, 400ms -> 70, matching reaction_time's own reference band),
+// extrapolated and clamped beyond that.
 function cognitiveComposite(avgReactionTimeMs: number): number {
   const t = (avgReactionTimeMs - 250) / (400 - 250);
   return Math.round(Math.max(0, Math.min(100, 100 - t * 30)));
@@ -43,14 +44,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const { participantId, trialsMs } = req.body ?? {};
-  if (!participantId || !Array.isArray(trialsMs) || trialsMs.length === 0) {
-    res.status(400).json({ error: "participantId and a non-empty trialsMs array are required" });
+  const { participantId, trialsMs, who5, pss4 } = req.body ?? {};
+  if (!participantId) {
+    res.status(400).json({ error: "participantId is required" });
     return;
   }
-  if (!trialsMs.every((t: unknown) => typeof t === "number" && t > 0 && t < 5000)) {
-    res.status(400).json({ error: "trialsMs must contain plausible reaction times in milliseconds" });
+
+  const hasTrials = Array.isArray(trialsMs) && trialsMs.length > 0;
+  const hasQuestionnaire = Array.isArray(who5) && Array.isArray(pss4);
+  if (!hasTrials && !hasQuestionnaire) {
+    res.status(400).json({ error: "Provide trialsMs and/or who5+pss4" });
     return;
+  }
+
+  const values: Record<string, number> = {};
+
+  if (hasTrials) {
+    if (!trialsMs.every((t: unknown) => typeof t === "number" && t > 0 && t < 5000)) {
+      res.status(400).json({ error: "trialsMs must contain plausible reaction times in milliseconds" });
+      return;
+    }
+    const avg = Math.round(trialsMs.reduce((sum: number, t: number) => sum + t, 0) / trialsMs.length);
+    values.reaction_time = avg;
+    values.cog_composite = cognitiveComposite(avg);
+  }
+
+  if (hasQuestionnaire) {
+    try {
+      values.who5_wellbeing = scoreWho5(who5);
+      values.pss4_stress = scorePss4(pss4);
+    } catch (e) {
+      res.status(400).json({ error: e instanceof Error ? e.message : "Invalid questionnaire answers" });
+      return;
+    }
   }
 
   // Scoped to the caller's own session — RLS decides whether they can act for
@@ -68,17 +94,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const avgReactionTimeMs = Math.round(
-    trialsMs.reduce((sum: number, t: number) => sum + t, 0) / trialsMs.length
-  );
-  const composite = cognitiveComposite(avgReactionTimeMs);
-  const values: Record<string, number> = { reaction_time: avgReactionTimeMs, cog_composite: composite };
-
   // Biomarkers are participant-read-only in RLS — needs the service-role key.
   const serviceClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+  const catalogFor = (key: string) => RECOGNIZE_CATALOG_BY_KEY[key] ?? QUESTIONNAIRE_CATALOG_BY_KEY[key];
+  const sourceFor = (key: string) => (RECOGNIZE_CATALOG_BY_KEY[key] ? "recognize" : "questionnaire");
+
   const rows = Object.entries(values).map(([key, value]) => {
-    const entry = RECOGNIZE_CATALOG_BY_KEY[key];
+    const entry = catalogFor(key);
     return {
       participant_id: participantId,
       pillar: entry.pillar,
@@ -88,7 +111,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       unit: entry.unit,
       ref_low: entry.ref_low,
       ref_high: entry.ref_high,
-      source: "recognize",
+      source: sourceFor(key),
       status: "entered",
       flagged: isMarkerFlagged(entry.key, value, entry.ref_low, entry.ref_high),
       updated_at: new Date().toISOString(),
@@ -102,9 +125,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(500).json({ error: upsertErr.message });
     return;
   }
-  await flagIfPastSignoff(serviceClient, participantId, "New ReCOGnAIze results submitted — biomarkers pending review");
-  // Re-derive scores/bio age from the just-written values (see resyncDraftScores),
-  // then re-run the full draft (AI narrative too) best-effort.
+
+  await flagIfPastSignoff(serviceClient, participantId, "New Mental-pillar results submitted — biomarkers pending review");
+  // Re-derive scores/bio age from the just-written values, then re-run the full
+  // draft (AI narrative too) best-effort.
   await resyncDraftScores(serviceClient, participantId);
   try {
     await regenerateDraft(serviceClient, participantId);
@@ -112,5 +136,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     /* numbers already resynced above */
   }
 
-  res.status(200).json({ reaction_time: avgReactionTimeMs, cog_composite: composite });
+  res.status(200).json(values);
 }

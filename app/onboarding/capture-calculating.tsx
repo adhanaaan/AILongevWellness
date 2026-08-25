@@ -62,7 +62,7 @@ export default function CaptureCalculatingPage() {
           // Expected post-quiz ("Capture has already been submitted") — proceed.
         }
         // Refresh the draft so the just-completed ReCOGnAIze result is reflected
-        // (submit-recognize.ts also regenerates server-side) -- fire-and-forget.
+        // (submit-mental.ts also regenerates server-side) -- fire-and-forget.
         if (isSupabaseConfigured && session?.access_token && participantId) {
           generateDraft(session.access_token, participantId).catch(() => {});
         }

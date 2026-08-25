@@ -1,4 +1,5 @@
 // CHANGE LOG (newest first)
+// - 2026-08-25 Added "questionnaire" BiomarkerSource for WHO-5/PSS-4 mental-wellbeing scores (supabase/migrations/0017_questionnaire_biomarker_source.sql).
 // - 2026-08-15 Added ingest_token to Participant + WearableConnection type for Terra/health-export ingestion (supabase/migrations/0009_wearable_ingest.sql).
 // - 2026-08-14 Added consent_withdrawn_at to Participant for participant-initiated consent withdrawal (supabase/migrations/0008_consent_withdrawal.sql).
 // - 2026-08-13 care_plan items restructured from string[] to PlanItem[] ({title, detail}); legacy strings coerced by normalizePlanItem(). No migration (jsonb column).
@@ -67,7 +68,8 @@ export type BiomarkerSource =
   | "body_comp"
   | "recognize"
   | "admin"
-  | "apple_health";
+  | "apple_health"
+  | "questionnaire";
 
 export type BiomarkerStatus = "entered" | "imported" | "extracted" | "needs_review";
 

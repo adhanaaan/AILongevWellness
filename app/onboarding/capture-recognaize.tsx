@@ -9,14 +9,15 @@ import { Card } from "@/components/ui/Card";
 import { updateSectionStatusAction, updateCaptureChannelAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
-import { submitRecognizeResult } from "@/lib/ai/client";
+import { submitRecognizeResult, submitMentalQuestionnaire } from "@/lib/ai/client";
+import { MentalQuestionnaire } from "@/components/onboarding/MentalQuestionnaire";
 import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 
 const NUM_TRIALS = 5;
 const MIN_DELAY_MS = 1000;
 const MAX_DELAY_MS = 3000;
 
-type Phase = "intro" | "waiting" | "go" | "too_soon" | "submitting" | "results";
+type Phase = "questionnaire" | "intro" | "waiting" | "go" | "too_soon" | "submitting" | "results";
 
 export default function CaptureRecognaizePage() {
   const router = useRouter();
@@ -24,10 +25,34 @@ export default function CaptureRecognaizePage() {
   const { mode } = useLocalSearchParams<{ mode?: string }>();
   const isEditing = mode === "edit";
 
-  const [phase, setPhase] = useState<Phase>("intro");
+  // The Mental capture is two parts: the validated WHO-5 + PSS-4 questionnaire
+  // first, then the reaction-time test. Kept as sibling phases so recognaize-lite
+  // can later swap the reaction-time half without disturbing the questionnaire.
+  const [phase, setPhase] = useState<Phase>("questionnaire");
+  const [qSubmitting, setQSubmitting] = useState(false);
+  const [qError, setQError] = useState<string | null>(null);
   const [trials, setTrials] = useState<number[]>([]);
   const [result, setResult] = useState<{ reaction_time: number; cog_composite: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  async function onQuestionnaireComplete(who5: number[], pss4: number[]) {
+    // Mock mode (no backend) or no session: skip the write, proceed to the test —
+    // mirrors onStartTest's mock handling.
+    if (!isSupabaseConfigured || !participantId || !session?.access_token) {
+      setPhase("intro");
+      return;
+    }
+    setQError(null);
+    setQSubmitting(true);
+    try {
+      await submitMentalQuestionnaire(session.access_token, participantId, who5, pss4);
+      setPhase("intro");
+    } catch (e) {
+      setQError(e instanceof Error ? e.message : "Couldn't save your answers — please try again.");
+    } finally {
+      setQSubmitting(false);
+    }
+  }
 
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const goAtRef = useRef(0);
@@ -120,6 +145,30 @@ export default function CaptureRecognaizePage() {
   }
 
   const localAvg = trials.length > 0 ? Math.round(trials.reduce((a, b) => a + b, 0) / trials.length) : 0;
+
+  if (phase === "questionnaire") {
+    return (
+      <CaptureFlowStepper>
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+          <GlassCard tint="light" padding="none" radius="full" style={styles.headerIcon}>
+            <Brain size={24} color={colors.teal} />
+          </GlassCard>
+          <Text style={styles.title}>Mental wellbeing</Text>
+          <Text style={styles.subtitle}>
+            Two short, validated check-ins — the WHO-5 Well-Being Index and the PSS-4 stress scale —
+            that feed your Mental pillar. Next comes a quick reaction-time test.
+          </Text>
+          <View style={styles.questionnaireWrap}>
+            <MentalQuestionnaire
+              onComplete={onQuestionnaireComplete}
+              submitting={qSubmitting}
+              error={qError}
+            />
+          </View>
+        </ScrollView>
+      </CaptureFlowStepper>
+    );
+  }
 
   if (phase === "waiting" || phase === "go") {
     return (
@@ -240,6 +289,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
     paddingBottom: spacing.lg,
   },
+  questionnaireWrap: { marginTop: spacing.xl },
   headerIcon: {
     width: 48,
     height: 48,
