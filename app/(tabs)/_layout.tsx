@@ -7,9 +7,9 @@ import { ParticipantGuard } from "@/lib/auth/RouteGuard";
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
   // Real home-indicator inset now that the app has a SafeAreaProvider +
-  // viewport-fit=cover (app/+html.tsx). Keep a minimum so non-notched devices
-  // and desktop still get comfortable spacing.
-  const bottomInset = Math.max(insets.bottom, 12);
+  // viewport-fit=cover (app/+html.tsx). Keep a min of 20 as a safety net in case
+  // the web build reports a 0 inset, so labels still clear the home indicator.
+  const bottomInset = Math.max(insets.bottom, 20);
 
   return (
     <ParticipantGuard>
