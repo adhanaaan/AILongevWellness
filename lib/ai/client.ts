@@ -74,12 +74,14 @@ export function setupHealthIngest(
   return postJson("/api/health-ingest-setup", token, { participantId, rotate });
 }
 
+// Both Mental-capture submits share one endpoint (api/submit-mental) — merged to
+// stay under Vercel Hobby's 12-function cap. It writes whichever inputs it gets.
 export function submitRecognizeResult(
   token: string,
   participantId: string,
   trialsMs: number[]
 ): Promise<{ reaction_time: number; cog_composite: number }> {
-  return postJson("/api/submit-recognize", token, { participantId, trialsMs });
+  return postJson("/api/submit-mental", token, { participantId, trialsMs });
 }
 
 export function submitMentalQuestionnaire(
@@ -88,5 +90,5 @@ export function submitMentalQuestionnaire(
   who5: number[],
   pss4: number[]
 ): Promise<{ who5_wellbeing: number; pss4_stress: number }> {
-  return postJson("/api/submit-questionnaire", token, { participantId, who5, pss4 });
+  return postJson("/api/submit-mental", token, { participantId, who5, pss4 });
 }
