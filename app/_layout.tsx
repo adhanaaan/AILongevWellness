@@ -19,8 +19,14 @@ import {
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { colors } from "@/lib/theme/tokens";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
+import { applyWebViewportFix } from "@/lib/web/viewportFix";
 
 SplashScreen.preventAutoHideAsync();
+
+// output:single ignores app/+html.tsx, so patch viewport-fit=cover + #root dvh at
+// runtime (web only) — otherwise bottom content clips under Safari's toolbar and
+// safe-area insets read 0. Runs at module load, before first paint.
+applyWebViewportFix();
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
