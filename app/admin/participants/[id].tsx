@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { View, Text, ScrollView, StyleSheet, Platform } from "react-native";
 import * as Linking from "expo-linking";
+import * as DocumentPicker from "expo-document-picker";
 import { ArrowLeft, ArrowRight, AlertTriangle } from "lucide-react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { AdminShell } from "@/components/layout/AdminShell";
@@ -18,7 +19,8 @@ import { ReviewStatusSummary } from "@/components/admin/ReviewStatusSummary";
 import { Button, Card } from "@/components/ui";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { repository } from "@/lib/data/mock";
-import { resolveAttentionAction, getFileUrlAction } from "@/lib/data/actions";
+import { resolveAttentionAction, getFileUrlAction, uploadFileAction } from "@/lib/data/actions";
+import { validateUploadSize } from "@/lib/data/uploadLimits";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
 import { generateDraft, extractLabReport, extractWearableExport, extractBodyComp } from "@/lib/ai/client";
@@ -31,6 +33,7 @@ import type {
   PipelineState,
   Pillar,
   FileRecord,
+  FileKind,
   DailyLog,
   ParticipantSummary,
 } from "@/lib/types/db";
@@ -42,6 +45,14 @@ import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 // specific stage(s) are done is shown by the two SignOffStage cards below,
 // not by this high-level progress strip.
 const PIPELINE_STAGES = ["Capturing", "AI Draft", "Review", "Signed", "Delivered"];
+
+// Accepted file types per kind for the care-team upload picker — mirrors the
+// participant-side capture channels.
+const PICKER_TYPES: Record<FileKind, string[]> = {
+  lab_report: ["application/pdf", "image/*"],
+  body_comp: ["application/pdf", "image/*"],
+  apple_health_export: ["application/zip", "application/xml", "text/xml", "application/octet-stream"],
+};
 
 const STATE_INDEX: Record<PipelineState, number> = {
   capturing: 0,
@@ -75,6 +86,8 @@ export default function ParticipantDetailPage() {
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [extractingFileId, setExtractingFileId] = useState<string | null>(null);
   const [extractErrors, setExtractErrors] = useState<Record<string, string>>({});
+  const [uploadingKind, setUploadingKind] = useState<FileKind | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [resolvingAttention, setResolvingAttention] = useState(false);
   const [resolveError, setResolveError] = useState<string | null>(null);
 
@@ -126,6 +139,42 @@ export default function ParticipantDetailPage() {
   async function onViewFile(file: FileRecord) {
     const url = await getFileUrlAction(file.id);
     if (url) Linking.openURL(url);
+  }
+
+  // Care team uploading a report on the participant's behalf (e.g. collected at
+  // the retreat, or a paper report handed to staff). RLS already grants care_team
+  // full storage + files access, so uploadFileAction works against this
+  // participant's folder; auto-extract afterwards so biomarkers land immediately.
+  async function onUploadFile(kind: FileKind) {
+    if (!id) return;
+    setUploadError(null);
+    const result = await DocumentPicker.getDocumentAsync({
+      type: PICKER_TYPES[kind],
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled) return;
+    const asset = result.assets[0];
+    setUploadingKind(kind);
+    try {
+      const response = await fetch(asset.uri);
+      const blob = await response.blob();
+      const sizeErr = validateUploadSize(kind, blob.size);
+      if (sizeErr) {
+        setUploadError(sizeErr);
+        return;
+      }
+      const fileRecord = await uploadFileAction(id, kind, {
+        blob,
+        filename: asset.name,
+        contentType: asset.mimeType ?? (Platform.OS === "web" ? blob.type : undefined),
+      });
+      await loadData();
+      await onExtractFile(fileRecord);
+    } catch (e) {
+      setUploadError(e instanceof Error ? e.message : "Upload failed.");
+    } finally {
+      setUploadingKind(null);
+    }
   }
 
   useEffect(() => {
@@ -346,11 +395,36 @@ export default function ParticipantDetailPage() {
           </View>
         )}
 
-        {files.length > 0 && (
+        {isSupabaseConfigured && (
           <View style={styles.section}>
-            <ReviewSectionHeader label="Uploaded files" />
+            <ReviewSectionHeader label="Files" />
             <Card>
-              {files.map((file, i) => {
+              <Text style={styles.fileLabel}>Upload a report for this participant</Text>
+              <Text style={styles.meta}>
+                For reports collected at the retreat or handed to staff. Uploads are extracted into
+                biomarkers automatically, the same as a participant upload.
+              </Text>
+              <View style={styles.uploadRow}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={uploadingKind !== null}
+                  onPress={() => onUploadFile("lab_report")}
+                >
+                  {uploadingKind === "lab_report" ? "Uploading…" : "Lab report"}
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={uploadingKind !== null}
+                  onPress={() => onUploadFile("body_comp")}
+                >
+                  {uploadingKind === "body_comp" ? "Uploading…" : "Body composition"}
+                </Button>
+              </View>
+              {!!uploadError && <Text style={styles.attentionReason}>{uploadError}</Text>}
+
+              {files.map((file) => {
                 const label =
                   file.kind === "lab_report"
                     ? "Lab report"
@@ -363,7 +437,7 @@ export default function ParticipantDetailPage() {
                   file.kind === "body_comp";
                 const error = extractErrors[file.id];
                 return (
-                  <View key={file.id} style={i > 0 ? styles.fileRow : undefined}>
+                  <View key={file.id} style={styles.fileRow}>
                     <View style={styles.fileRowContent}>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.fileLabel}>{label}</Text>
@@ -581,6 +655,12 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
     marginTop: spacing.md,
     paddingTop: spacing.md,
+  },
+  uploadRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+    marginTop: spacing.md,
   },
   fileRowContent: {
     flexDirection: "row",
