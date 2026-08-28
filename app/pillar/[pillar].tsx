@@ -16,6 +16,7 @@ import { repository } from "@/lib/data/mock";
 import { useAskAva } from "@/lib/ava/useAskAva";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { BIOMARKER_KEYS_BY_PILLAR, pillarStatus } from "@/lib/ai/scoring";
+import { biomarkerLabel } from "@/lib/ai/biomarkerLabels";
 import { computeVascularAge, computeMetabolicAge, type AgeClockResult } from "@/lib/ai/ageClocks";
 import type { AiDraft, Biomarker, BiomarkerReading, Participant, Pillar } from "@/lib/types/db";
 import {
@@ -42,9 +43,10 @@ const PILLAR_COLORS: Record<Pillar, string> = {
   mental: colors.mental,
 };
 
+// Resolve a biomarker key to its real catalog label (e.g. who5_wellbeing ->
+// "Wellbeing (WHO-5)"), not a titleized key ("Who5 wellbeing").
 function humanizeKey(key: string) {
-  const withSpaces = key.replace(/_/g, " ");
-  return withSpaces.charAt(0).toUpperCase() + withSpaces.slice(1);
+  return biomarkerLabel(key);
 }
 
 // measured_at is a plain "YYYY-MM-DD" date, not a timestamp -- new Date(str)

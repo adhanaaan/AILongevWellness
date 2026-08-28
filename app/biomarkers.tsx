@@ -11,6 +11,7 @@ import { BiomarkerSummaryBar } from "@/components/participant/BiomarkerSummaryBa
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { BIOMARKER_KEYS_BY_PILLAR } from "@/lib/ai/scoring";
+import { biomarkerLabel } from "@/lib/ai/biomarkerLabels";
 import type { AiDraft, Biomarker, BiomarkerReading, Pillar } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
 
@@ -26,9 +27,10 @@ const PILLAR_COLORS: Record<Pillar, string> = {
   mental: colors.mental,
 };
 
+// Real catalog label (e.g. who5_wellbeing -> "Wellbeing (WHO-5)"), not a
+// titleized key.
 function humanizeKey(key: string) {
-  const s = key.replace(/_/g, " ");
-  return s.charAt(0).toUpperCase() + s.slice(1);
+  return biomarkerLabel(key);
 }
 
 function formatShortDate(dateOnly: string) {
