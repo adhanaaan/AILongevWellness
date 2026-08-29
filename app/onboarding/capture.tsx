@@ -2,10 +2,10 @@ import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { ArrowLeft, Smartphone, PersonStanding, FileText, Brain, ChevronRight, type LucideIcon } from "lucide-react-native";
+import { ArrowLeft, Smartphone, PersonStanding, FileText, Brain, Dna, ChevronRight, type LucideIcon } from "lucide-react-native";
 import { HubSectionCard } from "@/components/participant/HubSectionCard";
 import { Button } from "@/components/ui/Button";
-import { getOnboardingProgressAction } from "@/lib/data/actions";
+import { getOnboardingProgressAction, listFilesAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { CAPTURE_SECTIONS, deriveSectionState, type CaptureSectionId } from "@/lib/onboarding/flow";
@@ -42,11 +42,17 @@ export default function CaptureHubPage() {
   const { fromQuiz } = useLocalSearchParams<{ fromQuiz?: string }>();
   const isOnboarding = fromQuiz === "1";
   const [progress, setProgress] = useState<OnboardingProgress | null>(null);
+  // Genetic report is store-only and outside CAPTURE_SECTIONS, so its "added"
+  // state comes from whether a genetic_report file exists, not from progress.
+  const [hasGenetic, setHasGenetic] = useState(false);
 
   useEffect(() => {
     if (!participantId) return;
     function load() {
       getOnboardingProgressAction(participantId!).then(setProgress);
+      listFilesAction(participantId!)
+        .then((files) => setHasGenetic(files.some((f) => f.kind === "genetic_report")))
+        .catch(() => {});
     }
     load();
     return repository.subscribe(load);
@@ -96,6 +102,23 @@ export default function CaptureHubPage() {
               />
             );
           })}
+
+          {/* Genetic report — store-only, optional, outside CAPTURE_SECTIONS.
+              "done" once a genetic file is on record. */}
+          <HubSectionCard
+            icon={Dna}
+            title="Genetic report"
+            description="Share a DNA or genetic screening for your care team. Stored privately — never auto-analysed."
+            state={hasGenetic ? "done" : "available"}
+            optional
+            onPress={() =>
+              router.push(
+                isOnboarding
+                  ? ({ pathname: "/onboarding/capture-genetic-intro", params: { fromQuiz: "1" } } as never)
+                  : ("/onboarding/capture-genetic-intro" as never)
+              )
+            }
+          />
         </View>
 
         <View style={styles.editSection}>

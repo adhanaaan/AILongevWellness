@@ -18,6 +18,7 @@ export default function OnboardingLayout() {
       <Stack.Screen name="capture-wearables-intro" />
       <Stack.Screen name="capture-body-composition-intro" />
       <Stack.Screen name="capture-lab-reports-intro" />
+      <Stack.Screen name="capture-genetic-intro" />
       <Stack.Screen name="capture-recognaize" />
       <Stack.Screen name="capture-calculating" />
     </Stack>
