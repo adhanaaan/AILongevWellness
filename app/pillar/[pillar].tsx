@@ -134,6 +134,9 @@ export default function PillarDetailPage() {
   );
   const inRangeCount = pillarBiomarkers.filter((b) => !b.flagged).length;
   const outOfRangeCount = pillarBiomarkers.filter((b) => b.flagged).length;
+  // No captured data for this pillar yet — the score is just the neutral default,
+  // so don't present it as a real "70 / On track". Show a not-assessed state.
+  const hasData = pillarBiomarkers.length > 0;
 
   let ageClock: AgeClockResult | null = null;
   let ageClockLabel = "";
@@ -166,14 +169,28 @@ export default function PillarDetailPage() {
         <FadeInView>
         <View style={styles.titleRow}>
           <Text style={styles.pillarName}>{PILLAR_LABELS[pillar]}</Text>
-          <StatusBadge
-            status={status}
-            label={status === "good" ? "On track" : "Monitor"}
-          />
+          {hasData && (
+            <StatusBadge
+              status={status}
+              label={status === "good" ? "On track" : "Monitor"}
+            />
+          )}
         </View>
-        <View style={styles.scoreRingWrap}>
-          <ScoreRing value={score} label="out of 100" status={status} size={140} />
-        </View>
+        {hasData ? (
+          <View style={styles.scoreRingWrap}>
+            <ScoreRing value={score} label="out of 100" status={status} size={140} />
+          </View>
+        ) : (
+          <View style={styles.noDataWrap}>
+            <View style={styles.noDataRing}>
+              <Text style={styles.noDataDash}>–</Text>
+            </View>
+            <Text style={styles.noDataText}>Not assessed yet</Text>
+            <Text style={styles.noDataSub}>
+              Add {PILLAR_LABELS[pillar].toLowerCase()} data to unlock your score.
+            </Text>
+          </View>
+        )}
 
         {ageClock && (
           <View style={styles.ageClockCard}>
@@ -355,6 +372,39 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: spacing.lg,
     marginBottom: spacing.xs,
+  },
+  noDataWrap: {
+    alignItems: "center",
+    marginTop: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  noDataRing: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  noDataDash: {
+    fontFamily: fontFamilies.displayBold,
+    fontSize: 44,
+    color: colors.borderStrong,
+    includeFontPadding: false,
+  },
+  noDataText: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.bodyMd,
+    color: colors.ink,
+    marginTop: spacing.md,
+  },
+  noDataSub: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.labelMd,
+    color: colors.inkMuted,
+    marginTop: spacing.xs,
+    textAlign: "center",
   },
   section: {
     marginTop: spacing["2xl"],
