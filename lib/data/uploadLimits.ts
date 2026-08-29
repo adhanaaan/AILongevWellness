@@ -8,6 +8,7 @@ export const UPLOAD_MAX_BYTES: Record<FileKind, number> = {
   lab_report: 20 * 1024 * 1024,
   body_comp: 20 * 1024 * 1024,
   apple_health_export: 200 * 1024 * 1024,
+  genetic_report: 20 * 1024 * 1024,
 };
 
 function formatMb(bytes: number): string {
