@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { ArrowLeft, Watch, PersonStanding, FileText, Brain, ChevronRight, type LucideIcon } from "lucide-react-native";
+import { ArrowLeft, Smartphone, PersonStanding, FileText, Brain, ChevronRight, type LucideIcon } from "lucide-react-native";
 import { HubSectionCard } from "@/components/participant/HubSectionCard";
 import { Button } from "@/components/ui/Button";
 import { getOnboardingProgressAction } from "@/lib/data/actions";
@@ -19,14 +19,14 @@ import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 // section is intentionally excluded — it's handled by app/onboarding/quiz.tsx.)
 
 const SECTION_ICON: Partial<Record<CaptureSectionId, LucideIcon>> = {
-  wearables: Watch,
+  wearables: Smartphone,
   body_composition: PersonStanding,
   lab_reports: FileText,
   recognize: Brain,
 };
 
 const SECTION_DESCRIPTION: Partial<Record<CaptureSectionId, string>> = {
-  wearables: "Connect a wearable — syncs heart rate, sleep and activity.",
+  wearables: "Add your phone's health data — steps, heart rate, sleep and activity. No wearable needed.",
   body_composition: "Upload a body-composition scan.",
   lab_reports: "Upload a lab report — we pull out the key results.",
   recognize: "A short cognitive check.",

@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { useLocalSearchParams } from "expo-router";
-import { Watch, HeartPulse, Moon, Activity, UploadCloud, Smartphone, User, ChevronRight, Share2 } from "lucide-react-native";
+import { HeartPulse, Moon, Activity, UploadCloud, Smartphone, User, ChevronRight, Share2 } from "lucide-react-native";
 import { CaptureFlowStepper } from "@/components/layout/CaptureFlowStepper";
 import { GlassCard } from "@/components/ui/GlassCard";
 import { Card } from "@/components/ui/Card";
@@ -54,19 +54,20 @@ export default function CaptureWearablesIntroPage() {
     <CaptureFlowStepper>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         <GlassCard tint="light" padding="none" radius="full" style={styles.headerIcon}>
-          <Watch size={24} color={colors.teal} />
+          <Smartphone size={24} color={colors.teal} />
         </GlassCard>
-        <Text style={styles.title}>Wearables</Text>
+        <Text style={styles.title}>Phone health data</Text>
         <Text style={styles.subtitle}>
-          We&apos;d like to connect your wearable data from Apple Health. It gives us a fuller
-          picture of your day-to-day patterns alongside your labs and questionnaire answers.
+          Your phone already tracks a lot — steps, heart rate, sleep and activity — even if you
+          don&apos;t wear a watch. Sharing it gives us a fuller picture of your day-to-day patterns
+          alongside your labs and questionnaire answers. Got a wearable? Even better, it flows in too.
         </Text>
 
         <Card padding="lg" style={styles.pointsCard}>
           <Text style={styles.pointsHeading}>What this feeds into</Text>
           <Text style={styles.pointsBody}>
-            Your export includes key metrics like heart rate, sleep, activity, and HRV.
-            These roll up into your Vascular, Metabolic, and Mental pillar scores.
+            Your Health app data includes metrics like heart rate, sleep, activity and HRV.
+            These roll up into your Vascular, Metabolic and Mental pillar scores.
           </Text>
           <View style={styles.pointsList}>
             {POINTS.map(({ Icon, label }) => (

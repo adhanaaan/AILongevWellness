@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { Watch, PersonStanding, FileText, ChevronRight, RotateCw, type LucideIcon } from "lucide-react-native";
+import { Smartphone, PersonStanding, FileText, ChevronRight, RotateCw, type LucideIcon } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { Card } from "@/components/ui/Card";
 import { LoadingState } from "@/components/ui/LoadingState";
@@ -34,8 +34,8 @@ const ADD_DATA_ROWS: Array<{ Icon: LucideIcon; label: string; description: strin
     route: "/onboarding/capture-lab-reports-intro",
   },
   {
-    Icon: Watch,
-    label: "Wearable export",
+    Icon: Smartphone,
+    label: "Phone health data",
     description: "Apple Health export — heart rate, sleep, activity",
     route: "/onboarding/capture-wearables-intro",
   },

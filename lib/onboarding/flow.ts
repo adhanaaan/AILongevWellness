@@ -51,7 +51,9 @@ export const CAPTURE_SECTIONS: CaptureSectionDef[] = [
   // (deriveSectionState / isCaptureComplete / computeUnlockedSections). The route
   // is a safe live fallback and isn't actually navigated to from the hub.
   { id: "questionnaire", label: "Questionnaire", keys: ["personal_info", "lifestyle"], route: "/onboarding/quiz" },
-  { id: "wearables", label: "Wearables", keys: ["wearables"], route: "/onboarding/capture-wearables-intro", optional: true },
+  // Internal id/keys stay "wearables", but it's presented as phone health data —
+  // most participants have Apple Health data on their phone even with no wearable.
+  { id: "wearables", label: "Phone health data", keys: ["wearables"], route: "/onboarding/capture-wearables-intro", optional: true },
   {
     id: "body_composition",
     label: "Body Composition",
