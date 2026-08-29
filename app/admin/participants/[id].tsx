@@ -95,6 +95,10 @@ export default function ParticipantDetailPage() {
   const [extractingFileId, setExtractingFileId] = useState<string | null>(null);
   const [extractErrors, setExtractErrors] = useState<Record<string, string>>({});
   const [uploadingKind, setUploadingKind] = useState<FileKind | null>(null);
+  // Inline preview (web): which file is expanded + its signed URL.
+  const [previewFileId, setPreviewFileId] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [bpSystolic, setBpSystolic] = useState("");
   const [bpDiastolic, setBpDiastolic] = useState("");
@@ -154,6 +158,30 @@ export default function ParticipantDetailPage() {
   async function onViewFile(file: FileRecord) {
     const url = await getFileUrlAction(file.id);
     if (url) Linking.openURL(url);
+  }
+
+  // Inline preview on web (a signed URL rendered in an <iframe> — browsers render
+  // both PDFs and images that way). Tapping the same file again collapses it. On
+  // native there's no iframe, so fall back to opening the file.
+  async function onPreviewFile(file: FileRecord) {
+    if (Platform.OS !== "web") {
+      await onViewFile(file);
+      return;
+    }
+    if (previewFileId === file.id) {
+      setPreviewFileId(null);
+      setPreviewUrl(null);
+      return;
+    }
+    setPreviewLoading(true);
+    setPreviewFileId(file.id);
+    setPreviewUrl(null);
+    try {
+      const url = await getFileUrlAction(file.id);
+      setPreviewUrl(url ?? null);
+    } finally {
+      setPreviewLoading(false);
+    }
   }
 
   // Manual blood-pressure entry (e.g. a cuff reading at the retreat). Writes both
@@ -523,8 +551,13 @@ export default function ParticipantDetailPage() {
                         {!!error && <Text style={styles.attentionReason}>{error}</Text>}
                       </View>
                       {isSupabaseConfigured && (
+                        <Button variant="secondary" size="sm" onPress={() => onPreviewFile(file)}>
+                          {previewFileId === file.id ? "Hide" : "Preview"}
+                        </Button>
+                      )}
+                      {isSupabaseConfigured && (
                         <Button variant="ghost" size="sm" onPress={() => onViewFile(file)}>
-                          View file
+                          Open
                         </Button>
                       )}
                       {canExtract && isSupabaseConfigured && (
@@ -542,6 +575,22 @@ export default function ParticipantDetailPage() {
                         </Button>
                       )}
                     </View>
+                    {previewFileId === file.id && (
+                      <View style={styles.previewPanel}>
+                        {previewLoading || !previewUrl ? (
+                          <Text style={styles.meta}>
+                            {previewLoading ? "Loading preview…" : "Couldn't load a preview — try Open instead."}
+                          </Text>
+                        ) : Platform.OS === "web" ? (
+                          // Web-only: browsers render PDFs and images inside an iframe.
+                          <iframe
+                            src={previewUrl}
+                            title={`${label} preview`}
+                            style={{ width: "100%", height: 480, border: "none", borderRadius: 8 }}
+                          />
+                        ) : null}
+                      </View>
+                    )}
                   </View>
                 );
               })}
@@ -819,6 +868,12 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
+  },
+  previewPanel: {
+    marginTop: spacing.md,
+    backgroundColor: colors.cloud,
+    borderRadius: radii.md,
+    padding: spacing.sm,
   },
   fileLabel: {
     fontFamily: fontFamilies.bodySemiBold,
