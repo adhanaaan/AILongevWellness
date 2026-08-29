@@ -56,6 +56,10 @@ export async function updateBiomarkerAction(
   return repository.updateBiomarker(id, patch);
 }
 
+export async function upsertBiomarkerAction(participantId: string, key: string, value: number) {
+  return repository.upsertBiomarker(participantId, key, value);
+}
+
 export async function updateAiDraftAction(participantId: string, patch: Partial<AiDraft>) {
   return repository.updateAiDraft(participantId, patch);
 }

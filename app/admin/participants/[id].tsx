@@ -17,9 +17,10 @@ import { ReviewSectionHeader } from "@/components/admin/ReviewSectionHeader";
 import { ReviewParticipantHeader } from "@/components/admin/ReviewParticipantHeader";
 import { ReviewStatusSummary } from "@/components/admin/ReviewStatusSummary";
 import { Button, Card } from "@/components/ui";
+import { Input } from "@/components/ui/Field";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { repository } from "@/lib/data/mock";
-import { resolveAttentionAction, getFileUrlAction, uploadFileAction } from "@/lib/data/actions";
+import { resolveAttentionAction, getFileUrlAction, uploadFileAction, upsertBiomarkerAction } from "@/lib/data/actions";
 import { validateUploadSize } from "@/lib/data/uploadLimits";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
@@ -88,6 +89,10 @@ export default function ParticipantDetailPage() {
   const [extractErrors, setExtractErrors] = useState<Record<string, string>>({});
   const [uploadingKind, setUploadingKind] = useState<FileKind | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [bpSystolic, setBpSystolic] = useState("");
+  const [bpDiastolic, setBpDiastolic] = useState("");
+  const [bpSaving, setBpSaving] = useState(false);
+  const [bpError, setBpError] = useState<string | null>(null);
   const [resolvingAttention, setResolvingAttention] = useState(false);
   const [resolveError, setResolveError] = useState<string | null>(null);
 
@@ -139,6 +144,36 @@ export default function ParticipantDetailPage() {
   async function onViewFile(file: FileRecord) {
     const url = await getFileUrlAction(file.id);
     if (url) Linking.openURL(url);
+  }
+
+  // Manual blood-pressure entry (e.g. a cuff reading at the retreat). Writes both
+  // systolic + diastolic as vascular biomarkers via the care-team client (RLS
+  // allows it), and the scores re-derive automatically.
+  async function onSaveBp() {
+    if (!id) return;
+    const sys = Number(bpSystolic);
+    const dia = Number(bpDiastolic);
+    if (
+      !bpSystolic || !bpDiastolic ||
+      !Number.isFinite(sys) || !Number.isFinite(dia) ||
+      sys < 50 || sys > 260 || dia < 30 || dia > 180 || dia >= sys
+    ) {
+      setBpError("Enter plausible systolic and diastolic values (mmHg).");
+      return;
+    }
+    setBpError(null);
+    setBpSaving(true);
+    try {
+      await upsertBiomarkerAction(id, "systolic_bp", sys);
+      await upsertBiomarkerAction(id, "diastolic_bp", dia);
+      setBpSystolic("");
+      setBpDiastolic("");
+      await loadData();
+    } catch (e) {
+      setBpError(e instanceof Error ? e.message : "Couldn't save the reading.");
+    } finally {
+      setBpSaving(false);
+    }
   }
 
   // Care team uploading a report on the participant's behalf (e.g. collected at
@@ -473,6 +508,39 @@ export default function ParticipantDetailPage() {
           </View>
         )}
 
+        <View style={styles.section}>
+          <ReviewSectionHeader label="Add a blood-pressure reading" />
+          <Card>
+            <Text style={styles.meta}>
+              Enter a manual cuff reading (mmHg). Writes to the vascular pillar and updates the scores.
+            </Text>
+            <View style={styles.bpRow}>
+              <Input
+                label="Systolic"
+                value={bpSystolic}
+                onChangeText={(t) => setBpSystolic(t.replace(/[^0-9]/g, ""))}
+                keyboardType="number-pad"
+                maxLength={3}
+                placeholder="128"
+                containerStyle={styles.bpInput}
+              />
+              <Input
+                label="Diastolic"
+                value={bpDiastolic}
+                onChangeText={(t) => setBpDiastolic(t.replace(/[^0-9]/g, ""))}
+                keyboardType="number-pad"
+                maxLength={3}
+                placeholder="82"
+                containerStyle={styles.bpInput}
+              />
+            </View>
+            {!!bpError && <Text style={styles.attentionReason}>{bpError}</Text>}
+            <Button variant="secondary" size="sm" disabled={bpSaving} onPress={onSaveBp}>
+              {bpSaving ? "Saving…" : "Save reading"}
+            </Button>
+          </Card>
+        </View>
+
         {biomarkers.length > 0 && (
           <View style={styles.section}>
             <PhenoAgeStatusCard biomarkers={biomarkers} />
@@ -661,6 +729,16 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: spacing.sm,
     marginTop: spacing.md,
+  },
+  bpRow: {
+    flexDirection: "row",
+    gap: spacing.md,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  bpInput: {
+    flexGrow: 1,
+    flexBasis: 0,
   },
   fileRowContent: {
     flexDirection: "row",

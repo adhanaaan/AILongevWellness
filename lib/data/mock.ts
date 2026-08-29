@@ -31,6 +31,7 @@ import { createSupabaseRepository } from "./supabase";
 import { computeUnlockedSections } from "../onboarding/flow";
 import { sexAwareRange } from "../ai/sexAwareRanges";
 import { MARKER_DIRECTION, isMarkerFlagged } from "../ai/markerDirection";
+import { biomarkerCatalogEntry } from "../ai/biomarkerLabels";
 import { computePillarScores, computeBiologicalAge } from "../ai/scoring";
 import { computePhenoAge } from "../ai/phenoAge";
 
@@ -948,6 +949,51 @@ class MockRepository implements Repository {
 
     this.notify();
     return updated;
+  }
+
+  async upsertBiomarker(participantId: string, key: string, value: number): Promise<Biomarker> {
+    const entry = biomarkerCatalogEntry(key);
+    if (!entry) throw new Error(`No catalog entry for biomarker "${key}"`);
+    const flagged = isMarkerFlagged(key, value, entry.ref_low, entry.ref_high);
+    const existing = Array.from(this.biomarkers.values()).find(
+      (b) => b.participant_id === participantId && b.key === key
+    );
+    const id = existing?.id ?? `bm-${participantId}-${key}`;
+    const row: Biomarker = {
+      id,
+      participant_id: participantId,
+      pillar: entry.pillar,
+      key,
+      label: entry.label,
+      value,
+      unit: entry.unit,
+      ref_low: entry.ref_low,
+      ref_high: entry.ref_high,
+      source: "manual",
+      status: "entered",
+      flagged,
+      updated_at: nowIso(),
+    };
+    this.biomarkers.set(id, row);
+
+    // Recompute scores immediately (mirrors updateBiomarker), unless a clinician
+    // has already signed — then the signed draft stays frozen.
+    const draft = this.aiDrafts.get(participantId);
+    if (draft) {
+      const state = this.pipelines.get(participantId)?.state;
+      const hasSignedReview = (this.reviews.get(participantId) ?? []).some((r) => r.signed_at);
+      const locked = state === "signed" || state === "delivered" || hasSignedReview;
+      if (!locked) {
+        const allBiomarkers = await this.getBiomarkers(participantId);
+        const scores = computePillarScores(allBiomarkers);
+        const biological_age =
+          computePhenoAge(allBiomarkers, draft.chronological_age) ?? computeBiologicalAge(scores, draft.chronological_age);
+        this.aiDrafts.set(participantId, { ...draft, scores, biological_age });
+      }
+    }
+
+    this.notify();
+    return row;
   }
 
   async listBiomarkerHistory(participantId: string): Promise<BiomarkerReading[]> {
