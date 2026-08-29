@@ -6,10 +6,12 @@ import { ParticipantGuard } from "@/lib/auth/RouteGuard";
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
-  // Real home-indicator inset now that the app has a SafeAreaProvider +
-  // viewport-fit=cover (app/+html.tsx). Keep a min of 20 as a safety net in case
-  // the web build reports a 0 inset, so labels still clear the home indicator.
-  const bottomInset = Math.max(insets.bottom, 20);
+  // Clearance under the tab labels. On iOS Safari the floating bottom URL bar
+  // overlaps web content and isn't captured by env(safe-area-inset-bottom), so a
+  // 20px min wasn't enough — the labels clipped. Use a more generous floor so
+  // they sit above Safari's bar. (The real full-screen fix is Add to Home Screen,
+  // which removes Safari's chrome entirely.)
+  const bottomInset = Math.max(insets.bottom, 40);
 
   return (
     <ParticipantGuard>

@@ -1,5 +1,5 @@
 import { repository, DEMO_PARTICIPANT_ID } from "./mock";
-import type { UploadableFile } from "./repository";
+import type { UploadableFile, NewParticipantInput } from "./repository";
 import type {
   AiDraft,
   Biomarker,
@@ -15,6 +15,10 @@ import type {
 } from "../types/db";
 
 export { DEMO_PARTICIPANT_ID };
+
+export async function createParticipantAction(input: NewParticipantInput) {
+  return repository.createParticipant(input);
+}
 
 export async function updateParticipantAction(id: string, patch: Partial<Participant>) {
   return repository.updateParticipant(id, patch);

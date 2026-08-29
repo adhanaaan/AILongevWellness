@@ -143,15 +143,15 @@ export function BodyMap({ bioAge, chronoAge, pillars, onPressBio }: BodyMapProps
                       cx={CX}
                       cy={L.cy}
                       r={L.r}
-                      fill={colors.navy}
-                      stroke="rgba(255,255,255,0.22)"
+                      fill="rgba(255,255,255,0.04)"
+                      stroke="rgba(255,255,255,0.45)"
                       strokeWidth={2}
                       strokeDasharray="4 5"
                     />
-                    <SvgText x={CX} y={L.cy + 7} fill="rgba(255,255,255,0.35)" fontSize={20} fontWeight="700" textAnchor="middle">
-                      –
+                    <SvgText x={CX} y={L.cy + 6} fill="rgba(255,255,255,0.6)" fontSize={18} fontWeight="700" textAnchor="middle">
+                      +
                     </SvgText>
-                    <SvgText x={CX} y={L.labelY} fill="rgba(255,255,255,0.3)" fontSize={10} fontWeight="700" textAnchor="middle">
+                    <SvgText x={CX} y={L.labelY} fill="rgba(255,255,255,0.5)" fontSize={10} fontWeight="700" textAnchor="middle">
                       {L.label}
                     </SvgText>
                   </>

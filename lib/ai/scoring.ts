@@ -74,23 +74,38 @@ function joinPillarNames(pillars: Pillar[]): string {
 }
 
 /**
- * One plain-English sentence summarizing all three pillars at once, so a
- * first-time reader doesn't have to mentally combine three separate ring
- * values to know "am I okay?".
+ * One plain-English sentence summarizing the pillars at once, so a first-time
+ * reader doesn't have to mentally combine three separate ring values to know
+ * "am I okay?". `lockedPillars` are ones with no captured data yet — a neutral
+ * default score would otherwise read as "strong", contradicting the body map
+ * that shows them locked, so they're described as not-yet-assessed instead.
  */
-export function buildPillarNarrative(scores: PillarScores): string {
-  const pillars = Object.keys(scores) as Pillar[];
-  const good = pillars.filter((p) => pillarStatus(scores[p]) === "good");
-  const monitor = pillars.filter((p) => pillarStatus(scores[p]) === "monitor");
+export function buildPillarNarrative(scores: PillarScores, lockedPillars: Pillar[] = []): string {
+  const locked = new Set(lockedPillars);
+  const assessed = (Object.keys(scores) as Pillar[]).filter((p) => !locked.has(p));
+  const good = assessed.filter((p) => pillarStatus(scores[p]) === "good");
+  const monitor = assessed.filter((p) => pillarStatus(scores[p]) === "monitor");
 
+  const lockedNote =
+    lockedPillars.length > 0
+      ? ` ${joinPillarNames(lockedPillars)} ${lockedPillars.length === 1 ? "isn't" : "aren't"} assessed yet — add data to unlock ${lockedPillars.length === 1 ? "it" : "them"}.`
+      : "";
+
+  if (assessed.length === 0) {
+    return `Add your data to see how your systems are tracking.`;
+  }
+
+  let core: string;
   if (monitor.length === 0) {
-    return `${joinPillarNames(good)} scores are all within the optimal range for your age.`;
+    core = `${joinPillarNames(good)} ${good.length === 1 ? "is" : "scores are all"} within the optimal range for your age.`;
+  } else if (good.length === 0) {
+    const v = monitor.length === 1 ? "is" : "scores are";
+    core = `${joinPillarNames(monitor)} ${v} worth monitoring over the next few months.`;
+  } else {
+    const monitorVerb = monitor.length === 1 ? "is" : "are";
+    core = `${joinPillarNames(good)} scores are strong; ${joinPillarNames(monitor)} ${monitorVerb} worth monitoring over the next few months.`;
   }
-  if (good.length === 0) {
-    return `${joinPillarNames(monitor)} scores are worth monitoring over the next few months.`;
-  }
-  const monitorVerb = monitor.length === 1 ? "is" : "are";
-  return `${joinPillarNames(good)} scores are strong; ${joinPillarNames(monitor)} ${monitorVerb} worth monitoring over the next few months.`;
+  return core + lockedNote;
 }
 
 /**

@@ -18,7 +18,17 @@ import type {
   Pipeline,
   Review,
   ReviewStage,
+  Sex,
 } from "../types/db";
+
+export interface NewParticipantInput {
+  name: string;
+  age: number;
+  sex: Sex;
+  height_cm: number;
+  weight_kg: number;
+  goals?: string[];
+}
 
 export interface UploadableFile {
   blob: Blob;
@@ -40,6 +50,12 @@ export interface Repository {
   listParticipants(): Promise<ParticipantSummary[]>;
   getParticipant(id: string): Promise<Participant | null>;
   updateParticipant(id: string, patch: Partial<Participant>): Promise<Participant>;
+  /**
+   * Care-team creates a participant record from the admin portal (no auth login;
+   * clinician-managed). Creates the participant + pipeline (capturing) + capture
+   * channels, same as a self-signup would.
+   */
+  createParticipant(input: NewParticipantInput): Promise<Participant>;
   /** Withdraw consent. Goes through a server RPC (real backend) so the consent
    *  columns stay non-forgeable; a direct participant write to them is blocked. */
   withdrawConsent(participantId: string): Promise<void>;

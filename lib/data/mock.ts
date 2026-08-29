@@ -26,7 +26,7 @@ import type {
   ReviewStage,
   Sex,
 } from "../types/db";
-import type { Repository, SignedCard } from "./repository";
+import type { Repository, SignedCard, NewParticipantInput } from "./repository";
 import { createSupabaseRepository } from "./supabase";
 import { computeUnlockedSections } from "../onboarding/flow";
 import { sexAwareRange } from "../ai/sexAwareRanges";
@@ -820,6 +820,42 @@ class MockRepository implements Repository {
     this.participants.set(id, updated);
     this.notify();
     return updated;
+  }
+
+  async createParticipant(input: NewParticipantInput): Promise<Participant> {
+    const id = `p-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const participant: Participant = {
+      id,
+      name: input.name,
+      age: input.age,
+      sex: input.sex,
+      height_cm: input.height_cm,
+      weight_kg: input.weight_kg,
+      goals: input.goals ?? [],
+      created_at: nowIso(),
+    };
+    this.participants.set(id, participant);
+    this.pipelines.set(id, {
+      participant_id: id,
+      state: "capturing",
+      needs_attention: false,
+      attention_reason: null,
+      delivered_at: null,
+    });
+    this.reviews.set(id, []);
+    this.files.set(id, []);
+    for (const channel of CHANNELS) {
+      this.captureChannels.set(`${id}:${channel}`, {
+        id: `cc-${id}-${channel}`,
+        participant_id: id,
+        channel,
+        status: "empty",
+        entered_by: null,
+        updated_at: nowIso(),
+      });
+    }
+    this.notify();
+    return participant;
   }
 
   async withdrawConsent(participantId: string): Promise<void> {

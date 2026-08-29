@@ -6,6 +6,8 @@ import { SummaryStatCard } from "@/components/admin/SummaryStatCard";
 import { ParticipantTableRow } from "@/components/admin/ParticipantTableRow";
 import { TableRowSkeleton } from "@/components/admin/TableRowSkeleton";
 import { InsightsSectionHeader } from "@/components/participant/InsightsSectionHeader";
+import { Button } from "@/components/ui";
+import { Plus } from "lucide-react-native";
 import { repository } from "@/lib/data/mock";
 import type { ParticipantSummary, PipelineState } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, spacing, radii, shadows } from "@/lib/theme/tokens";
@@ -104,6 +106,13 @@ export default function AdminParticipantsPage() {
             style={styles.searchInput}
           />
         </View>
+        <Button
+          size="md"
+          onPress={() => router.push("/admin/participants/new")}
+          iconLeft={<Plus size={16} color={colors.white} />}
+        >
+          New patient
+        </Button>
       </View>
 
       <InsightsSectionHeader
@@ -165,9 +174,13 @@ const styles = StyleSheet.create({
     flexBasis: 160,
   },
   searchRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
     marginBottom: spacing["2xl"],
   },
   searchContainer: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: colors.surface,

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { View, Text, ScrollView, StyleSheet, Platform } from "react-native";
+import { View, Text, ScrollView, StyleSheet, Platform, TouchableOpacity } from "react-native";
 import * as Linking from "expo-linking";
 import * as DocumentPicker from "expo-document-picker";
 import { ArrowLeft, ArrowRight, AlertTriangle } from "lucide-react-native";
@@ -38,7 +38,7 @@ import type {
   DailyLog,
   ParticipantSummary,
 } from "@/lib/types/db";
-import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
+import { colors, fontFamilies, fontSizes, spacing, radii, shadows } from "@/lib/theme/tokens";
 
 // GP and TCM sign off independently, in either order -- collapsed into one
 // "Review" step rather than two sequential ones, since the pipeline no
@@ -46,6 +46,12 @@ import { colors, fontFamilies, fontSizes, spacing } from "@/lib/theme/tokens";
 // specific stage(s) are done is shown by the two SignOffStage cards below,
 // not by this high-level progress strip.
 const PIPELINE_STAGES = ["Capturing", "AI Draft", "Review", "Signed", "Delivered"];
+
+const TABS = [
+  { key: "reports", label: "Reports" },
+  { key: "analysis", label: "Analysis" },
+  { key: "review", label: "Review" },
+] as const;
 
 // Accepted file types per kind for the care-team upload picker — mirrors the
 // participant-side capture channels.
@@ -93,6 +99,9 @@ export default function ParticipantDetailPage() {
   const [bpDiastolic, setBpDiastolic] = useState("");
   const [bpSaving, setBpSaving] = useState(false);
   const [bpError, setBpError] = useState<string | null>(null);
+  // The detail page is split into three tabs so it reads as a clear flow
+  // (add/see reports -> see analysis -> sign off) instead of one long scroll.
+  const [tab, setTab] = useState<"reports" | "analysis" | "review">("reports");
   const [resolvingAttention, setResolvingAttention] = useState(false);
   const [resolveError, setResolveError] = useState<string | null>(null);
 
@@ -356,7 +365,20 @@ export default function ParticipantDetailPage() {
           </Card>
         </View>
 
-        {aiDraft && (
+        <View style={styles.tabBar}>
+          {TABS.map((t) => (
+            <TouchableOpacity
+              key={t.key}
+              style={[styles.tab, tab === t.key && styles.tabActive]}
+              onPress={() => setTab(t.key)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.tabText, tab === t.key && styles.tabTextActive]}>{t.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {tab === "analysis" && aiDraft && (
           <>
             <View style={styles.section}>
               <AIDraftSummaryCard
@@ -382,7 +404,7 @@ export default function ParticipantDetailPage() {
           </>
         )}
 
-        {pipeline.state === "ai_drafted" && isSupabaseConfigured && (
+        {tab === "analysis" && pipeline.state === "ai_drafted" && isSupabaseConfigured && (
           // Recovery for a participant stuck at ai_drafted: the post-capture
           // generateDraft is what advances ai_drafted -> gp_review, and it's
           // fired fire-and-forget, so if it failed the participant never reaches
@@ -413,7 +435,7 @@ export default function ParticipantDetailPage() {
           </View>
         )}
 
-        {aiDraft && isDraftSparse && isEditable && isSupabaseConfigured && (
+        {tab === "analysis" && aiDraft && isDraftSparse && isEditable && isSupabaseConfigured && (
           <View style={styles.section}>
             <Card>
               <Text style={styles.cardTitle}>This draft looks thin</Text>
@@ -430,7 +452,7 @@ export default function ParticipantDetailPage() {
           </View>
         )}
 
-        {isSupabaseConfigured && (
+        {tab === "reports" && isSupabaseConfigured && (
           <View style={styles.section}>
             <ReviewSectionHeader label="Files" />
             <Card>
@@ -508,6 +530,7 @@ export default function ParticipantDetailPage() {
           </View>
         )}
 
+        {tab === "reports" && (
         <View style={styles.section}>
           <ReviewSectionHeader label="Add a blood-pressure reading" />
           <Card>
@@ -540,13 +563,15 @@ export default function ParticipantDetailPage() {
             </Button>
           </Card>
         </View>
+        )}
 
-        {biomarkers.length > 0 && (
+        {tab === "analysis" && biomarkers.length > 0 && (
           <View style={styles.section}>
             <PhenoAgeStatusCard biomarkers={biomarkers} />
           </View>
         )}
 
+        {tab === "analysis" && (
         <View style={styles.section}>
           <ReviewSectionHeader label="Biomarkers" />
           {biomarkers.length === 0 ? (
@@ -581,7 +606,9 @@ export default function ParticipantDetailPage() {
             })
           )}
         </View>
+        )}
 
+        {tab === "reports" && (
         <View style={styles.section}>
           <ReviewSectionHeader label="Daily tracking" />
           {dailyLogs.length === 0 ? (
@@ -615,8 +642,9 @@ export default function ParticipantDetailPage() {
             </Card>
           )}
         </View>
+        )}
 
-        {pipeline.state !== "capturing" && pipeline.state !== "ai_drafted" && (
+        {tab === "review" && pipeline.state !== "capturing" && pipeline.state !== "ai_drafted" && (
           <View style={styles.section}>
             <ReviewSectionHeader label="Sign-off" />
             <View style={styles.signOffStack}>
@@ -636,6 +664,7 @@ export default function ParticipantDetailPage() {
           </View>
         )}
 
+        {tab === "review" && (
         <View style={styles.releaseSection}>
           <ReviewSectionHeader label="Deliver" />
           <Text style={styles.releaseHelper}>
@@ -650,6 +679,7 @@ export default function ParticipantDetailPage() {
             enabled={pipeline.state === "signed"}
           />
         </View>
+        )}
       </ScrollView>
     </AdminShell>
   );
@@ -697,6 +727,32 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: spacing["2xl"],
+  },
+  tabBar: {
+    flexDirection: "row",
+    gap: spacing.xs,
+    backgroundColor: colors.surfaceMuted,
+    borderRadius: radii.lg,
+    padding: spacing.xs,
+    marginBottom: spacing.xl,
+  },
+  tab: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: spacing.sm,
+    borderRadius: radii.md,
+  },
+  tabActive: {
+    backgroundColor: colors.surface,
+    ...shadows.card,
+  },
+  tabText: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.labelMd,
+    color: colors.inkMuted,
+  },
+  tabTextActive: {
+    color: colors.charcoal,
   },
   cardTitle: {
     fontFamily: fontFamilies.displaySemiBold,
