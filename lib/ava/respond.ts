@@ -12,7 +12,11 @@ export interface AvaResponse {
 }
 
 // Heuristic pattern matching for a rule-based mock responder — not real NLU.
-const OUT_OF_SCOPE = /diagnos|medicat|prescri|drug|dosage|symptom|disease|treat(ment)?|cure/i;
+// Fires on advice-seeking (diagnosis / dosing / prescribing / symptoms), NOT on
+// the bare word "medication" — otherwise the app's own "explain my medications &
+// supplements plan" chip trips it and AVA refuses its own deep-link. Real dosing
+// questions ("what should I take", "dosage") are still refused below.
+const OUT_OF_SCOPE = /diagnos|prescri|dosage|\bdose\b|symptom|disease|treat(ment)?|cure|side ?effect|should i (start|stop|take|change|adjust)|what (medication|drug|med|supplement|pill) should i/i;
 const COMPARISON = /better than|worse than|compared? to (other|another|everyone|the group|average)|how do i (compare|rank)|versus (other|another)|am i (better|worse)/i;
 const OTHER_PARTICIPANT = /\b(other|another) participants?\b|someone else'?s?\b|\banother person'?s?\b|\b(colleague|coworker|friend|spouse|partner)'?s?\s+(score|card|result|data)/i;
 

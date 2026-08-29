@@ -32,8 +32,15 @@ begin
 
   insert into public.pipeline (participant_id, state) values (v_participant.id, 'capturing');
 
-  insert into public.capture_channels (participant_id, channel, status)
-  select v_participant.id, c, 'empty'
+  -- The admin supplies name/sex/age/height/weight here — the questionnaire
+  -- equivalent — so seed the `manual` channel `complete`. submit_capture gates on
+  -- `manual` being complete (migration 0012), so without this an admin-created
+  -- participant can never leave `capturing` and the create -> analysis -> sign-off
+  -- flow dead-ends. Every other channel stays `empty` (optional uploads).
+  insert into public.capture_channels (participant_id, channel, status, entered_by)
+  select v_participant.id, c,
+         case when c = 'manual' then 'complete' else 'empty' end,
+         case when c = 'manual' then 'admin' else null end
   from unnest(array['manual', 'wearables', 'body_composition', 'lab_report', 'recognize']) as c;
 
   return v_participant;

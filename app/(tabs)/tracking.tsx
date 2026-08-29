@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { Smartphone, PersonStanding, FileText, ChevronRight, RotateCw, type LucideIcon } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { Card } from "@/components/ui/Card";
@@ -142,6 +142,11 @@ export default function TrackingPage() {
     loadData();
     return repository.subscribe(loadData);
   }, [participantId, loadData]);
+
+  // Server-side draft/care-plan generation completes with no local write, so
+  // repository.subscribe never fires — refetch on tab focus so the plan appears
+  // without a full reload.
+  useFocusEffect(loadData);
 
   const today = todayIso();
   const todayLog = logs.find((l) => l.log_date === today);

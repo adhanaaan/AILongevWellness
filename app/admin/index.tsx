@@ -111,7 +111,7 @@ export default function AdminParticipantsPage() {
           onPress={() => router.push("/admin/participants/new")}
           iconLeft={<Plus size={16} color={colors.white} />}
         >
-          New patient
+          New participant
         </Button>
       </View>
 

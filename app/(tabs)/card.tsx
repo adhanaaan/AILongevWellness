@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { MessageCircle, ClipboardList, ChevronRight } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { FadeInView } from "@/components/ui/FadeInView";
@@ -51,29 +51,35 @@ export default function CardPage() {
   const [showAllRecommendations, setShowAllRecommendations] = useState(false);
   const [showAllContributors, setShowAllContributors] = useState(false);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     if (!participantId) return;
-    function load() {
-      // .catch on the three gating fetches so a transient Supabase/RLS error
-      // degrades to the pending state instead of an infinite skeleton (they only
-      // resolve to null on the happy empty path otherwise).
-      repository.getSignedCard(participantId!).then(setCard).catch(() => setCard(null));
-      repository.getPipeline(participantId!).then(setPipeline).catch(() => setPipeline(null));
-      repository.getParticipant(participantId!).then(setParticipant).catch(() => setParticipant(null));
-      repository.getBiomarkers(participantId!).then(setBiomarkers).catch(() => setBiomarkers([]));
-      // Only actually used pre-delivery (see the !card branch below) -- fetched
-      // unconditionally here so it's ready the moment the pipeline advances,
-      // rather than adding a second effect keyed on pipeline state.
-      repository.getAiDraft(participantId!).then(setPendingDraft).catch(() => setPendingDraft(null));
-      // Drives the "Continue your data capture" banner below -- a participant
-      // who lands here (via the Data Capture hub's insights preview banner)
-      // before finishing every section otherwise has no way back except the
-      // browser back button, since (tabs) has no link into onboarding.
-      getOnboardingProgressAction(participantId!).then(setOnboardingProgress);
-    }
+    // .catch on the three gating fetches so a transient Supabase/RLS error
+    // degrades to the pending state instead of an infinite skeleton (they only
+    // resolve to null on the happy empty path otherwise).
+    repository.getSignedCard(participantId).then(setCard).catch(() => setCard(null));
+    repository.getPipeline(participantId).then(setPipeline).catch(() => setPipeline(null));
+    repository.getParticipant(participantId).then(setParticipant).catch(() => setParticipant(null));
+    repository.getBiomarkers(participantId).then(setBiomarkers).catch(() => setBiomarkers([]));
+    // Only actually used pre-delivery (see the !card branch below) -- fetched
+    // unconditionally here so it's ready the moment the pipeline advances,
+    // rather than adding a second effect keyed on pipeline state.
+    repository.getAiDraft(participantId).then(setPendingDraft).catch(() => setPendingDraft(null));
+    // Drives the "Continue your data capture" banner below -- a participant
+    // who lands here (via the Data Capture hub's insights preview banner)
+    // before finishing every section otherwise has no way back except the
+    // browser back button, since (tabs) has no link into onboarding.
+    getOnboardingProgressAction(participantId).then(setOnboardingProgress);
+  }, [participantId]);
+
+  useEffect(() => {
     load();
     return repository.subscribe(load);
-  }, [participantId]);
+  }, [load]);
+
+  // A server-side AI draft/sign-off completes without any local write, so
+  // repository.subscribe never fires for it — the screen would stay on the
+  // pending state until a full reload. Refetch whenever the tab regains focus.
+  useFocusEffect(load);
 
   if (card === undefined || pipeline === undefined || pendingDraft === undefined) {
     return (

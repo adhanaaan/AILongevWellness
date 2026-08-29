@@ -194,7 +194,11 @@ function BodyFigure({ pillars }: { pillars: RevealPillar[] }) {
 }
 
 export function BioAgeReveal({ bioAge, chronoAge, name, narrative, pillars, onPressBio }: BioAgeRevealProps) {
-  const delta = chronoAge - bioAge;
+  // PhenoAge returns a one-decimal float; display it as a whole number so the hero
+  // never shows "45.6" and the delta never shows an IEEE-754 artifact like
+  // "9.399999999999999 years younger". Round once, use everywhere for display.
+  const roundedBio = Math.round(bioAge);
+  const delta = chronoAge - roundedBio;
   const younger = delta > 0;
   const deltaLabel =
     delta === 0
@@ -203,11 +207,11 @@ export function BioAgeReveal({ bioAge, chronoAge, name, narrative, pillars, onPr
 
   const min = chronoAge - AGE_WINDOW;
   const max = chronoAge + AGE_WINDOW;
-  const markerPct = Math.max(5, Math.min(95, ((bioAge - min) / (max - min)) * 100));
+  const markerPct = Math.max(5, Math.min(95, ((roundedBio - min) / (max - min)) * 100));
 
   // The reveal: the big number eases up to its value on mount, and everything
   // below it fades/slides in staggered behind it.
-  const displayAge = useCountUp(bioAge, { duration: 900 });
+  const displayAge = useCountUp(roundedBio, { duration: 900 });
 
   return (
     <View style={styles.card}>
@@ -234,7 +238,7 @@ export function BioAgeReveal({ bioAge, chronoAge, name, narrative, pillars, onPr
       <View
         style={styles.numberRow}
         accessibilityRole="text"
-        accessibilityLabel={`Your biological age is ${bioAge} years`}
+        accessibilityLabel={`Your biological age is ${roundedBio} years`}
       >
         <Text style={styles.number}>{displayAge}</Text>
         <Text style={styles.unit}>years</Text>

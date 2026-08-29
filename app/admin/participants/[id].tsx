@@ -20,7 +20,7 @@ import { Button, Card } from "@/components/ui";
 import { Input } from "@/components/ui/Field";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { repository } from "@/lib/data/mock";
-import { resolveAttentionAction, getFileUrlAction, uploadFileAction, upsertBiomarkerAction } from "@/lib/data/actions";
+import { resolveAttentionAction, getFileUrlAction, uploadFileAction, upsertBiomarkerAction, submitCaptureAction } from "@/lib/data/actions";
 import { validateUploadSize } from "@/lib/data/uploadLimits";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
@@ -275,6 +275,25 @@ export default function ParticipantDetailPage() {
     }
   }
 
+  // Advance an admin-created participant out of `capturing`. create_participant
+  // seeds the `manual` channel complete, so submitCapture (capturing -> ai_drafted)
+  // succeeds; generateDraft then advances ai_drafted -> gp_review into the review
+  // queue. Without this the created participant has no path past capturing.
+  async function onAdvanceFromCapturing() {
+    if (!id || !session?.access_token) return;
+    setGenerateError(null);
+    setGenerating(true);
+    try {
+      await submitCaptureAction(id);
+      await generateDraft(session.access_token, id);
+      await loadData();
+    } catch (e) {
+      setGenerateError(e instanceof Error ? e.message : "Couldn't generate the analysis.");
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   async function onResolveAttention() {
     if (!id) return;
     setResolveError(null);
@@ -434,6 +453,26 @@ export default function ParticipantDetailPage() {
               </View>
             )}
           </>
+        )}
+
+        {tab === "analysis" && pipeline.state === "capturing" && isSupabaseConfigured && (
+          // Admin-created participants start in `capturing`. Give the care team a
+          // one-tap way to generate the analysis and move into the review queue,
+          // otherwise the create -> analysis -> sign-off flow dead-ends here.
+          <View style={styles.section}>
+            <Card>
+              <Text style={styles.cardTitle}>Generate the analysis</Text>
+              <Text style={styles.meta}>
+                {biomarkers.length > 0
+                  ? "Data is on file for this participant. Generate the AI draft to review, sign off, and release it."
+                  : "Add any reports or a blood-pressure reading first for a richer analysis, or generate now from the profile details and add more later."}
+              </Text>
+              {generateError && <Text style={styles.attentionReason}>{generateError}</Text>}
+              <Button size="sm" disabled={generating} onPress={onAdvanceFromCapturing}>
+                {generating ? "Generating…" : "Generate analysis"}
+              </Button>
+            </Card>
+          </View>
         )}
 
         {tab === "analysis" && pipeline.state === "ai_drafted" && isSupabaseConfigured && (
