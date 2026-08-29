@@ -21,11 +21,25 @@ export function applyWebViewportFix() {
     );
   }
 
-  // Make the app exactly the DYNAMIC viewport tall so its bottom edge stays above
-  // Safari's toolbar (100dvh), overriding the reset's #root{height:100%}. The
-  // 100vh line is a fallback for browsers without dvh support.
   const root = document.getElementById("root");
-  if (root) {
+  if (!root) return;
+
+  // Size the app to the VISUAL viewport. iOS Safari's floating bottom URL bar
+  // overlays content and is NOT excluded by 100dvh or env(safe-area-inset), which
+  // is why the tab bar kept clipping. window.visualViewport.height IS the real
+  // visible area (it shrinks for the floating bar, and for the keyboard), so
+  // fitting #root to it keeps the bottom tab bar above the bar. Re-fit whenever
+  // the bar shows/hides (resize) or the page scrolls it away (scroll). Falls back
+  // to 100dvh where visualViewport isn't available.
+  const vv = typeof window !== "undefined" ? window.visualViewport : null;
+  if (vv) {
+    const fit = () => {
+      root.style.height = `${Math.round(vv.height)}px`;
+    };
+    fit();
+    vv.addEventListener("resize", fit);
+    vv.addEventListener("scroll", fit);
+  } else {
     root.style.height = "100vh";
     root.style.height = "100dvh";
   }
