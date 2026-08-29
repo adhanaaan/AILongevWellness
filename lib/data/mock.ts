@@ -289,9 +289,18 @@ function genAiDraftForScores(
   const inRange = named.filter((b) => !b.flagged);
   const strongestInRange = inRange.filter((b) => b.pillar === strongest[0]);
 
-  const biologicalAge =
-    computePhenoAge(biomarkers, chronologicalAge) ?? Math.max(18, chronologicalAge - bioAgeOffset);
+  // Round PhenoAge's one-decimal float to a whole number for display, so the copy
+  // never shows "54.5" or an FP-garbled delta ("8.799999999999997 years younger").
+  const biologicalAge = Math.round(
+    computePhenoAge(biomarkers, chronologicalAge) ?? Math.max(18, chronologicalAge - bioAgeOffset)
+  );
   const youngerBy = chronologicalAge - biologicalAge;
+  // PhenoAge is pure blood chemistry, not a pillar composite; the fallback is the
+  // composite. Describe whichever actually produced the number.
+  const bioAgeProvenance =
+    computePhenoAge(biomarkers, chronologicalAge) != null
+      ? "from your blood chemistry"
+      : "a composite read across all three pillars";
   const goalPhrase = humanizeGoals(participant.goals);
 
   // --- key_contributors: real values first, then cross-pillar + goal framing ---
@@ -311,8 +320,8 @@ function genAiDraftForScores(
   keyContributors.push({
     text:
       youngerBy > 0
-        ? `Your biological age is estimated at ${biologicalAge}, tracking ${youngerBy} year${youngerBy === 1 ? "" : "s"} younger than your chronological age of ${chronologicalAge} — a composite read across all three pillars, and a good sign for the longevity side of your goals.`
-        : `Your biological age is estimated at ${biologicalAge}, close to your chronological age of ${chronologicalAge} — a composite read across all three pillars, with room to open up a gap as the areas below improve.`,
+        ? `Your biological age is estimated at ${biologicalAge}, tracking ${youngerBy} year${youngerBy === 1 ? "" : "s"} younger than your chronological age of ${chronologicalAge} — ${bioAgeProvenance}, and a good sign for the longevity side of your goals.`
+        : `Your biological age is estimated at ${biologicalAge}, close to your chronological age of ${chronologicalAge} — ${bioAgeProvenance}, with room to open up a gap as the areas below improve.`,
     tone: "good",
   });
   keyContributors.push({
@@ -845,12 +854,18 @@ class MockRepository implements Repository {
     this.reviews.set(id, []);
     this.files.set(id, []);
     for (const channel of CHANNELS) {
+      // The admin supplies name/sex/age/height/weight on creation — the
+      // questionnaire equivalent — so seed the `manual` channel `complete`.
+      // submit_capture gates on `manual` being complete, so without this an
+      // admin-created participant can never leave `capturing` (dead-ends the
+      // create -> analysis -> sign-off flow). Mirrors migration 0018.
+      const isManual = channel === "manual";
       this.captureChannels.set(`${id}:${channel}`, {
         id: `cc-${id}-${channel}`,
         participant_id: id,
         channel,
-        status: "empty",
-        entered_by: null,
+        status: isManual ? "complete" : "empty",
+        entered_by: isManual ? "admin" : null,
         updated_at: nowIso(),
       });
     }

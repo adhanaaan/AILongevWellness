@@ -14,6 +14,11 @@ const CONVERSIONS: Record<string, ConversionFn> = {
   "uric_acid|mg/dl": (v) => v * 59.48,
   "creatinine|mg/dl": (v) => v * 88.4,
   "fasting_glucose|mmol/l": (v) => v * 18.02,
+  // CGM average glucose is often printed in mmol/L (China/Nanjing, most of Asia
+  // & Europe) but the catalog's band is mg/dL. Same factor as fasting glucose —
+  // without this an mmol/L value (e.g. 6.5) reads as false hypoglycemia against
+  // the 70–140 mg/dL band and corrupts the metabolic pillar.
+  "cgm_avg_glucose|mmol/l": (v) => v * 18.02,
   // Chinese/European labs often report HbA1c in IFCC mmol/mol; the catalog uses
   // DCCT %. DCCT% = 0.09148 x IFCC + 2.152 (an unconverted mmol/mol value would
   // read as a wildly out-of-range % and corrupt the metabolic pillar).

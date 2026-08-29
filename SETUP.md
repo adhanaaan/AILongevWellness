@@ -50,6 +50,16 @@ same way:
 - `supabase/migrations/0009_wearable_ingest.sql` — adds the `wearable_connections`
   table and `participants.ingest_token`, for the Terra + health-export ingestion
   (see "Wearables & health data" below). Only needed if you wire those up.
+- `supabase/migrations/0010_optional_capture_and_xml_upload.sql` — relaxes
+  `submit_capture` (with 0012) and allows the Apple Health `export.xml` MIME.
+- `supabase/migrations/0011_enable_realtime.sql` — turns on Postgres realtime for
+  participants/pipeline/reviews/ai_draft. **Without it a two-device live demo
+  won't update across clients** (sign-off/release look stuck on the other screen).
+- `supabase/migrations/0012_submit_requires_questionnaire.sql` — **required.**
+  Redefines `submit_capture` to gate only on the `manual` channel being complete.
+  **Without it every new participant is blocked at quiz finish** ("All capture
+  channels must be complete").
+- `supabase/migrations/0014_*.sql` — run if present, in order.
 - `supabase/migrations/0013_gate_care_team_role.sql` — **SECURITY, required.**
   Adds the `care_team_allowlist` table and stops anyone from self-asserting the
   `care_team` role at signup (which has full read/write to every participant's
@@ -61,6 +71,15 @@ same way:
   signup trigger decides the role **solely from the allowlist** (client metadata
   is ignored): an allowlisted email becomes `care_team`, everyone else becomes a
   participant. The admin login is sign-in only — there is no public admin sign-up.
+- `supabase/migrations/0017_questionnaire_biomarker_source.sql` — **required for
+  the Mental health capture.** Adds `'questionnaire'` to the `biomarkers.source`
+  CHECK. Without it the WHO-5/PSS-4 submit 500s.
+- `supabase/migrations/0018_admin_create_participant.sql` — **required for the
+  admin "New participant" button.** Adds the `create_participant` RPC (and seeds
+  the new participant's `manual` channel complete so it can reach sign-off).
+- `supabase/migrations/0019_genetic_reports.sql` — **required for genetic report
+  upload.** Creates the private `genetic-reports` storage bucket + RLS. Without it
+  the upload fails with "Bucket not found".
 
 Any future numbered migration file works the same way: run it once, in
 order, after pulling new code that references it.

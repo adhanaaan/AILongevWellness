@@ -44,20 +44,20 @@ export default function NewParticipantPage() {
       });
       router.replace(`/admin/participants/${p.id}`);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Couldn't create the patient.");
+      setError(e instanceof Error ? e.message : "Couldn't create the participant.");
       setSaving(false);
     }
   }
 
   return (
-    <AdminShell title="New patient">
+    <AdminShell title="New participant">
       <ScrollView contentContainerStyle={styles.content}>
         <TouchableOpacity style={styles.back} onPress={() => router.back()} hitSlop={8}>
           <ArrowLeft size={18} color={colors.inkMuted} />
-          <Text style={styles.backText}>Patients</Text>
+          <Text style={styles.backText}>Participants</Text>
         </TouchableOpacity>
 
-        <Text style={styles.title}>New patient</Text>
+        <Text style={styles.title}>New participant</Text>
         <Text style={styles.subtitle}>
           Create a clinician-managed record. You can add reports and generate the analysis right after.
         </Text>
@@ -115,7 +115,7 @@ export default function NewParticipantPage() {
           {error && <Text style={styles.error}>{error}</Text>}
 
           <Button size="lg" disabled={!valid || saving} onPress={onCreate} style={styles.submit}>
-            {saving ? "Creating…" : "Create patient"}
+            {saving ? "Creating…" : "Create participant"}
           </Button>
         </Card>
       </ScrollView>

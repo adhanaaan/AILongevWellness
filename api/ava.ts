@@ -105,7 +105,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // medical advice. The refusal deliberately OMITS the wellness disclaimer — the
   // disclaimer belongs on substantive wellness answers, not on a refusal (where it
   // would read as if the refusal itself were sanctioned advice).
-  if (/diagnos|medicat|prescri|drug|dosage|symptom|disease|treat(ment)?|cure/i.test(message)) {
+  // Fires on advice-seeking (diagnosis / dosing / prescribing / symptoms), NOT the
+  // bare word "medication" — otherwise the app's own "explain my medications plan"
+  // deep-link trips it. Kept identical to lib/ava/respond.ts's OUT_OF_SCOPE.
+  if (/diagnos|prescri|dosage|\bdose\b|symptom|disease|treat(ment)?|cure|side ?effect|should i (start|stop|take|change|adjust)|what (medication|drug|med|supplement|pill) should i/i.test(message)) {
     res.status(200).json({
       reply:
         "I can only talk through what's on your reviewed wellness card — I'm not able to help with diagnoses, medications, or symptoms. That's a good question for your care team.",

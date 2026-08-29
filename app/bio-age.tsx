@@ -78,7 +78,11 @@ export default function BioAgePage() {
   }
 
   const { aiDraft, biomarkers } = card;
-  const { scores, biological_age: bioAge, chronological_age: chronoAge } = aiDraft;
+  const { scores, chronological_age: chronoAge } = aiDraft;
+  // PhenoAge returns a one-decimal float; round for display so the hero shows a
+  // whole number and the delta never carries an IEEE-754 artifact (e.g.
+  // "9.399999999999999 years younger").
+  const bioAge = Math.round(aiDraft.biological_age);
   const usedPhenoAge = missingPhenoAgeInputs(biomarkers).length === 0;
   // Same honesty gate as the Insights hero: a whole-body biological age isn't
   // trustworthy while any pillar has no data (the composite would treat it as

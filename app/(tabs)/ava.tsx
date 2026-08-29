@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
   Platform,
   StyleSheet,
 } from "react-native";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { Send, Sparkles, ChevronRight } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { FadeInView } from "@/components/ui/FadeInView";
@@ -49,18 +49,23 @@ export default function AvaPage() {
   const [pipeline, setPipeline] = useState<Pipeline | null | undefined>(undefined);
   const [participant, setParticipant] = useState<Participant | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     if (!participantId) return;
-    const load = () => {
-      repository.getSignedCard(participantId).then(setCard);
-      repository.getAiDraft(participantId).then(setAiDraft);
-      repository.getBiomarkers(participantId).then(setBiomarkers);
-      repository.getPipeline(participantId).then(setPipeline);
-      repository.getParticipant(participantId).then(setParticipant);
-    };
+    repository.getSignedCard(participantId).then(setCard);
+    repository.getAiDraft(participantId).then(setAiDraft);
+    repository.getBiomarkers(participantId).then(setBiomarkers);
+    repository.getPipeline(participantId).then(setPipeline);
+    repository.getParticipant(participantId).then(setParticipant);
+  }, [participantId]);
+
+  useEffect(() => {
     load();
     return repository.subscribe(load);
-  }, [participantId]);
+  }, [load]);
+
+  // A server-side AI draft completes with no local write, so repository.subscribe
+  // never fires — refetch on tab focus so AVA opens grounded once the draft lands.
+  useFocusEffect(load);
 
   if (card === undefined || pipeline === undefined || aiDraft === undefined) {
     return (
@@ -77,16 +82,22 @@ export default function AvaPage() {
   // mode stays gated to a delivered card, since its rule-based responder speaks in
   // "your reviewed card" terms and has no live model behind it.
   const reviewed = !!card;
+  // Ground the chat only when there's REAL data to ground on. A brand-new account
+  // can have an early AI draft with zero biomarkers (and a pipeline nudged to
+  // ai_drafted/gp_review) — opening the grounded chat then, or showing AvaPromo's
+  // "your care team is reviewing your results now" line, contradicts the Insights
+  // tab, which correctly reads "capturing / add data". Mirror that here.
+  const hasData = biomarkers.length > 0;
   const groundingCard: SignedCard | null = card
     ? card
-    : aiDraft && participant && isSupabaseConfigured
+    : aiDraft && participant && isSupabaseConfigured && hasData
       ? { participant, aiDraft, biomarkers, reviews: [] }
       : null;
 
   if (!groundingCard) {
     return (
       <MobileShell name={participant?.name}>
-        <AvaPromo pipelineState={pipeline?.state ?? "capturing"} />
+        <AvaPromo pipelineState={hasData ? (pipeline?.state ?? "capturing") : "capturing"} />
       </MobileShell>
     );
   }

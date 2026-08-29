@@ -24,7 +24,22 @@ export function CaptureFlowStepper({ children, showBackButton = true }: CaptureF
   // a participant who arrived from the quiz and dipped into a channel still lands
   // back on the onboarding hub (with its "Continue to the app" CTA), not a
   // back-stack dead-end.
-  const { fromQuiz } = useLocalSearchParams<{ fromQuiz?: string }>();
+  const { fromQuiz, mode } = useLocalSearchParams<{ fromQuiz?: string; mode?: string }>();
+
+  // In edit mode the screen was opened from inside the app (e.g. Care Plan's
+  // "add data" list), so "back" should return there, not replace-to-hub and
+  // strand the user in onboarding. Matches useChannelUpload.leave.
+  const goBack = () => {
+    if (mode === "edit") {
+      router.back();
+      return;
+    }
+    router.replace(
+      fromQuiz === "1"
+        ? { pathname: "/onboarding/capture", params: { fromQuiz: "1" } }
+        : "/onboarding/capture"
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -34,13 +49,7 @@ export function CaptureFlowStepper({ children, showBackButton = true }: CaptureF
         <View style={styles.header}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() =>
-              router.replace(
-                fromQuiz === "1"
-                  ? { pathname: "/onboarding/capture", params: { fromQuiz: "1" } }
-                  : "/onboarding/capture"
-              )
-            }
+            onPress={goBack}
             activeOpacity={0.7}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
