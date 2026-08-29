@@ -6,13 +6,14 @@ import { ParticipantGuard } from "@/lib/auth/RouteGuard";
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
-  // Clearance under the tab labels for the home indicator / notch safe area only.
-  // The Safari floating-bar overlap is ALREADY handled by lib/web/viewportFix.ts,
-  // which sizes the app to the visible viewport so the tab bar bottom sits right
-  // above Safari's bar. A big artificial floor here on top of that just created a
-  // dead white band below the labels (and squeezed the labels into a clip). So
-  // this is now just the real safe-area inset, floored small.
-  const bottomInset = Math.max(insets.bottom, 8);
+  // Two things to satisfy:
+  //  - The icon+label need a real ~56px band or the label clips (see below: the
+  //    band = ICON_LABEL_BAND, independent of the inset).
+  //  - A modest lift so it clears Safari's floating pill even if viewportFix.ts's
+  //    visualViewport re-fit lands a frame late. viewportFix already sizes the app
+  //    to the visible viewport; this inset is just a safety buffer + home indicator.
+  const bottomInset = Math.max(insets.bottom, 20);
+  const ICON_LABEL_BAND = 56;
 
   return (
     <ParticipantGuard>
@@ -35,9 +36,11 @@ export default function TabsLayout() {
             maxWidth: 448,
             width: "100%",
             alignSelf: "center",
-            // Comfortable icon+label band (~56px) plus only the real safe-area
-            // inset below it. The Safari-bar clearance lives in viewportFix.ts.
-            height: 56 + bottomInset,
+            // Height = a full 56px icon+label band + the bottom inset. Because
+            // paddingTop(8) + paddingBottom(bottomInset) are subtracted, the real
+            // icon+label room = ICON_LABEL_BAND - 8 + ... so we add 8 back into the
+            // band to keep a true ~56px of room for icon + label (no clip).
+            height: ICON_LABEL_BAND + 8 + bottomInset,
             paddingTop: 8,
             paddingBottom: bottomInset,
           },
