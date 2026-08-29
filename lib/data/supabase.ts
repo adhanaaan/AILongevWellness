@@ -13,6 +13,7 @@ import {
 } from "../ai/scoring";
 import { computePhenoAge } from "../ai/phenoAge";
 import { isMarkerFlagged } from "../ai/markerDirection";
+import { biomarkerCatalogEntry } from "../ai/biomarkerLabels";
 import type {
   AiDraft,
   Biomarker,
@@ -256,53 +257,83 @@ export class SupabaseRepository implements Repository {
       .select()
       .single();
     const updated = must(data, error, "biomarker");
-
-    // Scores and biological age are a deterministic function of biomarkers,
-    // not an AI call -- recompute them immediately so a reviewer who
-    // corrects a value sees it reflected right away. Written directly rather
-    // than via updateAiDraft so this doesn't flip edited_by_admin, which is
-    // reserved for an actual human rewrite of the narrative text.
-    const draft = await this.getAiDraft(updated.participant_id);
-    if (draft) {
-      // Never rewrite scores a clinician has already signed. Mirrors the guard in
-      // resyncDraftScores: once the card is signed/delivered or either review is
-      // signed, a post-sign-off biomarker correction must NOT silently change the
-      // numbers shown under the "Reviewed & signed off" badge. (The biomarker row
-      // itself is still corrected above; only the signed draft is left frozen.)
-      const { data: pipeline } = await this.client
-        .from("pipeline")
-        .select("state")
-        .eq("participant_id", updated.participant_id)
-        .maybeSingle();
-      const { data: signedReviews } = await this.client
-        .from("reviews")
-        .select("signed_at")
-        .eq("participant_id", updated.participant_id)
-        .not("signed_at", "is", null)
-        .limit(1);
-      const locked =
-        pipeline?.state === "signed" ||
-        pipeline?.state === "delivered" ||
-        (signedReviews?.length ?? 0) > 0;
-      if (!locked) {
-        const allBiomarkers = await this.getBiomarkers(updated.participant_id);
-        const scores = computePillarScores(allBiomarkers);
-        const biological_age =
-          computePhenoAge(allBiomarkers, draft.chronological_age) ?? computeBiologicalAge(scores, draft.chronological_age);
-        await this.client
-          .from("ai_draft")
-          .update({
-            scores,
-            biological_age,
-            missing_biomarkers: computeMissingBiomarkers(allBiomarkers),
-            out_of_range: computeOutOfRange(allBiomarkers),
-          })
-          .eq("participant_id", updated.participant_id);
-      }
-    }
-
+    await this.resyncScoresIfUnlocked(updated.participant_id);
     this.notify();
     return updated;
+  }
+
+  // Create or replace a biomarker by (participant, key) — care-team manual entry.
+  // care_team has full RLS write access to biomarkers, so this writes via the
+  // authenticated client (no service-role endpoint needed).
+  async upsertBiomarker(participantId: string, key: string, value: number): Promise<Biomarker> {
+    const entry = biomarkerCatalogEntry(key);
+    if (!entry) throw new Error(`No catalog entry for biomarker "${key}"`);
+    const flagged = isMarkerFlagged(key, value, entry.ref_low, entry.ref_high);
+    const { data, error } = await this.client
+      .from("biomarkers")
+      .upsert(
+        {
+          participant_id: participantId,
+          pillar: entry.pillar,
+          key,
+          label: entry.label,
+          value,
+          unit: entry.unit,
+          ref_low: entry.ref_low,
+          ref_high: entry.ref_high,
+          source: "manual",
+          status: "entered",
+          flagged,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "participant_id,key" }
+      )
+      .select()
+      .single();
+    const row = must(data, error, "biomarker");
+    await this.resyncScoresIfUnlocked(participantId);
+    this.notify();
+    return row;
+  }
+
+  // Scores and biological age are a deterministic function of biomarkers, so
+  // recompute them immediately after a biomarker write — UNLESS the card is
+  // signed/delivered or either review is signed, in which case the numbers shown
+  // under the "Reviewed & signed off" badge must stay frozen (the row itself is
+  // still written; only the signed draft is left alone). Written directly rather
+  // than via updateAiDraft so it never flips edited_by_admin.
+  private async resyncScoresIfUnlocked(participantId: string): Promise<void> {
+    const draft = await this.getAiDraft(participantId);
+    if (!draft) return;
+    const { data: pipeline } = await this.client
+      .from("pipeline")
+      .select("state")
+      .eq("participant_id", participantId)
+      .maybeSingle();
+    const { data: signedReviews } = await this.client
+      .from("reviews")
+      .select("signed_at")
+      .eq("participant_id", participantId)
+      .not("signed_at", "is", null)
+      .limit(1);
+    const locked =
+      pipeline?.state === "signed" ||
+      pipeline?.state === "delivered" ||
+      (signedReviews?.length ?? 0) > 0;
+    if (locked) return;
+    const allBiomarkers = await this.getBiomarkers(participantId);
+    const scores = computePillarScores(allBiomarkers);
+    const biological_age =
+      computePhenoAge(allBiomarkers, draft.chronological_age) ?? computeBiologicalAge(scores, draft.chronological_age);
+    await this.client
+      .from("ai_draft")
+      .update({
+        scores,
+        biological_age,
+        missing_biomarkers: computeMissingBiomarkers(allBiomarkers),
+        out_of_range: computeOutOfRange(allBiomarkers),
+      })
+      .eq("participant_id", participantId);
   }
 
   async listBiomarkerHistory(participantId: string): Promise<BiomarkerReading[]> {

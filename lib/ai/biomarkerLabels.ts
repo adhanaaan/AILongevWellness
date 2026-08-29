@@ -1,3 +1,4 @@
+import type { Pillar } from "../types/db";
 import { LAB_CATALOG_BY_KEY } from "./labCatalog";
 import { BODY_COMP_CATALOG_BY_KEY } from "./bodyCompCatalog";
 import { RECOGNIZE_CATALOG_BY_KEY } from "./recognizeCatalog";
@@ -32,5 +33,29 @@ export function biomarkerLabel(key: string): string {
     WEARABLE_CATALOG_BY_KEY[key]?.label ??
     EXTRA_LABELS[key] ??
     titleize(key)
+  );
+}
+
+export interface BiomarkerCatalogEntry {
+  key: string;
+  label: string;
+  pillar: Pillar;
+  unit: string;
+  ref_low: number;
+  ref_high: number;
+}
+
+// The full catalog entry (pillar, unit, reference range) for a key, from whichever
+// catalog defines it — used for manual/admin biomarker entry so a hand-typed value
+// gets the same label, unit and reference band as an extracted one. All catalogs
+// share the {key,label,pillar,unit,ref_low,ref_high} shape.
+export function biomarkerCatalogEntry(key: string): BiomarkerCatalogEntry | null {
+  return (
+    LAB_CATALOG_BY_KEY[key] ??
+    BODY_COMP_CATALOG_BY_KEY[key] ??
+    RECOGNIZE_CATALOG_BY_KEY[key] ??
+    QUESTIONNAIRE_CATALOG_BY_KEY[key] ??
+    WEARABLE_CATALOG_BY_KEY[key] ??
+    null
   );
 }

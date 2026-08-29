@@ -16,6 +16,10 @@ export interface LabCatalogEntry {
 // than this misses real values sitting right there in the document.
 export const LAB_CATALOG: LabCatalogEntry[] = [
   // Vascular
+  // BP is commonly printed on a health-screening report, so the lab extractor can
+  // read it too (ranges match wearableCatalog, the other source of these keys).
+  { key: "systolic_bp", label: "Systolic blood pressure", pillar: "vascular", unit: "mmHg", ref_low: 90, ref_high: 120 },
+  { key: "diastolic_bp", label: "Diastolic blood pressure", pillar: "vascular", unit: "mmHg", ref_low: 60, ref_high: 80 },
   { key: "total_cholesterol", label: "Total cholesterol", pillar: "vascular", unit: "mmol/L", ref_low: 2.5, ref_high: 5.2 },
   { key: "ldl_c", label: "LDL cholesterol", pillar: "vascular", unit: "mmol/L", ref_low: 1.0, ref_high: 3.0 },
   { key: "hdl_c", label: "HDL cholesterol", pillar: "vascular", unit: "mmol/L", ref_low: 1.0, ref_high: 2.5 },

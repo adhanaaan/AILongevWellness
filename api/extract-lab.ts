@@ -29,6 +29,8 @@ Only report values for these exact keys (common aliases a real report might use 
 in parentheses — match on meaning, not exact wording):
 
 Vascular:
+- systolic_bp (Blood Pressure systolic — the FIRST/upper number, e.g. the 128 in "128/82 mmHg"; often on a health-screening report)
+- diastolic_bp (Blood Pressure diastolic — the SECOND/lower number, e.g. the 82 in "128/82 mmHg")
 - total_cholesterol (Total Cholesterol, Cholesterol)
 - ldl_c (LDL, LDL-C, LDL Cholesterol)
 - hdl_c (HDL, HDL-C, HDL Cholesterol)

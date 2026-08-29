@@ -61,6 +61,12 @@ export interface Repository {
 
   getBiomarkers(participantId: string): Promise<Biomarker[]>;
   updateBiomarker(id: string, patch: Partial<Biomarker>): Promise<Biomarker>;
+  /**
+   * Create or replace a biomarker by (participant, key) — for care-team manual
+   * entry (e.g. a blood-pressure reading). Resolves label/unit/reference range
+   * from the catalog and re-derives scores, same as an extracted value.
+   */
+  upsertBiomarker(participantId: string, key: string, value: number): Promise<Biomarker>;
   /** Every historical reading ever recorded, oldest first -- not just the current snapshot getBiomarkers returns. */
   listBiomarkerHistory(participantId: string): Promise<BiomarkerReading[]>;
 
