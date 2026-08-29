@@ -6,4 +6,5 @@ export const BUCKET_BY_KIND: Record<FileKind, string> = {
   lab_report: "lab-reports",
   body_comp: "body-comp-scans",
   apple_health_export: "health-exports",
+  genetic_report: "genetic-reports",
 };

@@ -59,6 +59,7 @@ const PICKER_TYPES: Record<FileKind, string[]> = {
   lab_report: ["application/pdf", "image/*"],
   body_comp: ["application/pdf", "image/*"],
   apple_health_export: ["application/zip", "application/xml", "text/xml", "application/octet-stream"],
+  genetic_report: ["application/pdf", "image/*"],
 };
 
 const STATE_INDEX: Record<PipelineState, number> = {
@@ -213,7 +214,10 @@ export default function ParticipantDetailPage() {
         contentType: asset.mimeType ?? (Platform.OS === "web" ? blob.type : undefined),
       });
       await loadData();
-      await onExtractFile(fileRecord);
+      // Genetic reports are stored for care-team viewing only — never auto-extracted
+      // (a DNA/genetic screening isn't a lab panel and interpreting it is clinical,
+      // not wellness). Every other kind extracts into biomarkers as before.
+      if (kind !== "genetic_report") await onExtractFile(fileRecord);
     } catch (e) {
       setUploadError(e instanceof Error ? e.message : "Upload failed.");
     } finally {
@@ -458,8 +462,9 @@ export default function ParticipantDetailPage() {
             <Card>
               <Text style={styles.fileLabel}>Upload a report for this participant</Text>
               <Text style={styles.meta}>
-                For reports collected at the retreat or handed to staff. Uploads are extracted into
-                biomarkers automatically, the same as a participant upload.
+                For reports collected at the retreat or handed to staff. Lab reports and body
+                composition are extracted into biomarkers automatically. A genetic report is stored
+                for your review only — it is not automatically analysed or scored.
               </Text>
               <View style={styles.uploadRow}>
                 <Button
@@ -478,6 +483,14 @@ export default function ParticipantDetailPage() {
                 >
                   {uploadingKind === "body_comp" ? "Uploading…" : "Body composition"}
                 </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  disabled={uploadingKind !== null}
+                  onPress={() => onUploadFile("genetic_report")}
+                >
+                  {uploadingKind === "genetic_report" ? "Uploading…" : "Genetic report"}
+                </Button>
               </View>
               {!!uploadError && <Text style={styles.attentionReason}>{uploadError}</Text>}
 
@@ -487,6 +500,8 @@ export default function ParticipantDetailPage() {
                     ? "Lab report"
                     : file.kind === "apple_health_export"
                     ? "Apple Health export"
+                    : file.kind === "genetic_report"
+                    ? "Genetic report"
                     : "Body composition scan";
                 const canExtract =
                   file.kind === "lab_report" ||
@@ -499,7 +514,11 @@ export default function ParticipantDetailPage() {
                       <View style={{ flex: 1 }}>
                         <Text style={styles.fileLabel}>{label}</Text>
                         <Text style={styles.meta}>
-                          {file.extracted ? "Extracted" : "Not yet extracted"}
+                          {file.kind === "genetic_report"
+                            ? "Stored for care-team review — not automatically analysed"
+                            : file.extracted
+                            ? "Extracted"
+                            : "Not yet extracted"}
                         </Text>
                         {!!error && <Text style={styles.attentionReason}>{error}</Text>}
                       </View>

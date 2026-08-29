@@ -216,7 +216,11 @@ export interface WearableConnection {
   connected_at: string;
 }
 
-export type FileKind = "lab_report" | "body_comp" | "apple_health_export";
+// "genetic_report" is stored for care-team viewing only — deliberately NOT
+// auto-extracted or scored (a genetic/DNA screening isn't a lab panel, and
+// interpreting one is a clinical act, not wellness). See api/extract-* (no
+// genetic branch) and the admin Reports tab.
+export type FileKind = "lab_report" | "body_comp" | "apple_health_export" | "genetic_report";
 
 export interface FileRecord {
   id: string;
