@@ -29,7 +29,7 @@ const SECTION_DESCRIPTION: Partial<Record<CaptureSectionId, string>> = {
   wearables: "Add your phone's health data — steps, heart rate, sleep and activity. No wearable needed.",
   body_composition: "Upload a body-composition scan.",
   lab_reports: "Upload a lab report — we pull out the key results.",
-  recognize: "A short cognitive check.",
+  recognize: "A quick wellbeing & stress check-in, then a short reaction-time test.",
 };
 
 export default function CaptureHubPage() {

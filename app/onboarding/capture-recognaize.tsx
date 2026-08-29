@@ -153,10 +153,10 @@ export default function CaptureRecognaizePage() {
           <GlassCard tint="light" padding="none" radius="full" style={styles.headerIcon}>
             <Brain size={24} color={colors.teal} />
           </GlassCard>
-          <Text style={styles.title}>Mental wellbeing</Text>
+          <Text style={styles.title}>Mental health</Text>
           <Text style={styles.subtitle}>
             Two short, validated check-ins — the WHO-5 Well-Being Index and the PSS-4 stress scale —
-            that feed your Mental pillar. Next comes a quick reaction-time test.
+            that feed your Mental pillar. Next comes ReCOGnAIze, a quick reaction-time test.
           </Text>
           <View style={styles.questionnaireWrap}>
             <MentalQuestionnaire

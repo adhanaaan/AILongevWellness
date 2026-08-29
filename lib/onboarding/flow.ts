@@ -62,7 +62,10 @@ export const CAPTURE_SECTIONS: CaptureSectionDef[] = [
     optional: true,
   },
   { id: "lab_reports", label: "Lab Reports", keys: ["lab_reports"], route: "/onboarding/capture-lab-reports-intro", optional: true },
-  { id: "recognize", label: "ReCOGnAIze", keys: ["recognize"], route: "/onboarding/capture-recognaize" },
+  // "Mental health" section: the WHO-5 + PSS-4 wellbeing questionnaire first, then
+  // the ReCOGnAIze reaction-time test as its second step (both live in
+  // capture-recognaize.tsx). Internal id/keys stay "recognize" (no schema change).
+  { id: "recognize", label: "Mental health", keys: ["recognize"], route: "/onboarding/capture-recognaize" },
 ];
 
 export function deriveSectionState(
