@@ -11,7 +11,7 @@ export default function TabsLayout() {
   // 20px min wasn't enough — the labels clipped. Use a more generous floor so
   // they sit above Safari's bar. (The real full-screen fix is Add to Home Screen,
   // which removes Safari's chrome entirely.)
-  const bottomInset = Math.max(insets.bottom, 40);
+  const bottomInset = Math.max(insets.bottom, 56);
 
   return (
     <ParticipantGuard>
