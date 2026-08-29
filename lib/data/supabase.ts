@@ -2,7 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/config/env";
-import type { Repository, SignedCard, UploadableFile } from "./repository";
+import type { Repository, SignedCard, UploadableFile, NewParticipantInput } from "./repository";
 import { BUCKET_BY_KIND } from "./storageBuckets";
 import { computeUnlockedSections, deriveOnboardingProgress } from "../onboarding/flow";
 import {
@@ -149,6 +149,23 @@ export class SupabaseRepository implements Repository {
     // never receiving) a Postgres realtime event. Matches MockRepository.
     this.notify();
     return result;
+  }
+
+  async createParticipant(input: NewParticipantInput): Promise<Participant> {
+    // pipeline is RLS-locked to SELECT for care_team, so creation goes through the
+    // create_participant SECURITY DEFINER RPC (migration 0018), which also seeds
+    // the pipeline (capturing) + capture_channels.
+    const { data, error } = await this.client.rpc("create_participant", {
+      p_name: input.name,
+      p_age: input.age,
+      p_sex: input.sex,
+      p_height_cm: input.height_cm,
+      p_weight_kg: input.weight_kg,
+      p_goals: input.goals ?? [],
+    });
+    if (error) throw new Error(error.message);
+    this.notify();
+    return data as Participant;
   }
 
   async withdrawConsent(_participantId: string): Promise<void> {
