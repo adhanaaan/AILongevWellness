@@ -6,12 +6,13 @@ import { ParticipantGuard } from "@/lib/auth/RouteGuard";
 
 export default function TabsLayout() {
   const insets = useSafeAreaInsets();
-  // Clearance under the tab labels. On iOS Safari the floating bottom URL bar
-  // overlaps web content and isn't captured by env(safe-area-inset-bottom), so a
-  // 20px min wasn't enough — the labels clipped. Use a more generous floor so
-  // they sit above Safari's bar. (The real full-screen fix is Add to Home Screen,
-  // which removes Safari's chrome entirely.)
-  const bottomInset = Math.max(insets.bottom, 56);
+  // Clearance under the tab labels for the home indicator / notch safe area only.
+  // The Safari floating-bar overlap is ALREADY handled by lib/web/viewportFix.ts,
+  // which sizes the app to the visible viewport so the tab bar bottom sits right
+  // above Safari's bar. A big artificial floor here on top of that just created a
+  // dead white band below the labels (and squeezed the labels into a clip). So
+  // this is now just the real safe-area inset, floored small.
+  const bottomInset = Math.max(insets.bottom, 8);
 
   return (
     <ParticipantGuard>
@@ -23,6 +24,7 @@ export default function TabsLayout() {
           tabBarLabelStyle: {
             fontSize: fontSizes.caption,
             fontWeight: "500",
+            lineHeight: 15,
           },
           tabBarStyle: {
             borderTopWidth: 1,
@@ -33,14 +35,15 @@ export default function TabsLayout() {
             maxWidth: 448,
             width: "100%",
             alignSelf: "center",
-            // Lift icons + labels clear of the home indicator / Safari chrome using
-            // the real safe-area inset (see app/+html.tsx + the root SafeAreaProvider).
+            // Comfortable icon+label band (~56px) plus only the real safe-area
+            // inset below it. The Safari-bar clearance lives in viewportFix.ts.
             height: 56 + bottomInset,
             paddingTop: 8,
             paddingBottom: bottomInset,
           },
           tabBarItemStyle: {
             paddingTop: 2,
+            paddingBottom: 2,
           },
         }}
       >

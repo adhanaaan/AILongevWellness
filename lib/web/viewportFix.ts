@@ -39,6 +39,16 @@ export function applyWebViewportFix() {
     fit();
     vv.addEventListener("resize", fit);
     vv.addEventListener("scroll", fit);
+    // iOS Safari's bottom bar settles AFTER load (splash → first paint → bar
+    // collapses to the floating pill), and that transition doesn't always fire a
+    // visualViewport 'resize'. Without these catch-up re-fits the app can stay
+    // sized to the taller full-bar state, leaving a dead band below the tab bar.
+    if (typeof window !== "undefined") {
+      window.addEventListener("resize", fit);
+      window.addEventListener("orientationchange", fit);
+      window.addEventListener("pageshow", fit);
+    }
+    [150, 400, 800, 1500].forEach((ms) => setTimeout(fit, ms));
   } else {
     root.style.height = "100vh";
     root.style.height = "100dvh";
