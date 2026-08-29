@@ -126,7 +126,7 @@ export default function BioAgePage() {
           ) : (
             <Text style={styles.bioAgeLocked}>
               Your biological age unlocks once we have data across all three systems — Vascular,
-              Metabolic, and Mental. Add your labs and complete ReCOGnAIze to see it.
+              Metabolic, and Mental. Add your labs and complete the Mental health check to see it.
             </Text>
           )}
         </Card>
