@@ -27,7 +27,7 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { pillarStatus, buildPillarNarrative, BIOMARKER_KEYS_BY_PILLAR } from "@/lib/ai/scoring";
 import { isCaptureComplete } from "@/lib/onboarding/flow";
 import type { SignedCard } from "@/lib/data/repository";
-import type { AiDraft, Biomarker, OnboardingProgress, Participant, Pipeline } from "@/lib/types/db";
+import type { AiDraft, Biomarker, OnboardingProgress, Participant, Pipeline, Pillar } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, lineHeights, radii, shadows, spacing } from "@/lib/theme/tokens";
 
 function formatDate(iso: string) {
@@ -173,6 +173,9 @@ export default function CardPage() {
   // show the number once every pillar has data; otherwise the hero shows a
   // "unlocks as you add data" state.
   const bioAgeReady = bodyPillars.every((p) => p.value !== null);
+  // Pillars with no captured data — the summary must not call these "strong"
+  // (their neutral default score would), which would contradict the locked body map.
+  const lockedPillars = bodyPillars.filter((p) => p.value === null).map((p) => p.key as Pillar);
 
   // Scannable marker summary (replaces the wordier repeat of the pillar scores,
   // which the body hero above already shows). Counts derive from the draft alone.
@@ -220,7 +223,7 @@ export default function CardPage() {
               bioAge={aiDraft.biological_age}
               chronoAge={aiDraft.chronological_age}
               name={firstName}
-              narrative={buildPillarNarrative(aiDraft.scores)}
+              narrative={buildPillarNarrative(aiDraft.scores, lockedPillars)}
               pillars={pillarItems.map((p) => ({
                 key: p.key,
                 label: p.label,
@@ -242,7 +245,7 @@ export default function CardPage() {
 
         {!bioAgeReady && (
           <View style={styles.narrativeSection}>
-            <SnapshotSummaryCard narrative={buildPillarNarrative(aiDraft.scores)} />
+            <SnapshotSummaryCard narrative={buildPillarNarrative(aiDraft.scores, lockedPillars)} />
           </View>
         )}
 
