@@ -76,12 +76,15 @@ export function setupHealthIngest(
 
 // Both Mental-capture submits share one endpoint (api/submit-mental) — merged to
 // stay under Vercel Hobby's 12-function cap. It writes whichever inputs it gets.
-export function submitRecognizeResult(
+// Submits the Symbol-Digit game result; the server derives the 0-100 cognitive
+// composite (the scored Mental-pillar biomarker) from correct/errors.
+export function submitCognitiveResult(
   token: string,
   participantId: string,
-  trialsMs: number[]
-): Promise<{ reaction_time: number; cog_composite: number }> {
-  return postJson("/api/submit-mental", token, { participantId, trialsMs });
+  correct: number,
+  errors: number
+): Promise<{ cog_composite: number; sdmt_score: number }> {
+  return postJson("/api/submit-mental", token, { participantId, sdmt: { correct, errors } });
 }
 
 export function submitMentalQuestionnaire(
