@@ -7,6 +7,7 @@ import {
   QUESTIONNAIRE_CATALOG_BY_KEY,
 } from "../lib/ai/mentalQuestionnaire";
 import { isMarkerFlagged } from "../lib/ai/markerDirection";
+import { sdmtToComposite, sdmtScore } from "../lib/ai/symbolDigit";
 import { flagIfPastSignoff } from "../lib/data/pipelineAttention";
 import { resyncDraftScores } from "../lib/data/resyncDraftScores";
 import { regenerateDraft } from "../lib/ai/draftGeneration";
@@ -44,22 +45,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const { participantId, trialsMs, who5, pss4 } = req.body ?? {};
+  const { participantId, trialsMs, sdmt, who5, pss4 } = req.body ?? {};
   if (!participantId) {
     res.status(400).json({ error: "participantId is required" });
     return;
   }
 
   const hasTrials = Array.isArray(trialsMs) && trialsMs.length > 0;
+  const hasSdmt =
+    sdmt && typeof sdmt.correct === "number" && typeof sdmt.errors === "number" &&
+    sdmt.correct >= 0 && sdmt.errors >= 0 && sdmt.correct < 1000 && sdmt.errors < 1000;
   const hasQuestionnaire = Array.isArray(who5) && Array.isArray(pss4);
-  if (!hasTrials && !hasQuestionnaire) {
-    res.status(400).json({ error: "Provide trialsMs and/or who5+pss4" });
+  if (!hasTrials && !hasSdmt && !hasQuestionnaire) {
+    res.status(400).json({ error: "Provide sdmt (Symbol-Digit result), trialsMs, and/or who5+pss4" });
     return;
   }
 
   const values: Record<string, number> = {};
+  // Extra fields echoed back to the client but NOT written as scored biomarkers
+  // (e.g. the raw Symbol-Digit net score — informative, but averaging a raw count
+  // into the 0-100 Mental pillar would corrupt it, so only cog_composite is stored).
+  const echo: Record<string, number> = {};
 
-  if (hasTrials) {
+  // Symbol-Digit game (the current ReCOGnAIze cognitive test): derive the 0-100
+  // cognitive composite the Mental pillar scores. Preferred over trialsMs.
+  if (hasSdmt) {
+    values.cog_composite = sdmtToComposite(sdmt.correct, sdmt.errors);
+    echo.sdmt_score = sdmtScore(sdmt.correct, sdmt.errors);
+  } else if (hasTrials) {
+    // Legacy reaction-time path, kept for backward compatibility.
     if (!trialsMs.every((t: unknown) => typeof t === "number" && t > 0 && t < 5000)) {
       res.status(400).json({ error: "trialsMs must contain plausible reaction times in milliseconds" });
       return;
@@ -136,5 +150,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     /* numbers already resynced above */
   }
 
-  res.status(200).json(values);
+  res.status(200).json({ ...values, ...echo });
 }

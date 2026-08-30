@@ -24,7 +24,7 @@ export const METHODOLOGY_SECTIONS: MethodologySection[] = [
     paragraphs: [
       "Vascular age is our own simplified, transparent points model, informed by the risk factors used in the Framingham General Cardiovascular Risk Score (D'Agostino et al., 2008, Circulation) and the CDC's related \"heart age\" tool (Yang et al., 2015, MMWR) — it is not a replication of their exact statistical model. Those models use inputs we don't capture as explicit fields, including diagnosed-diabetes status and blood-pressure-medication use; diabetes is proxied here from fasting glucose/HbA1c against the same ADA thresholds used elsewhere on this page, and blood-pressure medication isn't factored in at all, since we don't currently ask about it.",
       "Metabolic age follows the same age-equivalent framing, built on real metabolic syndrome criteria (the IDF consensus definition, Alberti et al., 2006, and NCEP ATP III) rather than the body-composition-scale \"metabolic age\" some consumer devices report — that consumer version compares your metabolic rate to a population average with no published, peer-reviewed validation behind the specific number it produces, so it isn't what this is based on. The metabolic-syndrome criteria themselves are real and cited; converting that into an age-equivalent is our own construction, the same way it is for vascular age.",
-      "We deliberately do not report a \"cognitive age\" or \"brain age.\" Reaction time is a genuinely well-supported marker of cognitive processing speed and is linked in published research to long-term health outcomes (Deary & Der, 2005, Psychological Science; Hagger-Johnson et al., 2014, PLOS ONE) — but no peer-reviewed study converts a reaction-time result into an age-equivalent number the way vascular age can be derived from cardiovascular risk factors. Rather than invent that conversion, the Mental pillar stays a 0-100 score.",
+      "We deliberately do not report a \"cognitive age\" or \"brain age.\" Symbol-digit processing speed is a genuinely well-supported marker of cognitive function (the Symbol Digit Modalities Test, Smith, 1982) — but no peer-reviewed study converts a processing-speed result into an age-equivalent number the way vascular age can be derived from cardiovascular risk factors. Rather than invent that conversion, the Mental pillar stays a 0-100 score.",
     ],
   },
   {
@@ -99,8 +99,8 @@ export const METHODOLOGY_SECTIONS: MethodologySection[] = [
   {
     title: "Cognitive assessment (ReCOGnAIze)",
     paragraphs: [
-      "Reaction time as a general concept is grounded in a substantial published research base linking simple reaction time to cognitive performance and long-term health outcomes (e.g. Deary & Der, 2005; Hagger-Johnson et al., 2014).",
-      "The specific timing thresholds used in this app's in-house assessment are our own calibration for a short, practical test — they are not derived from a specific published study's cutoffs.",
+      "ReCOGnAIze is a symbol-digit matching test: a key pairs each of ten symbols with a number, and you tap the number that matches the symbol shown, as fast as you can, for 60 seconds. This is the format of the Symbol Digit Modalities Test (Smith, 1982), a widely used measure of cognitive processing speed and attention.",
+      "Your net score (correct minus incorrect matches) is mapped onto the Mental pillar's 0–100 cognitive-composite scale. That mapping is our own wellness calibration for a short, practical test — it is not a validated norm or a diagnostic cut-off, and it is not converted into a \"brain age\".",
     ],
   },
   {
@@ -108,7 +108,7 @@ export const METHODOLOGY_SECTIONS: MethodologySection[] = [
     paragraphs: [
       "Your Mental pillar also draws on two short, validated self-report questionnaires. The WHO-5 Well-Being Index (World Health Organization, 1998; validation review: Topp et al., 2015, Psychotherapy and Psychosomatics) is a five-item measure of subjective psychological wellbeing over the past two weeks; its raw 0–25 score is multiplied by 4 to give a 0–100 wellbeing percentage, where higher is better. We treat a score below 50 as a wellness area worth attention — deliberately as a wellbeing signal, not as a screen or diagnosis for any condition.",
       "The PSS-4 (Cohen & Williamson, 1988, the four-item short form of the Perceived Stress Scale, Cohen et al., 1983) measures how uncontrollable and overloaded you have found your life over the past month, scored 0–16 with two items reverse-keyed, where higher means more perceived stress. The PSS has no official clinical cut-offs, so the band we use to flag elevated stress is our own wellness heuristic, not a validated clinical threshold.",
-      "Both instruments are used here purely as wellness snapshots to make the Mental pillar more than a reaction-time proxy. They are not diagnostic tools; a low wellbeing or high stress result is a prompt to talk with your care team, never a diagnosis.",
+      "Both instruments are used here purely as wellness snapshots to make the Mental pillar more than a processing-speed proxy. They are not diagnostic tools; a low wellbeing or high stress result is a prompt to talk with your care team, never a diagnosis.",
     ],
   },
   {

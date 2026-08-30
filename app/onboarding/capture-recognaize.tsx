@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
-import { View, Text, ScrollView, StyleSheet, Pressable, ActivityIndicator } from "react-native";
+import React, { useState } from "react";
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
-import { Brain, Sparkles, Zap } from "lucide-react-native";
+import { Brain, Sparkles, Timer } from "lucide-react-native";
 import { CaptureFlowStepper } from "@/components/layout/CaptureFlowStepper";
 import { Button } from "@/components/ui/Button";
 import { GlassCard } from "@/components/ui/GlassCard";
@@ -9,15 +9,16 @@ import { Card } from "@/components/ui/Card";
 import { updateSectionStatusAction, updateCaptureChannelAction } from "@/lib/data/actions";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
-import { submitRecognizeResult, submitMentalQuestionnaire } from "@/lib/ai/client";
+import { submitCognitiveResult, submitMentalQuestionnaire } from "@/lib/ai/client";
 import { MentalQuestionnaire } from "@/components/onboarding/MentalQuestionnaire";
+import { SymbolDigitGame, type SymbolDigitResult } from "@/components/onboarding/SymbolDigitGame";
+import { SDMT_DURATION_SECONDS } from "@/lib/ai/symbolDigit";
 import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 
-const NUM_TRIALS = 5;
-const MIN_DELAY_MS = 1000;
-const MAX_DELAY_MS = 3000;
-
-type Phase = "questionnaire" | "intro" | "waiting" | "go" | "too_soon" | "submitting" | "results";
+// Mental capture: the validated WHO-5 + PSS-4 questionnaire first, then the
+// Symbol-Digit matching game (ReCOGnAIze — ported from recognaizelite lite-two),
+// which derives the cognitive composite fed into the Mental pillar.
+type Phase = "questionnaire" | "intro" | "game" | "submitting" | "results";
 
 export default function CaptureRecognaizePage() {
   const router = useRouter();
@@ -25,19 +26,13 @@ export default function CaptureRecognaizePage() {
   const { mode } = useLocalSearchParams<{ mode?: string }>();
   const isEditing = mode === "edit";
 
-  // The Mental capture is two parts: the validated WHO-5 + PSS-4 questionnaire
-  // first, then the reaction-time test. Kept as sibling phases so recognaize-lite
-  // can later swap the reaction-time half without disturbing the questionnaire.
   const [phase, setPhase] = useState<Phase>("questionnaire");
   const [qSubmitting, setQSubmitting] = useState(false);
   const [qError, setQError] = useState<string | null>(null);
-  const [trials, setTrials] = useState<number[]>([]);
-  const [result, setResult] = useState<{ reaction_time: number; cog_composite: number } | null>(null);
+  const [result, setResult] = useState<(SymbolDigitResult & { cog_composite?: number }) | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function onQuestionnaireComplete(who5: number[], pss4: number[]) {
-    // Mock mode (no backend) or no session: skip the write, proceed to the test —
-    // mirrors onStartTest's mock handling.
     if (!isSupabaseConfigured || !participantId || !session?.access_token) {
       setPhase("intro");
       return;
@@ -54,24 +49,6 @@ export default function CaptureRecognaizePage() {
     }
   }
 
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const goAtRef = useRef(0);
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, []);
-
-  function armTrial() {
-    setPhase("waiting");
-    const delay = MIN_DELAY_MS + Math.random() * (MAX_DELAY_MS - MIN_DELAY_MS);
-    timeoutRef.current = setTimeout(() => {
-      goAtRef.current = Date.now();
-      setPhase("go");
-    }, delay);
-  }
-
   async function finish() {
     try {
       if (participantId) {
@@ -86,8 +63,6 @@ export default function CaptureRecognaizePage() {
       if (isEditing) {
         router.back();
       } else {
-        // ReCOGnAIze is the one section that doesn't return to the hub — it flows
-        // straight into Calculating, so replace rather than push.
         router.replace("/onboarding/capture-calculating");
       }
     } catch (e) {
@@ -95,56 +70,31 @@ export default function CaptureRecognaizePage() {
     }
   }
 
-  function onStartTest() {
-    if (!isSupabaseConfigured) {
-      // No backend configured to submit results to — mirrors the other
-      // capture-*-intro screens' mock-mode behavior of skipping the real
-      // interaction and completing the section directly.
-      void finish();
-      return;
-    }
-    setError(null);
-    setTrials([]);
-    setResult(null);
-    armTrial();
-  }
-
-  function onTapZonePress() {
-    if (phase === "waiting") {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      setPhase("too_soon");
-      return;
-    }
-    if (phase === "go") {
-      const elapsed = Date.now() - goAtRef.current;
-      const next = [...trials, elapsed];
-      setTrials(next);
-      if (next.length >= NUM_TRIALS) {
-        void submitResults(next);
-      } else {
-        armTrial();
-      }
-    }
-  }
-
-  async function submitResults(finalTrials: number[]) {
-    setPhase("submitting");
-    setError(null);
-    if (!participantId || !session?.access_token) {
+  async function onGameComplete(res: SymbolDigitResult) {
+    // The game is fully client-side; only submission needs the backend. In mock
+    // mode (no Supabase) just show the local score and continue.
+    if (!isSupabaseConfigured || !participantId || !session?.access_token) {
+      setResult(res);
       setPhase("results");
       return;
     }
+    setPhase("submitting");
+    setError(null);
     try {
-      const res = await submitRecognizeResult(session.access_token, participantId, finalTrials);
-      setResult(res);
+      const { cog_composite } = await submitCognitiveResult(
+        session.access_token,
+        participantId,
+        res.correct,
+        res.errors
+      );
+      setResult({ ...res, cog_composite });
     } catch (e) {
+      setResult(res);
       setError(e instanceof Error ? e.message : "Couldn't save your results.");
     } finally {
       setPhase("results");
     }
   }
-
-  const localAvg = trials.length > 0 ? Math.round(trials.reduce((a, b) => a + b, 0) / trials.length) : 0;
 
   if (phase === "questionnaire") {
     return (
@@ -156,7 +106,7 @@ export default function CaptureRecognaizePage() {
           <Text style={styles.title}>Mental health</Text>
           <Text style={styles.subtitle}>
             Two short, validated check-ins — the WHO-5 Well-Being Index and the PSS-4 stress scale —
-            that feed your Mental pillar. Next comes ReCOGnAIze, a quick reaction-time test.
+            that feed your Mental pillar. Next comes ReCOGnAIze, a quick symbol-matching test.
           </Text>
           <View style={styles.questionnaireWrap}>
             <MentalQuestionnaire
@@ -170,20 +120,12 @@ export default function CaptureRecognaizePage() {
     );
   }
 
-  if (phase === "waiting" || phase === "go") {
+  if (phase === "game") {
     return (
-      <CaptureFlowStepper>
-        <Pressable
-          style={[styles.tapZone, phase === "go" ? styles.tapZoneGo : styles.tapZoneWaiting]}
-          onPress={onTapZonePress}
-        >
-          <Text style={[styles.tapZoneTitle, phase === "go" && styles.tapZoneTitleGo]}>
-            {phase === "go" ? "Tap now!" : "Wait for green…"}
-          </Text>
-          <Text style={[styles.tapZoneSubtitle, phase === "go" && styles.tapZoneSubtitleGo]}>
-            {phase === "go" ? "Tap anywhere on the screen" : `Trial ${trials.length + 1} of ${NUM_TRIALS}`}
-          </Text>
-        </Pressable>
+      <CaptureFlowStepper showBackButton={false}>
+        <View style={styles.gameWrap}>
+          <SymbolDigitGame onComplete={onGameComplete} />
+        </View>
       </CaptureFlowStepper>
     );
   }
@@ -196,8 +138,8 @@ export default function CaptureRecognaizePage() {
         </GlassCard>
         <Text style={styles.title}>ReCOGnAIze</Text>
         <Text style={styles.subtitle}>
-          ReCOGnAIze is a short reaction-time assessment that feeds into your Mental pillar
-          score, alongside your questionnaire, wearables, and lab data.
+          A quick symbol-matching test of how fast your brain processes — it feeds your Mental
+          pillar alongside your questionnaire, wearables, and lab data.
         </Text>
 
         {phase === "intro" && (
@@ -209,25 +151,16 @@ export default function CaptureRecognaizePage() {
               <Text style={styles.noticeHeading}>How it works</Text>
             </View>
             <Text style={styles.noticeBody}>
-              The screen will turn green at a random moment — tap anywhere as soon as it does.
-              You&apos;ll do this {NUM_TRIALS} times; if you tap too early, that trial just
-              restarts.
+              You&apos;ll see a key that pairs each symbol with a number. One symbol shows at a
+              time — tap its matching number as fast as you can. Match as many as you can in{" "}
+              {SDMT_DURATION_SECONDS} seconds.
             </Text>
-          </Card>
-        )}
-
-        {phase === "too_soon" && (
-          <Card padding="lg" style={styles.noticeCard}>
             <View style={styles.noticeHeader}>
-              <View style={[styles.noticeIcon, styles.noticeIconWarning]}>
-                <Zap size={16} color={colors.amberDark} />
+              <View style={styles.noticeIcon}>
+                <Timer size={16} color={colors.tealDark} />
               </View>
-              <Text style={styles.noticeHeading}>Too soon</Text>
+              <Text style={styles.noticeHeading}>{SDMT_DURATION_SECONDS} seconds</Text>
             </View>
-            <Text style={styles.noticeBody}>
-              You tapped before the screen turned green. That trial doesn&apos;t count — give it
-              another go.
-            </Text>
           </Card>
         )}
 
@@ -242,10 +175,14 @@ export default function CaptureRecognaizePage() {
           <Card padding="lg" style={styles.noticeCard}>
             <Text style={styles.noticeHeading}>Your results</Text>
             <View style={styles.resultRow}>
-              <Text style={styles.resultLabel}>Average reaction time</Text>
-              <Text style={styles.resultValue}>{result?.reaction_time ?? localAvg} ms</Text>
+              <Text style={styles.resultLabel}>Symbols matched</Text>
+              <Text style={styles.resultValue}>{result?.correct ?? 0}</Text>
             </View>
-            {result && (
+            <View style={styles.resultRow}>
+              <Text style={styles.resultLabel}>Net score</Text>
+              <Text style={styles.resultValue}>{result?.score ?? 0}</Text>
+            </View>
+            {typeof result?.cog_composite === "number" && (
               <View style={styles.resultRow}>
                 <Text style={styles.resultLabel}>Cognitive composite</Text>
                 <Text style={styles.resultValue}>{result.cog_composite}/100</Text>
@@ -258,21 +195,11 @@ export default function CaptureRecognaizePage() {
 
       <View style={styles.footer}>
         {phase === "intro" && (
-          <Button size="lg" onPress={onStartTest}>
+          <Button size="lg" onPress={() => setPhase("game")}>
             Start test
           </Button>
         )}
-        {phase === "too_soon" && (
-          <Button size="lg" onPress={armTrial}>
-            Try again
-          </Button>
-        )}
-        {phase === "results" && error && !result && (
-          <Button size="lg" onPress={() => void submitResults(trials)}>
-            Retry saving
-          </Button>
-        )}
-        {phase === "results" && (result || !error) && (
+        {phase === "results" && (
           <Button size="lg" onPress={() => void finish()}>
             Continue
           </Button>
@@ -287,6 +214,12 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: spacing["2xl"],
     paddingTop: spacing.lg,
+    paddingBottom: spacing.lg,
+  },
+  gameWrap: {
+    flex: 1,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
     paddingBottom: spacing.lg,
   },
   questionnaireWrap: { marginTop: spacing.xl },
@@ -318,6 +251,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.md,
+    marginTop: spacing.xs,
   },
   noticeIcon: {
     width: 32,
@@ -326,9 +260,6 @@ const styles = StyleSheet.create({
     backgroundColor: colors.tealTint,
     alignItems: "center",
     justifyContent: "center",
-  },
-  noticeIconWarning: {
-    backgroundColor: colors.amberLighter,
   },
   noticeHeading: {
     fontFamily: fontFamilies.bodySemiBold,
@@ -378,36 +309,5 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: spacing["2xl"],
     paddingVertical: spacing.lg,
-  },
-  tapZone: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: spacing["2xl"],
-  },
-  tapZoneWaiting: {
-    backgroundColor: colors.ink,
-  },
-  tapZoneGo: {
-    backgroundColor: colors.success,
-  },
-  tapZoneTitle: {
-    fontFamily: fontFamilies.displayBold,
-    fontSize: fontSizes.headlineLg,
-    color: colors.inkOnDark,
-    textAlign: "center",
-  },
-  tapZoneTitleGo: {
-    color: colors.white,
-  },
-  tapZoneSubtitle: {
-    fontFamily: fontFamilies.body,
-    fontSize: fontSizes.bodyMd,
-    color: colors.inkOnDarkMuted,
-    marginTop: spacing.sm,
-    textAlign: "center",
-  },
-  tapZoneSubtitleGo: {
-    color: "rgba(255,255,255,0.85)",
   },
 });
