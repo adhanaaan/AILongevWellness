@@ -10,6 +10,8 @@ import { FadeInView } from "@/components/ui/FadeInView";
 import { WellnessDisclaimer } from "@/components/participant/WellnessDisclaimer";
 import { BiomarkerRangeRow } from "@/components/participant/BiomarkerRangeRow";
 import { BiomarkerSummaryBar } from "@/components/participant/BiomarkerSummaryBar";
+import { RangeBar } from "@/components/ui/RangeBar";
+import { biomarkerCatalogEntry } from "@/lib/ai/biomarkerLabels";
 import { TrendSection } from "@/components/participant/TrendSection";
 import { ScoreRing } from "@/components/participant/ScoreRing";
 import { repository } from "@/lib/data/mock";
@@ -292,11 +294,55 @@ export default function PillarDetailPage() {
         {missing.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Not yet captured</Text>
-            {missing.map((key) => (
-              <View key={key} style={[styles.flagRow, styles.flagRowMissing]}>
-                <Text style={styles.flagText}>{humanizeKey(key)}</Text>
-              </View>
-            ))}
+            <Text style={styles.previewIntro}>
+              A preview of what unlocks here — the healthy range is shown; your own value plots on it
+              once the data is in.
+            </Text>
+            {missing.map((key) => {
+              const entry = biomarkerCatalogEntry(key);
+              if (!entry) {
+                return (
+                  <View key={key} style={[styles.flagRow, styles.flagRowMissing]}>
+                    <Text style={styles.flagText}>{humanizeKey(key)}</Text>
+                  </View>
+                );
+              }
+              const mid = (entry.ref_low + entry.ref_high) / 2;
+              const span = entry.ref_high - entry.ref_low || Math.abs(entry.ref_high) || 1;
+              return (
+                <View key={key} style={styles.previewCard}>
+                  <View style={styles.previewHead}>
+                    <Text style={styles.previewLabel}>{entry.label}</Text>
+                    <Text style={styles.previewDash}>
+                      –<Text style={styles.previewUnit}> {entry.unit}</Text>
+                    </Text>
+                  </View>
+                  <View style={styles.previewBar}>
+                    <RangeBar
+                      value={mid}
+                      min={entry.ref_low - span * 0.5}
+                      max={entry.ref_high + span * 0.5}
+                      zoneStart={entry.ref_low}
+                      zoneEnd={entry.ref_high}
+                      color={colors.sage}
+                      markerColor={colors.borderStrong}
+                      height={7}
+                    />
+                  </View>
+                  <Text style={styles.previewCaption}>
+                    Optimal {entry.ref_low}–{entry.ref_high} {entry.unit}
+                  </Text>
+                </View>
+              );
+            })}
+            <Button
+              variant="secondary"
+              size="sm"
+              style={styles.previewCta}
+              onPress={() => router.push("/onboarding/capture")}
+            >
+              Add data to reveal these
+            </Button>
           </View>
         )}
 
@@ -486,6 +532,55 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.bodyMd,
     color: colors.charcoal,
+  },
+  previewIntro: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    marginTop: -spacing.xs,
+    marginBottom: spacing.md,
+    lineHeight: 17,
+  },
+  previewCard: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderStyle: "dashed",
+    borderRadius: radii.md,
+    padding: spacing.lg,
+    marginBottom: spacing.sm,
+  },
+  previewHead: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+  },
+  previewLabel: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.bodyMd,
+    color: colors.charcoal,
+    flexShrink: 1,
+  },
+  previewDash: {
+    fontFamily: fontFamilies.displaySemiBold,
+    fontSize: fontSizes.headlineSm,
+    color: colors.borderStrong,
+  },
+  previewUnit: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+  },
+  previewBar: { marginTop: spacing.md },
+  previewCaption: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    marginTop: spacing.sm,
+  },
+  previewCta: {
+    alignSelf: "flex-start",
+    marginTop: spacing.sm,
   },
   askAvaRow: {
     flexDirection: "row",
