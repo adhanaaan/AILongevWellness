@@ -170,7 +170,7 @@ export default function ProfilePersonalPage() {
               onChangeText={(t) => setAge(digitsOnly(t))}
               keyboardType="number-pad"
               maxLength={3}
-              placeholder="58"
+              placeholder="e.g. 58"
               error={ageError}
               containerStyle={styles.rowField}
             />
@@ -180,7 +180,7 @@ export default function ProfilePersonalPage() {
               onChangeText={(t) => setHeight(digitsOnly(t))}
               keyboardType="number-pad"
               maxLength={3}
-              placeholder="175"
+              placeholder="e.g. 175"
               error={heightError}
               containerStyle={styles.rowField}
             />
@@ -190,7 +190,7 @@ export default function ProfilePersonalPage() {
               onChangeText={(t) => setWeight(digitsOnly(t))}
               keyboardType="number-pad"
               maxLength={3}
-              placeholder="72"
+              placeholder="e.g. 72"
               error={weightError}
               containerStyle={styles.rowField}
             />

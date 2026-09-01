@@ -15,6 +15,7 @@ import { SuggestedFocusGrid } from "@/components/participant/SuggestedFocusGrid"
 import { SnapshotPending } from "@/components/participant/SnapshotPending";
 import { CareTeamNotesCard } from "@/components/participant/CareTeamNotesCard";
 import { DraftStatusBadge } from "@/components/participant/DraftStatusBadge";
+import { PillarScoreCard } from "@/components/participant/PillarScoreCard";
 import { TopRecommendation } from "@/components/participant/TopRecommendation";
 import { InsightsSectionHeader } from "@/components/participant/InsightsSectionHeader";
 import { NextStepsCard } from "@/components/participant/NextStepsCard";
@@ -29,6 +30,12 @@ import { isCaptureComplete } from "@/lib/onboarding/flow";
 import type { SignedCard } from "@/lib/data/repository";
 import type { AiDraft, Biomarker, OnboardingProgress, Participant, Pipeline, Pillar } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, lineHeights, radii, shadows, spacing } from "@/lib/theme/tokens";
+
+const PILLAR_COLOR: Record<string, string> = {
+  vascular: colors.vascular,
+  metabolic: colors.metabolic,
+  mental: colors.mental,
+};
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", {
@@ -254,6 +261,24 @@ export default function CardPage() {
             <SnapshotSummaryCard narrative={buildPillarNarrative(aiDraft.scores, lockedPillars)} />
           </View>
         )}
+
+        {/* Prominent-number pillar cards, each plotted against the ideal band and
+            tappable to open the full detail. Retreat feedback: more cards, bigger
+            numbers, plot against ideal, header + number -> tap to read the rest;
+            a not-yet-assessed pillar shows a preview instead of a fake score. */}
+        <View style={styles.section}>
+          <InsightsSectionHeader label="Your three systems" />
+          {pillarItems.map((p) => (
+            <PillarScoreCard
+              key={p.key}
+              name={p.label}
+              score={lockedPillars.includes(p.key as Pillar) ? null : p.value}
+              status={p.status}
+              color={PILLAR_COLOR[p.key]}
+              onPress={p.onPress}
+            />
+          ))}
+        </View>
 
         {(gp || tcm) && (
           <View style={styles.section}>
