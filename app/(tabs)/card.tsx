@@ -268,16 +268,24 @@ export default function CardPage() {
             a not-yet-assessed pillar shows a preview instead of a fake score. */}
         <View style={styles.section}>
           <InsightsSectionHeader label="Your three systems" />
-          {pillarItems.map((p) => (
-            <PillarScoreCard
-              key={p.key}
-              name={p.label}
-              score={lockedPillars.includes(p.key as Pillar) ? null : p.value}
-              status={p.status}
-              color={PILLAR_COLOR[p.key]}
-              onPress={p.onPress}
-            />
-          ))}
+          {pillarItems.map((p) => {
+            const pillarMarkers = biomarkers.filter((b) => b.pillar === p.key && b.value !== null);
+            const pillarMissing = (aiDraft.missing_biomarkers ?? [])
+              .filter((k) => BIOMARKER_KEYS_BY_PILLAR[p.key].includes(k))
+              .slice(0, 3);
+            return (
+              <PillarScoreCard
+                key={p.key}
+                name={p.label}
+                score={lockedPillars.includes(p.key as Pillar) ? null : p.value}
+                status={p.status}
+                color={PILLAR_COLOR[p.key]}
+                markers={pillarMarkers}
+                previewKeys={pillarMissing}
+                onOpenDetail={p.onPress}
+              />
+            );
+          })}
         </View>
 
         {(gp || tcm) && (
