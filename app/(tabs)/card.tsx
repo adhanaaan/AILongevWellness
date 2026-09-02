@@ -16,6 +16,8 @@ import { SnapshotPending } from "@/components/participant/SnapshotPending";
 import { CareTeamNotesCard } from "@/components/participant/CareTeamNotesCard";
 import { DraftStatusBadge } from "@/components/participant/DraftStatusBadge";
 import { PillarScoreCard } from "@/components/participant/PillarScoreCard";
+import { MonitorMetricCard } from "@/components/participant/MonitorMetricCard";
+import { GradientOverlay } from "@/components/ui/GradientOverlay";
 import { TopRecommendation } from "@/components/participant/TopRecommendation";
 import { InsightsSectionHeader } from "@/components/participant/InsightsSectionHeader";
 import { NextStepsCard } from "@/components/participant/NextStepsCard";
@@ -197,9 +199,14 @@ export default function CardPage() {
   const markerOutOfRange = aiDraft.out_of_range?.length ?? 0;
   const markerInRange = Math.max(0, markerTotal - markerNotCaptured - markerOutOfRange);
 
+  // Flagged markers are now shown as plotted cards (MonitorMetricCard) in their
+  // own "Areas to monitor" section, so "Driving your scores" keeps only the
+  // positive/context drivers as prose — no number-in-prose duplication.
+  const outOfRangeItems = aiDraft.out_of_range ?? [];
+  const goodContributors = aiDraft.key_contributors.filter((c) => c.tone !== "monitor");
   const visibleContributors = showAllContributors
-    ? aiDraft.key_contributors
-    : aiDraft.key_contributors.slice(0, 3);
+    ? goodContributors
+    : goodContributors.slice(0, 3);
 
   return (
     <MobileShell name={card?.participant.name ?? participant?.name}>
@@ -310,27 +317,49 @@ export default function CardPage() {
           )}
         </View>
 
-        <View style={styles.section}>
-          <InsightsSectionHeader label="Driving your scores" />
-          <View style={styles.contributorList}>
-            {visibleContributors.map((c) => (
-              <KeyContributorItem key={c.text} text={c.text} tone={c.tone} />
+        {outOfRangeItems.length > 0 && (
+          <View style={styles.section}>
+            <InsightsSectionHeader label="Areas to monitor" />
+            {outOfRangeItems.slice(0, 4).map((o) => (
+              <MonitorMetricCard key={o.key} item={o} />
             ))}
+            {outOfRangeItems.length > 4 && (
+              <Pressable
+                onPress={() => router.push("/biomarkers")}
+                accessibilityRole="button"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={styles.seeAll}
+              >
+                <Text style={styles.seeAllText}>See all {outOfRangeItems.length}</Text>
+                <ChevronRight size={14} color={colors.sageDark} />
+              </Pressable>
+            )}
           </View>
-          {aiDraft.key_contributors.length > 3 && (
-            <Pressable
-              onPress={() => setShowAllContributors((v) => !v)}
-              accessibilityRole="button"
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              style={styles.seeAll}
-            >
-              <Text style={styles.seeAllText}>
-                {showAllContributors ? "Show less" : `See all ${aiDraft.key_contributors.length}`}
-              </Text>
-              <ChevronRight size={14} color={colors.sageDark} />
-            </Pressable>
-          )}
-        </View>
+        )}
+
+        {goodContributors.length > 0 && (
+          <View style={styles.section}>
+            <InsightsSectionHeader label="What's going well" />
+            <View style={styles.contributorList}>
+              {visibleContributors.map((c) => (
+                <KeyContributorItem key={c.text} text={c.text} tone={c.tone} />
+              ))}
+            </View>
+            {goodContributors.length > 3 && (
+              <Pressable
+                onPress={() => setShowAllContributors((v) => !v)}
+                accessibilityRole="button"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={styles.seeAll}
+              >
+                <Text style={styles.seeAllText}>
+                  {showAllContributors ? "Show less" : `See all ${goodContributors.length}`}
+                </Text>
+                <ChevronRight size={14} color={colors.sageDark} />
+              </Pressable>
+            )}
+          </View>
+        )}
 
         {(topFocus || topDiscussionPoint) && (
           <View style={styles.section}>
@@ -357,6 +386,17 @@ export default function CardPage() {
         </FadeInView>
       </ScrollView>
 
+      {/* Soft fade so scrolling content dissolves before it reaches the floating
+          Ask Ava button, instead of colliding with it. */}
+      <View style={styles.askAvaScrim} pointerEvents="none">
+        <GradientOverlay
+          stops={[
+            { offset: "0", color: "rgba(250,250,250,0)" },
+            { offset: "1", color: "rgba(250,250,250,0.96)" },
+          ]}
+        />
+      </View>
+
       <PressableScale
         onPress={askAva}
         haptics="light"
@@ -373,7 +413,14 @@ export default function CardPage() {
 }
 
 const styles = StyleSheet.create({
-  scrollContent: { paddingBottom: 96 },
+  scrollContent: { paddingBottom: 132 },
+  askAvaScrim: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 96,
+  },
   title: {
     fontFamily: fontFamilies.displaySemiBold,
     fontSize: fontSizes.headlineLg,

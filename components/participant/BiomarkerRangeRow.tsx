@@ -2,6 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Card } from "@/components/ui/Card";
 import { RangeBar } from "@/components/ui/RangeBar";
+import { MARKER_DIRECTION } from "@/lib/ai/markerDirection";
 import { colors, fontFamilies, fontSizes, fontWeights, radii, spacing } from "@/lib/theme/tokens";
 
 export interface BiomarkerRangeRowProps {
@@ -14,6 +15,18 @@ export interface BiomarkerRangeRowProps {
   flagged: boolean;
   /** Optional plain-English trend line, e.g. "↓ 3 since Jun 12". */
   trend?: string | null;
+  /** Marker key, so a one-directional marker (e.g. LDL) shows a one-sided
+   *  optimal ("≤3.0") instead of an invented "1–3" floor. */
+  markerKey?: string;
+}
+
+// The "optimal" caption, one-sided for markers that only have one bad bound.
+function optimalLabel(markerKey: string | undefined, low: number, high: number, unit: string): string {
+  const dir = markerKey ? MARKER_DIRECTION[markerKey] : undefined;
+  const n = (x: number) => (Number.isInteger(x) ? String(x) : String(Math.round(x * 100) / 100));
+  if (dir === "lower") return `Optimal ≤${n(high)} ${unit}`;
+  if (dir === "higher") return `Optimal ≥${n(low)} ${unit}`;
+  return `Optimal ${n(low)}–${n(high)} ${unit}`;
 }
 
 // Pads the track a little beyond the reference band (and beyond the value, if it
@@ -36,7 +49,7 @@ function formatNum(n: number) {
 // reference range, with the in-range band highlighted -- far more legible than
 // a bare "Ref: 40-160" line. Markers without a numeric reference range fall back
 // to a plain value row (no bar), rather than inventing bounds.
-export function BiomarkerRangeRow({ label, value, unit, refLow, refHigh, flagged, trend }: BiomarkerRangeRowProps) {
+export function BiomarkerRangeRow({ label, value, unit, refLow, refHigh, flagged, trend, markerKey }: BiomarkerRangeRowProps) {
   const hasRange = refLow !== null && refHigh !== null && refHigh > refLow;
   const markerColor = flagged ? colors.terracotta : colors.sage;
 
@@ -75,7 +88,7 @@ export function BiomarkerRangeRow({ label, value, unit, refLow, refHigh, flagged
           </View>
           <View style={styles.footer}>
             <Text style={styles.refLabel}>
-              Optimal {formatNum(refLow)}–{formatNum(refHigh)} {unit}
+              {optimalLabel(markerKey, refLow, refHigh, unit)}
             </Text>
             {trend ? <Text style={styles.trend}>{trend}</Text> : null}
           </View>

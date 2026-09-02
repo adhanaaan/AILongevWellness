@@ -261,6 +261,7 @@ export default function PillarDetailPage() {
                     refHigh={b.ref_high}
                     flagged={b.flagged}
                     trend={trend}
+                    markerKey={b.key}
                   />
                 );
               })}
