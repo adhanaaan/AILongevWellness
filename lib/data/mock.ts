@@ -1225,4 +1225,25 @@ export function getRepository(): Repository {
   return _repository;
 }
 
-export const repository: Repository = getRepository();
+/**
+ * The shared repository instance, imported directly by ~19 screens.
+ *
+ * Deliberately a lazy proxy rather than `= getRepository()`. Eager module-scope
+ * init ran createClient() AND the realtime channel("db-changes").subscribe()
+ * during bundle evaluation -- the import chain app/_layout.tsx ->
+ * lib/auth/AuthProvider -> lib/data/actions -> ./mock reaches here before React
+ * renders anything. That left no seam early enough to hand Supabase a different
+ * auth storage adapter (see lib/platform/), since createClient() takes it at
+ * construction. Every real use is inside an effect or handler, so resolution now
+ * happens after mount, and the realtime subscription is deferred with it.
+ *
+ * Repository is all methods and no data properties, so a get-trap that binds is
+ * sufficient -- there is nothing to proxy for writes.
+ */
+export const repository: Repository = new Proxy({} as Repository, {
+  get(_target, prop) {
+    const instance = getRepository() as unknown as Record<string | symbol, unknown>;
+    const value = instance[prop];
+    return typeof value === "function" ? value.bind(instance) : value;
+  },
+});
