@@ -55,6 +55,19 @@ export interface WebToNativeRequests {
   "notifications:cancel": { params: Record<string, never>; result: { ok: true } };
 
   /**
+   * Biometric app lock. `supported` is whether the hardware exists, `enrolled`
+   * whether the user has actually set up Face ID / a fingerprint — both are
+   * needed, since offering the toggle on a device with no enrolled biometric
+   * would produce a switch that silently refuses to turn on.
+   */
+  "security:getLock": {
+    params: Record<string, never>;
+    result: { supported: boolean; enrolled: boolean; enabled: boolean };
+  };
+  /** Returns the resulting state, which is `false` if enabling was refused. */
+  "security:setLock": { params: { enabled: boolean }; result: { enabled: boolean } };
+
+  /**
    * Open a URL outside the WebView, in a real browser
    * (ASWebAuthenticationSession / Custom Tabs).
    *

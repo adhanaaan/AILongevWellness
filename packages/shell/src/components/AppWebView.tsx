@@ -4,8 +4,10 @@ import { WebView } from "react-native-webview";
 
 import { APP_ORIGIN } from "../config";
 import { BEFORE_CONTENT_JS, useWebViewBridge } from "../bridge/useWebViewBridge";
+import { useAppLock } from "../hooks/useAppLock";
 import { useWebViewLoad, type WebViewLoadStatus } from "../hooks/useWebViewLoad";
 import { colors } from "../theme";
+import { AppLockOverlay } from "./AppLockOverlay";
 import { WebViewStatusOverlay } from "./WebViewStatusOverlay";
 
 interface AppWebViewProps {
@@ -26,6 +28,7 @@ export function AppWebView({ webViewUrl, onStatusChange }: AppWebViewProps) {
   const webViewRef = useRef<WebView>(null);
   const load = useWebViewLoad();
   const bridge = useWebViewBridge(webViewRef);
+  const lock = useAppLock();
 
   useEffect(() => {
     if (load.status !== "loading") onStatusChange(load.status);
@@ -124,6 +127,9 @@ export function AppWebView({ webViewUrl, onStatusChange }: AppWebViewProps) {
       {(load.status === "slow" || load.status === "failed") && (
         <WebViewStatusOverlay variant={load.status} onRetry={load.retry} />
       )}
+      {/* Last child, so it covers the status overlay too -- a locked app must not
+          leak anything, including which screen was open behind it. */}
+      {lock.locked && <AppLockOverlay onUnlock={lock.unlock} prompting={lock.prompting} />}
     </View>
   );
 }

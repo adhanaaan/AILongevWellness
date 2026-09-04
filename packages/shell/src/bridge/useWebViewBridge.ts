@@ -16,6 +16,7 @@ import {
 } from "@aiw/shared/bridge";
 
 import { cancelDaily, requestPermission, scheduleDaily } from "./handlers/notifications";
+import { getLock, setLock } from "./handlers/security";
 import { clearSession, getSession, setSession } from "./handlers/session";
 import { createSystemHandlers } from "./handlers/system";
 
@@ -115,6 +116,9 @@ export function useWebViewBridge(webViewRef: React.RefObject<WebView | null>): W
       scheduleDaily(p)
     );
     core.setHandler("notifications:cancel", () => cancelDaily());
+
+    core.setHandler("security:getLock", () => getLock());
+    core.setHandler("security:setLock", (p: { enabled: boolean }) => setLock(p));
 
     core.setHandler("system:open-external", (p: { url: string; returnTo?: string }) =>
       system.openExternal(p)

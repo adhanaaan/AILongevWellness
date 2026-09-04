@@ -5,7 +5,9 @@ import { ActivityIndicator, StyleSheet, View } from "react-native";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppWebView } from "./components/AppWebView";
+import { ConfigErrorView } from "./components/ConfigErrorView";
 import { OfflineView } from "./components/OfflineView";
+import { isMisconfiguredRelease } from "./config";
 import { useAppLaunch } from "./hooks/useAppLaunch";
 import type { WebViewLoadStatus } from "./hooks/useWebViewLoad";
 import { colors } from "./theme";
@@ -40,11 +42,17 @@ function Shell() {
     [markLaunched, hideSplash]
   );
 
-  // The WebView reports its own settle via onStatusChange; the offline screen has
-  // no such event, so take the splash down here instead.
+  // The WebView reports its own settle via onStatusChange; these screens have no
+  // such event, so take the splash down here instead.
   useEffect(() => {
-    if (launch.status === "offline") hideSplash();
+    if (launch.status === "offline" || isMisconfiguredRelease) hideSplash();
   }, [launch.status, hideSplash]);
+
+  // Before anything else: a release build with no real URL configured has
+  // nothing to show, and must say so rather than loading the placeholder.
+  if (isMisconfiguredRelease) {
+    return <ConfigErrorView />;
+  }
 
   if (launch.status === "offline") {
     return <OfflineView onRetry={launch.retry} />;

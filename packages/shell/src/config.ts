@@ -9,9 +9,18 @@ import Constants from "expo-constants";
  * in-app way to notice, so treat it as release-critical.
  */
 
-// TODO: confirm the production domain before the first store submission.
-// Taken from packages/web/.env.example's APP_URL example value.
-const PROD_WEB_APP_URL = "https://ai-longev-wellness.vercel.app";
+/**
+ * NOT CONFIRMED as the production domain — taken from the APP_URL example in
+ * packages/web/.env.example. Set the real URL here (or via an EAS profile in
+ * app.config.ts) before the first store submission.
+ *
+ * Exported so App.tsx can refuse to load a release build that still points at
+ * it. A store build silently serving the wrong environment has no in-app tell,
+ * and by the time anyone notices it is already in review.
+ */
+export const PLACEHOLDER_WEB_APP_URL = "https://ai-longev-wellness.vercel.app";
+
+const PROD_WEB_APP_URL = PLACEHOLDER_WEB_APP_URL;
 
 // Dev builds point at a Vercel preview rather than a LAN dev server: `expo
 // start --web` serves over http, and both platforms block mixed/cleartext
@@ -31,3 +40,14 @@ export const config = {
 
 /** Origin of {@link config.webAppUrl}, for navigation allow-listing. */
 export const APP_ORIGIN = new URL(config.webAppUrl).origin;
+
+/**
+ * True when a RELEASE build would load the unconfirmed placeholder URL — i.e.
+ * someone is about to ship a store build pointing who-knows-where.
+ *
+ * Deliberately not a module-load `throw`: crashing on launch is harder to read
+ * than a screen that names the file to fix, and a crash looks like a bug rather
+ * than a misconfiguration. Dev builds are unaffected.
+ */
+export const isMisconfiguredRelease =
+  !__DEV__ && config.webAppUrl === PLACEHOLDER_WEB_APP_URL;

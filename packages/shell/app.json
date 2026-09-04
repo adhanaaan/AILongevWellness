@@ -36,6 +36,12 @@
       "expo-secure-store",
       "expo-web-browser",
       [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "AI Wellness uses Face ID to unlock the app so your health data stays private if someone else picks up your phone."
+        }
+      ],
+      [
         "expo-notifications",
         {
           "color": "#2C4A38",
