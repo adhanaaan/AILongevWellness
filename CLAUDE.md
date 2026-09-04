@@ -770,7 +770,48 @@ go through `lib/platform/`, which no-ops when the shell isn't present.
       Reconciles the OS with the stored preference on mount, since localStorage can be
       evicted in a WKWebView and would otherwise leave a reminder firing that the UI
       shows as off.
-- [ ] **Blocking before any store build**: app icons + splash (none exist in this repo);
-      confirm the production URL in `packages/shell/src/config.ts`; in-app account deletion
-      (App Store 5.1.1(v) requires it — the existing consent withdrawal is deliberately
-      non-destructive and does not satisfy it). See `packages/shell/README.md`.
+- [x] **`Alert.alert` does nothing on web — fixed.** react-native-web ships it as
+      `class Alert { static alert() {} }`, an empty function. Web is the only deployment
+      target and is what runs inside the shell's WebView, so the "Withdraw consent"
+      confirmation on `app/privacy.tsx` never appeared and the withdrawal never fired.
+      New `components/ui/ConfirmDialog.tsx` (Modal-based, follows `TermsModal`'s sheet
+      presentation) replaces it, and `Button` gained a `danger` variant for irreversible
+      actions. **Never use `Alert.alert` for anything the user must confirm.**
+- [x] **In-app account deletion** (App Store 5.1.1(v), `app/privacy.tsx` →
+      `deleteAccountAction` → `supabase/migrations/0020_delete_account.sql`). Distinct from
+      consent withdrawal, which stays deliberately non-destructive: this erases personal
+      data but **retains the clinician sign-off trail**. The `participants` row is
+      TOMBSTONED (identity scrubbed, `deleted_at` set) rather than deleted, because
+      cascading it would destroy the `reviews` rows recording which GP/TCM signed off a
+      delivered card — an audit trail a participant's request shouldn't erase.
+      `name`/`age`/`sex`/`height_cm`/`weight_kg` are NOT NULL in 0001_init (and `sex` has a
+      CHECK), so a deleted row holds placeholders — **always branch on `deleted_at`, never
+      on those values**. Three non-obvious constraints shaped it: (a) `user_roles.participant_id`
+      is `on delete set null`, so deleting only the participant leaves a zombie account
+      that can log in, gets a null participant_id, and can never re-onboard because
+      `handle_new_user()` is an `after insert on auth.users` trigger — deleting the
+      `auth.users` row is what actually removes the account, and it cascades `user_roles`;
+      (b) it's a SECURITY DEFINER RPC rather than an API endpoint because `packages/web/api/`
+      is at exactly 12 functions, the Vercel Hobby cap; (c) `storage.objects` has no FK to
+      participants, so uploads are purged CLIENT-side *before* the RPC, while the session
+      still satisfies the storage policy — and enumerated via `storage.list()` rather than
+      the `files` table, since `files.kind`'s CHECK was never widened for `genetic_report`
+      and such objects can exist with no `files` row. Deleted participants stay in
+      `listParticipants()` (the audit-log export iterates it) but are filtered out of the
+      review queue.
+- [x] **Biometric app lock** (`packages/shell/src/bridge/handlers/security.ts` +
+      `hooks/useAppLock.ts` + `components/AppLockOverlay.tsx`, toggled from the web app's
+      Settings via `lib/platform/useAppLock.ts`). `expo-local-authentication`; the enabled
+      flag lives in SecureStore because the lock must be enforceable before the WebView has
+      loaded, including on cold start. 30s background grace period so glancing at another
+      app — or the system backgrounding us for the file picker / OAuth sheet — doesn't
+      re-prompt. Overlay renders ABOVE the WebView, never in place of it (same rule as
+      `OfflineView`: unmounting destroys the web app's JS context). Enabling requires a
+      successful prompt first, so it can't lock someone out of their own app.
+- [x] **Misconfigured release builds fail loudly**: `packages/shell/src/config.ts` exports
+      `isMisconfiguredRelease`, and `App.tsx` renders `ConfigErrorView` (naming the file to
+      fix) instead of loading the unconfirmed placeholder URL in a non-`__DEV__` build. A
+      store build silently pointing at the wrong environment has no in-app tell.
+- [ ] **Blocking before any store build**: app icons + splash (none exist in this repo —
+      to be supplied); confirm the production URL in `packages/shell/src/config.ts`; run
+      migration 0020 on the Supabase project. See `packages/shell/README.md`.

@@ -46,15 +46,22 @@ npm, which is why that package must stay dependency-free.
 
 ## Before the first store build
 
-Blocking, and not yet done:
+- [ ] **App icons and splash.** Still needed: a 1024×1024 `icon.png`, an Android
+      adaptive-icon foreground, and a splash image, under `assets/`, then wired
+      into `app.json`. They're deliberately not referenced there yet — pointing
+      at missing files breaks `expo start`.
+- [ ] **Set the production URL.** `src/config.ts`'s `PLACEHOLDER_WEB_APP_URL` is
+      an unconfirmed guess. A release build that still points at it renders
+      `ConfigErrorView` instead of loading anything, so this fails loudly rather
+      than silently shipping the wrong environment — but it does have to be set.
+- [ ] **Run `supabase/migrations/0020_delete_account.sql`** on the Supabase
+      project, or in-app account deletion will fail at the RPC call.
+- [x] **In-app account deletion** — App Store 5.1.1(v). Lives in the web app at
+      `app/privacy.tsx`.
+- [x] **Biometric app lock** — `expo-local-authentication`, toggled from the web
+      app's Settings under "On this device".
+- [x] **A real offline screen** with retry (`OfflineView`).
 
-- [ ] **App icons and splash.** None exist in this repo. Needs a 1024×1024
-      `icon.png`, an Android adaptive-icon foreground, and a splash image, all
-      under `assets/`, then wired into `app.json`. They're deliberately not
-      referenced there yet — pointing at missing files breaks `expo start`.
-- [ ] **Confirm the production URL** in `src/config.ts`. A store build pointing
-      at the wrong environment has no in-app tell.
-- [ ] **In-app account deletion** in `packages/web` — App Store guideline
-      5.1.1(v) requires it. The existing consent-withdrawal flow is deliberately
-      non-destructive and does not satisfy this.
-- [ ] Review notes for guideline 4.2 (see the plan's Phase 5).
+Reviewers looking for guideline 4.2 ("is this just a website?") should be pointed
+at Settings → On this device: the daily reminder and the Face ID lock are both
+native-only and user-configurable in three taps.
