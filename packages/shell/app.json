@@ -30,6 +30,15 @@
         {
           "backgroundColor": "#FAFAFA"
         }
+      ],
+      "expo-secure-store",
+      "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          "color": "#2C4A38",
+          "defaultChannel": "reminders"
+        }
       ]
     ],
     "extra": {}

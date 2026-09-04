@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef } from "react";
 import { BackHandler, Linking, Platform, StyleSheet, View } from "react-native";
-import { WebView, type WebViewNavigation } from "react-native-webview";
+import { WebView } from "react-native-webview";
 
 import { APP_ORIGIN } from "../config";
+import { BEFORE_CONTENT_JS, useWebViewBridge } from "../bridge/useWebViewBridge";
 import { useWebViewLoad, type WebViewLoadStatus } from "../hooks/useWebViewLoad";
 import { colors } from "../theme";
 import { WebViewStatusOverlay } from "./WebViewStatusOverlay";
@@ -23,39 +24,48 @@ const EXTERNAL_SCHEMES = ["mailto:", "tel:", "sms:", "market:", "itms-apps:"];
 
 export function AppWebView({ webViewUrl, onStatusChange }: AppWebViewProps) {
   const webViewRef = useRef<WebView>(null);
-  const canGoBack = useRef(false);
   const load = useWebViewLoad();
+  const bridge = useWebViewBridge(webViewRef);
 
   useEffect(() => {
     if (load.status !== "loading") onStatusChange(load.status);
   }, [load.status, onStatusChange]);
 
-  // Android hardware back. Interim implementation: this walks WebView history,
-  // which is not quite right because the web app uses expo-router's
-  // router.replace() in several places (app/index.tsx, useChannelUpload.leave()),
-  // and a replace pushes no history entry -- so back can skip a screen or exit
-  // the app earlier than the user expects. Phase 3 replaces this with a bridge
-  // request that lets the web app resolve its own canGoBack from expo-router.
+  // A remount gives the page a fresh JS context, so nothing in flight can ever
+  // be answered. Fail those requests now rather than leaving callers hanging
+  // until their individual timeouts.
+  const { reset } = bridge;
+  const remountKey = load.key;
+  useEffect(() => {
+    return () => reset("WebView remounting");
+  }, [remountKey, reset]);
+
+  // Android hardware back is resolved by the WEB app, not by WebView history.
+  // The web app navigates with expo-router's router.replace() in places, which
+  // pushes no history entry -- so webViewRef.goBack() would skip screens or exit
+  // the app early. Only the web app knows where back should actually go.
+  const { requestBack } = bridge;
   useEffect(() => {
     if (Platform.OS !== "android") return;
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
-      if (!canGoBack.current) return false; // let Android close the app
-      webViewRef.current?.goBack();
+      // BackHandler needs a synchronous answer, but the web app's is a round
+      // trip -- so always claim the press and decide afterwards. requestBack
+      // resolves false on timeout, so a wedged web app still exits rather than
+      // trapping the user with a dead back button.
+      void requestBack().then((handled) => {
+        if (!handled) BackHandler.exitApp();
+      });
       return true;
     });
     return () => sub.remove();
-  }, []);
-
-  const onNavigationStateChange = useCallback((nav: WebViewNavigation) => {
-    canGoBack.current = nav.canGoBack;
-  }, []);
+  }, [requestBack]);
 
   /**
    * Keeps our own origin in the WebView and pushes everything else out to the
    * OS. A safety net, not the mechanism: on Android this maps to
    * shouldOverrideUrlLoading, which is NOT reliably called for JS-initiated
    * navigation without a user gesture. Deliberate outbound navigation (Terra's
-   * OAuth) goes over the bridge in Phase 4 instead of relying on this.
+   * OAuth) goes over the bridge's system:open-external instead.
    */
   const onShouldStartLoadWithRequest = useCallback((request: { url: string }) => {
     const { url } = request;
@@ -64,12 +74,11 @@ export function AppWebView({ webViewUrl, onStatusChange }: AppWebViewProps) {
       return true;
     }
     if (EXTERNAL_SCHEMES.some((scheme) => url.startsWith(scheme))) {
-      void Linking.openURL(url).catch(() => {});
+      Linking.openURL(url).catch(() => {});
       return false;
     }
-    // Anything else (including plain http:) does not render in-app. Phase 4
-    // routes https: to expo-web-browser; until then it is simply blocked rather
-    // than silently loading a third-party page inside our shell.
+    // Anything else (including plain http:) does not render in-app, so a
+    // third-party page can never silently occupy our shell.
     return false;
   }, []);
 
@@ -98,7 +107,11 @@ export function AppWebView({ webViewUrl, onStatusChange }: AppWebViewProps) {
         // Route target=_blank through onShouldStartLoadWithRequest instead of
         // letting Android silently swallow it.
         setSupportMultipleWindows={false}
-        onNavigationStateChange={onNavigationStateChange}
+        injectedJavaScriptBeforeContentLoaded={BEFORE_CONTENT_JS}
+        // Sub-frames too: an iframe (the admin file preview renders one) that
+        // can't see the host flag would try to boot in browser mode.
+        injectedJavaScriptBeforeContentLoadedForMainFrameOnly={false}
+        onMessage={bridge.handleMessage}
         onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
         onLoadEnd={load.onLoadEnd}
         onError={load.onLoadError}
