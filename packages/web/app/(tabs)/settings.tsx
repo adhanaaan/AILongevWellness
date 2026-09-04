@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
-import { User, ShieldCheck, FileText, BookOpen, ChevronRight, LogOut } from "lucide-react-native";
+import { User, ShieldCheck, FileText, BookOpen, ChevronRight, LogOut, Bell, Clock } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { LoadingState } from "@/components/ui/LoadingState";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
+import { Toggle } from "@/components/ui/Toggle";
+import { useDailyReminder } from "@/lib/platform/useDailyReminder";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isSupabaseConfigured } from "@/lib/config/env";
@@ -17,6 +19,8 @@ export default function SettingsPage() {
   const router = useRouter();
   const { participantId, signOut } = useAuth();
   const [participant, setParticipant] = useState<Participant | null>(null);
+  // Only renders inside the native shell; a browser cannot wake the app on a schedule.
+  const reminder = useDailyReminder();
 
   useEffect(() => {
     if (!participantId) return;
@@ -91,6 +95,47 @@ export default function SettingsPage() {
             <ChevronRight size={18} color={colors.inkMuted} />
           </TouchableOpacity>
         </Card>
+
+        {reminder.available && (
+          <>
+            <Text style={styles.sectionLabel}>Reminders</Text>
+            <Card padding="none" style={styles.group}>
+              <View style={styles.infoRow}>
+                <View style={styles.iconCircle}>
+                  <Bell size={18} color={colors.sageDark} />
+                </View>
+                <View style={styles.infoTextGrow}>
+                  <Text style={styles.infoLabel}>Daily check-in reminder</Text>
+                  <Text style={styles.infoValue}>
+                    {reminder.permissionDenied
+                      ? "Notifications are turned off for AI Wellness in your device settings."
+                      : "A gentle nudge to log how you're feeling."}
+                  </Text>
+                </View>
+                <Toggle checked={reminder.enabled} onChange={reminder.setEnabled} />
+              </View>
+              {reminder.enabled && (
+                <>
+                  <View style={styles.divider} />
+                  <TouchableOpacity
+                    style={styles.infoRow}
+                    onPress={reminder.cycleTime}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.iconCircle}>
+                      <Clock size={18} color={colors.sageDark} />
+                    </View>
+                    <View style={styles.infoTextGrow}>
+                      <Text style={styles.infoLabel}>Remind me at</Text>
+                      <Text style={styles.infoValue}>Tap to change</Text>
+                    </View>
+                    <Text style={styles.reminderTime}>{reminder.timeLabel}</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </Card>
+          </>
+        )}
 
         <Text style={styles.sectionLabel}>About</Text>
         <Card padding="none" style={styles.group}>
@@ -207,6 +252,12 @@ const styles = StyleSheet.create({
     color: colors.inkMuted,
     marginTop: 2,
     lineHeight: 17,
+  },
+  reminderTime: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.labelMd,
+    fontWeight: "600",
+    color: colors.sageDark,
   },
   signOut: { marginTop: spacing.md },
 });
