@@ -189,6 +189,53 @@ export class SupabaseRepository implements Repository {
     this.notify();
   }
 
+  async deleteAccount(participantId: string): Promise<void> {
+    // Storage FIRST, and from the client. storage.objects has no foreign key to
+    // participants, so the delete_account() RPC cannot reach uploaded files --
+    // they would be orphaned in the buckets permanently. The storage policy is
+    // `for all` on `(storage.foldername(name))[1] = current_user_participant_id()`,
+    // so the participant can remove their own objects, but only while their
+    // session still resolves to a participant id. The RPC deletes their auth
+    // user, so after it there is no longer any identity to satisfy that policy.
+    await this.purgeParticipantStorage(participantId);
+
+    const { error } = await this.client.rpc("delete_account");
+    if (error) throw new Error(error.message);
+    this.notify();
+  }
+
+  /** Removes every uploaded object under `{participantId}/` across all buckets. */
+  private async purgeParticipantStorage(participantId: string): Promise<void> {
+    // Enumerated from storage rather than from the `files` table on purpose:
+    // files.kind's CHECK constraint (0001_init) was never widened for
+    // 'genetic_report', so a genetic upload can exist as an object with no
+    // matching files row. Listing the bucket finds it; joining the table
+    // wouldn't, and it would be left behind.
+    const PAGE = 100;
+    // Bounds the loop below. We always re-list from offset 0 because each pass
+    // deletes what it listed -- advancing an offset would step past files that
+    // shifted down into the range we already read.
+    const MAX_PASSES = 50;
+
+    for (const bucket of new Set(Object.values(BUCKET_BY_KIND))) {
+      const store = this.client.storage.from(bucket);
+
+      for (let pass = 0; pass < MAX_PASSES; pass++) {
+        const { data, error } = await store.list(participantId, { limit: PAGE });
+        // A missing bucket or a failed listing must not abort the deletion:
+        // losing the account is what the user actually asked for, and a stranded
+        // file is a smaller harm than an account half-deleted and unretryable.
+        if (error || !data || data.length === 0) break;
+
+        const paths = data.map((entry) => `${participantId}/${entry.name}`);
+        const { error: removeError } = await store.remove(paths);
+        // Stop rather than re-listing the same objects forever if removal is
+        // refused (a policy change, say).
+        if (removeError) break;
+      }
+    }
+  }
+
   async getCaptureChannels(participantId: string): Promise<CaptureChannel[]> {
     const { data, error } = await this.client
       .from("capture_channels")

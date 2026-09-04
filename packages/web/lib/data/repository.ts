@@ -59,6 +59,18 @@ export interface Repository {
   /** Withdraw consent. Goes through a server RPC (real backend) so the consent
    *  columns stay non-forgeable; a direct participant write to them is blocked. */
   withdrawConsent(participantId: string): Promise<void>;
+  /**
+   * Permanently erase the calling participant's account: personal data, uploaded
+   * files, and their login. Irreversible, and the caller MUST sign out and
+   * navigate away immediately — afterwards its session refers to a user that no
+   * longer exists, and any screen still mounted will read a tombstoned record.
+   *
+   * Clinician sign-off records (`reviews`) are deliberately retained against a
+   * tombstoned participant row; deleting on request must not destroy the audit
+   * trail for a card a doctor signed. Like withdrawConsent, the server derives
+   * the subject from the caller, so the id is ignored by the real backend.
+   */
+  deleteAccount(participantId: string): Promise<void>;
 
   getCaptureChannels(participantId: string): Promise<CaptureChannel[]>;
   updateCaptureChannel(

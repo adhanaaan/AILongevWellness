@@ -884,6 +884,57 @@ class MockRepository implements Repository {
     this.notify();
   }
 
+  async deleteAccount(participantId: string): Promise<void> {
+    const existing = this.participants.get(participantId);
+    if (!existing) throw new Error(`Unknown participant ${participantId}`);
+
+    // Mirrors supabase/migrations/0020_delete_account.sql exactly, so mock mode
+    // behaves the same as the real backend. Note `reviews` and `pipelines` are
+    // deliberately NOT cleared -- the clinician sign-off trail survives.
+    //
+    // These two are keyed by their own row id (not by participant), so they have
+    // to be filtered on the value rather than by key prefix.
+    for (const [key, reading] of this.biomarkerReadings) {
+      if (reading.participant_id === participantId) this.biomarkerReadings.delete(key);
+    }
+    for (const [key, biomarker] of this.biomarkers) {
+      if (biomarker.participant_id === participantId) this.biomarkers.delete(key);
+    }
+
+    // Composite-keyed `${participantId}:${...}`.
+    for (const key of this.dailyLogs.keys()) {
+      if (key.startsWith(`${participantId}:`)) this.dailyLogs.delete(key);
+    }
+    for (const key of this.captureChannels.keys()) {
+      if (key.startsWith(`${participantId}:`)) this.captureChannels.delete(key);
+    }
+
+    this.aiDrafts.delete(participantId);
+    this.pendingAiDrafts.delete(participantId);
+    this.files.delete(participantId);
+    this.onboardingProgress.delete(participantId);
+
+    // Tombstone, not a delete -- same placeholders the migration writes, since
+    // these columns are NOT NULL in the real schema. Scrubbing rather than
+    // removing also keeps mock mode from hard-crashing screens that are still
+    // mounted; MockRepository re-seeds on reload, so the demo isn't stuck.
+    this.participants.set(participantId, {
+      ...existing,
+      name: "Deleted participant",
+      age: 0,
+      sex: "other",
+      height_cm: 0,
+      weight_kg: 0,
+      goals: [],
+      medications: [],
+      ingest_token: null,
+      consent_given: false,
+      consent_withdrawn_at: existing.consent_withdrawn_at ?? nowIso(),
+      deleted_at: nowIso(),
+    });
+    this.notify();
+  }
+
   async getCaptureChannels(participantId: string): Promise<CaptureChannel[]> {
     return CHANNELS.map((c) => this.captureChannels.get(`${participantId}:${c}`)).filter(
       (c): c is CaptureChannel => Boolean(c)

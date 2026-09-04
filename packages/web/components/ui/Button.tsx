@@ -10,7 +10,8 @@ import {
 } from "react-native";
 import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 
-export type ButtonVariant = "primary" | "secondary" | "ghost";
+/** `danger` is for irreversible actions only (delete an account, withdraw consent). */
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
 export type ButtonSize = "sm" | "md" | "lg";
 export type ButtonShape = "full" | "md";
 
@@ -64,6 +65,7 @@ export function Button({
     variant === "primary" && styles.primaryContainer,
     variant === "secondary" && styles.secondaryContainer,
     variant === "ghost" && styles.ghostContainer,
+    variant === "danger" && styles.dangerContainer,
     disabled && styles.disabled,
     style,
   ].filter(Boolean) as ViewStyle[];
@@ -74,6 +76,7 @@ export function Button({
     variant === "primary" && styles.primaryText,
     variant === "secondary" && styles.secondaryText,
     variant === "ghost" && styles.ghostText,
+    variant === "danger" && styles.dangerText,
   ].filter(Boolean) as TextStyle[];
 
   return (
@@ -108,6 +111,9 @@ const styles = StyleSheet.create({
   ghostContainer: {
     backgroundColor: colors.transparent,
   },
+  dangerContainer: {
+    backgroundColor: colors.danger,
+  },
   disabled: {
     opacity: 0.5,
   },
@@ -122,6 +128,9 @@ const styles = StyleSheet.create({
   },
   ghostText: {
     color: colors.teal,
+  },
+  dangerText: {
+    color: colors.white,
   },
   iconLeft: {
     marginRight: spacing.sm,

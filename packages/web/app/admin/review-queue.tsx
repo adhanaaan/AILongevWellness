@@ -24,7 +24,17 @@ export default function ReviewQueuePage() {
 
   const loaded = summaries !== null;
   const reviewable = useMemo(
-    () => (summaries ?? []).filter((s) => s.pipeline.state === "gp_review"),
+    () =>
+      (summaries ?? []).filter(
+        (s) =>
+          s.pipeline.state === "gp_review" &&
+          // A deleted account can still be sitting in gp_review, but its
+          // biomarkers and draft are gone -- there is nothing left to review, so
+          // it must not occupy a clinician's work list. It stays visible on the
+          // participant list and in the audit export, where the retained
+          // sign-off record is the point.
+          !s.participant.deleted_at
+      ),
     [summaries]
   );
   const needsGpCount = reviewable.filter((s) => !s.gpSigned).length;

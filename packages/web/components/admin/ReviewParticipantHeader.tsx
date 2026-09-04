@@ -44,11 +44,23 @@ export function ReviewParticipantHeader({
       <View style={styles.topRow}>
         <View style={styles.identity}>
           <Text style={styles.name}>{participant.name}</Text>
-          <Text style={styles.meta}>
-            {participant.age} · {participant.sex} · {participant.height_cm}cm · {participant.weight_kg}kg
-          </Text>
+          {/* A deleted account's age/sex/height/weight are NOT NULL placeholders
+              (0, "other", 0, 0), so showing them would be actively misleading. */}
+          {!participant.deleted_at && (
+            <Text style={styles.meta}>
+              {participant.age} · {participant.sex} · {participant.height_cm}cm · {participant.weight_kg}kg
+            </Text>
+          )}
           <View style={styles.consentRow}>
-            {participant.consent_withdrawn_at ? (
+            {participant.deleted_at ? (
+              <>
+                <ShieldAlert size={13} color={colors.danger} />
+                <Text style={styles.consentMissing}>
+                  Account deleted {formatDate(participant.deleted_at)} — data erased at the
+                  participant's request; this sign-off record is retained
+                </Text>
+              </>
+            ) : participant.consent_withdrawn_at ? (
               <>
                 <ShieldAlert size={13} color={colors.danger} />
                 <Text style={styles.consentMissing}>

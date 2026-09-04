@@ -27,3 +27,6 @@ export type { StatusBadgeProps, Status } from "./StatusBadge";
 
 export { Toggle } from "./Toggle";
 export type { ToggleProps } from "./Toggle";
+
+export { ConfirmDialog } from "./ConfirmDialog";
+export type { ConfirmDialogProps } from "./ConfirmDialog";

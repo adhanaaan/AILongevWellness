@@ -28,6 +28,11 @@ export async function withdrawConsentAction(participantId: string) {
   return repository.withdrawConsent(participantId);
 }
 
+/** Irreversible. Callers must sign out and navigate away as soon as this resolves. */
+export async function deleteAccountAction(participantId: string) {
+  return repository.deleteAccount(participantId);
+}
+
 export async function updateCaptureChannelAction(
   participantId: string,
   channel: CaptureChannelName,

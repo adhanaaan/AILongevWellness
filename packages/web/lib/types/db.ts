@@ -32,6 +32,17 @@ export interface Participant {
   consented_at?: string | null;
   /** Set when a participant withdraws consent from Settings. Non-destructive: the account is signed out and flagged for the care team, data is not auto-deleted. */
   consent_withdrawn_at?: string | null;
+  /**
+   * Set when the participant deleted their own account (App Store 5.1.1(v)).
+   * Unlike consent withdrawal this IS destructive: personal data and uploads are
+   * gone and the login no longer exists. The row survives only so `reviews`
+   * (which clinician signed off, and when) isn't destroyed on request.
+   *
+   * name/age/sex/height_cm/weight_kg are NOT NULL in the DB, so on a deleted row
+   * they hold placeholders ("Deleted participant", 0, "other"). Always branch on
+   * this field — never infer deletion from those values.
+   */
+  deleted_at?: string | null;
   /** Per-participant secret embedded in the health-export app's POST URL (api/health-ingest). Minted on demand; null until the participant sets up the export app. */
   ingest_token?: string | null;
   /** Self-reported catalog of medications/supplements the participant currently takes (not doctor-prescribed dosing — a wellness platform never prescribes). Daily adherence lives in DailyLog.supplements. */

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, ScrollView, StyleSheet, Alert } from "react-native";
+import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { ArrowLeft, ShieldCheck, ShieldOff, Database } from "lucide-react-native";
+import { ArrowLeft, ShieldCheck, ShieldOff, Database, Trash2 } from "lucide-react-native";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { withdrawConsentAction } from "@/lib/data/actions";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { deleteAccountAction, withdrawConsentAction } from "@/lib/data/actions";
 import { repository } from "@/lib/data/mock";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import type { Participant } from "@/lib/types/db";
@@ -28,6 +29,9 @@ export default function PrivacyPage() {
   const [participant, setParticipant] = useState<Participant | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Which confirmation is open. Alert.alert is a no-op on react-native-web, so
+  // these destructive actions are gated behind a real ConfirmDialog instead.
+  const [confirming, setConfirming] = useState<null | "withdraw" | "delete">(null);
 
   useEffect(() => {
     if (!participantId) return;
@@ -35,6 +39,7 @@ export default function PrivacyPage() {
   }, [participantId]);
 
   const withdrawn = Boolean(participant?.consent_withdrawn_at);
+  const deleted = Boolean(participant?.deleted_at);
 
   async function doWithdraw() {
     if (!participantId) return;
@@ -44,6 +49,7 @@ export default function PrivacyPage() {
       // Goes through the withdraw_consent RPC — consent columns are non-forgeable
       // (a direct participant write to them is blocked by migration 0014).
       await withdrawConsentAction(participantId);
+      setConfirming(null);
       // Sign out so processing stops from the participant's side. The care team
       // sees the withdrawal on the admin detail page and handles data per the
       // retreat's policy — withdrawal here does not auto-delete anything.
@@ -54,15 +60,23 @@ export default function PrivacyPage() {
     }
   }
 
-  function confirmWithdraw() {
-    Alert.alert(
-      "Withdraw consent?",
-      "You'll be signed out and your care team will be notified to stop processing your data. Your existing data isn't deleted automatically — to request deletion, contact your care team. You can consent again by signing up.",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Withdraw consent", style: "destructive", onPress: doWithdraw },
-      ]
-    );
+  async function doDelete() {
+    if (!participantId) return;
+    setError(null);
+    setBusy(true);
+    try {
+      // Purges uploaded files then calls the delete_account() RPC, which removes
+      // the auth user last. Order matters on the way out too: sign out and leave
+      // immediately, because this screen's participant record is now a tombstone
+      // and the repository singleton keeps notifying subscribed screens.
+      await deleteAccountAction(participantId);
+      setConfirming(null);
+      await signOut();
+      router.replace("/");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't delete your account — please try again.");
+      setBusy(false);
+    }
   }
 
   return (
@@ -137,19 +151,78 @@ export default function PrivacyPage() {
                 data. Nothing is deleted automatically — to request deletion, contact your
                 care team.
               </Text>
-              {error && <Text style={styles.error}>{error}</Text>}
               <Button
                 variant="secondary"
                 iconLeft={<ShieldOff size={16} color={colors.danger} />}
-                onPress={confirmWithdraw}
+                onPress={() => setConfirming("withdraw")}
                 disabled={busy}
               >
-                {busy ? "Withdrawing…" : "Withdraw consent"}
+                {busy && confirming !== "delete" ? "Withdrawing…" : "Withdraw consent"}
               </Button>
             </Card>
           </>
         )}
+
+        {!deleted && (
+          <>
+            <Text style={styles.sectionLabel}>Delete your account</Text>
+            <Card padding="lg" style={styles.withdrawCard}>
+              <Text style={styles.withdrawBody}>
+                This permanently deletes your login, your profile and questionnaire answers,
+                everything you uploaded, and your scores, care plan and check-ins. It can't be
+                undone.
+              </Text>
+              <Text style={styles.withdrawBody}>
+                One thing is kept: the record of which clinician reviewed and signed off your
+                wellness card, and when. That's a professional sign-off we can't erase on
+                request — it no longer has your name or any of your health data attached to it.
+              </Text>
+              <Button
+                variant="danger"
+                iconLeft={<Trash2 size={16} color={colors.white} />}
+                onPress={() => setConfirming("delete")}
+                disabled={busy}
+              >
+                {busy && confirming === "delete" ? "Deleting…" : "Delete my account"}
+              </Button>
+            </Card>
+          </>
+        )}
+
+        {error && <Text style={styles.error}>{error}</Text>}
       </ScrollView>
+
+      <ConfirmDialog
+        visible={confirming === "withdraw"}
+        title="Withdraw consent?"
+        message={
+          "You'll be signed out and your care team will be notified to stop processing your data.\n\n" +
+          "Your existing data isn't deleted — if you want it removed, use “Delete your account” instead. " +
+          "You can consent again by signing up."
+        }
+        confirmLabel="Withdraw consent"
+        destructive
+        busy={busy}
+        onConfirm={doWithdraw}
+        onCancel={() => setConfirming(null)}
+      />
+
+      <ConfirmDialog
+        visible={confirming === "delete"}
+        title="Delete your account?"
+        message={
+          "This can't be undone. Your login, profile, uploads, scores, care plan and check-ins " +
+          "are permanently deleted, and you'll be signed out.\n\n" +
+          "The record of which clinician signed off your wellness card is kept, with your name " +
+          "and health data removed from it.\n\n" +
+          "If you only want us to stop processing your data, withdraw consent instead."
+        }
+        confirmLabel="Delete permanently"
+        destructive
+        busy={busy}
+        onConfirm={doDelete}
+        onCancel={() => setConfirming(null)}
+      />
     </SafeAreaView>
   );
 }
