@@ -707,3 +707,70 @@ go through `lib/platform/`, which no-ops when the shell isn't present.
       Reason for all of it: the native iOS/Android app is a thin WebView shell
       (`packages/shell`) around the deployed web build, mirroring the sibling
       `revitalaize-gms` repo's architecture.
+- [x] **Native WebView shell (`packages/shell`)**: a standalone Expo SDK 54 app whose only
+      screen is a `react-native-webview` onto the deployed web build. Deliberately NOT an
+      npm workspace member (root `workspaces` lists only `packages/web` + `packages/shared`)
+      with its own lockfile and `expo.autolinking.searchPaths: ["./node_modules"]` — Expo
+      autolinking searches every ANCESTOR `node_modules`, so under workspace hoisting it
+      would link `packages/web`'s native modules (expo-blur, expo-video, react-native-svg…)
+      into the shell build and pin both packages to one Expo SDK. Verified isolated:
+      `expo-modules-autolinking search` resolves all 13 modules from
+      `packages/shell/node_modules`, none from web. Note `resolver.disableHierarchicalLookup`
+      is NOT set anywhere — it sounds like the isolation knob and isn't (npm nests
+      conflicting versions, and disabling the lookup makes Metro refuse to see them; it
+      broke the bundle on `expo-asset`). Launch gates on connectivity ONCE and then never
+      unmounts the WebView — swapping in the offline screen would destroy the web app's JS
+      context and reboot it mid-flow on a brief drop. Crash recovery bumps the WebView's
+      React `key` to force a native remount rather than calling `.reload()`, which doesn't
+      reliably re-run `injectedJavaScriptBeforeContentLoaded`.
+- [x] **Typed web↔native bridge (`packages/shared/src/bridge`)**: dependency-free
+      postMessage protocol (`BridgeCore` — envelopes, request/response correlation,
+      timeouts, events) used by both sides, with 21 vitest tests. Versioned via
+      `PROTOCOL_VERSION` because the two halves ship on different clocks: web redeploys on
+      every push, the shell ships through store review and lingers on devices — so a newer
+      web app talking to an older shell is the NORMAL case, and `UNSUPPORTED` is a routine
+      answer, not an error. Web side is `packages/web/lib/platform/`; every helper there
+      no-ops or falls back in a plain browser, so nothing in the app needs to branch on
+      platform. `@aiw/shared` is aliased explicitly in both metro configs and both
+      tsconfigs (to `packages/shared/src`) rather than relying on its `exports` map — SDK
+      52's Metro doesn't enable package exports and `expo/tsconfig.base` uses classic
+      moduleResolution, so neither would honour it.
+- [x] **Auth session in the device keychain**: inside the WebView `Platform.OS === "web"`,
+      so supabase-js would persist to localStorage — and WebKit's storage eviction applies
+      to WKWebView, silently signing users out between launches. `lib/data/supabase.ts` now
+      picks its `storage` from `getPlatform()`, backed by `expo-secure-store` over the
+      bridge. Hydrate-once + write-through (whole map read at boot into memory, reads
+      served synchronously, writes mirrored after) rather than a proxy, so auth doesn't
+      depend on bridge liveness. Chunked at 1800 UTF-8 bytes because expo-secure-store
+      documents a 2048-byte Android limit and a Supabase session lands at 1.8–3 KB —
+      straddling it, so it would fail only for accounts with more metadata. The chunking
+      is in `sessionCodec.ts` (shared, tested for multi-byte and surrogate pairs) since
+      it's genuinely a two-sided contract. This is why the repository had to become lazy.
+- [x] **Terra OAuth via the system browser**: providers reject OAuth in an embedded WebView
+      (Google returns `disallowed_useragent`), so `WearableConnectOptions` now calls
+      `openExternalUrl()` → `WebBrowser.openAuthSessionAsync` (ASWebAuthenticationSession /
+      Custom Tabs). Driven by an explicit bridge call, NOT by intercepting
+      `onShouldStartLoadWithRequest` — on Android that maps to `shouldOverrideUrlLoading`,
+      which isn't reliably invoked for JS-initiated navigation without a user gesture, and
+      the call happens after an `await`. Terra requires an `https:` redirect but the iOS
+      auth sheet only auto-dismisses on a custom scheme, so `packages/web/public/terra-return.html`
+      bounces to `ai-wellness://` (served as a real static file, which Vercel resolves
+      before the SPA rewrite). The shell forwards the params back as a `navigation:deep-link`
+      event, since the redirect landed in the system browser and the web app can't read it
+      from `window.location`.
+- [x] **Android hardware back over the bridge**: resolved by the WEB app
+      (`useNativeBackHandler` → `router.canGoBack()`), not by WebView history — several
+      flows use `router.replace()`, which pushes no history entry, so `goBack()` would skip
+      screens or exit early.
+- [x] **Daily check-in reminder** (`app/(tabs)/settings.tsx` + `lib/platform/useDailyReminder.ts`):
+      local notifications only (no push, no server, no FCM/APNs). Renders only in the shell.
+      Deliberately a visible, user-configurable setting rather than a silent scheduler —
+      it's the main mitigation for App Store guideline 4.2, which rejects apps that are
+      just a website in a wrapper, and a reviewer has to be able to find and trigger it.
+      Reconciles the OS with the stored preference on mount, since localStorage can be
+      evicted in a WKWebView and would otherwise leave a reminder firing that the UI
+      shows as off.
+- [ ] **Blocking before any store build**: app icons + splash (none exist in this repo);
+      confirm the production URL in `packages/shell/src/config.ts`; in-app account deletion
+      (App Store 5.1.1(v) requires it — the existing consent withdrawal is deliberately
+      non-destructive and does not satisfy it). See `packages/shell/README.md`.
