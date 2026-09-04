@@ -12,7 +12,9 @@
       "supportsTablet": false,
       "backgroundColor": "#FAFAFA",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "AI Wellness uses your camera so you can photograph a lab report or body composition scan to upload.",
+        "NSPhotoLibraryUsageDescription": "AI Wellness accesses your photo library so you can upload a saved lab report or body composition scan."
       }
     },
     "android": {

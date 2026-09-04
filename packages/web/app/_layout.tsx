@@ -22,6 +22,7 @@ import { AuthProvider } from "@/lib/auth/AuthProvider";
 import { applyWebViewportFix } from "@/lib/web/viewportFix";
 import { usePlatformInit } from "@/lib/platform";
 import { useNativeBackHandler } from "@/lib/platform/useNativeBack";
+import { useNativeDeepLinkRouting } from "@/lib/platform/useNativeDeepLinks";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -49,6 +50,7 @@ export default function RootLayout() {
   // plain browser, where it changes nothing.
   const platformReady = usePlatformInit();
   useNativeBackHandler();
+  useNativeDeepLinkRouting();
 
   const onLayoutRootView = useCallback(async () => {
     if (fontsLoaded && platformReady) {

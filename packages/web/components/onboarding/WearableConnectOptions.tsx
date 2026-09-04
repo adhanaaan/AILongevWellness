@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/lib/auth/AuthProvider";
 import { isTerraEnabled, isHealthExportEnabled } from "@/lib/config/env";
 import { terraConnect, setupHealthIngest } from "@/lib/ai/client";
+import { isNativeShell, openExternalUrl } from "@/lib/platform";
 import { listWearableConnectionsAction } from "@/lib/data/actions";
 import type { WearableConnection } from "@/lib/types/db";
 import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
@@ -32,12 +33,19 @@ function terraJustReturned(participantId: string | null): boolean {
 // Terra-supported devices this cohort is likely to own.
 const SUPPORTED_PROVIDERS = ["Oura", "Garmin", "Fitbit", "Whoop", "Apple Watch", "Strava"];
 
-function openExternal(url: string) {
-  if (Platform.OS === "web" && typeof window !== "undefined") {
-    window.location.assign(url);
-  } else {
-    Linking.openURL(url);
-  }
+/**
+ * Where Terra should send the user back to.
+ *
+ * In the native shell this is a static bounce page (public/terra-return.html)
+ * rather than an app route: Terra requires an https: redirect, but the iOS auth
+ * sheet only closes itself on a custom scheme, so the page immediately re-navigates
+ * to ai-wellness://. In a plain browser Terra can return straight to the real route.
+ */
+function terraReturnUrls(origin: string | undefined) {
+  if (!origin) return { successUrl: undefined, failureUrl: undefined };
+
+  const base = isNativeShell() ? `${origin}/terra-return.html` : `${origin}/onboarding/wearable-connected`;
+  return { successUrl: base, failureUrl: `${base}?failed=1` };
 }
 
 /**
@@ -105,13 +113,20 @@ export function WearableConnectOptions() {
       // fragile/blank). Terra appends its own params (user_id, reference_id, resource).
       const origin =
         Platform.OS === "web" && typeof window !== "undefined" ? window.location.origin : undefined;
-      const successUrl = origin ? `${origin}/onboarding/wearable-connected` : undefined;
-      const failureUrl = origin ? `${origin}/onboarding/wearable-connected?failed=1` : undefined;
+      const { successUrl, failureUrl } = terraReturnUrls(origin);
       const { url } = await terraConnect(session.access_token, participantId, successUrl, failureUrl);
-      openExternal(url);
-      // On web the page navigates away and unmounts; on native the app stays
-      // mounted, so clear busy or the buttons stay disabled after returning.
-      if (Platform.OS !== "web") setBusy(null);
+
+      // In the shell this opens a real system browser rather than navigating our
+      // WebView. That is required, not cosmetic: providers reject OAuth started
+      // inside an embedded WebView (Google returns `disallowed_useragent`), so
+      // the flow simply cannot complete in-app. In a browser it's the same
+      // window.location.assign as before.
+      await openExternalUrl(url, "/onboarding/wearable-connected");
+
+      // On plain web the page navigates away and unmounts; in the shell (and on
+      // native) the app stays mounted, so clear busy or the buttons stay
+      // disabled after the user returns.
+      if (Platform.OS !== "web" || isNativeShell()) setBusy(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't start the connection. Please try again.");
       setBusy(null);

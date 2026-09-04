@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Connecting your device…</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #fafafa;
+        color: #1a1f2b;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        text-align: center;
+        padding: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <p>Finishing up — you can close this window.</p>
+
+    <!--
+      Handoff page for the native shell's OAuth return.
+
+      Terra requires an https: redirect URL, but ASWebAuthenticationSession (iOS)
+      only dismisses itself automatically on a CUSTOM SCHEME callback. Without
+      this bounce the auth sheet would land on an https page and just sit there,
+      leaving the user to close it by hand and stranding the app mid-flow.
+
+      So Terra is pointed here, and here we immediately re-navigate to the app's
+      own scheme, which the sheet recognises and closes -- handing the query
+      params back to the shell, which forwards them to the web app as a
+      navigation:deep-link event.
+
+      Lives in public/ so it is served as a real static file. Vercel resolves
+      those before applying rewrites, so vercel.json's SPA catch-all does not
+      swallow it.
+
+      In a plain browser (no shell) the custom scheme has no handler, so we fall
+      back to the normal in-app route after a moment.
+    -->
+    <script>
+      (function () {
+        var search = window.location.search || "";
+        var appUrl = "ai-wellness://oauth-return" + search;
+        var webFallback = "/onboarding/wearable-connected" + search;
+
+        // If the custom scheme is handled, the sheet closes and this page is torn
+        // down before the timeout fires. If it isn't, we're in a normal browser
+        // and should just continue to the in-app screen.
+        var fallback = setTimeout(function () {
+          window.location.replace(webFallback);
+        }, 1200);
+
+        window.addEventListener("pagehide", function () {
+          clearTimeout(fallback);
+        });
+
+        window.location.replace(appUrl);
+      })();
+    </script>
+  </body>
+</html>

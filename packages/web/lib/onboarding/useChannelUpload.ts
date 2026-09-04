@@ -117,6 +117,10 @@ export function useChannelUpload(config: ChannelUploadConfig): ChannelUploadStat
       return;
     }
 
+    // Must stay synchronously reachable from the press handler. iOS blocks
+    // input.click() outside a user gesture, and on web this call is exactly
+    // that click -- inserting any `await` above it makes the picker silently
+    // stop opening, with no error to explain why.
     const result = await DocumentPicker.getDocumentAsync({
       type: config.pickerTypes,
       copyToCacheDirectory: true,
@@ -126,8 +130,12 @@ export function useChannelUpload(config: ChannelUploadConfig): ChannelUploadStat
 
     setPhase("uploading");
     try {
-      const response = await fetch(asset.uri);
-      const blob = await response.blob();
+      // On web (including inside the native shell's WebView) the picker hands
+      // back the real File, and File extends Blob -- so prefer it over fetching
+      // the blob: URI, which relies on blob: URLs being fetchable from the
+      // WebView's origin. Falls back for platforms that only provide a uri.
+      const assetFile = (asset as { file?: File }).file;
+      const blob = assetFile ?? (await (await fetch(asset.uri)).blob());
 
       const sizeError = validateUploadSize(config.kind, blob.size);
       if (sizeError) {
