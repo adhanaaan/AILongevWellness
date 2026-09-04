@@ -20,6 +20,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { colors } from "@/lib/theme/tokens";
 import { AuthProvider } from "@/lib/auth/AuthProvider";
 import { applyWebViewportFix } from "@/lib/web/viewportFix";
+import { usePlatformInit } from "@/lib/platform";
+import { useNativeBackHandler } from "@/lib/platform/useNativeBack";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -40,13 +42,21 @@ export default function RootLayout() {
     PlusJakartaSans_800ExtraBold,
   });
 
+  // Detects the native shell and, inside it, wires Supabase's auth storage to
+  // the keychain over the bridge. This MUST resolve before AuthProvider mounts:
+  // supabase-js takes its `storage` at createClient() time, and AuthProvider is
+  // the first thing to build the client. Resolves within a few hundred ms in a
+  // plain browser, where it changes nothing.
+  const platformReady = usePlatformInit();
+  useNativeBackHandler();
+
   const onLayoutRootView = useCallback(async () => {
-    if (fontsLoaded) {
+    if (fontsLoaded && platformReady) {
       await SplashScreen.hideAsync();
     }
-  }, [fontsLoaded]);
+  }, [fontsLoaded, platformReady]);
 
-  if (!fontsLoaded) {
+  if (!fontsLoaded || !platformReady) {
     return null;
   }
 

@@ -2,6 +2,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from "@/lib/config/env";
+import { getPlatform } from "@/lib/platform/init";
 import type { Repository, SignedCard, UploadableFile, NewParticipantInput } from "./repository";
 import { BUCKET_BY_KIND } from "./storageBuckets";
 import { computeUnlockedSections, deriveOnboardingProgress } from "../onboarding/flow";
@@ -63,8 +64,19 @@ export function getSupabaseClient(): SupabaseClient | null {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
-        // Web uses the browser's own storage automatically; native needs an explicit adapter.
-        storage: Platform.OS === "web" ? undefined : (AsyncStorage as any),
+        // Three cases, not two:
+        //   - Plain browser: undefined, so supabase-js uses localStorage.
+        //   - Inside the native shell: a bridge-backed adapter writing to the
+        //     device keychain. Platform.OS is "web" in a WebView, so this case
+        //     is invisible to the check below -- getPlatform() is what
+        //     distinguishes it, and it's only populated because app/_layout.tsx
+        //     awaits initPlatform() before anything builds this client.
+        //     Necessary because WebKit's storage eviction applies to WKWebView,
+        //     so localStorage can be cleared out from under a signed-in user.
+        //   - A real native build (not currently shipped): AsyncStorage.
+        storage:
+          getPlatform().storage ??
+          (Platform.OS === "web" ? undefined : (AsyncStorage as any)),
       },
     });
   }

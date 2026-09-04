@@ -21,9 +21,14 @@ const config = getDefaultConfig(projectRoot);
 
 // @aiw/shared is resolved by path rather than npm, since it lives outside this
 // package's install graph. It must stay dependency-free for this to hold.
+//
+// Aliased to src/ rather than the package root so "@aiw/shared/bridge" resolves
+// to src/bridge/index.ts by plain directory lookup, without depending on Metro
+// honouring the package.json "exports" map -- which packages/web, on an older
+// Expo SDK, does not. Same alias on both sides.
 config.watchFolders = [sharedRoot];
 config.resolver.extraNodeModules = {
-  "@aiw/shared": sharedRoot,
+  "@aiw/shared": path.resolve(sharedRoot, "src"),
 };
 
 module.exports = config;

@@ -22,4 +22,15 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, "node_modules"),
 ];
 
+// Alias @aiw/shared explicitly rather than leaning on its package.json
+// "exports" map: SDK 52's Metro doesn't enable package exports by default, and
+// TypeScript here inherits expo/tsconfig.base's classic moduleResolution, which
+// ignores them outright. Pointing at src/ means "@aiw/shared/bridge" resolves
+// to src/bridge/index.ts under both. Mirrored in tsconfig.json's paths, and in
+// packages/shell/metro.config.js.
+config.resolver.extraNodeModules = {
+  ...config.resolver.extraNodeModules,
+  "@aiw/shared": path.resolve(workspaceRoot, "packages/shared/src"),
+};
+
 module.exports = config;

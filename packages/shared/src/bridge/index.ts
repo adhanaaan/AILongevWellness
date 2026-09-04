@@ -4,6 +4,13 @@
  */
 export { BridgeCore, bridgeError, DEFAULT_TIMEOUT_MS, type Envelope, type BridgeCoreOptions } from "./protocol";
 export {
+  chunkByBytes,
+  MAX_SECURE_STORE_CHUNK_BYTES,
+  parseSessionMap,
+  serializeSessionMap,
+  utf8ByteLength,
+} from "./sessionCodec";
+export {
   PROTOCOL_VERSION,
   type BootConfig,
   type BridgeError,

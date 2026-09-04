@@ -24,6 +24,21 @@ export function applyWebViewportFix() {
   const root = document.getElementById("root");
   if (!root) return;
 
+  // Inside the native shell, stop here. Everything below fights mobile Safari's
+  // floating bottom toolbar, which does not exist in a WKWebView -- and the
+  // visualViewport listeners would still fire on keyboard open, resizing #root
+  // underneath the shell's own keyboard handling and causing layout jitter.
+  // The shell also insets the WebView itself, so the app is already the right
+  // size. Checked directly rather than via lib/platform because this runs at
+  // module load, before initPlatform() has resolved; the flag is injected by
+  // the shell before any page script, so it is reliable this early.
+  if ((window as { __AIW_NATIVE_HOST__?: boolean }).__AIW_NATIVE_HOST__) {
+    root.style.height = "100%";
+    document.documentElement.style.overscrollBehavior = "none";
+    document.body.style.overscrollBehavior = "none";
+    return;
+  }
+
   // Size the app to the VISUAL viewport. iOS Safari's floating bottom URL bar
   // overlays content and is NOT excluded by 100dvh or env(safe-area-inset), which
   // is why the tab bar kept clipping. window.visualViewport.height IS the real

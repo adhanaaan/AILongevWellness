@@ -1,5 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 
+import { chunkByBytes } from "@aiw/shared/bridge";
+
 /**
  * Persists the web app's Supabase session in the platform keychain/keystore.
  *
@@ -8,59 +10,22 @@ import * as SecureStore from "expo-secure-store";
  * script-writable-storage eviction to WKWebView, so a user can be silently
  * signed out between launches. The keychain is the durable store.
  *
- * Why it chunks: expo-secure-store documents a 2048-byte value limit on Android.
- * A Supabase session is an access JWT + refresh token + the full serialized user
- * object with metadata -- routinely 1.8-3 KB, i.e. straddling the limit. Failing
- * for some users and not others, depending on how much metadata their account
- * carries, is exactly the kind of bug that never reproduces on a developer's
- * device. Chunking is preferred over Supabase's documented encrypt-and-offload
- * pattern (aes-js + expo-crypto, ciphertext in AsyncStorage) because it needs no
- * dependencies and keeps every byte inside secure storage.
+ * Why it chunks: expo-secure-store documents a 2048-byte value limit on Android,
+ * and a Supabase session routinely lands at 1.8-3 KB -- straddling it, so it
+ * would fail for some accounts and not others depending on how much metadata
+ * they carry. Chunking is preferred over Supabase's documented
+ * encrypt-and-offload pattern (aes-js + expo-crypto, ciphertext in AsyncStorage)
+ * because it needs no dependencies and keeps every byte inside secure storage.
+ * The splitting itself lives in @aiw/shared so it can be tested -- see
+ * sessionCodec.test.ts for the multi-byte and surrogate-pair cases.
  */
 
 const KEY = "aiw.session";
 const COUNT_KEY = `${KEY}.__n`;
-/** Conservative margin under Android's documented 2048-byte cap. */
-const MAX_CHUNK_BYTES = 1800;
 /** Survives reboots and is readable while the device is locked post-first-unlock. */
 const OPTIONS: SecureStore.SecureStoreOptions = {
   keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK,
 };
-
-function utf8Len(codePoint: number): number {
-  if (codePoint < 0x80) return 1;
-  if (codePoint < 0x800) return 2;
-  if (codePoint < 0x10000) return 3;
-  return 4;
-}
-
-/**
- * Splits on UTF-8 byte length, not string length: user metadata can carry
- * non-ASCII (names, locales), where one character is up to 4 bytes, so counting
- * characters would under-measure and silently exceed the cap.
- *
- * Iterates with for...of so surrogate pairs are treated as one code point and
- * never split down the middle.
- */
-export function chunkByBytes(value: string, maxBytes = MAX_CHUNK_BYTES): string[] {
-  const chunks: string[] = [];
-  let current = "";
-  let currentBytes = 0;
-
-  for (const char of value) {
-    const bytes = utf8Len(char.codePointAt(0)!);
-    if (currentBytes + bytes > maxBytes) {
-      chunks.push(current);
-      current = "";
-      currentBytes = 0;
-    }
-    current += char;
-    currentBytes += bytes;
-  }
-  if (current.length > 0) chunks.push(current);
-
-  return chunks;
-}
 
 async function readCount(): Promise<number> {
   const raw = await SecureStore.getItemAsync(COUNT_KEY, OPTIONS);

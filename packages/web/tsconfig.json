@@ -4,7 +4,11 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      // Mirrors metro.config.js's extraNodeModules alias. expo/tsconfig.base
+      // sets classic moduleResolution, which ignores @aiw/shared's package.json
+      // "exports" map, so the subpath has to be spelled out here.
+      "@aiw/shared/*": ["../shared/src/*"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
