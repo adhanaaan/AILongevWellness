@@ -2,9 +2,17 @@
   "name": "@aiw/shared",
   "version": "0.1.0",
   "private": true,
-  "description": "Code shared between the web app and the native WebView shell. Must stay dependency-free -- the shell resolves it via Metro rather than npm, and packages/web/api/ (Vercel functions) must never import it.",
+  "description": "Code shared between the web app and the native WebView shell.",
   "exports": {
     "./bridge": "./src/bridge/index.ts"
   },
-  "types": "./src/bridge/index.ts"
+  "types": "./src/bridge/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "~5.5.4",
+    "vitest": "^2.1.9"
+  }
 }
