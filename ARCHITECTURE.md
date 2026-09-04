@@ -1,6 +1,29 @@
 # AI Wellness - Architecture & Code Reference
 
-A React Native (Expo) executive wellness platform with two interfaces: a participant-facing mobile app and an admin review portal. Targets **web, iOS, and Android** from a single codebase.
+A React Native (Expo) executive wellness platform with two interfaces: a participant-facing mobile app and an admin review portal.
+
+The app is written in React Native but **ships as a web app** — `expo export
+--platform web` to a Vercel static SPA. iOS and Android are reached not by
+building this code natively, but by `packages/shell`: a thin Expo app whose only
+screen is a `react-native-webview` pointed at the deployed URL, with native
+capabilities (secure session storage, local notifications, offline detection,
+OAuth) exposed to the web app over a typed postMessage bridge.
+
+So it does target web, iOS and Android from a single codebase — just via one web
+build plus a shell, rather than three native builds.
+
+---
+
+## Repo layout
+
+npm workspaces monorepo. **The app lives in `packages/web`, not the repo root.**
+
+| Path | What |
+|------|------|
+| `packages/web` | `@aiw/web` — the app + its Vercel serverless functions in `api/` |
+| `packages/shared` | `@aiw/shared` — the web↔native bridge protocol. Zero runtime deps. |
+| `packages/shell` | `@aiw/shell` — the native WebView app. Standalone, not an npm workspace. |
+| `supabase/` | Migrations (repo root — infra, not a package) |
 
 ---
 

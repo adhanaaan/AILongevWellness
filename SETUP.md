@@ -174,8 +174,36 @@ Project → **Settings** → **Environment Variables**:
 | `SUPABASE_SERVICE_ROLE_KEY` | service_role key | server-only — used only inside `/api/*.ts` |
 | `OPENAI_API_KEY` | your OpenAI secret key | server-only — used only inside `/api/*.ts` |
 
-Leave `EXPO_PUBLIC_API_BASE_URL` unset unless you're building a native
-(iOS/Android) app — the web deploy calls `/api/*` on its own origin.
+Leave `EXPO_PUBLIC_API_BASE_URL` unset. The web deploy calls `/api/*` on its own
+origin, and the native shell loads that same deployed origin in a WebView, so
+relative paths resolve correctly there too.
+
+## 5b. Vercel project settings (monorepo)
+
+The app lives in `packages/web`, so the Vercel project needs two settings under
+Project → **Settings** → **General** → **Root Directory**:
+
+| Setting | Value |
+|---|---|
+| Root Directory | `packages/web` |
+| Include source files outside of the Root Directory | **ON** |
+
+The second one is not optional. npm workspaces hoist dependencies to the
+repo-root `node_modules`, which is *outside* `packages/web` — and `@vercel/node`
+traces each `api/*.ts` function's imports from the build context to decide what
+to bundle. With the toggle off, install fails or the hoisted packages
+(`@supabase/supabase-js`, `openai`, `jszip`, `fast-xml-parser`) never get
+bundled, and every serverless function dies at runtime with `MODULE_NOT_FOUND`
+while the static site still loads fine — so it looks like the app deployed
+correctly right up until something calls the API.
+
+After changing these, redeploy and **verify by making a real request to
+`/api/ava`**, not just by loading the page.
+
+Note that `packages/web/vercel.json` deliberately has no `installCommand`. A
+custom install command runs with cwd = the Root Directory, where there is no
+lockfile, so `npm ci` fails there; Vercel's default install walks up to the
+workspace root, which is what we want.
 
 ## 6. Redeploy
 

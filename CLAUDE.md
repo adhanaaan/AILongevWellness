@@ -12,11 +12,13 @@ never diagnosis, treatment, or medical advice. Say "participant" never "patient"
 
 ## Stack
 
-- React Native 0.76 + Expo SDK 52 + Expo Router 4
+- npm workspaces monorepo — the app is `packages/web`, not the repo root
+- React Native 0.76 + Expo SDK 52 + Expo Router 4, built for web
+  (`expo export --platform web`) and deployed to Vercel as a static SPA
 - TypeScript 5.5, StyleSheet.create() with design tokens
 - lucide-react-native for icons, react-native-svg for charts
-- Repository pattern with in-memory mock (Supabase swap later)
-- NO Tailwind, NO Next.js — this is React Native, not web
+- Repository pattern over Supabase, with an in-memory mock fallback
+- NO Tailwind, NO Next.js — write React Native, even though it ships as web
 
 ## Who owns what
 
@@ -115,24 +117,56 @@ git push origin person[N]/[feature-name]
 
 ## File structure (do not reorganise)
 
+**The app lives in `packages/web/`, NOT at the repo root.** This is an npm
+workspaces monorepo — never create `app/`, `components/`, `lib/` or `api/` at the
+root. Paths elsewhere in this file are relative to `packages/web/` unless they
+start with `packages/`.
+
 ```
-app/                    # Screens (Expo Router)
-  (tabs)/               # Participant bottom tabs (card, ava, tracking, settings)
-  admin/                # Admin portal
-  onboarding/           # Consent → profile → capture
-components/
-  ui/                   # Shared primitives (Button, Card, Field, etc.)
-  participant/          # Participant-specific components
-  admin/                # Admin-specific components
-  layout/               # Shell layouts (MobileShell, AdminShell)
-lib/
-  types/db.ts           # THE shared type contract
-  data/repository.ts    # THE repository interface
-  data/mock.ts          # Mock implementation (20 participants seeded)
-  data/actions.ts       # Thin async wrappers
-  theme/tokens.ts       # Design tokens
-  ava/respond.ts        # AVA chat engine
+package.json            # workspaces: ["packages/web", "packages/shared"]
+supabase/               # migrations (repo root — infra, not a package)
+packages/
+  web/                  # @aiw/web — the app. Deployed to Vercel as a web SPA.
+    app/                # Screens (Expo Router)
+      (tabs)/           # Participant bottom tabs (card, ava, tracking, settings)
+      admin/            # Admin portal
+      onboarding/       # Auth → quiz → capture
+    components/
+      ui/               # Shared primitives (Button, Card, Field, etc.)
+      participant/      # Participant-specific components
+      admin/            # Admin-specific components
+      layout/           # Shell layouts (MobileShell, AdminShell)
+    lib/
+      types/db.ts       # THE shared type contract
+      data/repository.ts# THE repository interface
+      data/mock.ts      # Mock implementation (20 participants seeded)
+      data/actions.ts   # Thin async wrappers
+      theme/tokens.ts   # Design tokens
+      ava/respond.ts    # AVA chat engine
+      platform/         # Native-shell bridge client (no-ops in a real browser)
+    api/                # Vercel serverless functions. MUST stay beside lib/ —
+                        # they import ../lib/* and @vercel/node doesn't reliably
+                        # honour tsconfig paths. Never import @aiw/shared here.
+    vercel.json         # Vercel Root Directory is set to packages/web
+  shared/               # @aiw/shared — bridge protocol. ZERO runtime deps.
+  shell/                # @aiw/shell — native WebView app. NOT an npm workspace;
+                        # standalone lockfile so its Expo SDK can differ from
+                        # web's without Expo autolinking picking up web's
+                        # native modules through workspace hoisting.
 ```
+
+### Web vs native
+
+There is one app, and it is a web app. The native iOS/Android build is a thin
+Expo shell whose only screen is a `react-native-webview` pointed at the deployed
+Vercel URL — so **participant/admin features are built once, in
+`packages/web`, and are automatically present on native**. Only capabilities a
+browser genuinely cannot provide (secure session storage, local notifications,
+offline detection, OAuth that providers refuse to run in a WebView) live in
+`packages/shell`, reached over the typed bridge in `packages/shared`.
+
+Everything in `packages/web` must keep working in a plain browser. Bridge calls
+go through `lib/platform/`, which no-ops when the shell isn't present.
 
 ## Current state (update this when you make progress)
 
@@ -646,3 +680,30 @@ lib/
       Deliberately NON-destructive — data isn't auto-deleted; the withdrawal surfaces to the
       care team on the admin participant detail page ("Consent withdrawn [date]") for handling
       per the retreat's data policy.
+- [x] Repository resolution made lazy (`lib/data/mock.ts`): `export const repository =
+      getRepository()` ran at module scope, so `createClient()` AND the realtime
+      `channel("db-changes").subscribe()` both fired during bundle evaluation — the import
+      chain `app/_layout.tsx → lib/auth/AuthProvider → lib/data/actions → ./mock` reaches it
+      before React renders anything. That left no seam early enough to hand Supabase a
+      different auth `storage` adapter (it's taken at `createClient` construction), which the
+      native shell needs to back the session with `expo-secure-store` instead of localStorage.
+      Now a lazy `Proxy` with a binding get-trap, so the ~19 files importing the const are
+      untouched; `Repository` is all methods and no data properties, so that's sufficient.
+- [x] **Repo restructured into an npm workspaces monorepo** — the whole app moved from the
+      repo root into `packages/web` (`git mv`, so history follows; no file's relative imports
+      changed, and `api/` moved alongside `lib/` so its `../lib/*` imports still resolve).
+      Root `package.json` declares `workspaces: ["packages/web", "packages/shared"]`.
+      `packages/web/metro.config.js` gained the monorepo `watchFolders` +
+      `nodeModulesPaths` config (npm hoists everything to the root `node_modules`, outside
+      Metro's default project root) — deliberately WITHOUT `disableHierarchicalLookup`,
+      which under npm hoisting makes Metro ignore nested version resolutions and serve the
+      wrong transitive deps. `vercel.json` moved to `packages/web/` and **dropped its
+      `installCommand: "npm ci"`**: a custom install command runs with cwd = the Vercel Root
+      Directory, where there is no lockfile, so it fails outright — Vercel's default install
+      correctly walks up to the workspace root instead. Two matching Vercel dashboard changes
+      are required (see SETUP.md): Root Directory → `packages/web`, and **"Include source
+      files outside of the Root Directory" → ON**, without which `@vercel/node` can't trace
+      the hoisted deps and every `/api/*` function fails at runtime with `MODULE_NOT_FOUND`.
+      Reason for all of it: the native iOS/Android app is a thin WebView shell
+      (`packages/shell`) around the deployed web build, mirroring the sibling
+      `revitalaize-gms` repo's architecture.
