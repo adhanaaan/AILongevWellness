@@ -19,6 +19,8 @@ export interface AuthState {
   signUpParticipant: (email: string, password: string) => Promise<boolean>;
   signUpCareTeam: (email: string, password: string) => Promise<boolean>;
   signOut: () => Promise<void>;
+  // Sends a password-reset email (Supabase). No-op in mock mode.
+  sendPasswordReset: (email: string) => Promise<void>;
 }
 
 // Mock mode (no Supabase configured): always "signed in" as the demo participant,
@@ -33,6 +35,7 @@ const MOCK_STATE: AuthState = {
   signUpParticipant: async () => true,
   signUpCareTeam: async () => true,
   signOut: async () => {},
+  sendPasswordReset: async () => {},
 };
 
 const AuthContext = createContext<AuthState>(MOCK_STATE);
@@ -145,9 +148,17 @@ function RealAuthProvider({ children }: { children: React.ReactNode }) {
     await client.auth.signOut();
   }, [client]);
 
+  const sendPasswordReset = useCallback(
+    async (email: string) => {
+      const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo: emailRedirectTo });
+      if (error) throw new Error(error.message);
+    },
+    [client, emailRedirectTo]
+  );
+
   const value = useMemo<AuthState>(
-    () => ({ loading, session, role, participantId, signIn, signUpParticipant, signUpCareTeam, signOut }),
-    [loading, session, role, participantId, signIn, signUpParticipant, signUpCareTeam, signOut]
+    () => ({ loading, session, role, participantId, signIn, signUpParticipant, signUpCareTeam, signOut, sendPasswordReset }),
+    [loading, session, role, participantId, signIn, signUpParticipant, signUpCareTeam, signOut, sendPasswordReset]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
-import { MessageCircle, ClipboardList, ChevronRight } from "lucide-react-native";
+import { MessageCircle, ClipboardList, ChevronRight, Leaf, Apple } from "lucide-react-native";
 import { MobileShell } from "@/components/layout/MobileShell";
 import { FadeInView } from "@/components/ui/FadeInView";
 import { PressableScale } from "@/components/ui/PressableScale";
@@ -295,6 +295,32 @@ export default function CardPage() {
           })}
         </View>
 
+        <View style={styles.section}>
+          <InsightsSectionHeader label="Deeper analysis" />
+          {[
+            { key: "tcm", Icon: Leaf, title: "TCM Analysis", desc: "Your constitution and organ-system balance, read by a TCM practitioner.", color: colors.terracotta, route: "/analysis/tcm" },
+            { key: "nutrition", Icon: Apple, title: "Nutritional Corrective Medicine", desc: "A corrective-nutrition strategy targeting your screening patterns.", color: colors.metabolic, route: "/analysis/nutrition" },
+          ].map((a) => (
+            <PressableScale
+              key={a.key}
+              style={styles.analysisCard}
+              haptics="selection"
+              accessibilityRole="button"
+              accessibilityLabel={`Open ${a.title}`}
+              onPress={() => router.push(a.route as never)}
+            >
+              <View style={[styles.analysisIcon, { backgroundColor: a.color + "22" }]}>
+                <a.Icon size={20} color={a.color} />
+              </View>
+              <View style={styles.analysisText}>
+                <Text style={styles.analysisTitle}>{a.title}</Text>
+                <Text style={styles.analysisDesc}>{a.desc}</Text>
+              </View>
+              <ChevronRight size={18} color={colors.inkMuted} />
+            </PressableScale>
+          ))}
+        </View>
+
         {(gp || tcm) && (
           <View style={styles.section}>
             <CareTeamNotesCard gp={gp} tcm={tcm} />
@@ -414,6 +440,37 @@ export default function CardPage() {
 
 const styles = StyleSheet.create({
   scrollContent: { paddingBottom: 132 },
+  analysisCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radii.lg,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+  },
+  analysisIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radii.md,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  analysisText: { flex: 1, gap: 2 },
+  analysisTitle: {
+    fontFamily: fontFamilies.displaySemiBold,
+    fontSize: fontSizes.bodyLg,
+    color: colors.ink,
+  },
+  analysisDesc: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.inkMuted,
+    lineHeight: 17,
+  },
   askAvaScrim: {
     position: "absolute",
     left: 0,
