@@ -22,6 +22,7 @@ import { TopRecommendation } from "@/components/participant/TopRecommendation";
 import { InsightsSectionHeader } from "@/components/participant/InsightsSectionHeader";
 import { NextStepsCard } from "@/components/participant/NextStepsCard";
 import { SnapshotSummaryCard } from "@/components/participant/SnapshotSummaryCard";
+import { MdtReviewCard } from "@/components/participant/MdtReviewCard";
 import { WellnessDisclaimer } from "@/components/participant/WellnessDisclaimer";
 import { repository } from "@/lib/data/mock";
 import { getOnboardingProgressAction } from "@/lib/data/actions";
@@ -268,6 +269,10 @@ export default function CardPage() {
             <SnapshotSummaryCard narrative={buildPillarNarrative(aiDraft.scores, lockedPillars)} />
           </View>
         )}
+
+        <View style={styles.section}>
+          <MdtReviewCard />
+        </View>
 
         {/* Prominent-number pillar cards, each plotted against the ideal band and
             tappable to open the full detail. Retreat feedback: more cards, bigger

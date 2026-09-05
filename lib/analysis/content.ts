@@ -1,4 +1,5 @@
 import { colors } from "@/lib/theme/tokens";
+import { mdtNames } from "@/lib/mdt/panel";
 
 // Sample content for the two "deeper analysis" reports (TCM Analysis, Nutritional
 // Corrective Medicine). These showcase capabilities the platform offers; the copy
@@ -40,7 +41,7 @@ export const TCM_ANALYSIS: AnalysisReportContent = {
   subtitle:
     "A constitutional wellness read drawn from your intake and screening, reviewed by a TCM practitioner alongside your Western results.",
   accent: colors.terracotta,
-  reviewer: "Reviewed by Dr. Mei Lin, TCM Practitioner (Reg. TCMB)",
+  reviewer: `Reviewed by your Multidisciplinary Team — ${mdtNames()}`,
   sections: [
     {
       heading: "Your constitution",
@@ -81,7 +82,7 @@ export const NUTRITION_ANALYSIS: AnalysisReportContent = {
   subtitle:
     "A corrective-nutrition strategy targeting the specific patterns in your screening, reviewed by your care team.",
   accent: colors.metabolic,
-  reviewer: "Reviewed by your care team",
+  reviewer: `Reviewed by your Multidisciplinary Team — ${mdtNames()}`,
   sections: [
     {
       heading: "Priority patterns to correct",
