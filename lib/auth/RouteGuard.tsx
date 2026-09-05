@@ -28,27 +28,29 @@ export function CareTeamGuard({ children }: { children: React.ReactNode }) {
   const { loading, role, participantId } = useAuth();
   const onLoginScreen = segments[segments.length - 1] === "login";
 
-  // The admin portal is deliberately separated from the consumer app: only
-  // care_team accounts may see it (or its login). A signed-in participant is a
-  // lay user — they're sent back to their own app, never shown the admin login.
-  // The care-team login is the only admin surface a signed-out visitor may reach.
+  // Only care_team accounts may see the admin PORTAL. The care-team LOGIN, though,
+  // is reachable by anyone who isn't already care_team — including a signed-in
+  // participant, so a presenter (or a participant on a shared device) can sign out
+  // and switch into the care-team account without first hunting for a sign-out.
+  // The login screen itself handles the "you're signed in as a participant" case.
   useEffect(() => {
     if (!isSupabaseConfigured || loading) return;
     if (role === "care_team") {
       if (onLoginScreen) router.replace("/admin");
       return;
     }
+    // A participant may view the login (to switch accounts) but never the portal.
     if (participantId) {
-      router.replace("/");
+      if (!onLoginScreen) router.replace("/");
       return;
     }
     if (!onLoginScreen) router.replace("/admin/login");
   }, [loading, role, participantId, onLoginScreen, router]);
 
   if (onLoginScreen) {
-    // Show the login only to genuinely signed-out visitors; a signed-in
-    // participant or care_team member is mid-redirect (handled above).
-    if (isSupabaseConfigured && (loading || participantId || role === "care_team")) return null;
+    // Show the login to signed-out visitors AND signed-in participants; a
+    // care_team member is redirected to the portal (handled above).
+    if (isSupabaseConfigured && (loading || role === "care_team")) return null;
     return <>{children}</>;
   }
   if (isSupabaseConfigured && (loading || role !== "care_team")) return null;
