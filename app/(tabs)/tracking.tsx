@@ -14,6 +14,7 @@ import { useAuth } from "@/lib/auth/AuthProvider";
 import { CARE_PLAN_CATEGORIES, normalizePlanItem } from "@/lib/carePlan/categories";
 import { CarePlanCategoryCard, type CarePlanTodayStatus } from "@/components/participant/CarePlanCategoryCard";
 import { CarePlanTodayHero } from "@/components/participant/CarePlanTodayHero";
+import { CarePlanFocusCard } from "@/components/participant/CarePlanFocusCard";
 import { CarePlanSectionLabel } from "@/components/participant/CarePlanSectionLabel";
 import { TodayActionsList } from "@/components/participant/TodayActionsList";
 import { DraftStatusBadge } from "@/components/participant/DraftStatusBadge";
@@ -152,6 +153,7 @@ export default function TrackingPage() {
   const todayLog = logs.find((l) => l.log_date === today);
   const last7 = logs.slice(-7);
   const isDelivered = Boolean(card);
+  const activeDraft = card?.aiDraft ?? pendingDraft;
   const carePlan = card?.aiDraft.care_plan ?? pendingDraft?.care_plan;
   // The care plan is AI-drafted then clinician-reviewed on the same pipeline as
   // the scores, so it carries the same status badge as the Insights snapshot:
@@ -241,6 +243,17 @@ export default function TrackingPage() {
               backfills only the care plan (handleGenerate picks the mode). */}
           {!carePlan && isSupabaseConfigured && (
             <GeneratePlanCard status={genStatus} error={genError} onGenerate={handleGenerate} />
+          )}
+
+          {carePlan && (
+            <View style={styles.focusWrap}>
+              <CarePlanFocusCard
+                firstName={participant?.name?.split(" ")[0]}
+                focusAreas={activeDraft?.suggested_focus ?? []}
+                goal={participant?.goals?.[0] ?? null}
+                flaggedCount={activeDraft?.out_of_range?.length ?? 0}
+              />
+            </View>
           )}
 
           <CarePlanTodayHero done={actionsDone} total={actionsTotal} dateLabel={todayLabel()} />
@@ -382,6 +395,7 @@ const styles = StyleSheet.create({
     color: colors.terracottaInk,
     lineHeight: 15,
   },
+  focusWrap: { marginTop: spacing.lg },
   categoriesList: { gap: spacing.md },
   barsContainer: {
     flexDirection: "row",

@@ -14,11 +14,13 @@ import { colors, fontFamilies, fontSizes, spacing, radii, shadows } from "@/lib/
 // provisioned care_team account sign in; there is no signup path to abuse.
 export default function AdminLoginPage() {
   const router = useRouter();
-  const { signIn, role } = useAuth();
+  const { signIn, role, participantId, signOut, sendPasswordReset } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   async function onSubmit() {
     setError(null);
@@ -32,6 +34,24 @@ export default function AdminLoginPage() {
       setError(e instanceof Error ? e.message : "Something went wrong.");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  async function onForgotPassword() {
+    setError(null);
+    setResetSent(false);
+    if (!email.trim()) {
+      setError("Enter your email above first, then tap Forgot password.");
+      return;
+    }
+    setResetting(true);
+    try {
+      await sendPasswordReset(email.trim());
+      setResetSent(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't send the reset email.");
+    } finally {
+      setResetting(false);
     }
   }
 
@@ -52,6 +72,18 @@ export default function AdminLoginPage() {
         by your administrator — there is no public sign-up.
       </Text>
 
+      {participantId && (
+        <Card padding="lg" style={styles.switchCard}>
+          <Text style={styles.switchText}>
+            You&apos;re signed in as a participant. Sign in below with your care-team
+            account to switch, or sign out.
+          </Text>
+          <Button variant="secondary" size="sm" onPress={() => void signOut()}>
+            Sign out
+          </Button>
+        </Card>
+      )}
+
       <Card padding="lg" style={styles.card}>
         <Input
           label="Email"
@@ -69,7 +101,12 @@ export default function AdminLoginPage() {
           placeholder="Your password"
         />
         {error && <Text style={styles.error}>{error}</Text>}
-        {role === "participant" && (
+        {resetSent && (
+          <Text style={styles.notice}>
+            If an account exists for that email, a password-reset link is on its way.
+          </Text>
+        )}
+        {role === "participant" && !participantId && (
           <Text style={styles.error}>
             That account is registered as a participant, not care team.
           </Text>
@@ -81,6 +118,10 @@ export default function AdminLoginPage() {
           onPress={onSubmit}
         >
           Sign in
+        </Button>
+
+        <Button variant="ghost" size="sm" disabled={resetting} onPress={onForgotPassword}>
+          {resetting ? "Sending…" : "Forgot password?"}
         </Button>
       </Card>
 
@@ -137,10 +178,27 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     ...shadows.soft,
   },
+  switchCard: {
+    gap: spacing.md,
+    marginBottom: spacing.lg,
+    backgroundColor: colors.sageTint,
+  },
+  switchText: {
+    fontFamily: fontFamilies.body,
+    fontSize: fontSizes.caption,
+    color: colors.charcoal,
+    lineHeight: 18,
+  },
   error: {
     fontFamily: fontFamilies.body,
     fontSize: fontSizes.caption,
     color: colors.danger,
+  },
+  notice: {
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.caption,
+    color: colors.sageDark,
+    lineHeight: 18,
   },
   footnote: {
     fontFamily: fontFamilies.body,
