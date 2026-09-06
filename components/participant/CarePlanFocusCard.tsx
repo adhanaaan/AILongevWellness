@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Target } from "lucide-react-native";
+import { Target, Check } from "lucide-react-native";
 import { Card } from "@/components/ui/Card";
 import { colors, fontFamilies, fontSizes, radii, spacing } from "@/lib/theme/tokens";
 
@@ -18,7 +18,7 @@ export interface CarePlanFocusCardProps {
 // protocol is built around THIS participant's results and goal, not a generic
 // template. Only shown once a real AI draft exists (the caller gates on that).
 export function CarePlanFocusCard({ firstName, focusAreas, goal, flaggedCount = 0 }: CarePlanFocusCardProps) {
-  const chips = focusAreas.slice(0, 4);
+  const chips = focusAreas.slice(0, 3);
   const watchLine =
     flaggedCount > 0
       ? `${flaggedCount} area${flaggedCount === 1 ? "" : "s"} to watch`
@@ -41,14 +41,18 @@ export function CarePlanFocusCard({ firstName, focusAreas, goal, flaggedCount = 
 
       <Text style={styles.body}>
         Your care team shaped this plan around {watchLine}
-        {goalLine}. Each section below targets a specific part of your picture.
+        {goalLine}.
       </Text>
 
       {chips.length > 0 && (
-        <View style={styles.chips}>
+        <View style={styles.focusPanel}>
+          <Text style={styles.focusLabel}>This plan focuses on</Text>
           {chips.map((f) => (
-            <View key={f} style={styles.chip}>
-              <Text style={styles.chipText}>{f}</Text>
+            <View key={f} style={styles.focusRow}>
+              <View style={styles.focusTick}>
+                <Check size={11} color={colors.sageDark} strokeWidth={3} />
+              </View>
+              <Text style={styles.focusText}>{f}</Text>
             </View>
           ))}
         </View>
@@ -79,12 +83,36 @@ const styles = StyleSheet.create({
   },
   title: { fontFamily: fontFamilies.displaySemiBold, fontSize: fontSizes.bodyLg, color: colors.ink },
   body: { fontFamily: fontFamilies.body, fontSize: fontSizes.labelMd, color: colors.charcoal, lineHeight: 21 },
-  chips: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
-  chip: {
+  focusPanel: {
     backgroundColor: colors.surface,
-    borderRadius: radii.full,
-    paddingVertical: 5,
-    paddingHorizontal: spacing.md,
+    borderRadius: radii.md,
+    padding: spacing.md,
+    gap: spacing.md,
   },
-  chipText: { fontFamily: fontFamilies.bodySemiBold, fontSize: fontSizes.caption, color: colors.sageDark },
+  focusLabel: {
+    fontFamily: fontFamilies.bodySemiBold,
+    fontSize: fontSizes.overline,
+    color: colors.inkMuted,
+    textTransform: "uppercase",
+    letterSpacing: 0.6,
+  },
+  focusRow: { flexDirection: "row", alignItems: "flex-start", gap: spacing.sm },
+  focusTick: {
+    width: 18,
+    height: 18,
+    borderRadius: radii.full,
+    backgroundColor: colors.tealTint,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 1,
+    flexShrink: 0,
+  },
+  focusText: {
+    flex: 1,
+    fontFamily: fontFamilies.bodyMedium,
+    fontSize: fontSizes.labelMd,
+    color: colors.charcoal,
+    lineHeight: 20,
+  },
 });
+
